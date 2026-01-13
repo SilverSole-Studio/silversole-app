@@ -1,14 +1,25 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:silversole/constants.dart';
 import 'package:silversole/core/utils/utils_function.dart';
 import 'package:silversole/shared/models/update_info_model.dart';
 
 import '../error/result.dart';
+
+
+const String apiUrl = 'https://api.github.com';
+const String apiPath = '/repos/andongni0723/silversole-app/releases/latest';
+
+
+final dio = Dio(
+  BaseOptions(
+    baseUrl: apiUrl,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  )
+);
 
 bool isUpdateAvailable(String currentVersion, String latestVersion) {
   var current = currentVersion.trim().removePrefix("v");
@@ -23,15 +34,15 @@ bool isUpdateAvailable(String currentVersion, String latestVersion) {
 ///
 /// Return a version name and a change log.
 Future<Result<UpdateInfo>> fetchLatestReleaseTag() async {
-  final url = Uri.parse(Constants.apiLatestReleaseUrl);
   try {
     // Fetch latest release
-    var res = await http.get(url).timeout(const Duration(seconds: 10));
+    // var res = await http.get(url).timeout(const Duration(seconds: 10));
+    var res = await dio.get(apiPath);
     if (res.statusCode != 200) {
       return Result.error(HttpException('Error ${res.statusCode}: Get latest release failed. Try again later.'));
     }
     // Decode detail
-    var body = json.decode(res.body) as Map<String, dynamic>;
+    var body = res.data as Map<String, dynamic>;
     final tag = body['tag_name'] as String?;
     final notes = (body['body'] as String?) ?? '';
     final assets = (body['assets'] as List).cast<Map<String, dynamic>>();

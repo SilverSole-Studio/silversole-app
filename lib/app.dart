@@ -1,18 +1,22 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:silversole/shared/pages/home_page.dart';
+import 'package:silversole/core/routing/router.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
 
-  // This widget is the root of your application.
+  static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Silver Sole',
+      supportedLocales: context.supportedLocales,
+      localizationsDelegates: context.localizationDelegates,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       theme: ThemeData(
-        fontFamily: 'oxanium',
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF6750A4),
+        // colorSchemeSeed: const Color(0xFF6750A4),
         brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
@@ -21,7 +25,7 @@ class App extends StatelessWidget {
         brightness: Brightness.dark,
       ),
       themeMode: ThemeMode.system,
-      home: const HomePage(title: 'Silver Sole'),
+      routerConfig: router,
     );
   }
 }
