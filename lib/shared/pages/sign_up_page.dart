@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,68 +7,84 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
-import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 
-class SignInPage extends ConsumerStatefulWidget {
-  const SignInPage({super.key});
+class SignUpPage extends ConsumerStatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  ConsumerState<SignInPage> createState() => _SignInPageState();
+  ConsumerState<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SignInPageState extends ConsumerState<SignInPage> {
+class _SignUpPageState extends ConsumerState<SignUpPage> {
   String email = '';
   String password = '';
-  bool enableSignInButton = true;
+  String confirmPassword = '';
+  bool enableSignUpButton = true;
 
   final _formKey = GlobalKey<FormState>();
   bool _autoValidate = false;
 
   void back() => context.pop();
 
+  void clearValidatorHint() {
+    if (_autoValidate) {
+      setState(() => _autoValidate = false);
+    }
+  }
+
   void setEmail(String value) => setState(() => email = value);
 
   void setPassword(String value) => setState(() => password = value);
 
-  String? fieldValidator(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'field_required'.tr();
-    }
+  void setConfirmPassword(String value) => setState(() => confirmPassword = value);
+
+  String? fieldEmptyValidator(String? value) {
+    if (value == null || value.trim().isEmpty) return 'field_required'.tr();
+    return null;
+  }
+
+  String? emailValidator(String value) {
+    if (!EmailValidator.validate(value.trim())) return 'invalid_email'.tr();
+    return null;
+  }
+
+  String? confirmPasswordMatchValidator(String value) {
+    if (value != password) return 'password_mismatch'.tr();
     return null;
   }
 
   void signInGoogle() => comingSoon();
 
-  Future<void> signIn() async {
+  Future<void> signUp() async {
     if (!_formKey.currentState!.validate()) {
       setState(() => _autoValidate = true);
       return;
     }
-    setState(() => enableSignInButton = false);
+    setState(() => enableSignUpButton = false);
     try {
       final authService = ref.read(authServiceProvider);
-      final res = await authService.supabaseSignIn(email, password);
+      final res = await authService.supabaseSignUp(email, password);
       switch (res) {
-        case Ok<UserData>():
-          final data = res.value;
-          ref.read(authUserProvider.notifier).setUser(data);
-          showMessage('sign_in_success'.tr());
+        case Ok<void>():
+          showMessage('sign_up_success'.tr());
           back();
         case Error():
           showErrorSnakeBar(res.error.toString());
       }
     } finally {
       if (mounted) {
-        setState(() => enableSignInButton = true);
+        setState(() => enableSignUpButton = true);
       }
     }
   }
 
-  void goToSignUp() => context.push('/sign-up');
+  void goToSignUp() => comingSoon();
 
   @override
   Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
@@ -80,18 +97,18 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           autovalidateMode: _autoValidate ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 16,
             children: [
-              SizedBox(
-                height: 250,
-                child: Center(
-                  child: Text(
-                    'silversole'.tr(),
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontFamily: 'Oxanium',
-                      fontVariations: const [FontVariation('wght', 600)],
-                    ),
-                  ),
+              Padding(
+                padding: const EdgeInsets.only(top: 100, bottom: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 8,
+                  children: [
+                    Text('sign_up'.tr(), style: tt.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('sign_up_intro'.tr(), style: tt.titleSmall?.copyWith(color: Colors.grey)),
+                  ],
                 ),
               ),
               TextFormField(
@@ -101,8 +118,11 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(LucideIcons.mail),
                 ),
-                validator: (val) => fieldValidator(val),
-                onChanged: (value) => setEmail(value),
+                validator: (val) => fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
+                onChanged: (value) {
+                  clearValidatorHint();
+                  setEmail(value);
+                },
               ),
               TextFormField(
                 obscureText: true,
@@ -111,22 +131,31 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(LucideIcons.lock),
                 ),
-                validator: (val) => fieldValidator(val),
-                onChanged: (value) => setPassword(value),
+                validator: (val) => fieldEmptyValidator(val),
+                onChanged: (value) {
+                  clearValidatorHint();
+                  setPassword(value);
+                },
+              ),
+              TextFormField(
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'confirm_password'.tr(),
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(LucideIcons.lock),
+                ),
+                validator: (val) => fieldEmptyValidator(val) ?? confirmPasswordMatchValidator(val ?? ''),
+                onChanged: (value) {
+                  clearValidatorHint();
+                  setConfirmPassword(value);
+                },
               ),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(onPressed: enableSignInButton ? signIn : null, child: Text('sign_in'.tr())),
+                child: ElevatedButton(onPressed: enableSignUpButton ? signUp : null, child: Text('sign_up'.tr())),
               ),
               Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: textOnDivider(context, 'or'.tr())),
               googleSignInButton(context, onPressed: signInGoogle),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('no_account_prompt'.tr(), style: TextStyle(color: Colors.grey)),
-                  TextButton(onPressed: goToSignUp, child: Text('sign_up'.tr())),
-                ],
-              ),
             ],
           ),
         ),

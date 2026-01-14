@@ -11,7 +11,6 @@ import '../../core/error/result.dart';
 import '../../core/utils/update_checker.dart';
 import '../../core/utils/utils_function.dart';
 
-
 Future<void> showUpdateVersionDialog(BuildContext context) async {
   debugPrint('[UpdateCheck] show dialog');
 
@@ -27,11 +26,10 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
       changelog = result.value.notes;
       filename = result.value.name;
       size = result.value.size;
-      break;
     case Error():
       debugPrint('[UpdateCheck] fetch failed: ${result.error}');
       if (!context.mounted) return;
-      showErrorSnakeBar(context, result.error.toString());
+      showErrorSnakeBar(result.error.toString());
       return;
   }
   if (!isUpdateAvailable(currentVersion, latestVersion)) return;
@@ -40,14 +38,13 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
   final ts = Theme.of(context).textTheme;
   final cs = Theme.of(context).colorScheme;
   const releasePath = Constants.latestReleaseUrl;
-  final downloadPath =
-      '${Constants.releaseDownloadUrl}/$latestVersion/$filename';
+  final downloadPath = '${Constants.releaseDownloadUrl}/$latestVersion/$filename';
 
   void clickToJump(String uriStr) {
     final uri = Uri.parse(uriStr);
     launchUrl(uri, mode: LaunchMode.externalApplication).then((ok) {
       if (!ok && context.mounted) {
-        showErrorSnakeBar(context, 'Could not open release page');
+        showErrorSnakeBar('Could not open release page');
       }
     });
   }
@@ -91,15 +88,17 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                   spacing: 8,
                   children: [
                     outlineButtonWithTheme(
-                        title: filename ?? 'app-release.apk',
-                        subtitle: '${bytesToMiB(size ?? 0).toStringAsFixed(2)} MB',
-                        icon: LucideIcons.download,
-                        onPressed: () => clickToJump(downloadPath)),
+                      title: filename ?? 'app-release.apk',
+                      subtitle: '${bytesToMiB(size ?? 0).toStringAsFixed(2)} MB',
+                      icon: LucideIcons.download,
+                      onPressed: () => clickToJump(downloadPath),
+                    ),
                     outlineButtonWithTheme(
-                        title: 'Github Release ',
-                        subtitle: latestVersion.toString(),
-                        icon: LucideIcons.github,
-                        onPressed: () => clickToJump(releasePath))
+                      title: 'Github Release ',
+                      subtitle: latestVersion.toString(),
+                      icon: LucideIcons.github,
+                      onPressed: () => clickToJump(releasePath),
+                    ),
                   ],
                 ),
               ),
@@ -120,9 +119,7 @@ Widget outlineButtonWithTheme({
   return OutlinedButton(
     style: OutlinedButton.styleFrom(
       alignment: Alignment.centerLeft,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     onPressed: onPressed,
     child: ListTile(
@@ -133,4 +130,3 @@ Widget outlineButtonWithTheme({
     ),
   );
 }
-

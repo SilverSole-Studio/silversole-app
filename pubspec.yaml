@@ -53,6 +53,7 @@ dependencies:
   flutter_svg: ^2.2.3
   easy_localization: ^3.0.8
   easy_localization_loader: ^2.0.2
+  email_validator: ^3.0.0
 
 
 dev_dependencies:

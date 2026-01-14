@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:silversole/shared/pages/home_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
+import 'package:silversole/shared/pages/sign_up_page.dart';
 
 final router = GoRouter(
   routes: [
@@ -8,6 +9,7 @@ final router = GoRouter(
       path: '/',
       builder: (_, _) => HomePage(title: 'Silver Sole'),
     ),
-    GoRoute(path: '/sign-in', builder: (_, _) => SignInPage())
+    GoRoute(path: '/sign-in', builder: (_, _) => SignInPage()),
+    GoRoute(path: '/sign-up', builder: (_, _) => SignUpPage()),
   ],
 );
