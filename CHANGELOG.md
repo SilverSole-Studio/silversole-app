@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.5.0
+更新內容:
+- 支持查詢SilverSole 裝置數據 (需登入)
+
+Updates:
+- Support query SilverSole device data
+
 ## v0.4.0
 更新內容:
 - 支持綁定 SilverSole 裝置

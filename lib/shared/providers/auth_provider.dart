@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/auth/auth_service.dart';
+import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/shared/models/auth_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,9 +9,10 @@ class AuthUserNotifier extends Notifier<UserData?> {
   UserData? build() {
     final auth = Supabase.instance.client.auth;
 
-    final sub = auth.onAuthStateChange.listen((data) {
+    final sub = auth.onAuthStateChange.listen((data) async {
       final user = data.session?.user;
-      state = user != null ? UserData(email: user.email ?? '', uuid: user.id) : null;
+      final deviceId = await loadDeviceId();
+      state = user != null ? UserData(email: user.email ?? '', uuid: user.id, localDeviceId: deviceId) : null;
     });
     ref.onDispose(sub.cancel);
 

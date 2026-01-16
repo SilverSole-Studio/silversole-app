@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/models/sole_record_data_model.dart';
 import 'package:silversole/shared/models/user_device_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,7 +32,15 @@ class SilverSoleService {
     }
   }
 
-
+  Future<Result<List<SilverSoleRecordModel>>> getRecentDeviceData({required String deviceId, int limit = 10}) async {
+    try {
+      if (client.auth.currentUser == null) return Result.error(Exception('not_signed_in'.tr()));
+      final result = await client.from('silversole_test_data').select().eq('device_id', deviceId).limit(limit);
+      return Result.ok(result.map((e) => SilverSoleRecordModel.fromJson(e)).toList());
+    } catch (e) {
+      return Result.error(Exception(e.toString()));
+    }
+  }
 
   SilverSoleService({required this.client});
 }

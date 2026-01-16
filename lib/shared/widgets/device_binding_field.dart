@@ -4,9 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/utils/field_validator.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/sole_provider.dart';
+
+import '../models/auth_model.dart';
 
 class DeviceBindingField extends ConsumerStatefulWidget {
   const DeviceBindingField({super.key});
@@ -36,6 +39,14 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
       final result = await soleService.bindingDevice(userProvider.uuid, deviceId);
       switch (result) {
         case Ok():
+          await saveDeviceId(deviceId);
+          ref.read(authUserProvider.notifier).setUser(
+                UserData(
+                  email: userProvider.email,
+                  uuid: userProvider.uuid,
+                  localDeviceId: deviceId,
+                ),
+              );
           showMessage('binding_success'.tr());
         case Error():
           showErrorSnakeBar(result.error.toString());
