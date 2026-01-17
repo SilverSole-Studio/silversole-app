@@ -86,4 +86,8 @@ jobs:
         uses: tsickert/discord-webhook@v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          args: "SilverSole APP 新版本：${{ env.VERSION_NAME }} $NOTES\n開啟 APP 後即可快速更新"
+          content: |
+            SilverSole APP 新版本：${{ env.VERSION_NAME }}
+            ${{ env.NOTES }}
+            開啟 APP 後即可快速更新
+          wait: true
