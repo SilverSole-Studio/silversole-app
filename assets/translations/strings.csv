@@ -1,4 +1,8 @@
 key,en,zh_TW
+home,Home,主頁
+person,Person,個人
+account,Account,帳號
+not_signed_in,Not signed in,尚未登入
 sign_in,Sign In,登入
 sign_out,Sign Out,登出
 sign_up,Sign Up,註冊
@@ -21,10 +25,20 @@ sign_in_success,Sign In Success,登入成功
 sign_out_success,Sign Out Success,登出成功
 email_not_confirmed,Email not Confirmed,信箱尚未驗證
 invalid_credentials,Invalid email or password,帳號或密碼錯誤
+device,Device,裝置
 silversole_device_id,SilverSole device ID,SilverSole 裝置 ID
 binding,Binding,綁定
+binding_silversole_device,Binding SilverSole Device,綁定 SilverSole 裝置
+not_binding,Not bound yet,尚未綁定
 invalid_device_id_format,Invalid device ID format,裝置 ID 格式不正確
 device_already_binding,Device already Binding,裝置已綁定
+get_data_success,Data loaded,資料載入完成
 rls_denied,Permission denied,權限不足
 binding_failed,Binding failed,綁定失敗
 device_not_found,Device not found,裝置不存在
+identity,Identity,身份
+transmitter,Transmitter,傳輸者
+observer,Observer,觀察者
+offline,Offline,離線
+online,Online,連線中
+done,Done,完成

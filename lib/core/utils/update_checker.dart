@@ -36,7 +36,6 @@ bool isUpdateAvailable(String currentVersion, String latestVersion) {
 Future<Result<UpdateInfo>> fetchLatestReleaseTag() async {
   try {
     // Fetch latest release
-    // var res = await http.get(url).timeout(const Duration(seconds: 10));
     var res = await dio.get(apiPath);
     if (res.statusCode != 200) {
       return Result.error(HttpException('Error ${res.statusCode}: Get latest release failed. Try again later.'));

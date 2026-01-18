@@ -6,7 +6,6 @@ part 'user_device_model.freezed.dart';
 part 'user_device_model.g.dart';
 
 @freezed
-// @JsonSerializable(fieldRename: FieldRename.snake)
 abstract class UserDeviceModel with _$UserDeviceModel {
   const factory UserDeviceModel({
     @JsonKey(includeToJson: false) int? id,
@@ -18,4 +17,3 @@ abstract class UserDeviceModel with _$UserDeviceModel {
 
   factory UserDeviceModel.fromJson(Map<String, dynamic> json) => _$UserDeviceModelFromJson(json);
 }
-// 4cc6f5bf-899a-467c-9506-ee797217599f

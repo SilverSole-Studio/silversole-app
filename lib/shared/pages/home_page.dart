@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/pages/home_body.dart';
+import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
-import 'package:silversole/shared/widgets/account_card.dart';
-import 'package:silversole/shared/widgets/recent_data_list.dart';
+import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
-
-import '../widgets/device_binding_field.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, required this.title});
@@ -21,6 +20,8 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  int _page = 0;
+
   @override
   void initState() {
     super.initState();
@@ -51,53 +52,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = ref.watch(authUserProvider);
-    final email = user?.email ?? 'not_signed_in'.tr();
-    final uuid = user?.uuid ?? '-';
-
+    final pages = [const HomeBody(), const PersonPage()];
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar.large(
-            title: Text(
-              'silversole'.tr(),
-              style: TextStyle(fontFamily: 'Oxanium', fontVariations: const [FontVariation('wght', 600)]),
-            ),
-            pinned: true,
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                spacing: 32,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      OutlinedButton(
-                        onPressed: user == null ? goToLogin : null,
-                        child: Text('sign_in'.tr(), style: Theme.of(context).textTheme.titleMedium),
-                      ),
-                      OutlinedButton(
-                        onPressed: user != null ? signOut : null,
-                        child: Text('sign_out'.tr(), style: Theme.of(context).textTheme.titleMedium),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: double.infinity, height: 100, child: accountCard(context, email, uuid)),
-                  DeviceBindingField(),
-                  RecentDataList(),
-                  // SizedBox(
-                  //   width: double.infinity,
-                  //   height: 1000,
-                  //   child: OutlinedButton(onPressed: comingSoon, child: Text('')),
-                  // ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      bottomNavigationBar: appNavigationBar(
+        selectedIndex: _page,
+        onDestinationSelected: (index) => setState(() => _page = index),
       ),
+      body: IndexedStack(index: _page, children: pages),
     );
   }
 }

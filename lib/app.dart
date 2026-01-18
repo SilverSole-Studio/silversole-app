@@ -16,7 +16,6 @@ class App extends StatelessWidget {
       scaffoldMessengerKey: scaffoldMessengerKey,
       theme: ThemeData(
         useMaterial3: true,
-        // colorSchemeSeed: const Color(0xFF6750A4),
         brightness: Brightness.light,
       ),
       darkTheme: ThemeData(

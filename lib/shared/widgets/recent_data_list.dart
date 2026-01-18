@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/sole_record_data_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/sole_provider.dart';
 
 import '../../core/error/result.dart';
@@ -18,19 +20,22 @@ class RecentDataList extends ConsumerStatefulWidget {
 
 class _RecentDataListState extends ConsumerState<RecentDataList> {
   final List<SilverSoleRecordModel> _items = [];
+  ProviderSubscription<AppSettings>? _sub;
+  bool _loaded = false;
 
   Future<void> getRecentData() async {
     final userProvider = ref.read(authUserProvider);
+    final settings = ref.read(settingsProvider);
     if (userProvider == null) {
       showErrorSnakeBar('not_signed_in'.tr());
       return;
     }
-    if (userProvider.localDeviceId == null) {
+    if (settings.deviceId == null) {
       showErrorSnakeBar('not_binding'.tr());
       return;
     }
     final soleService = ref.read(soleProvider);
-    final result = await soleService.getRecentDeviceData(deviceId: userProvider.localDeviceId ?? '', limit: 20);
+    final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 20);
     debugPrint(result.toString());
 
     switch (result) {
@@ -48,28 +53,24 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => getRecentData());
+    _sub = ref.listenManual<AppSettings>(settingsProvider, (prev, next) {
+      final id = next.deviceId;
+      if (!_loaded && id != null && id.isNotEmpty) {
+        _loaded = true;
+        getRecentData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.close();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-
-    // final _items = List<SilverSoleRecordModel>.generate(
-    //   10,
-    //   (_) => SilverSoleRecordModel(
-    //     uuid: '0e0492d6-9c19-4c4a-accf-1d60dfbd64f6',
-    //     userId: '6e83f23a-eb5e-4570-bf5b-f3cf1f9baab9',
-    //     deviceId: '33047a3b-9b02-49b2-a7a3-ac984f7dbcf4',
-    //     createdAt: DateTime.parse('2026-01-13 05:12:06+00:00'),
-    //     wearStatus: true,
-    //     pressure: 300,
-    //     pitch: 1.1,
-    //     roll: 0.4,
-    //     latitude: 24.9937,
-    //     longitude: 121.3009,
-    //   ),
-    // );
     const outerRadius = 16.0;
     const innerRadius = 4.0;
 

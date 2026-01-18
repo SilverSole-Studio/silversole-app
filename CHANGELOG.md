@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.6.0 
+更新內容:
+- 更新UI介面
+- 新增用戶身份設定
+- 重構綁定系統
+
+Updates:
+- Update the UI.
+- Add user identity settings.
+- Refactor the binding system.
+
 ## v0.5.0
 更新內容:
 - 支持查詢SilverSole 裝置數據 (需登入)
