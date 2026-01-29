@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
@@ -67,7 +68,8 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                 // margin: const EdgeInsets.symmetric(vertical: 20),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  '發現新版本 $latestVersion',
+                  // '發現新版本 $latestVersion',
+                  'new_version'.tr(args: [latestVersion.toString()]),
                   style: ts.headlineMedium?.copyWith(color: cs.primaryFixed, fontWeight: FontWeight.w600),
                 ),
               ),

@@ -30,5 +30,4 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state = state.copyWith(deviceId: value);
   }
 }
-
 final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);

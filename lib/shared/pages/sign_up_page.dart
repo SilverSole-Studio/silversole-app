@@ -138,7 +138,19 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                 ),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(onPressed: enableSignUpButton ? signUp : null, child: Text('sign_up'.tr())),
+                  child: ElevatedButton(
+                    onPressed: enableSignUpButton ? signUp : null,
+                    child: enableSignUpButton
+                        ? Text('sign_up'.tr())
+                        : SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                          ),
+                  ),
                 ),
                 Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: textOnDivider(context, 'or'.tr())),
                 googleSignInButton(context, onPressed: signInGoogle),

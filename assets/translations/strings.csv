@@ -13,7 +13,7 @@ no_account_prompt,Don't have an account?,還沒有帳號嗎？
 not_signed_in,Not signed in,未登入
 silversole,SilverSole,SilverSole
 or,OR,或
-new_version,New Version %1$s,發現新版本 %1$s
+new_version,New Version {},發現新版本 {}
 coming_soon,Coming Soon!,即將推出!
 field_required,This field is required,此欄位為必填
 sign_up_intro,Enter the following details to complete registration,輸入以下資料完成註冊
@@ -37,8 +37,11 @@ rls_denied,Permission denied,權限不足
 binding_failed,Binding failed,綁定失敗
 device_not_found,Device not found,裝置不存在
 identity,Identity,身份
+switch_identity,Switch Identity,切換身份
+change_identity_check_content,Are you sure you want to switch to {} identity?,您確定要切換成 「{}」 身份嗎？
 transmitter,Transmitter,傳輸者
 observer,Observer,觀察者
 offline,Offline,離線
 online,Online,連線中
 done,Done,完成
+map_binding_required,Bind a device to use map features,需要綁定後才能使用地圖功能

@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/account_card.dart';
+import 'package:silversole/shared/widgets/map_card.dart';
 
 import '../widgets/recent_data_list.dart';
 
@@ -49,6 +50,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                     active: active,
                   ),
                 ),
+                MapCard(),
                 RecentDataList(),
               ],
             ),

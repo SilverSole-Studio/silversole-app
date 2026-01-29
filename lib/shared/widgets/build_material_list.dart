@@ -1,23 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:silversole/shared/widgets/basic_dialog.dart';
 
 class ListTileData {
   final String title;
   final String? subtitle;
   final IconData icon;
   final VoidCallback onClick;
+  final bool needCheck;
+  final String? checkTitle;
+  final String? checkContent;
   final bool enable;
   final bool trailing;
 
-  ListTileData({required this.title, this.subtitle, required this.icon, required this.onClick, this.enable = true, this.trailing = false});
+  ListTileData({
+    required this.title,
+    this.subtitle,
+    required this.icon,
+    required this.onClick,
+    this.needCheck = false,
+    this.checkTitle,
+    this.checkContent,
+    this.enable = true,
+    this.trailing = false,
+  });
 }
 
 Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> list}) {
   const outerRadius = 16.0;
   const innerRadius = 4.0;
-  final scheme = Theme.of(context).colorScheme;
+  final scheme = Theme
+      .of(context)
+      .colorScheme;
   final splashColor = scheme.primary.withValues(alpha: 0.08);
   final hoverColor = scheme.primary.withValues(alpha: 0.04);
+
+  // Future<void>
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +49,10 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)
           Material(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            color: Theme
+                .of(context)
+                .colorScheme
+                .surfaceContainerLow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(i == 0 ? outerRadius : innerRadius),
@@ -47,7 +68,18 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
                 splashColor: splashColor,
                 hoverColor: hoverColor,
                 focusColor: hoverColor,
-                onTap: list[i].onClick,
+                onTap: () =>
+                {
+                  if (list[i].needCheck)
+                    showConfirmLeaveDialog(context,
+                        title: list[i].checkTitle ?? '',
+                        text: list[i].checkContent ?? '',
+                        onDismiss: () => {},
+                        onClick: list[i].onClick
+                    )
+                  else
+                    list[i].onClick()
+                },
                 trailing: list[i].trailing ? const Icon(LucideIcons.chevronRight) : null,
               ),
             ),

@@ -17,7 +17,6 @@ class SilverSoleService {
       if (deviceTable.isEmpty) {
         return Result.error(Exception('device_not_found'.tr()));
       }
-      debugPrint(UserDeviceModel(userId: userId, deviceId: deviceId).toJson().toString());
       await client.from('user_devices').insert(UserDeviceModel(userId: userId, deviceId: deviceId).toJson());
       return const Result.ok(BindingResult.success);
     } on PostgrestException catch (e) {
@@ -40,8 +39,20 @@ class SilverSoleService {
   Future<Result<List<SilverSoleRecordModel>>> getRecentDeviceData({required String deviceId, int limit = 10}) async {
     try {
       if (client.auth.currentUser == null) return Result.error(Exception('not_signed_in'.tr()));
-      final result = await client.from('silversole_test_data').select().eq('device_id', deviceId).limit(limit);
+      final result = await client
+          .from('silversole_test_data')
+          .select()
+          .eq('device_id', deviceId)
+          .order('created_at', ascending: false)
+          .limit(limit);
       return Result.ok(result.map((e) => SilverSoleRecordModel.fromJson(e)).toList());
+    } on PostgrestException catch (e) {
+      debugPrint('${e.code} : ${e.message}');
+      final error = switch (e.code) {
+        '42501' => 'rls_denied'.tr(),
+        _ => 'binding_failed'.tr(),
+      };
+      return Result.error(Exception(error));
     } catch (e) {
       return Result.error(Exception(e.toString()));
     }

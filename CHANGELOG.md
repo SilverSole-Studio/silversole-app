@@ -1,6 +1,17 @@
 # Changelog
 
-## v0.6.0 
+## v0.7.0 
+更新內容:
+- 新增地圖卡片
+- 修正資料時區問題
+- 優化使用者體驗
+
+Updates:
+- Add the Google map card
+- Fix the recent data time zone issue
+- Optimize user experience
+
+## v0.6.1
 更新內容:
 - 更新UI介面
 - 新增用戶身份設定

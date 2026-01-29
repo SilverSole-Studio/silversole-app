@@ -35,7 +35,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
       return;
     }
     final soleService = ref.read(soleProvider);
-    final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 20);
+    final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 10);
     debugPrint(result.toString());
 
     switch (result) {
@@ -102,7 +102,10 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                             spacing: 4,
                             children: [
                               Icon(LucideIcons.dot, color: _items[i].wearStatus ? Colors.green : Colors.red, size: 40),
-                              Text(_items[i].createdAt.toString(), style: tt.titleSmall?.copyWith(color: Colors.grey)),
+                              Text(
+                                DateFormat('yyyy/MM/dd HH:mm:ss').format(_items[i].createdAt.toLocal()),
+                                style: tt.titleSmall?.copyWith(color: Colors.grey),
+                              ),
                             ],
                           ),
                           Row(
@@ -110,19 +113,22 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                             children: [
                               Chip(avatar: Icon(LucideIcons.moveVertical), label: Text(_items[i].pitch.toString())),
                               Chip(avatar: Icon(LucideIcons.moveHorizontal), label: Text(_items[i].roll.toString())),
+                              /*
                               Chip(
                                 avatar: const Icon(LucideIcons.mapPin),
                                 label: Text(
                                   '${_items[i].latitude?.toStringAsFixed(2)} ${_items[i].longitude?.toStringAsFixed(2)}',
                                 ),
                               ),
+                              */
                             ],
                           ),
                         ],
                       ),
                     ),
                     Text(
-                      ((_items[i].pressure ?? 0) / 5).toStringAsFixed(0),
+                      // ((_items[i].pressure ?? 0) / 5).toStringAsFixed(0),
+                      _items[i].pressure.toString(),
                       style: tt.displaySmall?.copyWith(
                         fontFamily: 'Oxanium',
                         color: Colors.grey,

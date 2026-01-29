@@ -54,7 +54,7 @@ dependencies:
   easy_localization: ^3.0.8
   easy_localization_loader: ^2.0.2
   email_validator: ^3.0.0
-
+  google_maps_flutter: ^2.14.0
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +70,12 @@ dev_dependencies:
   freezed: ^3.2.3
   build_runner: ^2.7.1
   flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/silversole_app_logo.png"
+  min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -87,6 +93,7 @@ flutter:
     - .env
     - assets/images/
     - assets/translations/
+    - assets/map_styles/
 
   fonts:
     - family: Oxanium

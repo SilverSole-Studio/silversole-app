@@ -41,14 +41,15 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     }
   }
 
+  String nextIdentity(String? currentValue) {
+    return currentValue == UserIdentity.transmitter.value
+        ? UserIdentity.observer.value
+        : UserIdentity.transmitter.value;
+  }
+
   Future<void> switchIdentity(String? currentValue) async {
-    //TODO: Add dialog to double check
     final old = currentValue ?? UserIdentity.transmitter.value;
-    ref
-        .read(settingsProvider.notifier)
-        .setIdentity(
-          old == UserIdentity.transmitter.value ? UserIdentity.observer.value : UserIdentity.transmitter.value,
-        );
+    ref.read(settingsProvider.notifier).setIdentity(nextIdentity(old));
   }
 
   @override
@@ -72,6 +73,9 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         subtitle: identity?.tr(),
         icon: LucideIcons.userPlus,
         onClick: () => switchIdentity(identity),
+        needCheck: true,
+        checkTitle: 'switch_identity'.tr(),
+        checkContent: 'change_identity_check_content'.tr(args: [nextIdentity(identity).tr()]),
         trailing: true,
       ),
       ListTileData(
@@ -82,13 +86,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
           context,
           title: 'binding'.tr(),
           content: SizedBox(width: 400, child: DeviceBindingField()),
-          buttonText: 'done'.tr()
+          buttonText: 'done'.tr(),
         ),
         trailing: true,
       ),
     ];
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(
           'person'.tr(),
@@ -99,8 +104,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
           ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
         child: SizedBox(
           width: double.infinity,
           child: Column(
