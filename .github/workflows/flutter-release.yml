@@ -88,13 +88,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           NOTES=$(awk -v ver="${GITHUB_REF_NAME}" '
-            BEGIN { found=0 }
-            $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
-            $0 ~ "^##[[:space:]]+v" { if (found) exit }
-            found { print }
+          BEGIN { found=0 }
+          $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
+          $0 ~ "^##[[:space:]]+v" { if (found) exit }
+          found { print }
           ' CHANGELOG.md)
           {
-            echo "NOTES<<'EOF'"
+            echo "NOTES<<EOF"
             echo "$NOTES"
             echo "EOF"
           } >> "$GITHUB_ENV"
@@ -109,6 +109,8 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           content: |
             SilverSole APP 新版本：${{ env.VERSION_NAME }}
+            
             ${{ env.NOTES }}
+            
             開啟 APP 後即可快速更新
           wait: true
