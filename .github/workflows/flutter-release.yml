@@ -93,6 +93,11 @@ jobs:
             $0 ~ "^##[[:space:]]+v" { if (found) exit }
             found { print }
           ' CHANGELOG.md)
+          {
+            echo "NOTES<<'EOF'"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
           gh release create "${GITHUB_REF_NAME}" \
             --title "${GITHUB_REF_NAME}" \
             --notes "$NOTES" \

@@ -83,7 +83,7 @@ class _MapCardState extends ConsumerState<MapCard> {
       height: 300,
       child: Card.outlined(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(8.0),
           child: (settings.deviceId != null) ? googleMap(style) : hintBindingPage(),
         ),
       ),
