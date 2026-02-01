@@ -50,3 +50,6 @@ device_recent_warnings,Recent device warnings,裝置近期警告
 device_recent_data,Recent device data,裝置近期資料
 events,Events,事件
 safe,Safe,安全
+get_last_update_time_success,Last update time fetched successfully,成功取得最後更新時間
+get_last_update_time_failed,Failed to fetch last update time,取得最後更新時間失敗
+refresh,Refresh,刷新

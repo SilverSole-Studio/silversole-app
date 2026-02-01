@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.8.0
+更新內容:
+- 新增 SilverSole 裝置在線判斷 (目前需手動刷新)
+- 新增 SilverSole 裝置近期警告卡片
+- 重構使用者界面
+
+Updates:
+- Add SilverSole device online checker (need to refresh manually for now)
+- Add SilverSole device recent warning card
+- Refactor user interface style
+
 ## v0.7.2
 更新內容:
 - 新增地圖卡片

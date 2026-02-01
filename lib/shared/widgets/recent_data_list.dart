@@ -84,7 +84,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('device_recent_data'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-              ElevatedButton(onPressed: () => getRecentData(), child: Text('Refresh')),
+              ElevatedButton(onPressed: () => getRecentData(), child: Text('refresh'.tr())),
             ],
           ),
           for (var i = 0; i < _items.length; i++)

@@ -10,9 +10,11 @@ enum BindingResult { success, alreadyBound }
 class SilverSoleService {
   SupabaseClient client;
 
+  Result<T> _notSignIn<T>() => Result<T>.error(Exception('not_signed_in'.tr()));
+
   Future<Result<BindingResult>> bindingDevice(String userId, String deviceId) async {
     try {
-      if (client.auth.currentUser == null) return Result.error(Exception('not_signed_in'.tr()));
+      if (client.auth.currentUser == null) return _notSignIn();
       final deviceTable = await client.from('devices').select().eq('device_id', deviceId);
       if (deviceTable.isEmpty) {
         return Result.error(Exception('device_not_found'.tr()));
@@ -38,7 +40,7 @@ class SilverSoleService {
 
   Future<Result<List<SilverSoleRecordModel>>> getRecentDeviceData({required String deviceId, int limit = 10}) async {
     try {
-      if (client.auth.currentUser == null) return Result.error(Exception('not_signed_in'.tr()));
+      if (client.auth.currentUser == null) return _notSignIn();
       final result = await client
           .from('silversole_test_data')
           .select()
@@ -56,6 +58,33 @@ class SilverSoleService {
     } catch (e) {
       return Result.error(Exception(e.toString()));
     }
+  }
+
+  Future<Result<DateTime?>> getDeviceLastUpdateTime({required String deviceId}) async {
+    try {
+      if (client.auth.currentUser == null) return _notSignIn();
+      final result = await client.from('devices').select('last_heartbeat_at').eq('device_id', deviceId).maybeSingle();
+      final raw = result?['last_heartbeat_at'] as String?;
+      if (raw == null) return Result.ok(null);
+      final lastUpdateTime = DateTime.parse(raw);
+      return Result.ok(lastUpdateTime);
+    } on PostgrestException catch (e) {
+      debugPrint('${e.code} : ${e.message}');
+      final error = switch (e.code) {
+        '42501' => 'rls_denied'.tr(),
+        _ => 'get_last_update_time_failed'.tr(),
+      };
+      return Result.error(Exception(error));
+    } catch (e) {
+      return Result.error(Exception(e.toString()));
+    }
+  }
+
+  bool checkDeviceOnline(DateTime? time) {
+    if (time == null) return false;
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    return diff.inSeconds < 35;
   }
 
   SilverSoleService({required this.client});

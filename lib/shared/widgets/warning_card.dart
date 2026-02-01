@@ -13,7 +13,6 @@ class WarningCard extends ConsumerStatefulWidget {
 }
 
 class _WarningCardState extends ConsumerState<WarningCard> {
-
   void goToRecentWarningsPage(bool enable) {
     if (enable) {
       context.push('/device-recent-warnings');
@@ -75,10 +74,10 @@ class _WarningCardState extends ConsumerState<WarningCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(LucideIcons.check, size: 48, fontWeight: FontWeight.bold, color: Colors.greenAccent),
-              Text(
-                'safe'.tr(),
-                style: tt.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.greenAccent),
-              ),
+              // Text(
+              //   'safe'.tr(),
+              //   style: tt.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.greenAccent),
+              // ),
             ],
           );
   }
