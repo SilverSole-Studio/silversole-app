@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.9.0
+更新內容:
+- 新增裝置頁與分析頁（含搜尋與近期資料列表）
+- 地圖支援位置權限與最近位置刷新/標記
+- 新增深色模式設定
+- 新增近期資料趨勢圖卡片
+- 調整警報卡片與介面細節
+
+Updates:
+- Add Devices and Analytics pages (search and recent data list)
+- Map supports location permission and refresh/markers for recent locations
+- Add dark mode setting
+- Add recent data trend chart card
+- Refine warning card and UI details
+
 ## v0.8.0
 更新內容:
 - 新增 SilverSole 裝置在線判斷 (目前需手動刷新)

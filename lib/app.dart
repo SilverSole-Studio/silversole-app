@@ -1,14 +1,19 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/routing/router.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 
-class App extends StatelessWidget {
+class App extends ConsumerWidget {
   const App({super.key});
 
   static final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final darkMode = settings.darkMode;
+
     return MaterialApp.router(
       title: 'Silver Sole',
       supportedLocales: context.supportedLocales,
@@ -23,7 +28,7 @@ class App extends StatelessWidget {
         colorSchemeSeed: const Color(0xFF6750A4),
         brightness: Brightness.dark,
       ),
-      themeMode: ThemeMode.system,
+      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
     );
   }

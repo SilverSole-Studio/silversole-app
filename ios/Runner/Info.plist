@@ -47,5 +47,9 @@
 	<true/>
 	<key>MAPS_API_KEY</key>
 	<string>$(MAPS_API_KEY)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>需要定位來顯示裝置位置</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>需要定位來持續追蹤裝置位置</string>
 </dict>
 </plist>

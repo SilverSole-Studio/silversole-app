@@ -1,11 +1,16 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+enum StatusCardType { normal, statusDisplay }
 
 Widget statusCard(
   BuildContext context, {
+  StatusCardType type = StatusCardType.normal,
   required String title,
   required String subtitle,
   required IconData icon,
+  bool addition = true,
   bool? active,
   VoidCallback? onTap,
 }) {
@@ -13,6 +18,112 @@ Widget statusCard(
   final tt = Theme.of(context).textTheme;
   final splashColor = cs.primary.withValues(alpha: 0.04);
   final hoverColor = cs.primary.withValues(alpha: 0.02);
+
+
+  Widget subStatusCard({
+    required IconData icon,
+    required String title,
+    bool hasProgress = false,
+    double progress = 0.8,
+    required String subtitle,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Flexible(
+      flex: 1,
+      child: SizedBox(
+        width: 300,
+        child: Card(
+          color: cs.surfaceContainerHigh,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Icon
+                    Icon(icon, size: 30, color: cs.onSurfaceVariant),
+                    // Data
+                    Text(title, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (hasProgress)
+                  LinearProgressIndicator(
+                    year2023: false, //ignore: deprecated_member_use
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: cs.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                  )
+                else
+                  SizedBox(height: 6),
+                Text(subtitle),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget statusTag(bool active) {
+    final bgColor = active ? Colors.green[800] : Colors.grey[800];
+    final textColor = active ? Colors.white : Colors.grey;
+    final text = active ? 'online'.tr() : 'offline'.tr();
+    return SizedBox(
+      height: 32,
+      child: Card(
+        color: bgColor,
+        child: Container(
+          margin: EdgeInsets.symmetric(horizontal: 12),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(color: textColor, shape: BoxShape.circle),
+                    child: const SizedBox(width: 6, height: 6),
+                  ),
+                ),
+                Text(
+                  text,
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget statusLoading() {
+    return SizedBox(
+      width: 70,
+      height: 32,
+      child: Card(
+        color: Colors.grey[800],
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Theme.of(context).colorScheme.outline,
+              year2023: false, // ignore: deprecated_member_use
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   return Card(
     child: InkWell(
@@ -22,48 +133,73 @@ Widget statusCard(
       focusColor: hoverColor,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Row(
+        child: Column(
           spacing: 16,
           children: [
-            Icon(icon),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            Row(
+              spacing: 16,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  spacing: 4,
-                  children: [
-                    Text(title, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                    if (active != null) ...[
-                      const SizedBox(width: 4),
-                      SizedBox(
-                        width: 70,
-                        height: 32,
-                        child: Card(
-                          color: active ? Colors.green[800] : Colors.red,
-                          child: Center(
-                            child: Text(
-                              active ? 'online'.tr() : 'offline'.tr(),
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                Icon(icon),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 4,
+                    children: [
+                      Row(
+                        textBaseline: TextBaseline.alphabetic,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        spacing: 4,
+                        children: [
+                          // Title
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontFamily: 'oxanium',
+                              fontWeight: FontWeight.bold,
+                              fontVariations: [FontVariation('wght', 600)],
                             ),
+                          ),
+
+                          // Status Tag
+                          if (type == StatusCardType.statusDisplay) ...[
+                            const SizedBox(width: 4),
+                            if (active != null) statusTag(active) else statusLoading(),
+                          ],
+                        ],
+                      ),
+
+                      // Device Model + Device ID
+                      SizedBox(
+                        child: Text(
+                          'SilverSole • ID: $subtitle 1324234',
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.labelLarge?.copyWith(
+                            fontFamily: 'Oxanium',
+                            color: Colors.grey,
+                            fontVariations: [const FontVariation('wght', 500)],
                           ),
                         ),
                       ),
                     ],
-                  ],
-                ),
-                Text(
-                  subtitle,
-                  style: tt.labelSmall?.copyWith(
-                    fontFamily: 'Oxanium',
-                    color: Colors.grey,
-                    fontVariations: [const FontVariation('wght', 500)],
                   ),
                 ),
               ],
             ),
+            if (addition)
+              Row(
+                spacing: 8,
+                children: [
+                  subStatusCard(
+                    icon: LucideIcons.batteryMedium,
+                    title: '84%',
+                    hasProgress: true,
+                    subtitle: '12hrs remaining',
+                  ),
+                  subStatusCard(icon: LucideIcons.wifi, title: 'strong'.tr(), subtitle: '8 sec ago'),
+                ],
+              ),
           ],
         ),
       ),

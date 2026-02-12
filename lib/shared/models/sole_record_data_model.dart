@@ -6,17 +6,15 @@ part 'sole_record_data_model.g.dart';
 @freezed
 abstract class SilverSoleRecordModel with _$SilverSoleRecordModel {
   const factory SilverSoleRecordModel({
-    @JsonKey(includeToJson: false) required String uuid,
-    @JsonKey(name: 'user_id') String? userId,
+    @JsonKey(includeToJson: false) required int id,
     @JsonKey(name: 'device_id') required String deviceId,
-    @JsonKey(name: 'created_at') required DateTime createdAt,
+    @JsonKey(name: 'received_at', includeToJson: false) required DateTime receivedAt,
+    @JsonKey(name: 'client_ts') int? clientTs,
     @JsonKey(name: 'wear_status') required bool wearStatus,
-    int? pressure,
+    @JsonKey(name: 'pressure') required int pressure,
     double? pitch,
     double? roll,
-    double? latitude,
-    double? longitude,
-}) = _SilverSoleRecordModel;
+  }) = _SilverSoleRecordModel;
 
   factory SilverSoleRecordModel.fromJson(Map<String, dynamic> json) => _$SilverSoleRecordModelFromJson(json);
 }

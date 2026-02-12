@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SilverSoleRecordModel {
 
-@JsonKey(includeToJson: false) String get uuid;@JsonKey(name: 'user_id') String? get userId;@JsonKey(name: 'device_id') String get deviceId;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'wear_status') bool get wearStatus; int? get pressure; double? get pitch; double? get roll; double? get latitude; double? get longitude;
+@JsonKey(includeToJson: false) int get id;@JsonKey(name: 'device_id') String get deviceId;@JsonKey(name: 'received_at') DateTime get receivedAt;@JsonKey(name: 'client_ts') int? get clientTs;@JsonKey(name: 'wear_status') bool get wearStatus;@JsonKey(name: 'pressure') int get pressure; double? get pitch; double? get roll;
 /// Create a copy of SilverSoleRecordModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $SilverSoleRecordModelCopyWith<SilverSoleRecordModel> get copyWith => _$SilverSo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SilverSoleRecordModel&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.wearStatus, wearStatus) || other.wearStatus == wearStatus)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SilverSoleRecordModel&&(identical(other.id, id) || other.id == id)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.clientTs, clientTs) || other.clientTs == clientTs)&&(identical(other.wearStatus, wearStatus) || other.wearStatus == wearStatus)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,uuid,userId,deviceId,createdAt,wearStatus,pressure,pitch,roll,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,id,deviceId,receivedAt,clientTs,wearStatus,pressure,pitch,roll);
 
 @override
 String toString() {
-  return 'SilverSoleRecordModel(uuid: $uuid, userId: $userId, deviceId: $deviceId, createdAt: $createdAt, wearStatus: $wearStatus, pressure: $pressure, pitch: $pitch, roll: $roll, latitude: $latitude, longitude: $longitude)';
+  return 'SilverSoleRecordModel(id: $id, deviceId: $deviceId, receivedAt: $receivedAt, clientTs: $clientTs, wearStatus: $wearStatus, pressure: $pressure, pitch: $pitch, roll: $roll)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $SilverSoleRecordModelCopyWith<$Res>  {
   factory $SilverSoleRecordModelCopyWith(SilverSoleRecordModel value, $Res Function(SilverSoleRecordModel) _then) = _$SilverSoleRecordModelCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeToJson: false) String uuid,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'wear_status') bool wearStatus, int? pressure, double? pitch, double? roll, double? latitude, double? longitude
+@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at') DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
 });
 
 
@@ -65,18 +65,16 @@ class _$SilverSoleRecordModelCopyWithImpl<$Res>
 
 /// Create a copy of SilverSoleRecordModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? uuid = null,Object? userId = freezed,Object? deviceId = null,Object? createdAt = null,Object? wearStatus = null,Object? pressure = freezed,Object? pitch = freezed,Object? roll = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? deviceId = null,Object? receivedAt = null,Object? clientTs = freezed,Object? wearStatus = null,Object? pressure = null,Object? pitch = freezed,Object? roll = freezed,}) {
   return _then(_self.copyWith(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
-as String?,deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,wearStatus: null == wearStatus ? _self.wearStatus : wearStatus // ignore: cast_nullable_to_non_nullable
-as bool,pressure: freezed == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
-as int?,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
+as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,clientTs: freezed == clientTs ? _self.clientTs : clientTs // ignore: cast_nullable_to_non_nullable
+as int?,wearStatus: null == wearStatus ? _self.wearStatus : wearStatus // ignore: cast_nullable_to_non_nullable
+as bool,pressure: null == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
+as int,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as double?,roll: freezed == roll ? _self.roll : roll // ignore: cast_nullable_to_non_nullable
-as double?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -162,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  String uuid, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'wear_status')  bool wearStatus,  int? pressure,  double? pitch,  double? roll,  double? latitude,  double? longitude)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel() when $default != null:
-return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wearStatus,_that.pressure,_that.pitch,_that.roll,_that.latitude,_that.longitude);case _:
+return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
   return orElse();
 
 }
@@ -183,10 +181,10 @@ return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wea
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  String uuid, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'wear_status')  bool wearStatus,  int? pressure,  double? pitch,  double? roll,  double? latitude,  double? longitude)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)  $default,) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel():
-return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wearStatus,_that.pressure,_that.pitch,_that.roll,_that.latitude,_that.longitude);case _:
+return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +201,10 @@ return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wea
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  String uuid, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'wear_status')  bool wearStatus,  int? pressure,  double? pitch,  double? roll,  double? latitude,  double? longitude)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel() when $default != null:
-return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wearStatus,_that.pressure,_that.pitch,_that.roll,_that.latitude,_that.longitude);case _:
+return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
   return null;
 
 }
@@ -218,19 +216,17 @@ return $default(_that.uuid,_that.userId,_that.deviceId,_that.createdAt,_that.wea
 @JsonSerializable()
 
 class _SilverSoleRecordModel implements SilverSoleRecordModel {
-  const _SilverSoleRecordModel({@JsonKey(includeToJson: false) required this.uuid, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'device_id') required this.deviceId, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'wear_status') required this.wearStatus, this.pressure, this.pitch, this.roll, this.latitude, this.longitude});
+  const _SilverSoleRecordModel({@JsonKey(includeToJson: false) required this.id, @JsonKey(name: 'device_id') required this.deviceId, @JsonKey(name: 'received_at') required this.receivedAt, @JsonKey(name: 'client_ts') this.clientTs, @JsonKey(name: 'wear_status') required this.wearStatus, @JsonKey(name: 'pressure') required this.pressure, this.pitch, this.roll});
   factory _SilverSoleRecordModel.fromJson(Map<String, dynamic> json) => _$SilverSoleRecordModelFromJson(json);
 
-@override@JsonKey(includeToJson: false) final  String uuid;
-@override@JsonKey(name: 'user_id') final  String? userId;
+@override@JsonKey(includeToJson: false) final  int id;
 @override@JsonKey(name: 'device_id') final  String deviceId;
-@override@JsonKey(name: 'created_at') final  DateTime createdAt;
+@override@JsonKey(name: 'received_at') final  DateTime receivedAt;
+@override@JsonKey(name: 'client_ts') final  int? clientTs;
 @override@JsonKey(name: 'wear_status') final  bool wearStatus;
-@override final  int? pressure;
+@override@JsonKey(name: 'pressure') final  int pressure;
 @override final  double? pitch;
 @override final  double? roll;
-@override final  double? latitude;
-@override final  double? longitude;
 
 /// Create a copy of SilverSoleRecordModel
 /// with the given fields replaced by the non-null parameter values.
@@ -245,16 +241,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SilverSoleRecordModel&&(identical(other.uuid, uuid) || other.uuid == uuid)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.wearStatus, wearStatus) || other.wearStatus == wearStatus)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SilverSoleRecordModel&&(identical(other.id, id) || other.id == id)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.receivedAt, receivedAt) || other.receivedAt == receivedAt)&&(identical(other.clientTs, clientTs) || other.clientTs == clientTs)&&(identical(other.wearStatus, wearStatus) || other.wearStatus == wearStatus)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,uuid,userId,deviceId,createdAt,wearStatus,pressure,pitch,roll,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,id,deviceId,receivedAt,clientTs,wearStatus,pressure,pitch,roll);
 
 @override
 String toString() {
-  return 'SilverSoleRecordModel(uuid: $uuid, userId: $userId, deviceId: $deviceId, createdAt: $createdAt, wearStatus: $wearStatus, pressure: $pressure, pitch: $pitch, roll: $roll, latitude: $latitude, longitude: $longitude)';
+  return 'SilverSoleRecordModel(id: $id, deviceId: $deviceId, receivedAt: $receivedAt, clientTs: $clientTs, wearStatus: $wearStatus, pressure: $pressure, pitch: $pitch, roll: $roll)';
 }
 
 
@@ -265,7 +261,7 @@ abstract mixin class _$SilverSoleRecordModelCopyWith<$Res> implements $SilverSol
   factory _$SilverSoleRecordModelCopyWith(_SilverSoleRecordModel value, $Res Function(_SilverSoleRecordModel) _then) = __$SilverSoleRecordModelCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeToJson: false) String uuid,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'wear_status') bool wearStatus, int? pressure, double? pitch, double? roll, double? latitude, double? longitude
+@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at') DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
 });
 
 
@@ -282,18 +278,16 @@ class __$SilverSoleRecordModelCopyWithImpl<$Res>
 
 /// Create a copy of SilverSoleRecordModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? uuid = null,Object? userId = freezed,Object? deviceId = null,Object? createdAt = null,Object? wearStatus = null,Object? pressure = freezed,Object? pitch = freezed,Object? roll = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? deviceId = null,Object? receivedAt = null,Object? clientTs = freezed,Object? wearStatus = null,Object? pressure = null,Object? pitch = freezed,Object? roll = freezed,}) {
   return _then(_SilverSoleRecordModel(
-uuid: null == uuid ? _self.uuid : uuid // ignore: cast_nullable_to_non_nullable
-as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
-as String?,deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,wearStatus: null == wearStatus ? _self.wearStatus : wearStatus // ignore: cast_nullable_to_non_nullable
-as bool,pressure: freezed == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
-as int?,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,deviceId: null == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
+as String,receivedAt: null == receivedAt ? _self.receivedAt : receivedAt // ignore: cast_nullable_to_non_nullable
+as DateTime,clientTs: freezed == clientTs ? _self.clientTs : clientTs // ignore: cast_nullable_to_non_nullable
+as int?,wearStatus: null == wearStatus ? _self.wearStatus : wearStatus // ignore: cast_nullable_to_non_nullable
+as bool,pressure: null == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
+as int,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as double?,roll: freezed == roll ? _self.roll : roll // ignore: cast_nullable_to_non_nullable
-as double?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }

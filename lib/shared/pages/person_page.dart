@@ -52,6 +52,11 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setIdentity(nextIdentity(old));
   }
 
+  Future<void> switchDarkMode() async {
+    final darkMode = ref.read(settingsProvider);
+    ref.read(settingsProvider.notifier).setDarkMode(!darkMode.darkMode);
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authUserProvider);
@@ -60,6 +65,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final uuid = user?.uuid ?? '-';
     final deviceId = settings.deviceId;
     final identity = settings.identity;
+    final darkMode = settings.darkMode;
     final isSignedIn = user != null;
 
     final accountSettingList = [
@@ -92,6 +98,15 @@ class _PersonPageState extends ConsumerState<PersonPage> {
       ),
     ];
 
+    final generalSettingList = [
+      ListTileData(
+        title: 'dark_mode'.tr(),
+        subtitle: darkMode ? 'on'.tr() : 'off'.tr(),
+        icon: LucideIcons.moon,
+        onClick: switchDarkMode,
+      ),
+    ];
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -115,19 +130,22 @@ class _PersonPageState extends ConsumerState<PersonPage> {
             children: [
               SizedBox(
                 width: double.infinity,
-                height: 100,
-                child: statusCard(context, title: email, subtitle: uuid, icon: LucideIcons.user),
+                child: statusCard(context, title: email, subtitle: uuid, icon: LucideIcons.user, addition: false),
               ),
               SizedBox(
                 width: double.infinity,
-                child: buildMaterialList(context, title: 'account'.tr(), list: accountSettingList),
+                child: buildMaterialList(context, title: 'account'.tr(), raw: accountSettingList),
               ),
               if (isSignedIn) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: buildMaterialList(context, title: 'device'.tr(), list: silverSoleSettingList),
+                  child: buildMaterialList(context, title: 'device'.tr(), raw: silverSoleSettingList),
                 ),
               ],
+              SizedBox(
+                width: double.infinity,
+                child: buildMaterialList(context, title: 'general'.tr(), raw: generalSettingList),
+              ),
             ],
           ),
         ),

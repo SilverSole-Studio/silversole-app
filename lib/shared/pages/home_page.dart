@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/pages/analytics_page.dart';
+import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -52,7 +54,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [const HomeBody(), const PersonPage()];
+    final pages = [const HomeBody(), const DevicesPage(), const AnalyticsPage(), const PersonPage()];
     return Scaffold(
       bottomNavigationBar: appNavigationBar(
         selectedIndex: _page,

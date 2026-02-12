@@ -26,7 +26,7 @@ class ListTileData {
   });
 }
 
-Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> list}) {
+Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> raw}) {
   const outerRadius = 16.0;
   const innerRadius = 4.0;
   final scheme = Theme
@@ -34,6 +34,7 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
       .colorScheme;
   final splashColor = scheme.primary.withValues(alpha: 0.08);
   final hoverColor = scheme.primary.withValues(alpha: 0.04);
+  final list = raw.where((tile) => tile.enable).toList();
 
   // Future<void>
 

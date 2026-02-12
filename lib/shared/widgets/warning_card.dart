@@ -38,48 +38,63 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     );
   }
 
-  Widget buildIndicator({required double progress, required Color? bgColor, required Color color}) {
-    return SizedBox(
-      width: 128,
-      height: 128,
-      child: CircularProgressIndicator(
-        value: progress,
-        strokeWidth: 8,
-        // ignore: deprecated_member_use
-        year2023: false,
-        backgroundColor: bgColor,
-        color: color,
+  Widget bar(bool isOn) {
+    return Expanded(
+      child: SizedBox(
+        height: 12,
+        child: LinearProgressIndicator(
+          value: isOn ? 1 : 0,
+          borderRadius: BorderRadius.circular(8),
+          year2023: false, // ignore: deprecated_member_use
+          stopIndicatorRadius: 0,
+        ),
       ),
     );
   }
 
-  Widget buildCenterContent({required int eventCount, required Color color}) {
+  Widget buildIndicator({required double progress, required Color? bgColor, required Color color}) {
+    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    return (eventCount > 0)
-        ? Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                eventCount.toString(),
-                style: tt.displaySmall?.copyWith(
-                  fontFamily: "Oxanium",
-                  fontVariations: [FontVariation('wght', 600)],
-                  color: color,
-                ),
-              ),
-              Text('events'.tr()),
-            ],
-          )
-        : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(LucideIcons.check, size: 48, fontWeight: FontWeight.bold, color: Colors.greenAccent),
-              // Text(
-              //   'safe'.tr(),
-              //   style: tt.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.greenAccent),
-              // ),
-            ],
-          );
+
+    return Column(
+      spacing: 8,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('alert_severity'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+        SizedBox(
+          height: 16,
+          child: Row(spacing: 6, children: [bar(progress > 0), bar(progress > 1), bar(progress > 2)]),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('low'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+            Text('high'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget buildCenterContent({required int eventCount, required Color color}) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Row(
+      spacing: 8,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          eventCount.toString(),
+          style: tt.displayMedium?.copyWith(
+            fontFamily: "Oxanium",
+            fontVariations: [FontVariation('wght', 900)],
+            color: color,
+          ),
+        ),
+        Text('safety_events_detected'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+      ],
+    );
   }
 
   @override
@@ -92,36 +107,39 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     final hoverColor = cs.primary.withValues(alpha: 0.02);
     final settings = ref.watch(settingsProvider);
     final isBinding = settings.deviceId != null;
-    return Card(
-      child: InkWell(
-        onTap: () => goToRecentWarningsPage(isBinding),
-        splashColor: splashColor,
-        hoverColor: hoverColor,
-        focusColor: hoverColor,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('device_recent_warnings'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-              Expanded(
-                child: Center(
-                  child: (!isBinding)
-                      ? hintBindingPage()
-                      : Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            buildIndicator(
-                              progress: eventCount.toDouble() / 10.0,
-                              bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
-                              color: color,
-                            ),
-                            buildCenterContent(eventCount: eventCount, color: color),
-                          ],
-                        ),
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        child: InkWell(
+          onTap: () => goToRecentWarningsPage(isBinding),
+          splashColor: splashColor,
+          hoverColor: hoverColor,
+          focusColor: hoverColor,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 18,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('device_recent_warnings'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    Text('view_history'.tr(), style: tt.titleSmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold)),
+                  ],
                 ),
-              ),
-            ],
+                if (!isBinding)
+                  Center(child: hintBindingPage())
+                else ...[
+                  buildCenterContent(eventCount: eventCount, color: color),
+                  buildIndicator(
+                    progress: eventCount.toDouble() / 10.0,
+                    bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
+                    color: color,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

@@ -17,7 +17,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
       await saveLocalValue(LocalSavableKey.identity, identity);
     }
     final deviceId = await loadLocalValue(LocalSavableKey.deviceId);
-    state = state.copyWith(identity: identity, deviceId: deviceId);
+    final darkMode = await loadLocalValue(LocalSavableKey.darkMode) == 'true';
+    state = state.copyWith(identity: identity, deviceId: deviceId, darkMode: darkMode);
   }
 
   Future<void> setIdentity(String value) async {
@@ -28,6 +29,11 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setDeviceId(String value) async {
     await saveLocalValue(LocalSavableKey.deviceId, value);
     state = state.copyWith(deviceId: value);
+  }
+
+  Future<void> setDarkMode(bool value) async {
+    await saveLocalValue(LocalSavableKey.darkMode, value ? 'true' : 'false');
+    state = state.copyWith(darkMode: value);
   }
 }
 final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);

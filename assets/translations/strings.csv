@@ -53,3 +53,20 @@ safe,Safe,安全
 get_last_update_time_success,Last update time fetched successfully,成功取得最後更新時間
 get_last_update_time_failed,Failed to fetch last update time,取得最後更新時間失敗
 refresh,Refresh,刷新
+safety_events_detected,Safety events detected,件安全事件已偵測
+devices,devices,裝置
+analytics,analytics,分析
+settings,settings,設定
+strong,strong,強
+medium,medium,中
+weak,weak,弱
+low,low,低
+high,high,高
+alert_severity,alert severity,警報嚴重程度
+view_history,View history,查看歷史
+on,On,開
+off,Off,關
+general,General,一般
+search_device,Search device,搜尋裝置
+current_devices,Current devices,目前裝置
+dark_mode,Dark Mode,深色模式

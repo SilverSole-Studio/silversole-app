@@ -35,6 +35,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
       return;
     }
     final soleService = ref.read(soleProvider);
+    debugPrint('getRecentData');
     final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 10);
     debugPrint(result.toString());
 
@@ -109,7 +110,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                             children: [
                               Icon(LucideIcons.dot, color: _items[i].wearStatus ? Colors.green : Colors.red, size: 40),
                               Text(
-                                DateFormat('yyyy/MM/dd HH:mm:ss').format(_items[i].createdAt.toLocal()),
+                                DateFormat('yyyy/MM/dd HH:mm:ss').format(_items[i].receivedAt.toLocal()),
                                 style: tt.titleSmall?.copyWith(color: Colors.grey),
                               ),
                             ],
