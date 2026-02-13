@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.10.0
+更新內容:
+- 新增電量顯示
+- 修復自動整理無法運作的問題
+- 修復定位權限請求未正常顯示問題
+- 近期資料趨勢圖改為實際資料並支援點擊刷新
+- 重構設定清單資料模型與元件檔案結構
+
+Updates:
+- Add device battery display
+- Fix automatic refresh not working issue
+- Fix location permission request not showing issue
+- Recent data chart now uses real data and supports tap-to-refresh
+- Refactor settings list model and widget structure
+
 ## v0.9.0
 更新內容:
 - 新增裝置頁與分析頁（含搜尋與近期資料列表）

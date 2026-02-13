@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SilverSoleRecordModel {
 
-@JsonKey(includeToJson: false) int get id;@JsonKey(name: 'device_id') String get deviceId;@JsonKey(name: 'received_at') DateTime get receivedAt;@JsonKey(name: 'client_ts') int? get clientTs;@JsonKey(name: 'wear_status') bool get wearStatus;@JsonKey(name: 'pressure') int get pressure; double? get pitch; double? get roll;
+@JsonKey(includeToJson: false) int get id;@JsonKey(name: 'device_id') String get deviceId;@JsonKey(name: 'received_at', includeToJson: false) DateTime get receivedAt;@JsonKey(name: 'client_ts') int? get clientTs;@JsonKey(name: 'wear_status') bool get wearStatus;@JsonKey(name: 'pressure') int get pressure; double? get pitch; double? get roll;
 /// Create a copy of SilverSoleRecordModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SilverSoleRecordModelCopyWith<$Res>  {
   factory $SilverSoleRecordModelCopyWith(SilverSoleRecordModel value, $Res Function(SilverSoleRecordModel) _then) = _$SilverSoleRecordModelCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at') DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
+@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at', includeToJson: false) DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
 });
 
 
@@ -160,7 +160,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at', includeToJson: false)  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel() when $default != null:
 return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
@@ -181,7 +181,7 @@ return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.we
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at', includeToJson: false)  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)  $default,) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel():
 return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
@@ -201,7 +201,7 @@ return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.we
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at')  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(includeToJson: false)  int id, @JsonKey(name: 'device_id')  String deviceId, @JsonKey(name: 'received_at', includeToJson: false)  DateTime receivedAt, @JsonKey(name: 'client_ts')  int? clientTs, @JsonKey(name: 'wear_status')  bool wearStatus, @JsonKey(name: 'pressure')  int pressure,  double? pitch,  double? roll)?  $default,) {final _that = this;
 switch (_that) {
 case _SilverSoleRecordModel() when $default != null:
 return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.wearStatus,_that.pressure,_that.pitch,_that.roll);case _:
@@ -216,12 +216,12 @@ return $default(_that.id,_that.deviceId,_that.receivedAt,_that.clientTs,_that.we
 @JsonSerializable()
 
 class _SilverSoleRecordModel implements SilverSoleRecordModel {
-  const _SilverSoleRecordModel({@JsonKey(includeToJson: false) required this.id, @JsonKey(name: 'device_id') required this.deviceId, @JsonKey(name: 'received_at') required this.receivedAt, @JsonKey(name: 'client_ts') this.clientTs, @JsonKey(name: 'wear_status') required this.wearStatus, @JsonKey(name: 'pressure') required this.pressure, this.pitch, this.roll});
+  const _SilverSoleRecordModel({@JsonKey(includeToJson: false) required this.id, @JsonKey(name: 'device_id') required this.deviceId, @JsonKey(name: 'received_at', includeToJson: false) required this.receivedAt, @JsonKey(name: 'client_ts') this.clientTs, @JsonKey(name: 'wear_status') required this.wearStatus, @JsonKey(name: 'pressure') required this.pressure, this.pitch, this.roll});
   factory _SilverSoleRecordModel.fromJson(Map<String, dynamic> json) => _$SilverSoleRecordModelFromJson(json);
 
 @override@JsonKey(includeToJson: false) final  int id;
 @override@JsonKey(name: 'device_id') final  String deviceId;
-@override@JsonKey(name: 'received_at') final  DateTime receivedAt;
+@override@JsonKey(name: 'received_at', includeToJson: false) final  DateTime receivedAt;
 @override@JsonKey(name: 'client_ts') final  int? clientTs;
 @override@JsonKey(name: 'wear_status') final  bool wearStatus;
 @override@JsonKey(name: 'pressure') final  int pressure;
@@ -261,7 +261,7 @@ abstract mixin class _$SilverSoleRecordModelCopyWith<$Res> implements $SilverSol
   factory _$SilverSoleRecordModelCopyWith(_SilverSoleRecordModel value, $Res Function(_SilverSoleRecordModel) _then) = __$SilverSoleRecordModelCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at') DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
+@JsonKey(includeToJson: false) int id,@JsonKey(name: 'device_id') String deviceId,@JsonKey(name: 'received_at', includeToJson: false) DateTime receivedAt,@JsonKey(name: 'client_ts') int? clientTs,@JsonKey(name: 'wear_status') bool wearStatus,@JsonKey(name: 'pressure') int pressure, double? pitch, double? roll
 });
 
 

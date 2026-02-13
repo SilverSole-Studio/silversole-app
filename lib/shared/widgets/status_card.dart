@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:silversole/shared/models/device_status_detail_model.dart';
 
 enum StatusCardType { normal, statusDisplay }
 
@@ -11,6 +12,7 @@ Widget statusCard(
   required String subtitle,
   required IconData icon,
   bool addition = true,
+  DeviceStatusDetailModel? detail,
   bool? active,
   VoidCallback? onTap,
 }) {
@@ -18,7 +20,6 @@ Widget statusCard(
   final tt = Theme.of(context).textTheme;
   final splashColor = cs.primary.withValues(alpha: 0.04);
   final hoverColor = cs.primary.withValues(alpha: 0.02);
-
 
   Widget subStatusCard({
     required IconData icon,
@@ -36,6 +37,7 @@ Widget statusCard(
         width: 300,
         child: Card(
           color: cs.surfaceContainerHigh,
+          elevation: 0,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -187,14 +189,17 @@ Widget statusCard(
                 ),
               ],
             ),
-            if (addition)
+            if (addition && detail != null)
               Row(
                 spacing: 8,
                 children: [
                   subStatusCard(
-                    icon: LucideIcons.batteryMedium,
-                    title: '84%',
+                    icon: (detail.isCharging ?? false)
+                        ? LucideIcons.batteryCharging
+                        : LucideIcons.batteryMedium,
+                    title: detail.lastBatteryPercent != null ? '${detail.lastBatteryPercent}%' : 'no_data'.tr(),
                     hasProgress: true,
+                    progress: ((detail.lastBatteryPercent ?? 0) / 100),
                     subtitle: '12hrs remaining',
                   ),
                   subStatusCard(icon: LucideIcons.wifi, title: 'strong'.tr(), subtitle: '8 sec ago'),

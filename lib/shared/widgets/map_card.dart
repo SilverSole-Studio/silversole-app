@@ -36,7 +36,7 @@ class _MapCardState extends ConsumerState<MapCard> {
   void initState() {
     super.initState();
     _loadStyle();
-    _requestLocationPermission();
+    _checkLocationPermission();
   }
 
   Future<void> _loadStyle() async {
@@ -49,11 +49,11 @@ class _MapCardState extends ConsumerState<MapCard> {
     });
   }
 
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.request();
+  Future<void> _checkLocationPermission() async {
+    final status = await Permission.locationWhenInUse.status;
     if (!mounted) return;
     setState(() {
-      _hasLocationPermission = status.isGranted;
+      _hasLocationPermission = status.isGranted || status.isLimited;
     });
   }
 
@@ -142,6 +142,7 @@ class _MapCardState extends ConsumerState<MapCard> {
               right: 4,
               top: 4,
               child: FloatingActionButton.small(
+                heroTag: 'fab_map_card',
                 backgroundColor: cs.surfaceContainer,
                 onPressed: comingSoon,
                 child: const Icon(LucideIcons.locateFixed),

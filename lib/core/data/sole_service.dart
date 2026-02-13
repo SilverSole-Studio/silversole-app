@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
+import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/sole_record_data_model.dart';
 import 'package:silversole/shared/models/user_device_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -61,6 +62,33 @@ class SilverSoleService {
       return Result.error(Exception(error));
     } catch (e) {
       debugPrint('[getRecentDeviceDataError]: ${e.toString()}');
+      return Result.error(Exception(e.toString()));
+    }
+  }
+
+  Future<Result<DeviceStatusDetailModel>> getDeviceStatusDetail({required String? deviceId}) async {
+    try {
+      if (supabase.auth.currentUser == null) return _notSignIn();
+      if (deviceId == null || deviceId.isEmpty) return _notBinding();
+      final result = await supabase
+          .from('devices')
+          .select('last_heartbeat_at,last_battery_percent,last_battery_at,is_charging')
+          .eq('device_id', deviceId)
+          .maybeSingle();
+      if (result == null) return Result.error(Exception('device_not_found'.tr()));
+      return Result.ok(DeviceStatusDetailModel.fromJson(result));
+      // final raw = result?['last_heartbeat_at'] as String?;
+      // if (raw == null) return Result.ok(null);
+      // final lastUpdateTime = DateTime.parse(raw);
+      // return Result.ok(lastUpdateTime);
+    } on PostgrestException catch (e) {
+      debugPrint('${e.code} : ${e.message}');
+      final error = switch (e.code) {
+        '42501' => 'rls_denied'.tr(),
+        _ => 'get_last_update_time_failed'.tr(),
+      };
+      return Result.error(Exception(error));
+    } catch (e) {
       return Result.error(Exception(e.toString()));
     }
   }

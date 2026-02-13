@@ -4,14 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/widgets/account_card.dart';
-import 'package:silversole/shared/widgets/basic_dialog.dart';
+import 'package:silversole/shared/widgets/status_card.dart';
+import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
 import 'package:silversole/shared/widgets/device_binding_field.dart';
 
 import '../../core/error/result.dart';
+import '../models/app_settings.dart';
 import '../providers/auth_provider.dart';
 
 class PersonPage extends ConsumerStatefulWidget {
@@ -57,36 +59,62 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setDarkMode(!darkMode.darkMode);
   }
 
+  IconData getTransmissionIcon(TransmissionMethod method) {
+    return switch (method) {
+      TransmissionMethod.bluetooth => LucideIcons.bluetooth,
+      TransmissionMethod.wifi => LucideIcons.wifi,
+    };
+  }
+
+  String getTransmissionTitle(TransmissionMethod method) {
+    return switch (method) {
+      TransmissionMethod.bluetooth => 'bluetooth'.tr(),
+      TransmissionMethod.wifi => 'wifi'.tr(),
+    };
+  }
+
+  Future<void> setTransmissionMethod(TransmissionMethod method) async {
+    ref.read(settingsProvider.notifier).setTransmissionMethod(method);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authUserProvider);
     final settings = ref.watch(settingsProvider);
     final email = user?.email ?? 'not_signed_in'.tr();
     final uuid = user?.uuid ?? '-';
-    final deviceId = settings.deviceId;
-    final identity = settings.identity;
-    final darkMode = settings.darkMode;
     final isSignedIn = user != null;
 
     final accountSettingList = [
-      ListTileData(title: 'sign_in'.tr(), icon: LucideIcons.logIn, onClick: goToLogin, enable: !isSignedIn),
-      ListTileData(title: 'sign_out'.tr(), icon: LucideIcons.logOut, onClick: signOut, enable: isSignedIn),
+      ListTileData.normal(title: 'sign_in'.tr(), icon: LucideIcons.logIn, onClick: goToLogin, enable: !isSignedIn),
+      ListTileData.normal(title: 'sign_out'.tr(), icon: LucideIcons.logOut, onClick: signOut, enable: isSignedIn),
     ];
 
     final silverSoleSettingList = [
-      ListTileData(
+      ListTileData.normal(
         title: 'identity'.tr(),
-        subtitle: identity?.tr(),
+        subtitle: settings.identity?.tr(),
         icon: LucideIcons.userPlus,
-        onClick: () => switchIdentity(identity),
+        onClick: () => switchIdentity(settings.identity),
         needCheck: true,
         checkTitle: 'switch_identity'.tr(),
-        checkContent: 'change_identity_check_content'.tr(args: [nextIdentity(identity).tr()]),
+        checkContent: 'change_identity_check_content'.tr(args: [nextIdentity(settings.identity).tr()]),
         trailing: true,
       ),
-      ListTileData(
+      ListTileData.dropdown(
+        title: 'transmission_method'.tr(),
+        enable: settings.identity == 'transmitter',
+        selected: settings.transmissionMethod.name,
+        icon: getTransmissionIcon(settings.transmissionMethod),
+        onClick: comingSoon,
+        optionsMap: {TransmissionMethod.bluetooth.name: 'bluetooth'.tr(), TransmissionMethod.wifi.name: 'wifi'.tr()},
+        onChanged: (int idx, String key) =>
+            setTransmissionMethod(TransmissionMethodValue.fromValue(key) ?? TransmissionMethod.bluetooth),
+      ),
+      ListTileData.normal(
         title: 'binding_silversole_device'.tr(),
-        subtitle: deviceId,
+        subtitle: settings.deviceId,
         icon: LucideIcons.link2,
         onClick: () => showContentDialog(
           context,
@@ -99,9 +127,9 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ];
 
     final generalSettingList = [
-      ListTileData(
+      ListTileData.normal(
         title: 'dark_mode'.tr(),
-        subtitle: darkMode ? 'on'.tr() : 'off'.tr(),
+        subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
         icon: LucideIcons.moon,
         onClick: switchDarkMode,
       ),

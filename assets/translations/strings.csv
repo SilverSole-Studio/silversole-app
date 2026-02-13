@@ -70,3 +70,8 @@ general,General,一般
 search_device,Search device,搜尋裝置
 current_devices,Current devices,目前裝置
 dark_mode,Dark Mode,深色模式
+transmission_method,Transmission Method,傳輸方式
+bluetooth,Bluetooth,藍牙
+hotspot,Hotspot,熱點
+no_data,No data,無資料
+wifi,WiFi,WiFi

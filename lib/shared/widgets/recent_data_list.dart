@@ -60,7 +60,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
         _loaded = true;
         getRecentData();
       }
-    });
+    }, fireImmediately: true);
   }
 
   @override

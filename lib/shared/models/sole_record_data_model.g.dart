@@ -23,7 +23,6 @@ Map<String, dynamic> _$SilverSoleRecordModelToJson(
   _SilverSoleRecordModel instance,
 ) => <String, dynamic>{
   'device_id': instance.deviceId,
-  'received_at': instance.receivedAt.toIso8601String(),
   'client_ts': instance.clientTs,
   'wear_status': instance.wearStatus,
   'pressure': instance.pressure,

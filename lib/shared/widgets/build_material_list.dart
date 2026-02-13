@@ -1,42 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:silversole/shared/widgets/basic_dialog.dart';
-
-class ListTileData {
-  final String title;
-  final String? subtitle;
-  final IconData icon;
-  final VoidCallback onClick;
-  final bool needCheck;
-  final String? checkTitle;
-  final String? checkContent;
-  final bool enable;
-  final bool trailing;
-
-  ListTileData({
-    required this.title,
-    this.subtitle,
-    required this.icon,
-    required this.onClick,
-    this.needCheck = false,
-    this.checkTitle,
-    this.checkContent,
-    this.enable = true,
-    this.trailing = false,
-  });
-}
+import 'package:silversole/shared/dialogs/basic_dialog.dart';
+import 'package:silversole/shared/models/list_tile_data_model.dart';
 
 Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> raw}) {
   const outerRadius = 16.0;
   const innerRadius = 4.0;
-  final scheme = Theme
-      .of(context)
-      .colorScheme;
+  final scheme = Theme.of(context).colorScheme;
   final splashColor = scheme.primary.withValues(alpha: 0.08);
   final hoverColor = scheme.primary.withValues(alpha: 0.04);
   final list = raw.where((tile) => tile.enable).toList();
-
-  // Future<void>
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,10 +23,7 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)
           Material(
-            color: Theme
-                .of(context)
-                .colorScheme
-                .surfaceContainerLow,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(i == 0 ? outerRadius : innerRadius),
@@ -62,26 +32,46 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: ListTile(
-                leading: Icon(list[i].icon),
-                title: Text(list[i].title),
-                subtitle: list[i].subtitle != null ? Text(list[i].subtitle ?? '') : null,
-                splashColor: splashColor,
-                hoverColor: hoverColor,
-                focusColor: hoverColor,
-                onTap: () =>
-                {
-                  if (list[i].needCheck)
-                    showConfirmLeaveDialog(context,
-                        title: list[i].checkTitle ?? '',
-                        text: list[i].checkContent ?? '',
+              child: list[i].map(
+                normal: (data) => ListTile(
+                  leading: Icon(data.icon),
+                  title: Text(data.title),
+                  subtitle: data.subtitle != null ? Text(data.subtitle ?? '') : null,
+                  splashColor: splashColor,
+                  hoverColor: hoverColor,
+                  focusColor: hoverColor,
+                  onTap: () => {
+                    if (data.needCheck)
+                      showConfirmLeaveDialog(
+                        context,
+                        title: data.checkTitle ?? '',
+                        text: data.checkContent ?? '',
                         onDismiss: () => {},
-                        onClick: list[i].onClick
-                    )
-                  else
-                    list[i].onClick()
-                },
-                trailing: list[i].trailing ? const Icon(LucideIcons.chevronRight) : null,
+                        onClick: data.onClick,
+                      )
+                    else
+                      data.onClick(),
+                  },
+                  trailing: data.trailing ? const Icon(LucideIcons.chevronRight) : null,
+                ),
+                dropdown: (data) => ListTile(
+                  leading: Icon(data.icon),
+                  title: Text(data.title),
+                  subtitle: data.selected != null ? Text(data.optionsMap[data.selected] ?? '') : null,
+                  splashColor: splashColor,
+                  hoverColor: hoverColor,
+                  focusColor: hoverColor,
+                  onTap: () {
+                    showOptionsDialog(
+                      context,
+                      title: data.title,
+                      optionsMap: data.optionsMap,
+                      selectedKey: data.selected,
+                      onChanged: (key) => data.onChanged(i, key),
+                    );
+                  },
+                  trailing: const Icon(LucideIcons.chevronRight),
+                ),
               ),
             ),
           ),

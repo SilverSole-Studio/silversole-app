@@ -106,3 +106,40 @@ Future<void> showConfirmLeaveDialog(
     onDismiss();
   }
 }
+
+Future<void> showOptionsDialog(
+    BuildContext context, {
+      required String title,
+      required Map<String, String> optionsMap,
+      String? selectedKey,
+      required void Function(String) onChanged,
+    }) async {
+  if (optionsMap.isEmpty) {
+    await showBasicDialog(context, title: title, text: '');
+    return;
+  }
+
+  final result = await showDialog<String>(
+    context: context,
+    builder: (_) => SimpleDialog(
+      title: Text(title),
+      children: [
+        RadioGroup<String>(
+          groupValue: selectedKey,
+          onChanged: (value) {
+            Navigator.pop(context, value);
+          },
+          child: Column(
+            children: [
+              for (final entry in optionsMap.entries)
+                RadioListTile(title: Text(entry.value), value: entry.key),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (result == null || result == selectedKey) return;
+  onChanged(result);
+}

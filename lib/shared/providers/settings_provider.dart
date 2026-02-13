@@ -18,7 +18,18 @@ class SettingsNotifier extends Notifier<AppSettings> {
     }
     final deviceId = await loadLocalValue(LocalSavableKey.deviceId);
     final darkMode = await loadLocalValue(LocalSavableKey.darkMode) == 'true';
-    state = state.copyWith(identity: identity, deviceId: deviceId, darkMode: darkMode);
+    final methodString = await loadLocalValue(LocalSavableKey.transmissionMethod);
+    final transmissionMethod = switch (methodString) {
+      'bluetooth' => TransmissionMethod.bluetooth,
+      'wifi' => TransmissionMethod.wifi,
+      _ => TransmissionMethod.bluetooth,
+    };
+    state = state.copyWith(
+      identity: identity,
+      deviceId: deviceId,
+      darkMode: darkMode,
+      transmissionMethod: transmissionMethod,
+    );
   }
 
   Future<void> setIdentity(String value) async {
@@ -35,5 +46,11 @@ class SettingsNotifier extends Notifier<AppSettings> {
     await saveLocalValue(LocalSavableKey.darkMode, value ? 'true' : 'false');
     state = state.copyWith(darkMode: value);
   }
+
+  Future<void> setTransmissionMethod(TransmissionMethod method) async {
+    await saveLocalValue(LocalSavableKey.transmissionMethod, method.name);
+    state = state.copyWith(transmissionMethod: method);
+  }
 }
+
 final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);

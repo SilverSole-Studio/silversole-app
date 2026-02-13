@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum LocalSavableKey {
   deviceId('device_id'),
   identity('identity'),
-  darkMode('dark_mode');
+  darkMode('dark_mode'),
+  transmissionMethod('transmission_method');
 
   const LocalSavableKey(this.value);
   final String value;

@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/models/device_status_detail_model.dart';
 
 import '../../core/error/error_logger.dart';
 import '../models/app_settings.dart';
 import '../models/user_identity.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sole_provider.dart';
-import 'account_card.dart';
+import 'status_card.dart';
 
 class DeviceStatusCard extends ConsumerStatefulWidget {
   const DeviceStatusCard({super.key});
@@ -22,6 +23,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
   ProviderSubscription<AppSettings>? _sub;
   bool _load = false;
   bool? _online;
+  DeviceStatusDetailModel? _detail;
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
         _load = true;
         refreshDeviceStatus(deviceId);
       }
-    });
+    }, fireImmediately: true);
   }
 
   @override
@@ -46,12 +48,26 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       _online = null;
     });
     final service = ref.read(soleProvider);
-    final result = await service.getDeviceLastUpdateTime(deviceId: deviceId);
+    // final result = await service.getDeviceLastUpdateTime(deviceId: deviceId);
+    // switch (result) {
+    //   case Ok<DateTime?>():
+    //     if (!mounted) return;
+    //     setState(() {
+    //       _online = service.checkDeviceOnline(result.value);
+    //     });
+    //     return showMessage('get_last_update_time_success'.tr());
+    //   case Error():
+    //     return showErrorSnakeBar(result.error.toString());
+    // }
+    final result = await service.getDeviceStatusDetail(deviceId: deviceId);
     switch (result) {
-      case Ok<DateTime?>():
+      case Ok<DeviceStatusDetailModel>():
         if (!mounted) return;
         setState(() {
-          _online = service.checkDeviceOnline(result.value);
+          _online = service.checkDeviceOnline(result.value.lastHeartbeatAt);
+          // _batteryPercent = result.value.lastBatteryPercent;
+          // _isCharging = result.value.isCharging;
+          _detail = result.value;
         });
         return showMessage('get_last_update_time_success'.tr());
       case Error():
@@ -80,6 +96,8 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       subtitle: deviceId,
       icon: LucideIcons.footprints,
       active: activeDisplay ? _online : null,
+      addition: true,
+      detail: _detail,
       onTap: () => refreshDeviceStatus(deviceId),
     );
   }

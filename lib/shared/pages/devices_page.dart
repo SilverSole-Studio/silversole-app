@@ -24,6 +24,7 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
         title: Text('devices'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_devices_page',
         onPressed: comingSoon,
         child: Icon(LucideIcons.plus),
       ),
@@ -40,6 +41,7 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                 SearchBar(
                   leading: Container(margin: EdgeInsets.only(left: 8), child: Icon(LucideIcons.search, color: cs.onSurfaceVariant,)),
                   hintText: 'search_device'.tr(),
+                  elevation: const WidgetStatePropertyAll(0),
                 ),
                 const SizedBox(height: 16),
                 Text('current_devices'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),),
