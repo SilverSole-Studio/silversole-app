@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:silversole/core/error/error_logger.dart';
 
 import '../providers/settings_provider.dart';
 
@@ -17,9 +16,6 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    final splashColor = cs.primary.withValues(alpha: 0.04);
-    final hoverColor = cs.primary.withValues(alpha: 0.02);
     final settings = ref.watch(settingsProvider);
     final isBinding = settings.deviceId != null;
 

@@ -13,12 +13,11 @@ class AnalyticsPage extends ConsumerStatefulWidget {
 class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('analytics'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),),
+        title: Text('analytics'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -26,9 +25,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-            child: Column(spacing: 16, children: [
-              RecentDataList()
-            ]),
+            child: Column(spacing: 16, children: [RecentDataList()]),
           ),
         ),
       ),

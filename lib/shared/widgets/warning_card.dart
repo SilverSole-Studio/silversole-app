@@ -54,7 +54,6 @@ class _WarningCardState extends ConsumerState<WarningCard> {
 
   Widget buildIndicator({required double progress, required Color? bgColor, required Color color}) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     return Column(
       spacing: 8,

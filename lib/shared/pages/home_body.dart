@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -7,8 +6,6 @@ import 'package:silversole/shared/widgets/device_status_card.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
 import 'package:silversole/shared/widgets/warning_card.dart';
-
-import '../widgets/recent_data_list.dart';
 
 class HomeBody extends ConsumerStatefulWidget {
   const HomeBody({super.key});

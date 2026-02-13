@@ -13,7 +13,6 @@ import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/sole_provider.dart';
 
 import '../../core/error/result.dart';
-import '../models/app_settings.dart';
 
 class MapCard extends ConsumerStatefulWidget {
   const MapCard({super.key});
@@ -82,19 +81,19 @@ class _MapCardState extends ConsumerState<MapCard> {
     await _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
   }
 
-  void _drawLine(LatLng a, LatLng b) {
-    setState(() {
-      _polyline.add(
-        Polyline(
-          polylineId: const PolylineId('ab'),
-          color: Colors.redAccent,
-          width: 4,
-          points: [a, b],
-          endCap: Cap.roundCap,
-        ),
-      );
-    });
-  }
+  // void _drawLine(LatLng a, LatLng b) {
+  //   setState(() {
+  //     _polyline.add(
+  //       Polyline(
+  //         polylineId: const PolylineId('ab'),
+  //         color: Colors.redAccent,
+  //         width: 4,
+  //         points: [a, b],
+  //         endCap: Cap.roundCap,
+  //       ),
+  //     );
+  //   });
+  // }
 
   Future<void> refreshMapAndResetCenter() async {
     final settings = ref.read(settingsProvider);
