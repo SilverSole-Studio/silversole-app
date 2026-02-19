@@ -1,6 +1,26 @@
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
+
+part 'app_settings.freezed.dart';
 
 enum TransmissionMethod { bluetooth, wifi }
+
+@freezed
+abstract class AppSettings with _$AppSettings {
+  const factory AppSettings({
+    String? identity,
+    String? deviceId,
+    @Default(true) bool darkMode,
+    @Default(TransmissionMethod.bluetooth) TransmissionMethod transmissionMethod,
+    @Default(<BlePairedDevice>[]) List<BlePairedDevice> pairedDevicesList,
+  }) = _AppSettings;
+
+  const AppSettings._();
+
+  BlePairedDevice? get preferredDevice => pairedDevicesList.firstWhereOrNull((d) => d.isPreferred);
+}
 
 extension TransmissionMethodValue on TransmissionMethod {
   static TransmissionMethod? fromValue(String? value) {
@@ -12,28 +32,4 @@ extension TransmissionMethodValue on TransmissionMethod {
   }
 
   static String toFormatString(TransmissionMethod method) => method.name.tr();
-}
-
-class AppSettings {
-  final String? identity;
-  final String? deviceId;
-  final bool? _darkMode;
-  final TransmissionMethod? _transmissionMethod;
-
-  bool get darkMode => _darkMode ?? true;
-
-  TransmissionMethod get transmissionMethod => _transmissionMethod ?? TransmissionMethod.bluetooth;
-
-  const AppSettings({this.identity, this.deviceId, bool? darkMode, TransmissionMethod? transmissionMethod})
-    : _darkMode = darkMode,
-      _transmissionMethod = transmissionMethod;
-
-  AppSettings copyWith({String? identity, String? deviceId, bool? darkMode, TransmissionMethod? transmissionMethod}) {
-    return AppSettings(
-      identity: identity ?? this.identity,
-      deviceId: deviceId ?? this.deviceId,
-      darkMode: darkMode ?? _darkMode,
-      transmissionMethod: transmissionMethod ?? _transmissionMethod,
-    );
-  }
 }

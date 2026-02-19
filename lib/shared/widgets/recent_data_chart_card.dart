@@ -72,8 +72,6 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final settings = ref.watch(settingsProvider);
-    final isBinding = settings.deviceId != null;
     final spots = _pressuresDataList.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
 
     return SizedBox(
@@ -91,27 +89,21 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
               spacing: 18,
               children: [
                 Text('device_recent_data'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                if (!isBinding)
-                  // Center(child: hintBindingPage())
-                  const SizedBox.shrink()
-                else ...[
-                  SizedBox(
-                    height: 180,
-                    child: LineChart(
-                      LineChartData(
-                        titlesData: FlTitlesData(
-                          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
-                        ),
-                        maxY: 4500,
-
-                        lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.blue)],
+                SizedBox(
+                  height: 180,
+                  child: LineChart(
+                    LineChartData(
+                      titlesData: FlTitlesData(
+                        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
                       ),
+                      maxY: 4500,
+                      lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.blue)],
                     ),
                   ),
-                ],
+                ),
               ],
             ),
           ),

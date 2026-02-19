@@ -134,7 +134,6 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                       ),
                     ),
                     Text(
-                      // ((_items[i].pressure ?? 0) / 5).toStringAsFixed(0),
                       _items[i].pressure.toString(),
                       style: tt.displaySmall?.copyWith(
                         fontFamily: 'Oxanium',

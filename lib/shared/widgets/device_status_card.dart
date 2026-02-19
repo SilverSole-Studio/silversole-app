@@ -13,7 +13,11 @@ import '../providers/sole_provider.dart';
 import 'status_card.dart';
 
 class DeviceStatusCard extends ConsumerStatefulWidget {
-  const DeviceStatusCard({super.key});
+  final String name;
+  final String model;
+  final String id;
+  final VoidCallback? onClick;
+  const DeviceStatusCard({super.key, required this.name, required this.model, required this.id, this.onClick});
 
   @override
   ConsumerState<DeviceStatusCard> createState() => _DeviceStatusCard();
@@ -48,25 +52,12 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       _online = null;
     });
     final service = ref.read(soleProvider);
-    // final result = await service.getDeviceLastUpdateTime(deviceId: deviceId);
-    // switch (result) {
-    //   case Ok<DateTime?>():
-    //     if (!mounted) return;
-    //     setState(() {
-    //       _online = service.checkDeviceOnline(result.value);
-    //     });
-    //     return showMessage('get_last_update_time_success'.tr());
-    //   case Error():
-    //     return showErrorSnakeBar(result.error.toString());
-    // }
     final result = await service.getDeviceStatusDetail(deviceId: deviceId);
     switch (result) {
       case Ok<DeviceStatusDetailModel>():
         if (!mounted) return;
         setState(() {
           _online = service.checkDeviceOnline(result.value.lastHeartbeatAt);
-          // _batteryPercent = result.value.lastBatteryPercent;
-          // _isCharging = result.value.isCharging;
           _detail = result.value;
         });
         return showMessage('get_last_update_time_success'.tr());
@@ -78,13 +69,13 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
   Future<void> openDeviceStatusPage() async {
     //TODO: this is test feature now
     // context.push('/device-status');
-    debugPrint('click device card');
+    // debugPrint('click device card');
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final deviceNickName = settings.deviceId != null ? 'SilverSole 原型機' : 'not_binding'.tr(); //FIXME: Test code
+    // final deviceNickName = settings.deviceId != null ? 'SilverSole 原型機' : 'not_binding'.tr(); //FIXME: Test code
     final deviceId = settings.deviceId ?? '';
     final identity = settings.identity;
     final activeDisplay = identity == UserIdentity.transmitter.value && settings.deviceId != null; //FIXME: Test code
@@ -92,13 +83,15 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
     return statusCard(
       context,
       type: StatusCardType.statusDisplay,
-      title: deviceNickName,
-      subtitle: deviceId,
+      title: widget.name,
+      model: widget.model,
+      id: widget.id,
       icon: LucideIcons.footprints,
       active: activeDisplay ? _online : null,
       addition: true,
       detail: _detail,
-      onTap: () => refreshDeviceStatus(deviceId),
+      // onTap: () => refreshDeviceStatus(deviceId),
+      onTap: widget.onClick ?? () {},
     );
   }
 }

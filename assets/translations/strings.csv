@@ -75,3 +75,14 @@ bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點
 no_data,No data,無資料
 wifi,WiFi,WiFi
+scanning_nearby_devices,Scanning nearby devices...,正在掃描附近的裝置...
+select_your_silversole_device,Select your SilverSole device,選擇你的 SilverSole 裝置
+confirm,Confirm,確認
+cancel,Cancel,取消
+unknown_model,Unknown model,未知型號
+nearby_devices,Nearby devices,附近裝置
+set_primary_device_title,Set as Primary Device,設為主要裝置
+set_primary_device_content,Set {deviceName} as your primary device? The app will prioritize this device on Home and attempt to connect to it first.,要將「{deviceName}」設為主要裝置嗎？設為主要裝置後，首頁會優先顯示此裝置並優先嘗試連線。
+set_primary_device_success,Primary device updated,已設為主要裝置
+no_primary_device_title,No primary device available,目前沒有可用的主要裝置
+no_primary_device_body,Go to “Devices” to add a device then enable any device to get started.,前往「裝置」新增裝置後，啟用任一裝置即可開始使用。

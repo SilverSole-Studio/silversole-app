@@ -4,13 +4,14 @@ import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/sole_record_data_model.dart';
-import 'package:silversole/shared/models/user_device_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum BindingResult { success, alreadyBound }
 
 class SilverSoleService {
   SupabaseClient supabase;
+
+  SilverSoleService({required this.supabase});
 
   Result<T> _notSignIn<T>() => Result<T>.error(Exception('not_signed_in'.tr()));
 
@@ -23,7 +24,7 @@ class SilverSoleService {
       if (deviceTable.isEmpty) {
         return Result.error(Exception('device_not_found'.tr()));
       }
-      await supabase.from('user_devices').insert(UserDeviceModel(userId: userId, deviceId: deviceId).toJson());
+      // await supabase.from('user_devices').insert(UserDeviceModel(userId: userId, deviceId: deviceId).toJson());
       return const Result.ok(BindingResult.success);
     } on PostgrestException catch (e) {
       debugPrint('${e.code} : ${e.message}');
@@ -77,10 +78,6 @@ class SilverSoleService {
           .maybeSingle();
       if (result == null) return Result.error(Exception('device_not_found'.tr()));
       return Result.ok(DeviceStatusDetailModel.fromJson(result));
-      // final raw = result?['last_heartbeat_at'] as String?;
-      // if (raw == null) return Result.ok(null);
-      // final lastUpdateTime = DateTime.parse(raw);
-      // return Result.ok(lastUpdateTime);
     } on PostgrestException catch (e) {
       debugPrint('${e.code} : ${e.message}');
       final error = switch (e.code) {
@@ -144,6 +141,4 @@ class SilverSoleService {
     final diff = now.difference(time);
     return diff.inSeconds < 35;
   }
-
-  SilverSoleService({required this.supabase});
 }

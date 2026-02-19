@@ -3,7 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 
-Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> raw}) {
+Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> raw, Color? themeColor}) {
   const outerRadius = 16.0;
   const innerRadius = 4.0;
   final scheme = Theme.of(context).colorScheme;
@@ -23,7 +23,7 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)
           Material(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            color: themeColor ?? Theme.of(context).colorScheme.surfaceContainerLow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(i == 0 ? outerRadius : innerRadius),
@@ -47,7 +47,7 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
                         title: data.checkTitle ?? '',
                         text: data.checkContent ?? '',
                         onDismiss: () => {},
-                        onClick: data.onClick,
+                        onConfirm: data.onClick,
                       )
                     else
                       data.onClick(),

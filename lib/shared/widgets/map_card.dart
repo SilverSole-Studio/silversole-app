@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -95,6 +98,42 @@ class _MapCardState extends ConsumerState<MapCard> {
   //   });
   // }
 
+  Future<Position?> _getPhoneLocation() async {
+    final serviceEnable = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnable) {
+      showErrorSnakeBar('get_phone_location_service_failed'.tr());
+      return null;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      showErrorSnakeBar('get_phone_location_permission_failed'.tr());
+      return null;
+    }
+
+    LocationSettings settings;
+    if (Platform.isAndroid) {
+      settings = AndroidSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+    } else if (Platform.isIOS || Platform.isMacOS) {
+      settings = AppleSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+    } else {
+      settings = const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+    }
+
+    return Geolocator.getCurrentPosition(locationSettings: settings);
+  }
+
+  Future<void> controlMapWithPhonePosition() async {
+    final position = await _getPhoneLocation();
+    if (position == null) return;
+    final latLng = LatLng(position.latitude, position.longitude);
+    _controller?.animateCamera(CameraUpdate.newLatLngZoom(latLng, 16));
+  }
+
   Future<void> refreshMapAndResetCenter() async {
     final settings = ref.read(settingsProvider);
     final service = ref.read(soleProvider);
@@ -144,35 +183,10 @@ class _MapCardState extends ConsumerState<MapCard> {
               child: FloatingActionButton.small(
                 heroTag: 'fab_map_card',
                 backgroundColor: cs.surfaceContainer,
-                onPressed: comingSoon,
+                onPressed: controlMapWithPhonePosition,
                 child: const Icon(LucideIcons.locateFixed),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget hintBindingPage() {
-    final colorScheme = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        spacing: 16,
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: colorScheme.primaryContainer,
-            child: Icon(LucideIcons.link2, color: colorScheme.onPrimaryContainer, size: 28),
-          ),
-          Text('not_binding'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-          Text(
-            'map_binding_required'.tr(),
-            style: tt.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
@@ -182,7 +196,6 @@ class _MapCardState extends ConsumerState<MapCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final style = isDark ? darkStyle : lightStyle;
-    final settings = ref.watch(settingsProvider);
 
     return SizedBox(
       width: double.infinity,
@@ -192,7 +205,8 @@ class _MapCardState extends ConsumerState<MapCard> {
           onTap: refreshMapAndResetCenter,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: settings.deviceId != null ? googleMap(style) : hintBindingPage(),
+            // child: settings.deviceId != null ? googleMap(style) : hintBindingPage(),
+            child: googleMap(style),
           ),
         ),
       ),

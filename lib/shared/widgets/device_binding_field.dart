@@ -45,7 +45,7 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
           final message = result.value == BindingResult.alreadyBound
               ? 'device_already_binding'.tr()
               : 'binding_success'.tr();
-          await saveDeviceId(deviceId);
+          await saveLocalValue(LocalSavableKey.deviceId, deviceId);
           ref.read(authUserProvider.notifier).setUser(UserData(email: userProvider.email, uuid: userProvider.uuid));
           ref.read(settingsProvider.notifier).setDeviceId(deviceId);
           showMessage(message);

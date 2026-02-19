@@ -19,25 +19,6 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     }
   }
 
-  Widget hintBindingPage() {
-    final tt = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        spacing: 16,
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: colorScheme.primaryContainer,
-            child: Icon(LucideIcons.link2, color: colorScheme.onPrimaryContainer, size: 28),
-          ),
-          Text('not_binding'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
   Widget bar(bool isOn) {
     return Expanded(
       child: SizedBox(
@@ -98,7 +79,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
 
   @override
   Widget build(BuildContext context) {
-    final eventCount = 1;
+    final eventCount = 0;
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final color = eventCount > 3 ? Colors.red : Theme.of(context).colorScheme.primary;
@@ -127,16 +108,12 @@ class _WarningCardState extends ConsumerState<WarningCard> {
                     Text('view_history'.tr(), style: tt.titleSmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                if (!isBinding)
-                  Center(child: hintBindingPage())
-                else ...[
-                  buildCenterContent(eventCount: eventCount, color: color),
-                  buildIndicator(
-                    progress: eventCount.toDouble() / 10.0,
-                    bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
-                    color: color,
-                  ),
-                ],
+                buildCenterContent(eventCount: eventCount, color: color),
+                buildIndicator(
+                  progress: eventCount.toDouble() / 10.0,
+                  bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
+                  color: color,
+                ),
               ],
             ),
           ),

@@ -9,7 +9,8 @@ Widget statusCard(
   BuildContext context, {
   StatusCardType type = StatusCardType.normal,
   required String title,
-  required String subtitle,
+  required String model,
+  required String id,
   required IconData icon,
   bool addition = true,
   DeviceStatusDetailModel? detail,
@@ -175,7 +176,7 @@ Widget statusCard(
                       // Device Model + Device ID
                       SizedBox(
                         child: Text(
-                          'SilverSole • ID: $subtitle 1324234',
+                          '$model • ID: $id',
                           overflow: TextOverflow.ellipsis,
                           style: tt.labelLarge?.copyWith(
                             fontFamily: 'Oxanium',

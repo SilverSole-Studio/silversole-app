@@ -7,10 +7,8 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/widgets/status_card.dart';
-import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
-import 'package:silversole/shared/widgets/device_binding_field.dart';
+import 'package:silversole/shared/widgets/status_card.dart';
 
 import '../../core/error/result.dart';
 import '../models/app_settings.dart';
@@ -77,7 +75,6 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setTransmissionMethod(method);
   }
 
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authUserProvider);
@@ -102,6 +99,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         checkContent: 'change_identity_check_content'.tr(args: [nextIdentity(settings.identity).tr()]),
         trailing: true,
       ),
+      /*
       ListTileData.dropdown(
         title: 'transmission_method'.tr(),
         enable: settings.identity == 'transmitter',
@@ -112,6 +110,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         onChanged: (int idx, String key) =>
             setTransmissionMethod(TransmissionMethodValue.fromValue(key) ?? TransmissionMethod.bluetooth),
       ),
+       */
+      /*
       ListTileData.normal(
         title: 'binding_silversole_device'.tr(),
         subtitle: settings.deviceId,
@@ -124,6 +124,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         ),
         trailing: true,
       ),
+       */
     ];
 
     final generalSettingList = [
@@ -158,7 +159,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
             children: [
               SizedBox(
                 width: double.infinity,
-                child: statusCard(context, title: email, subtitle: uuid, icon: LucideIcons.user, addition: false),
+                child: statusCard(
+                  context,
+                  title: email,
+                  model: 'Basic',
+                  id: uuid,
+                  icon: LucideIcons.user,
+                  addition: false,
+                ),
               ),
               SizedBox(
                 width: double.infinity,
