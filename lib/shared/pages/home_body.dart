@@ -8,6 +8,7 @@ import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/device_status_card.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
+import 'package:silversole/shared/widgets/status_card.dart';
 import 'package:silversole/shared/widgets/warning_card.dart';
 
 class HomeBody extends ConsumerStatefulWidget {
@@ -18,7 +19,6 @@ class HomeBody extends ConsumerStatefulWidget {
 }
 
 class _HomeBodyState extends ConsumerState<HomeBody> {
-
   Widget notActiveBody() {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -39,11 +39,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                 color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(16), // 圓角方形
               ),
-              child: Icon(
-                LucideIcons.link2,
-                color: cs.onPrimaryContainer,
-                size: 28,
-              ),
+              child: Icon(LucideIcons.link2, color: cs.onPrimaryContainer, size: 28),
             ),
             Text('no_primary_device_title'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             Text(
@@ -61,7 +57,13 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     return Column(
       spacing: 16,
       children: [
-        DeviceStatusCard(name: device.name, model: device.displayModel ?? 'unknown_model'.tr(), id: device.remoteId),
+        DeviceStatusCard(
+          name: device.name,
+          type: StatusCardType.statusDisplay,
+          model: device.displayModel ?? 'unknown_model'.tr(),
+          id: device.remoteId,
+          activeDisplay: true,
+        ),
         MapCard(),
         WarningCard(),
         RecentDataChartCard(),
@@ -104,10 +106,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                     IconButton(onPressed: comingSoon, icon: Icon(LucideIcons.bell)),
                   ],
                 ),
-                if (preferredDevice != null)
-                  activeBody(preferredDevice)
-                else
-                  notActiveBody()
+                if (preferredDevice != null) activeBody(preferredDevice) else notActiveBody(),
               ],
             ),
           ),

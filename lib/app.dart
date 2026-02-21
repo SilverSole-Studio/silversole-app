@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/routing/router.dart';
+import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
 class App extends ConsumerWidget {
@@ -13,6 +14,8 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final darkMode = settings.darkMode;
+    
+    ref.watch(bleForegroundControlProvider);
 
     return MaterialApp.router(
       title: 'Silver Sole',

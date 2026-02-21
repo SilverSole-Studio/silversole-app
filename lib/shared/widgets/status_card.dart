@@ -2,8 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
+import 'package:silversole/shared/models/list_tile_data_model.dart';
+import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
 
-enum StatusCardType { normal, statusDisplay }
+enum StatusCardType { normal, statusDisplay, menu }
 
 Widget statusCard(
   BuildContext context, {
@@ -14,6 +16,7 @@ Widget statusCard(
   required IconData icon,
   bool addition = true,
   DeviceStatusDetailModel? detail,
+  List<ListTileData> menuItems = const <ListTileData>[],
   bool? active,
   VoidCallback? onTap,
 }) {
@@ -165,11 +168,12 @@ Widget statusCard(
                             ),
                           ),
 
-                          // Status Tag
-                          if (type == StatusCardType.statusDisplay) ...[
-                            const SizedBox(width: 4),
-                            if (active != null) statusTag(active) else statusLoading(),
-                          ],
+                          // Right Tool Widget
+                          switch (type) {
+                            StatusCardType.statusDisplay => active != null ? statusTag(active) : statusLoading(),
+                            StatusCardType.menu => buildMaterialPopupMenu(context, raw: menuItems),
+                            _ => const SizedBox.shrink(),
+                          },
                         ],
                       ),
 
@@ -195,9 +199,7 @@ Widget statusCard(
                 spacing: 8,
                 children: [
                   subStatusCard(
-                    icon: (detail.isCharging ?? false)
-                        ? LucideIcons.batteryCharging
-                        : LucideIcons.batteryMedium,
+                    icon: (detail.isCharging ?? false) ? LucideIcons.batteryCharging : LucideIcons.batteryMedium,
                     title: detail.lastBatteryPercent != null ? '${detail.lastBatteryPercent}%' : 'no_data'.tr(),
                     hasProgress: true,
                     progress: ((detail.lastBatteryPercent ?? 0) / 100),

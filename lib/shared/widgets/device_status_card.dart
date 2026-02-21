@@ -4,20 +4,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
+import 'package:silversole/shared/models/list_tile_data_model.dart';
 
 import '../../core/error/error_logger.dart';
 import '../models/app_settings.dart';
-import '../models/user_identity.dart';
 import '../providers/settings_provider.dart';
 import '../providers/sole_provider.dart';
 import 'status_card.dart';
 
 class DeviceStatusCard extends ConsumerStatefulWidget {
+  final StatusCardType type;
   final String name;
   final String model;
   final String id;
+  final bool activeDisplay;
+  final List<ListTileData> menuItems;
   final VoidCallback? onClick;
-  const DeviceStatusCard({super.key, required this.name, required this.model, required this.id, this.onClick});
+
+  const DeviceStatusCard({
+    super.key,
+    this.type = StatusCardType.normal,
+    required this.name,
+    required this.model,
+    required this.id,
+    required this.activeDisplay,
+    this.menuItems = const <ListTileData>[],
+    this.onClick,
+  });
 
   @override
   ConsumerState<DeviceStatusCard> createState() => _DeviceStatusCard();
@@ -74,23 +87,17 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(settingsProvider);
-    // final deviceNickName = settings.deviceId != null ? 'SilverSole 原型機' : 'not_binding'.tr(); //FIXME: Test code
-    final deviceId = settings.deviceId ?? '';
-    final identity = settings.identity;
-    final activeDisplay = identity == UserIdentity.transmitter.value && settings.deviceId != null; //FIXME: Test code
-
     return statusCard(
       context,
-      type: StatusCardType.statusDisplay,
+      type: widget.type,
       title: widget.name,
       model: widget.model,
       id: widget.id,
       icon: LucideIcons.footprints,
-      active: activeDisplay ? _online : null,
+      menuItems: widget.menuItems,
+      active: widget.activeDisplay ? _online : null,
       addition: true,
       detail: _detail,
-      // onTap: () => refreshDeviceStatus(deviceId),
       onTap: widget.onClick ?? () {},
     );
   }

@@ -1,6 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 enum ConfirmType { primary, delete }
 
@@ -14,10 +13,10 @@ Future<void> showBasicDialog(
 }) async {
   final result = await showDialog<bool>(
     context: context,
-    builder: (_) => AlertDialog(
+    builder: (dialogContext) => AlertDialog(
       title: Text(title),
       content: Text(text),
-      actions: [TextButton(onPressed: () => context.pop(true), child: Text(buttonText ?? 'confirm'.tr()))],
+      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: Text(buttonText ?? 'confirm'.tr()))],
     ),
   );
 
@@ -32,16 +31,28 @@ Future<void> showContentDialog(
   BuildContext context, {
   required String title,
   Widget? content,
-  String? buttonText,
+  String? dismissText,
+  String? confirmText,
+  ConfirmType confirmType = ConfirmType.primary,
   VoidCallback? onDismiss,
   VoidCallback? onClick,
 }) async {
+  final cs = Theme.of(context).colorScheme;
   final result = await showDialog<bool>(
     context: context,
-    builder: (_) => AlertDialog(
+    builder: (dialogContext) => AlertDialog(
       title: Text(title),
       content: content,
-      actions: [TextButton(onPressed: () => context.pop(true), child: Text(buttonText ?? 'confirm'.tr()))],
+      actions: [
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(dismissText ?? 'cancel'.tr())),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(
+            confirmText ?? 'confirm'.tr(),
+            style: TextStyle(color: confirmType == ConfirmType.primary ? cs.primary : cs.error),
+          ),
+        ),
+      ],
     ),
   );
 
@@ -66,14 +77,14 @@ Future<void> showConfirmLeaveDialog(
   final cs = Theme.of(context).colorScheme;
   final result = await showDialog<bool>(
     context: context,
-    builder: (_) => AlertDialog(
+    builder: (dialogContext) => AlertDialog(
       icon: icon,
       title: Text(title),
       content: Text(text),
       actions: [
-        TextButton(onPressed: () => context.pop(false), child: Text(dismissText ?? 'cancel'.tr())),
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(dismissText ?? 'cancel'.tr())),
         TextButton(
-          onPressed: () => context.pop(true),
+          onPressed: () => Navigator.of(dialogContext).pop(true),
           child: Text(
             confirmText ?? 'confirm'.tr(),
             style: TextStyle(color: confirmType == ConfirmType.primary ? cs.primary : cs.error),
@@ -82,12 +93,7 @@ Future<void> showConfirmLeaveDialog(
       ],
     ),
   );
-
-  if (result == true) {
-    onConfirm();
-  } else {
-    if (onDismiss != null) onDismiss();
-  }
+  result == true ? onConfirm() : onDismiss?.call();
 }
 
 Future<void> showOptionsDialog(
@@ -104,13 +110,13 @@ Future<void> showOptionsDialog(
 
   final result = await showDialog<String>(
     context: context,
-    builder: (_) => SimpleDialog(
+    builder: (dialogContext) => SimpleDialog(
       title: Text(title),
       children: [
         RadioGroup<String>(
           groupValue: selectedKey,
           onChanged: (value) {
-            Navigator.pop(context, value);
+            Navigator.of(dialogContext).pop(value);
           },
           child: Column(
             children: [

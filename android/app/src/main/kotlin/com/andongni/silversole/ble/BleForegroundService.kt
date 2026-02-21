@@ -1,13 +1,10 @@
 package com.andongni.silversole.ble
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
 import android.content.Intent
-import android.os.Build
-import android.os.IBinder
+import android.os.*
 import androidx.core.app.NotificationCompat
+import com.andongni.silversole.MainActivity
 import com.andongni.silversole.R
 
 class BleForegroundService : Service() {
@@ -27,16 +24,48 @@ class BleForegroundService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+
             ACTION_START, null -> {
                 createNotificationChannelIfNeeded()
+                startForeground(NOTIFICATION_ID, buildNotification())
                 return START_STICKY
             }
+
             else -> return START_NOT_STICKY
         }
     }
 
-    private fun createNotificationChannelIfNeeded() {
+    private fun buildNotification(): Notification {
+        val openAppIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
 
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            openAppIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.ble_service_title))
+            .setContentText(getString(R.string.ble_service_running))
+            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
     }
 
+    private fun createNotificationChannelIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "BLE Foreground Service",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        manager.createNotificationChannel(channel)
+    }
 }
