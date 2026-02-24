@@ -1,10 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/device_status_card.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
@@ -32,15 +35,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 16,
           children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                borderRadius: BorderRadius.circular(16), // 圓角方形
-              ),
-              child: Icon(LucideIcons.link2, color: cs.onPrimaryContainer, size: 28),
-            ),
+            SvgPicture.asset('assets/images/undraw_void_wez2.svg', width: 300),
+            const SizedBox(height: 32),
             Text('no_primary_device_title'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             Text(
               'no_primary_device_body'.tr(),
@@ -53,7 +49,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     );
   }
 
-  Widget activeBody(BlePairedDevice device) {
+  Widget activeBody(BlePairedDevice device, DeviceStatusDetailModel detail) {
     return Column(
       spacing: 16,
       children: [
@@ -63,6 +59,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           model: device.displayModel ?? 'unknown_model'.tr(),
           id: device.remoteId,
           activeDisplay: true,
+          detail: detail,
         ),
         MapCard(),
         WarningCard(),
@@ -77,6 +74,14 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final tt = Theme.of(context).textTheme;
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
+    final viewProvider = ref.watch(telemetryViewProvider);
+    final lastest = viewProvider.recent.isNotEmpty ? viewProvider.recent.last : null;
+    final detail = DeviceStatusDetailModel(
+      lastHeartbeatAt: viewProvider.updatedAt,
+      lastBatteryAt: viewProvider.updatedAt,
+      lastBatteryPercent: lastest?.batteryPercent,
+      isCharging: lastest?.isCharging,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -106,7 +111,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                     IconButton(onPressed: comingSoon, icon: Icon(LucideIcons.bell)),
                   ],
                 ),
-                if (preferredDevice != null) activeBody(preferredDevice) else notActiveBody(),
+                if (preferredDevice != null) activeBody(preferredDevice, detail) else notActiveBody(),
               ],
             ),
           ),

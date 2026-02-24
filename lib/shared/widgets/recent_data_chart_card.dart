@@ -3,11 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
-import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/app_settings.dart';
-import 'package:silversole/shared/models/sole_record_data_model.dart';
+import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
-import 'package:silversole/shared/providers/sole_provider.dart';
+import 'package:silversole/shared/providers/telemetry_view_provider.dart';
 
 import '../providers/settings_provider.dart';
 
@@ -19,7 +18,7 @@ class RecentDataChartCard extends ConsumerStatefulWidget {
 }
 
 class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
-  final List<int> _pressuresDataList = [];
+  // final List<int> _pressuresDataList = [];
   ProviderSubscription<AppSettings>? _sub;
   bool _loaded = false;
 
@@ -34,21 +33,21 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
       showErrorSnakeBar('not_binding'.tr());
       return;
     }
-    final soleService = ref.read(soleProvider);
     debugPrint('getRecentData');
-    final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 20);
-    debugPrint(result.toString());
+    // final viewProvider = ref.watch(telemetryViewProvider);
+    // _pressuresDataList = data.take(20);
+    // debugPrint(result.toString());
 
-    switch (result) {
-      case Ok<List<SilverSoleRecordModel>>():
-        if (mounted) {
-          setState(() => _pressuresDataList.clear());
-          setState(() => _pressuresDataList.addAll(result.value.map((it) => it.pressure).toList()));
-          showMessage('get_data_success'.tr());
-        }
-      case Error():
-        return showErrorSnakeBar(result.error.toString());
-    }
+    // switch (result) {
+    //   case Ok<List<SilverSoleRecordModel>>():
+    //     if (mounted) {
+    //       setState(() => _pressuresDataList.clear());
+    //       setState(() => _pressuresDataList.addAll(result.value.map((it) => it.pressure).toList()));
+    //       showMessage('get_data_success'.tr());
+    //     }
+    //   case Error():
+    //     return showErrorSnakeBar(result.error.toString());
+    // }
   }
 
   @override
@@ -72,13 +71,33 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    final spots = _pressuresDataList.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.toDouble())).toList();
+    final viewProvider = ref.watch(telemetryViewProvider);
+    final data = viewProvider.recent;
+    final recent = viewProvider.recent.skip((data.length - 20).clamp(0, data.length)).toList(growable: false);
+
+    List<FlSpot> buildSpots(num Function(ImuNotifyDataModel d) pick) =>
+        List.generate(recent.length, (i) => FlSpot(i.toDouble(), pick(recent[i]).toDouble()), growable: false);
+
+    Color getColor(int i) => Colors.accents[i % Colors.accents.length];
+
+    final labels = ['pressure', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'battery'];
+
+    final spots = <List<FlSpot>>[
+      buildSpots((d) => d.pressure),
+      buildSpots((d) => d.ax),
+      buildSpots((d) => d.ay),
+      buildSpots((d) => d.az),
+      buildSpots((d) => d.gx),
+      buildSpots((d) => d.gy),
+      buildSpots((d) => d.gz),
+      buildSpots((d) => d.batteryPercent),
+    ];
 
     return SizedBox(
       width: double.infinity,
       child: Card(
+        elevation: 0,
         child: InkWell(
-          onTap: getRecentPressureData,
           splashColor: Colors.transparent,
           hoverColor: Colors.transparent,
           focusColor: Colors.transparent,
@@ -99,10 +118,28 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
                         leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
                       ),
-                      maxY: 4500,
-                      lineBarsData: [LineChartBarData(spots: spots, isCurved: true, color: Colors.blue)],
+                      maxY: 20000,
+                      lineBarsData: [
+                        for (int i = 0; i < spots.length; i++)
+                          LineChartBarData(
+                            spots: spots[i],
+                            isCurved: true,
+                            color: Colors.accents[i % Colors.accents.length],
+                            dotData: const FlDotData(show: false),
+                          ),
+                      ],
                     ),
                   ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (int i = 0; i < labels.length; i++)
+                      Chip(
+                        avatar: CircleAvatar(backgroundColor: getColor(i), radius: 5,),
+                        label: Text(labels[i]),
+                      ),
+                  ],
                 ),
               ],
             ),

@@ -93,3 +93,5 @@ delete_device_title,Delete this device?,要刪除此裝置嗎？
 delete_device_content,This action cannot be undone. You can pair it again later.,此操作無法復原，你之後仍可重新配對。
 rename_device_success,Device renamed successfully,裝置名稱已更新
 delete_device_success,Device deleted successfully,裝置已刪除
+coming_soon,Coming Soon,敬請期待
+coming_soon_content,This feature is not available yet. Stay tuned for updates.,功能尚未開放，等待後續更新。

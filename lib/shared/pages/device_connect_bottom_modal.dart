@@ -76,7 +76,6 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
   Future<bool> ensureScanPermission() async {
     final statuses = await [Permission.bluetoothScan, Permission.locationWhenInUse].request();
     final scanGranted = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-    final locationGranted = statuses[Permission.locationWhenInUse]?.isGranted ?? false;
     if (scanGranted) return true;
     showErrorSnakeBar('Bluetooth scan permission is required.');
     return false;
@@ -131,6 +130,7 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
       lastConnectedAt: DateTime.now(),
     );
 
+    // Add paired device
     await ref.read(settingsProvider.notifier).addOrUpdatePairedDevice(device);
     var shouldSetPreferred = false;
 

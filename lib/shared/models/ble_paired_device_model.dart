@@ -7,6 +7,7 @@ part 'ble_paired_device_model.g.dart';
 @freezed
 abstract class BlePairedDevice with _$BlePairedDevice {
   const factory BlePairedDevice({
+    String? deviceId,
     required String remoteId,
     required String name,
     String? displayModel,

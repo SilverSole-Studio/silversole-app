@@ -1,5 +1,30 @@
 # Changelog
 
+## v1.0.0
+更新內容:
+- 因重構基於資料庫之前端架構，與先前版本較有較大差異
+- 裝置頁新增配對按鈕，使用藍牙偵測 SilverSole BLE 裝置
+- 裝置頁新增重命名裝置、刪除裝置功能
+- 支持前台服務 (僅限Android)
+- 支持自動連線、斷線重連 (若已綁定主要裝置)
+- 新增藍牙實時監測模式
+- 修復首次進入應用程式時預設非深色主題的問題
+- 重構未綁定裝置時的 UI 表現
+- 暫不支持遠端查看資料 (即目前無法查看資料庫狀態)
+- 暫不支持上傳資料至資料庫
+
+Updates:
+- Due to a database-driven frontend architecture refactor, this version differs significantly from previous versions.
+- Added a pairing button on the Devices page to scan for SilverSole BLE devices via Bluetooth.
+- Added device renaming and device deletion on the Devices page.
+- Added foreground service support (Android only).
+- Supports auto-connect and auto-reconnect after disconnection (when a primary device is already set).
+- Added real-time Bluetooth monitoring mode.
+- Fixed the issue where the app did not default to dark theme on first launch.
+- Refactored the UI for the unbound/unpaired device state.
+- Remote data viewing is not supported yet (database status cannot be viewed at this time).
+- Uploading data to the database is not supported yet.
+
 ## v0.10.0
 更新內容:
 - 新增電量顯示

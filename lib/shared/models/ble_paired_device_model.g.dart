@@ -8,6 +8,7 @@ part of 'ble_paired_device_model.dart';
 
 _BlePairedDevice _$BlePairedDeviceFromJson(Map<String, dynamic> json) =>
     _BlePairedDevice(
+      deviceId: json['deviceId'] as String?,
       remoteId: json['remoteId'] as String,
       name: json['name'] as String,
       displayModel: json['displayModel'] as String?,
@@ -21,6 +22,7 @@ _BlePairedDevice _$BlePairedDeviceFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$BlePairedDeviceToJson(_BlePairedDevice instance) =>
     <String, dynamic>{
+      'deviceId': instance.deviceId,
       'remoteId': instance.remoteId,
       'name': instance.name,
       'displayModel': instance.displayModel,

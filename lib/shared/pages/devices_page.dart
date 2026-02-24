@@ -69,10 +69,7 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
           autofocus: true,
           textInputAction: TextInputAction.done,
           maxLength: 24,
-          decoration: InputDecoration(
-            hintText: 'device_name'.tr(),
-            counterText: '',
-          ),
+          decoration: InputDecoration(hintText: 'device_name'.tr(), counterText: ''),
           onChanged: (v) => newName = v.trim(),
         ),
         onClick: () => result = true,

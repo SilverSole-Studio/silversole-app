@@ -138,7 +138,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                 ),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: enableSignUpButton ? signUp : null,
                     child: enableSignUpButton
                         ? Text('sign_up'.tr())

@@ -1,15 +1,12 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
+import 'package:silversole/shared/providers/telemetry_facade_provider.dart';
 
-import '../../core/error/error_logger.dart';
 import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
-import '../providers/sole_provider.dart';
 import 'status_card.dart';
 
 class DeviceStatusCard extends ConsumerStatefulWidget {
@@ -18,6 +15,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
   final String model;
   final String id;
   final bool activeDisplay;
+  final DeviceStatusDetailModel? detail;
   final List<ListTileData> menuItems;
   final VoidCallback? onClick;
 
@@ -28,6 +26,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
     required this.model,
     required this.id,
     required this.activeDisplay,
+    this.detail,
     this.menuItems = const <ListTileData>[],
     this.onClick,
   });
@@ -39,8 +38,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
 class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
   ProviderSubscription<AppSettings>? _sub;
   bool _load = false;
-  bool? _online;
-  DeviceStatusDetailModel? _detail;
+
 
   @override
   void initState() {
@@ -49,7 +47,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       final deviceId = next.deviceId;
       if (!_load && deviceId != null && deviceId.isNotEmpty) {
         _load = true;
-        refreshDeviceStatus(deviceId);
+        // refreshDeviceStatus(deviceId);
       }
     }, fireImmediately: true);
   }
@@ -60,6 +58,10 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
     _sub?.close();
   }
 
+  //TODO: Remove code and create reload logic in other place
+  /*
+  bool? _online;
+  DeviceStatusDetailModel? _detail;
   Future<void> refreshDeviceStatus(String deviceId) async {
     setState(() {
       _online = null;
@@ -78,15 +80,18 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
         return showErrorSnakeBar(result.error.toString());
     }
   }
+   */
 
   Future<void> openDeviceStatusPage() async {
     //TODO: this is test feature now
-    // context.push('/device-status');
+    // context.push('/device-stat us');
     // debugPrint('click device card');
   }
 
   @override
   Widget build(BuildContext context) {
+    final facade = ref.watch(telemetryFacadeProvider);
+
     return statusCard(
       context,
       type: widget.type,
@@ -95,9 +100,9 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       id: widget.id,
       icon: LucideIcons.footprints,
       menuItems: widget.menuItems,
-      active: widget.activeDisplay ? _online : null,
+      active: facade.checkDeviceOnline(widget.detail?.lastHeartbeatAt),
       addition: true,
-      detail: _detail,
+      detail: widget.detail,
       onTap: widget.onClick ?? () {},
     );
   }

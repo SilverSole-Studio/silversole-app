@@ -111,7 +111,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 ),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: FilledButton(
                     onPressed: enableSignInButton ? signIn : null,
                     child: enableSignInButton
                         ? Text('sign_in'.tr())

@@ -201,6 +201,7 @@ class _MapCardState extends ConsumerState<MapCard> {
       width: double.infinity,
       height: 200,
       child: Card(
+        elevation: 0,
         child: InkWell(
           onTap: refreshMapAndResetCenter,
           child: Padding(

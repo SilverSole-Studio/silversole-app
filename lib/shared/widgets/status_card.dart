@@ -4,8 +4,11 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
+import 'package:silversole/shared/widgets/rader_dot.dart';
 
 enum StatusCardType { normal, statusDisplay, menu }
+
+
 
 Widget statusCard(
   BuildContext context, {
@@ -62,6 +65,7 @@ Widget statusCard(
                   LinearProgressIndicator(
                     year2023: false, //ignore: deprecated_member_use
                     value: progress,
+                    stopIndicatorRadius: 0,
                     minHeight: 6,
                     backgroundColor: cs.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
@@ -78,32 +82,40 @@ Widget statusCard(
   }
 
   Widget statusTag(bool active) {
-    final bgColor = active ? Colors.green[800] : Colors.grey[800];
-    final textColor = active ? Colors.white : Colors.grey;
+    final bgColor = active
+        ? cs.primaryContainer
+        : cs.surfaceContainerHighest;
+
+    final textColor = active
+        ? cs.onPrimaryContainer
+        : cs.onSurfaceVariant;
     final text = active ? 'online'.tr() : 'offline'.tr();
     return SizedBox(
       height: 32,
       child: Card(
+        elevation: 0,
         color: bgColor,
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: 12),
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(color: textColor, shape: BoxShape.circle),
-                    child: const SizedBox(width: 6, height: 6),
+            child: RichText(
+              text: TextSpan(
+                style: tt.bodySmall?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                children: [
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: RadarDot(active: active, color: textColor),
+                    ),
                   ),
-                ),
-                Text(
-                  text,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
+                  TextSpan(text: text),
+                ],
+              ),
+            )
           ),
         ),
       ),
@@ -132,6 +144,7 @@ Widget statusCard(
   }
 
   return Card(
+    elevation: 0,
     child: InkWell(
       onTap: onTap,
       splashColor: splashColor,
