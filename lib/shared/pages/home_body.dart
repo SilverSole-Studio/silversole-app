@@ -7,7 +7,7 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/device_status_card.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
@@ -75,7 +75,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
     final viewProvider = ref.watch(telemetryViewProvider);
-    final lastest = viewProvider.recent.isNotEmpty ? viewProvider.recent.last : null;
+    final lastest = viewProvider.recentImu.isNotEmpty ? viewProvider.recentImu.last : null;
     final detail = DeviceStatusDetailModel(
       lastHeartbeatAt: viewProvider.updatedAt,
       lastBatteryAt: viewProvider.updatedAt,

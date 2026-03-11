@@ -95,3 +95,13 @@ rename_device_success,Device renamed successfully,裝置名稱已更新
 delete_device_success,Device deleted successfully,裝置已刪除
 coming_soon,Coming Soon,敬請期待
 coming_soon_content,This feature is not available yet. Stay tuned for updates.,功能尚未開放，等待後續更新。
+pressure,Pressure,壓力
+acc,Acceleration,加速度
+gyro,Gyroscope,陀螺儀
+battery,Battery,電池
+start_record,Start record All,開始記錄
+stop_record,Stop record,結束記錄
+recording,Recording,記錄中
+already_recording_with_seconds,Recording in progress: {} seconds,記錄進行中：{} 秒
+already_recording_with_count,Recorded samples: {},已記錄資料筆數：{}
+export,Export,匯出

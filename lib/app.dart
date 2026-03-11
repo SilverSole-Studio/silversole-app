@@ -21,6 +21,7 @@ class App extends ConsumerWidget {
       title: 'Silver Sole',
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
+      locale: context.locale,
       scaffoldMessengerKey: scaffoldMessengerKey,
       theme: ThemeData(
         useMaterial3: true,

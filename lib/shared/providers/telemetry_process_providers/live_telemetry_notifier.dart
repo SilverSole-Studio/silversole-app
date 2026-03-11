@@ -13,15 +13,30 @@ class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
 
   Future<void> _load() async {}
 
-  void updateImuNotifyData(ImuNotifyDataModel data) async {
-    final next = [...state.recent, data];
+  void updateImuNotifyData(ImuNotifyDataModel data) {
+    final next = [...state.recentImu, data];
     final trimmed = next.length > 100 ? next.sublist(next.length - 100) : next;
     state = state.copyWith(
-      recent: trimmed,
+      recentImu: trimmed,
       source: TelemetrySource.bleLive,
       updatedAt: DateTime.now(),
       errorMessage: null,
     );
+  }
+
+  void updateRecordImuNotifyData(ImuNotifyDataModel data, {int max = 1000}) {
+    final next = [...state.record, data];
+    final trimmed = next.length > max ? next.sublist(next.length - max) : next;
+    state = state.copyWith(
+      record: trimmed,
+      source: TelemetrySource.bleLive,
+      updatedAt: DateTime.now(),
+      errorMessage: null,
+    );
+  }
+
+  void clearRecordImuNotifyData() {
+    state = state.copyWith(record: []);
   }
 }
 

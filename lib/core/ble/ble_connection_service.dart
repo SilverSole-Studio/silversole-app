@@ -27,6 +27,8 @@ class BleConnectionService {
     return target;
   }
 
+  bool checkConnect(BlePairedDevice device) => BluetoothDevice.fromId(device.remoteId).isConnected;
+
   /// Disconnects the BLE [device] and clears all notify subscriptions for that device.
   ///
   /// This method:
@@ -149,39 +151,15 @@ class BleConnectionService {
     } catch (_) {}
   }
 
-  /// Reconnects to [device] if needed, then re-subscribes notify callbacks.
-  ///
-  /// This is a convenience wrapper around [connect] and [subscribeNotify].
-  /// It returns the same [Result] contract as [subscribeNotify].
-  Future<Result<StreamSubscription<List<int>>>> reconnectIfNeed(
-    BlePairedDevice device, {
-    required String serviceUuid,
-    required String characteristicUuid,
-    required void Function(List<int> value) onData,
-  }) async {
-    try {
-      final target = BluetoothDevice.fromId(device.remoteId);
-      if (target.isDisconnected) await connect(device);
-      return await subscribeNotify(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: characteristicUuid,
-        onData: onData,
-      );
-    } catch (e) {
-      return Result.error(Exception('reconnectIfNeed failed: $e'));
-    }
-  }
-
   Future<Result<String>> readStringCharacteristic(
     BlePairedDevice device, {
     required String serviceUuid,
     required String characteristicUuid,
   }) async {
     try {
+      // check characteristic exist
       final target = await connect(device);
       final services = await target.discoverServices();
-
       final s = services.firstWhereOrNull((s) => s.uuid == Guid(serviceUuid));
       final c = s?.characteristics.firstWhereOrNull((c) => c.uuid == Guid(characteristicUuid));
       if (c == null) return Result.error(Exception('Characteristic not found'));
@@ -191,6 +169,44 @@ class BleConnectionService {
     } catch (e) {
       return Result.error(Exception('readStringCharacteristic failed: $e'));
     }
+  }
+
+  Future<Result<void>> writeCharacteristic(
+    BlePairedDevice device, {
+    required String serviceUuid,
+    required String characteristicUuid,
+    required List<int> value,
+    bool withoutResponse = false,
+  }) async {
+    try {
+      // check characteristic exist
+      final target = await connect(device);
+      final services = await target.discoverServices();
+      final s = services.firstWhereOrNull((s) => s.uuid == Guid(serviceUuid));
+      final c = s?.characteristics.firstWhereOrNull((c) => c.uuid == Guid(characteristicUuid));
+      if (c == null) return Result.error(Exception('Characteristic not found'));
+
+      await c.write(value, withoutResponse: withoutResponse);
+      return Result.ok(null);
+    } catch (e) {
+      return Result.error(Exception('WriteCharacteristic failed: $e'));
+    }
+  }
+
+  Future<Result<void>> writeBoolCharacteristic(
+    BlePairedDevice device, {
+    required String serviceUuid,
+    required String characteristicUuid,
+    required bool value,
+    bool withoutResponse = false,
+  }) async {
+    return writeCharacteristic(
+      device,
+      serviceUuid: serviceUuid,
+      characteristicUuid: characteristicUuid,
+      value: utf8.encode(value ? '1' : '0'),
+      withoutResponse: withoutResponse,
+    );
   }
 
   Map<String, dynamic> parseImuNotify(List<int> value) {

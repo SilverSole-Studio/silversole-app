@@ -13,7 +13,8 @@ enum TelemetrySource {
 abstract class LiveTelemetryState with _$LiveTelemetryState {
   const factory LiveTelemetryState({
     @Default(TelemetrySource.none) TelemetrySource source,
-    @Default(<ImuNotifyDataModel>[]) List<ImuNotifyDataModel> recent,
+    @Default(<ImuNotifyDataModel>[]) List<ImuNotifyDataModel> recentImu,
+    @Default(<ImuNotifyDataModel>[]) List<ImuNotifyDataModel> record,
     DateTime? updatedAt,
     @Default(false) bool loading,
     String? errorMessage,
