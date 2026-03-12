@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.0
+更新內容:
+- 分析頁新增錄製資料匯出功能，可將 IMU 記錄整理為 JSON 檔並直接分享
+- 分析頁即時圖表新增六軸顯示項目，支援 pitch / roll 視覺化
+- 新增錄製資料專用圖表元件，區分即時資料與錄製資料的顯示邏輯
+- 新增自動連接主要使用的 SilverSole 裝置
+
+Updates:
+- Added export support on the Analytics page to package recorded IMU data as a JSON file and share it directly.
+- Added a six-axis chart option on the Analytics page, including pitch / roll visualization.
+- Added dedicated chart widgets for recorded telemetry and separated the rendering flow from live telemetry charts.
+- Added automatic connection to the preferred SilverSole device used
+
 ## v1.0.0
 更新內容:
 - 因重構基於資料庫之前端架構，與先前版本較有較大差異

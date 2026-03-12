@@ -128,7 +128,7 @@ Widget outlineButtonWithTheme({
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
       leading: Icon(icon, size: 28),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-      subtitle: Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w400)),
+      subtitle: subtitle.trim().isEmpty ? null : Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w400)),
     ),
   );
 }

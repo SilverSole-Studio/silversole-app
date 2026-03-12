@@ -9,6 +9,7 @@ import 'package:silversole/core/ble/ble_uuids.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
+import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 
@@ -28,12 +29,12 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     final json = bleConnectionService.parseImuNotify(value);
     final data = ImuNotifyDataModel.fromJson(json);
     live.updateImuNotifyData(data);
-    debugPrint('notify: $data');
+    // debugPrint('notify: $data');
   }
 
   void onRecordData(List<int> value) {
     final json = bleConnectionService.parseImuNotify(value);
-    final data = ImuNotifyDataModel.fromJson(json);
+    final data = RecordImuNotifyDataModel.fromJson(json);
     live.updateRecordImuNotifyData(data);
     debugPrint('record notify: $data');
   }

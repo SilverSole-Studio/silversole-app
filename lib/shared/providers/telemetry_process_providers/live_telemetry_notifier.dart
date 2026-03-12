@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/live_telemetry_state.dart';
+import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 
 class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
   @override
@@ -24,11 +25,11 @@ class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
     );
   }
 
-  void updateRecordImuNotifyData(ImuNotifyDataModel data, {int max = 1000}) {
+  void updateRecordImuNotifyData(RecordImuNotifyDataModel data) {
     final next = [...state.record, data];
-    final trimmed = next.length > max ? next.sublist(next.length - max) : next;
+    // final trimmed = next.length > max ? next.sublist(next.length - max) : next;
     state = state.copyWith(
-      record: trimmed,
+      record: next,
       source: TelemetrySource.bleLive,
       updatedAt: DateTime.now(),
       errorMessage: null,

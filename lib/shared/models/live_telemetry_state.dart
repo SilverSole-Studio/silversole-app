@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
+import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 
 part 'live_telemetry_state.freezed.dart';
 
@@ -14,7 +15,7 @@ abstract class LiveTelemetryState with _$LiveTelemetryState {
   const factory LiveTelemetryState({
     @Default(TelemetrySource.none) TelemetrySource source,
     @Default(<ImuNotifyDataModel>[]) List<ImuNotifyDataModel> recentImu,
-    @Default(<ImuNotifyDataModel>[]) List<ImuNotifyDataModel> record,
+    @Default(<RecordImuNotifyDataModel>[]) List<RecordImuNotifyDataModel> record,
     DateTime? updatedAt,
     @Default(false) bool loading,
     String? errorMessage,

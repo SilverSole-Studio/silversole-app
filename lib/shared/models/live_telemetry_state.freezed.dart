@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LiveTelemetryState {
 
- TelemetrySource get source; List<ImuNotifyDataModel> get recentImu; List<ImuNotifyDataModel> get record; DateTime? get updatedAt; bool get loading; String? get errorMessage;
+ TelemetrySource get source; List<ImuNotifyDataModel> get recentImu; List<RecordImuNotifyDataModel> get record; DateTime? get updatedAt; bool get loading; String? get errorMessage;
 /// Create a copy of LiveTelemetryState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $LiveTelemetryStateCopyWith<$Res>  {
   factory $LiveTelemetryStateCopyWith(LiveTelemetryState value, $Res Function(LiveTelemetryState) _then) = _$LiveTelemetryStateCopyWithImpl;
 @useResult
 $Res call({
- TelemetrySource source, List<ImuNotifyDataModel> recentImu, List<ImuNotifyDataModel> record, DateTime? updatedAt, bool loading, String? errorMessage
+ TelemetrySource source, List<ImuNotifyDataModel> recentImu, List<RecordImuNotifyDataModel> record, DateTime? updatedAt, bool loading, String? errorMessage
 });
 
 
@@ -67,7 +67,7 @@ class _$LiveTelemetryStateCopyWithImpl<$Res>
 source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
 as TelemetrySource,recentImu: null == recentImu ? _self.recentImu : recentImu // ignore: cast_nullable_to_non_nullable
 as List<ImuNotifyDataModel>,record: null == record ? _self.record : record // ignore: cast_nullable_to_non_nullable
-as List<ImuNotifyDataModel>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as List<RecordImuNotifyDataModel>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -155,7 +155,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<ImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<RecordImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveTelemetryState() when $default != null:
 return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.loading,_that.errorMessage);case _:
@@ -176,7 +176,7 @@ return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<ImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<RecordImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)  $default,) {final _that = this;
 switch (_that) {
 case _LiveTelemetryState():
 return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.loading,_that.errorMessage);case _:
@@ -196,7 +196,7 @@ return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<ImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( TelemetrySource source,  List<ImuNotifyDataModel> recentImu,  List<RecordImuNotifyDataModel> record,  DateTime? updatedAt,  bool loading,  String? errorMessage)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveTelemetryState() when $default != null:
 return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.loading,_that.errorMessage);case _:
@@ -211,7 +211,7 @@ return $default(_that.source,_that.recentImu,_that.record,_that.updatedAt,_that.
 
 
 class _LiveTelemetryState implements LiveTelemetryState {
-  const _LiveTelemetryState({this.source = TelemetrySource.none, final  List<ImuNotifyDataModel> recentImu = const <ImuNotifyDataModel>[], final  List<ImuNotifyDataModel> record = const <ImuNotifyDataModel>[], this.updatedAt, this.loading = false, this.errorMessage}): _recentImu = recentImu,_record = record;
+  const _LiveTelemetryState({this.source = TelemetrySource.none, final  List<ImuNotifyDataModel> recentImu = const <ImuNotifyDataModel>[], final  List<RecordImuNotifyDataModel> record = const <RecordImuNotifyDataModel>[], this.updatedAt, this.loading = false, this.errorMessage}): _recentImu = recentImu,_record = record;
   
 
 @override@JsonKey() final  TelemetrySource source;
@@ -222,8 +222,8 @@ class _LiveTelemetryState implements LiveTelemetryState {
   return EqualUnmodifiableListView(_recentImu);
 }
 
- final  List<ImuNotifyDataModel> _record;
-@override@JsonKey() List<ImuNotifyDataModel> get record {
+ final  List<RecordImuNotifyDataModel> _record;
+@override@JsonKey() List<RecordImuNotifyDataModel> get record {
   if (_record is EqualUnmodifiableListView) return _record;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_record);
@@ -263,7 +263,7 @@ abstract mixin class _$LiveTelemetryStateCopyWith<$Res> implements $LiveTelemetr
   factory _$LiveTelemetryStateCopyWith(_LiveTelemetryState value, $Res Function(_LiveTelemetryState) _then) = __$LiveTelemetryStateCopyWithImpl;
 @override @useResult
 $Res call({
- TelemetrySource source, List<ImuNotifyDataModel> recentImu, List<ImuNotifyDataModel> record, DateTime? updatedAt, bool loading, String? errorMessage
+ TelemetrySource source, List<ImuNotifyDataModel> recentImu, List<RecordImuNotifyDataModel> record, DateTime? updatedAt, bool loading, String? errorMessage
 });
 
 
@@ -285,7 +285,7 @@ class __$LiveTelemetryStateCopyWithImpl<$Res>
 source: null == source ? _self.source : source // ignore: cast_nullable_to_non_nullable
 as TelemetrySource,recentImu: null == recentImu ? _self._recentImu : recentImu // ignore: cast_nullable_to_non_nullable
 as List<ImuNotifyDataModel>,record: null == record ? _self._record : record // ignore: cast_nullable_to_non_nullable
-as List<ImuNotifyDataModel>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as List<RecordImuNotifyDataModel>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
 as String?,

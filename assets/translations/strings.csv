@@ -98,10 +98,19 @@ coming_soon_content,This feature is not available yet. Stay tuned for updates.,�
 pressure,Pressure,壓力
 acc,Acceleration,加速度
 gyro,Gyroscope,陀螺儀
+six-axis,Six Axis,六軸
 battery,Battery,電池
 start_record,Start record All,開始記錄
 stop_record,Stop record,結束記錄
 recording,Recording,記錄中
+record,Record,記錄
 already_recording_with_seconds,Recording in progress: {} seconds,記錄進行中：{} 秒
 already_recording_with_count,Recorded samples: {},已記錄資料筆數：{}
+export_record_file_title,Choose the action type,選擇動作種類
 export,Export,匯出
+walk,Walk,走路
+run,Run,跑步
+sit_down,Sit Down,坐下
+stand_up,Stand Up,起立
+fall,Fall,跌倒
+kick,Kick,踢擊

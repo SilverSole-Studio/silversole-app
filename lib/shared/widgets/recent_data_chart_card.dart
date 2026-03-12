@@ -1,14 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/app_settings.dart';
-import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
-import 'package:silversole/shared/widgets/chard_section.dart';
+import 'package:silversole/shared/widgets/chart/chart_section.dart';
+import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
 
 import '../providers/settings_provider.dart';
 
@@ -58,7 +56,7 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   @override
   Widget build(BuildContext context) {
     Color getColor(int i) => Colors.accents[i % Colors.accents.length];
-    final labels = ['pressure', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'battery'];
+    final labels = ['pressure', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'pitch', 'roll', 'battery'];
 
     return SizedBox(
       width: double.infinity,
@@ -75,7 +73,7 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
               spacing: 18,
               children: [
                 Text('device_recent_data'.tr(), style: context.tt.titleSmall.bold),
-                ChardSection(type: ChardDisplayType.all),
+                ImuChartSection(type: ChardDisplayType.all),
                 Wrap(
                   spacing: 8,
                   children: [
