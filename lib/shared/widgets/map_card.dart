@@ -202,13 +202,9 @@ class _MapCardState extends ConsumerState<MapCard> {
       height: 200,
       child: Card(
         elevation: 0,
-        child: InkWell(
-          onTap: refreshMapAndResetCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            // child: settings.deviceId != null ? googleMap(style) : hintBindingPage(),
-            child: googleMap(style),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: googleMap(style),
         ),
       ),
     );

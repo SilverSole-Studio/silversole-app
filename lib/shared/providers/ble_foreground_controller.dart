@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -8,9 +9,11 @@ import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/fall_detect_event_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
+import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 
 import 'settings_provider.dart';
@@ -37,6 +40,12 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     final data = RecordImuNotifyDataModel.fromJson(json);
     live.updateRecordImuNotifyData(data);
     debugPrint('record notify: $data');
+  }
+
+  void onFallDetect(List<int> value, String deviceId) {
+    final isFall = utf8.decode(value) == "1";
+    if (!isFall) return;
+    ref.read(fallEventBusProvider).emit(FallDetectEvent(timestamp: DateTime.now(), deviceId: deviceId, detect: true));
   }
 
   Future<bool> ensureConnectPermission() async {
@@ -101,6 +110,8 @@ final bleForegroundControlProvider = Provider<void>((ref) {
           debugPrint('auto connect success');
       }
 
+
+
       // Read device ID
       final deviceIdResult = await bleConnectionService.readStringCharacteristic(
         device,
@@ -110,9 +121,31 @@ final bleForegroundControlProvider = Provider<void>((ref) {
       switch (deviceIdResult) {
         case Error():
           debugPrint('read device id failed: ${deviceIdResult.error}');
+          break;
         case Ok():
           unawaited(settings.addOrUpdatePairedDevice(device.copyWith(deviceId: deviceIdResult.value)));
           debugPrint('device id: ${deviceIdResult.value}');
+      }
+
+      // Read fall detect
+      final fallDetectResult = await bleConnectionService.subscribeNotify(device, serviceUuid: serviceUuid, characteristicUuid: fallDetectCharUuid, onData: (value) {
+        try {
+          final deviceId = switch (deviceIdResult) {
+            Error() => 'Unknown',
+            Ok() => deviceIdResult.value,
+          };
+          onFallDetect(value, deviceId);
+        } catch (e) {
+          debugPrint('parse fall detect failed: $e');
+        }
+      });
+
+      switch (fallDetectResult) {
+        case Error():
+          debugPrint('fall_detect_subscribe_failed ${fallDetectResult.error}');
+          break;
+        case Ok():
+          debugPrint('auto connect success');
       }
     } finally {
       connecting = false;

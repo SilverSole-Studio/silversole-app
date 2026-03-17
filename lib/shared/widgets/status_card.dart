@@ -9,7 +9,6 @@ import 'package:silversole/shared/widgets/rader_dot.dart';
 enum StatusCardType { normal, statusDisplay, menu }
 
 
-
 Widget statusCard(
   BuildContext context, {
   StatusCardType type = StatusCardType.normal,

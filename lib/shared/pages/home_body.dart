@@ -5,13 +5,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
-import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
-import 'package:silversole/shared/widgets/device_status_card.dart';
+import 'package:silversole/shared/widgets/home_device_status_section.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
-import 'package:silversole/shared/widgets/status_card.dart';
 import 'package:silversole/shared/widgets/warning_card.dart';
 
 class HomeBody extends ConsumerStatefulWidget {
@@ -49,18 +46,11 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     );
   }
 
-  Widget activeBody(BlePairedDevice device, DeviceStatusDetailModel detail) {
+  Widget activeBody(BlePairedDevice device) {
     return Column(
       spacing: 16,
       children: [
-        DeviceStatusCard(
-          name: device.name,
-          type: StatusCardType.statusDisplay,
-          model: device.displayModel ?? 'unknown_model'.tr(),
-          id: device.remoteId,
-          activeDisplay: true,
-          detail: detail,
-        ),
+        HomeDeviceStatusSection(device: device),
         MapCard(),
         WarningCard(),
         RecentDataChartCard(),
@@ -74,14 +64,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final tt = Theme.of(context).textTheme;
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
-    final viewProvider = ref.watch(telemetryViewProvider);
-    final lastest = viewProvider.recentImu.isNotEmpty ? viewProvider.recentImu.last : null;
-    final detail = DeviceStatusDetailModel(
-      lastHeartbeatAt: viewProvider.updatedAt,
-      lastBatteryAt: viewProvider.updatedAt,
-      lastBatteryPercent: lastest?.batteryPercent,
-      isCharging: lastest?.isCharging,
-    );
+
 
     return Scaffold(
       body: SafeArea(
@@ -111,7 +94,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                     IconButton(onPressed: comingSoon, icon: Icon(LucideIcons.bell)),
                   ],
                 ),
-                if (preferredDevice != null) activeBody(preferredDevice, detail) else notActiveBody(),
+                if (preferredDevice != null) activeBody(preferredDevice) else notActiveBody(),
               ],
             ),
           ),

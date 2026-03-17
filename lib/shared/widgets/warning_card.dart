@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
 class WarningCard extends ConsumerStatefulWidget {
@@ -12,6 +13,9 @@ class WarningCard extends ConsumerStatefulWidget {
 }
 
 class _WarningCardState extends ConsumerState<WarningCard> {
+  //TODO: the eventCount is global currently, make the eventCount per device
+  int eventCount = 0;
+
   void goToRecentWarningsPage(bool enable) {
     if (enable) {
       context.push('/device-recent-warnings');
@@ -78,7 +82,6 @@ class _WarningCardState extends ConsumerState<WarningCard> {
 
   @override
   Widget build(BuildContext context) {
-    final eventCount = 0;
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final color = eventCount > 3 ? Colors.red : Theme.of(context).colorScheme.primary;
@@ -86,6 +89,14 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     final hoverColor = cs.primary.withValues(alpha: 0.02);
     final settings = ref.watch(settingsProvider);
     final isBinding = settings.deviceId != null;
+
+    //TODO: save the event to history provider and separate with the deviceId
+    ref.listen(fallEventStreamProvider, (_, next) {
+      next.whenData((event) {
+        setState(() {eventCount++;});
+      });
+    });
+
     return SizedBox(
       width: double.infinity,
       child: Card(
@@ -110,7 +121,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
                 ),
                 buildCenterContent(eventCount: eventCount, color: color),
                 buildIndicator(
-                  progress: eventCount.toDouble() / 10.0,
+                  progress: eventCount.toDouble() / 2.0,
                   bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
                   color: color,
                 ),
