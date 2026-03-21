@@ -52,7 +52,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       children: [
         HomeDeviceStatusSection(device: device),
         MapCard(),
-        WarningCard(),
+        WarningCard(key: ValueKey(device.remoteId)),
         RecentDataChartCard(),
       ],
     );
