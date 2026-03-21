@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.0
+更新內容:
+- 增加簡易跌倒判定
+- 優化地圖效能
+
+Updates:
+- Added simple fall detection
+- Optimized map performance
+
+
 ## v1.1.0
 更新內容:
 - 分析頁新增錄製資料匯出功能，可將 IMU 記錄整理為 JSON 檔並直接分享
