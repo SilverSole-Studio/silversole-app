@@ -10,19 +10,37 @@ class ImuChartSection extends ConsumerWidget {
   final ChardDisplayType type;
   final List<int> selectedList;
 
-  const ImuChartSection({super.key, required this.type, this.selectedList = const []});
+  const ImuChartSection({
+    super.key,
+    required this.type,
+    this.selectedList = const [],
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(telemetryViewProvider).recentImu;
-    final recent = data.takeLast(20);
+    final recent = data.takeLast(ChardSection.defaultVisiblePointCount);
+    final startIndex = data.length - recent.length;
     List<FlSpot> buildSpots(num Function(ImuNotifyDataModel d) pick) =>
-        List.generate(recent.length, (i) => FlSpot(i.toDouble(), pick(recent[i]).toDouble()), growable: false);
+        List.generate(
+          recent.length,
+          (i) =>
+              FlSpot((startIndex + i).toDouble(), pick(recent[i]).toDouble()),
+          growable: false,
+        );
 
     final spotsList = [
       [buildSpots((d) => d.pressure)],
-      [buildSpots((d) => d.ax), buildSpots((d) => d.ay), buildSpots((d) => d.az)],
-      [buildSpots((d) => d.gx), buildSpots((d) => d.gy), buildSpots((d) => d.gz)],
+      [
+        buildSpots((d) => d.ax),
+        buildSpots((d) => d.ay),
+        buildSpots((d) => d.az),
+      ],
+      [
+        buildSpots((d) => d.gx),
+        buildSpots((d) => d.gy),
+        buildSpots((d) => d.gz),
+      ],
       [buildSpots((d) => d.pitch ?? 0), buildSpots((d) => d.roll ?? 0)],
       [buildSpots((d) => d.batteryPercent)],
     ];
@@ -37,6 +55,7 @@ class ImuChartSection extends ConsumerWidget {
       dataMax: dataMax,
       dataMin: dataMin,
       spotsList: spotsList,
+      visiblePointCount: ChardSection.defaultVisiblePointCount,
     );
   }
 }

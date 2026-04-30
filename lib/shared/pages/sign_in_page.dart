@@ -64,15 +64,19 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: back, icon: const Icon(LucideIcons.arrowLeft)),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(48, 0, 48, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            48,
+            48,
+            48,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           child: Form(
             key: _formKey,
-            autovalidateMode: _autoValidate ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
+            autovalidateMode: _autoValidate
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               spacing: 16,
@@ -96,7 +100,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(LucideIcons.mail),
                   ),
-                  validator: (val) => fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
+                  validator: (val) =>
+                      fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
                   onChanged: (value) => setEmail(value),
                 ),
                 TextFormField(
@@ -125,13 +130,22 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                           ), // ignore: deprecated_member_use
                   ),
                 ),
-                Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: textOnDivider(context, 'or'.tr())),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: textOnDivider(context, 'or'.tr()),
+                ),
                 googleSignInButton(context, onPressed: signInGoogle),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('no_account_prompt'.tr(), style: TextStyle(color: Colors.grey)),
-                    TextButton(onPressed: goToSignUp, child: Text('sign_up'.tr())),
+                    Text(
+                      'no_account_prompt'.tr(),
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    TextButton(
+                      onPressed: goToSignUp,
+                      child: Text('sign_up'.tr()),
+                    ),
                   ],
                 ),
               ],
@@ -160,7 +174,10 @@ Widget textOnDivider(BuildContext context, String text) {
   );
 }
 
-Widget googleSignInButton(BuildContext context, {required VoidCallback onPressed}) {
+Widget googleSignInButton(
+  BuildContext context, {
+  required VoidCallback onPressed,
+}) {
   return SizedBox(
     width: double.infinity,
     child: ElevatedButton(
@@ -172,9 +189,17 @@ Widget googleSignInButton(BuildContext context, {required VoidCallback onPressed
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: SvgPicture.asset('assets/images/google_logo.svg', width: 20, height: 20),
+              child: SvgPicture.asset(
+                'assets/images/google_logo.svg',
+                width: 20,
+                height: 20,
+              ),
             ),
-            Text('sign_in_with_google'.tr(), style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+            Text(
+              'sign_in_with_google'.tr(),
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

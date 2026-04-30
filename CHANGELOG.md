@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.3.0
+更新內容:
+- 新增登入狀態導向，未登入時導向登入頁
+- 新增 BLE base timestamp 寫入與裝置狀態通知上傳流程
+- 新增 SilverSole 裝置狀態資料承載模型與心跳函式資料接收服務
+- 優化即時與錄製 IMU 圖表，只顯示最近資料視窗並平滑更新
+- 設定主要 BLE 裝置前會停止掃描，降低連線衝突
+
+Updates:
+- Added auth-aware routing that sends guests to the sign-in page.
+- Added BLE base timestamp writing and device status notification upload flow.
+- Added SilverSole device status payload models and heartbeat function ingest service.
+- Improved live and recorded IMU charts with a recent-data viewport and smoother updates.
+- Stops BLE scanning before setting a preferred device to reduce connection conflicts.
+
 ## v1.2.1
 更新內容:
 - 增加簡易跌倒判定

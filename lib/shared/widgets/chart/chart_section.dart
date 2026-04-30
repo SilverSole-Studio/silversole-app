@@ -8,6 +8,8 @@ enum ChardDisplayType { all, single, optional }
 enum ChardDataSource { imu, recordImu }
 
 class ChardSection extends ConsumerStatefulWidget {
+  static const int defaultVisiblePointCount = 20;
+
   final ChardDataSource source;
   final ChardDisplayType type;
   final List<dynamic> data;
@@ -15,6 +17,7 @@ class ChardSection extends ConsumerStatefulWidget {
   final List<double> dataMin;
   final List<List<List<FlSpot>>> spotsList;
   final List<int> selectedList;
+  final int visiblePointCount;
 
   const ChardSection({
     super.key,
@@ -25,6 +28,7 @@ class ChardSection extends ConsumerStatefulWidget {
     required this.dataMin,
     this.selectedList = const [],
     this.source = ChardDataSource.imu,
+    this.visiblePointCount = defaultVisiblePointCount,
   });
 
   @override
@@ -42,7 +46,9 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
         case ChardDisplayType.single:
           return widget.dataMax[widget.selectedList[0]];
         case ChardDisplayType.optional:
-          final selected = widget.dataMax.whereIndexed((i, _) => widget.selectedList.contains(i)).toList();
+          final selected = widget.dataMax
+              .whereIndexed((i, _) => widget.selectedList.contains(i))
+              .toList();
           return (selected.isNotEmpty ? selected : [widget.dataMax[0]]).max;
       }
     } catch (e) {
@@ -58,7 +64,9 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
         case ChardDisplayType.single:
           return widget.dataMin[widget.selectedList[0]];
         case ChardDisplayType.optional:
-          final selected = widget.dataMin.whereIndexed((i, _) => widget.selectedList.contains(i)).toList();
+          final selected = widget.dataMin
+              .whereIndexed((i, _) => widget.selectedList.contains(i))
+              .toList();
           return (selected.isNotEmpty ? selected : [widget.dataMin[0]]).min;
       }
     } catch (e) {
@@ -66,16 +74,31 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
     }
   }
 
-  List<T> getRecentList<T>(List<T> data, int count) =>
-      data.skip((data.length - count).clamp(0, data.length)).toList(growable: false);
+  List<T> getRecentList<T>(List<T> data, int count) => data
+      .skip((data.length - count).clamp(0, data.length))
+      .toList(growable: false);
 
+  double getMinX() {
+    final totalCount = widget.data.length;
+    if (totalCount <= widget.visiblePointCount) return 0;
+    return (totalCount - widget.visiblePointCount).toDouble();
+  }
 
+  double getMaxX() {
+    final totalCount = widget.data.length;
+    if (totalCount <= widget.visiblePointCount) {
+      return (widget.visiblePointCount - 1).toDouble();
+    }
+    return (totalCount - 1).toDouble();
+  }
 
   @override
   Widget build(BuildContext context) {
     final filteredSpotsList = widget.type == ChardDisplayType.all
         ? widget.spotsList
-        : widget.spotsList.whereIndexed((i, _) => widget.selectedList.contains(i)).toList();
+        : widget.spotsList
+              .whereIndexed((i, _) => widget.selectedList.contains(i))
+              .toList();
 
     return ClipRect(
       child: SizedBox(
@@ -84,10 +107,16 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
           LineChartData(
             titlesData: FlTitlesData(
               topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: true),
+              ),
             ),
+            minX: getMinX(),
+            maxX: getMaxX(),
             maxY: getMaxY(),
             minY: getMinY(),
             lineBarsData: () {
@@ -100,6 +129,7 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
                     LineChartBarData(
                       spots: spots,
                       isCurved: true,
+                      preventCurveOverShooting: true,
                       color: getColor(colorIndex++),
                       dotData: const FlDotData(show: false),
                     ),
@@ -110,6 +140,8 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
               return bars;
             }(),
           ),
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.linear,
         ),
       ),
     );

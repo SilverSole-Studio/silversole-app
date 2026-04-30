@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
@@ -24,7 +23,9 @@ class TelemetryIngestService {
     try {
       final deviceId = device.deviceId;
       final eventTs = ts ?? DateTime.now();
-      if (deviceId == null) return Result.error(Exception('Device id not bound with BLE device'));
+      if (deviceId == null) {
+        return Result.error(Exception('Device id not bound with BLE device'));
+      }
       await enqueue(deviceId: deviceId, data: payload, ts: eventTs);
       await flushQueue(deviceId: device.deviceId);
       return Result.ok(null);
@@ -42,7 +43,9 @@ class TelemetryIngestService {
       final deviceId = device.deviceId;
       //TODO: make device status model
       // final eventTs = ts ?? DateTime.now();
-      if (deviceId == null) return Result.error(Exception('Device id not bound with BLE device'));
+      if (deviceId == null) {
+        return Result.error(Exception('Device id not bound with BLE device'));
+      }
       // await enqueue(deviceId: deviceId, data: payload, ts: eventTs);
       await flushQueue(deviceId: device.deviceId);
       return Result.ok(null);
@@ -63,7 +66,11 @@ class TelemetryIngestService {
   ///
   /// [deviceId] is the cloud device id, [data] is the parsed IMU payload,
   /// and [ts] is the event timestamp.
-  Future<void> enqueue({required String deviceId, required ImuNotifyDataModel data, required DateTime ts}) async {}
+  Future<void> enqueue({
+    required String deviceId,
+    required ImuNotifyDataModel data,
+    required DateTime ts,
+  }) async {}
 
   /// Flushes queued telemetry items to backend, optionally filtered by [deviceId].
   ///

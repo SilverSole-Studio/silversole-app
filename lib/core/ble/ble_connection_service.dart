@@ -11,7 +11,11 @@ class BleConnectionService {
   final _notifyCharMap = <String, BluetoothCharacteristic>{};
 
   /// Builds a stable cache key from [remoteId], [serviceUuid], and [characteristicUuid].
-  String _notifyKey({required String remoteId, required String serviceUuid, required String characteristicUuid}) =>
+  String _notifyKey({
+    required String remoteId,
+    required String serviceUuid,
+    required String characteristicUuid,
+  }) =>
       '$remoteId|${serviceUuid.toLowerCase()}|${characteristicUuid.toLowerCase()}';
 
   /// Connects to the BLE [device] and returns the corresponding [BluetoothDevice].
@@ -22,12 +26,18 @@ class BleConnectionService {
 
     // Reconnect
     if (target.isDisconnected) {
-      await target.connect(license: License.free, timeout: Duration(seconds: 20), autoConnect: false, mtu: 512);
+      await target.connect(
+        license: License.free,
+        timeout: Duration(seconds: 20),
+        autoConnect: false,
+        mtu: 512,
+      );
     }
     return target;
   }
 
-  bool checkConnect(BlePairedDevice device) => BluetoothDevice.fromId(device.remoteId).isConnected;
+  bool checkConnect(BlePairedDevice device) =>
+      BluetoothDevice.fromId(device.remoteId).isConnected;
 
   /// Disconnects the BLE [device] and clears all notify subscriptions for that device.
   ///
@@ -38,7 +48,9 @@ class BleConnectionService {
   Future<void> disconnect(BlePairedDevice device) async {
     // Clear cache with same remoteId
     final remoteId = device.remoteId;
-    final keys = _notifySubMap.keys.where((key) => key.startsWith('$remoteId|')).toList();
+    final keys = _notifySubMap.keys
+        .where((key) => key.startsWith('$remoteId|'))
+        .toList();
     for (final key in keys) {
       final sub = _notifySubMap.remove(key);
       await sub?.cancel();
@@ -96,11 +108,17 @@ class BleConnectionService {
 
       // Check device detail exist
       if (targetChar == null) {
-        return Result.error(Exception('Characteristic not found: $serviceUuid / $characteristicUuid'));
+        return Result.error(
+          Exception(
+            'Characteristic not found: $serviceUuid / $characteristicUuid',
+          ),
+        );
       }
 
       if (!targetChar.properties.notify && !targetChar.properties.indicate) {
-        return Result.error(Exception('Characteristic not support notify or indicate'));
+        return Result.error(
+          Exception('Characteristic not support notify or indicate'),
+        );
       }
 
       // Alter Map cache
@@ -140,7 +158,11 @@ class BleConnectionService {
     required String serviceUuid,
     required String characteristicUuid,
   }) async {
-    final key = _notifyKey(remoteId: device.remoteId, serviceUuid: serviceUuid, characteristicUuid: characteristicUuid);
+    final key = _notifyKey(
+      remoteId: device.remoteId,
+      serviceUuid: serviceUuid,
+      characteristicUuid: characteristicUuid,
+    );
 
     final sub = _notifySubMap.remove(key);
     await sub?.cancel();
@@ -161,7 +183,9 @@ class BleConnectionService {
       final target = await connect(device);
       final services = await target.discoverServices();
       final s = services.firstWhereOrNull((s) => s.uuid == Guid(serviceUuid));
-      final c = s?.characteristics.firstWhereOrNull((c) => c.uuid == Guid(characteristicUuid));
+      final c = s?.characteristics.firstWhereOrNull(
+        (c) => c.uuid == Guid(characteristicUuid),
+      );
       if (c == null) return Result.error(Exception('Characteristic not found'));
 
       final bytes = await c.read();
@@ -183,7 +207,9 @@ class BleConnectionService {
       final target = await connect(device);
       final services = await target.discoverServices();
       final s = services.firstWhereOrNull((s) => s.uuid == Guid(serviceUuid));
-      final c = s?.characteristics.firstWhereOrNull((c) => c.uuid == Guid(characteristicUuid));
+      final c = s?.characteristics.firstWhereOrNull(
+        (c) => c.uuid == Guid(characteristicUuid),
+      );
       if (c == null) return Result.error(Exception('Characteristic not found'));
 
       await c.write(value, withoutResponse: withoutResponse);
@@ -205,6 +231,22 @@ class BleConnectionService {
       serviceUuid: serviceUuid,
       characteristicUuid: characteristicUuid,
       value: utf8.encode(value ? '1' : '0'),
+      withoutResponse: withoutResponse,
+    );
+  }
+
+  Future<Result<void>> writeStringCharacteristic(
+    BlePairedDevice device, {
+    required String serviceUuid,
+    required String characteristicUuid,
+    required String value,
+    bool withoutResponse = false,
+  }) async {
+    return writeCharacteristic(
+      device,
+      serviceUuid: serviceUuid,
+      characteristicUuid: characteristicUuid,
+      value: utf8.encode(value),
       withoutResponse: withoutResponse,
     );
   }

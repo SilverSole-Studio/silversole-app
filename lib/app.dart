@@ -13,8 +13,9 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final router = ref.watch(routerProvider);
     final darkMode = settings.darkMode;
-    
+
     ref.watch(bleForegroundControlProvider);
 
     return MaterialApp.router(
@@ -23,10 +24,7 @@ class App extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       locale: context.locale,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
+      theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
       darkTheme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF6750A4),

@@ -9,10 +9,12 @@ import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/device_status_model.dart';
 import 'package:silversole/shared/models/fall_detect_event_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
+import 'package:silversole/shared/providers/device_status_ingest_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 
@@ -22,6 +24,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   // Check platform
   if (defaultTargetPlatform != TargetPlatform.android) return;
   final bleConnectionService = ref.read(bleConnectProvider);
+  final deviceStatusIngestService = ref.read(deviceStatusIngestProvider);
   final settings = ref.read(settingsProvider.notifier);
   final live = ref.read(liveTelemetryProvider.notifier);
 
@@ -45,7 +48,49 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   void onFallDetect(List<int> value, String deviceId) {
     final isFall = utf8.decode(value) == "1";
     if (!isFall) return;
-    ref.read(fallEventBusProvider).emit(FallDetectEvent(timestamp: DateTime.now(), deviceId: deviceId, detect: true));
+    ref
+        .read(fallEventBusProvider)
+        .emit(
+          FallDetectEvent(
+            timestamp: DateTime.now(),
+            deviceId: deviceId,
+            detect: true,
+          ),
+        );
+  }
+
+  bool isDeviceStatusTimestampValid(
+    int timestampMs, {
+    Duration tolerance = const Duration(minutes: 10),
+  }) {
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final diffMs = (timestampMs - nowMs).abs();
+    debugPrint('device status diffMs=$diffMs');
+    return diffMs <= tolerance.inMilliseconds;
+  }
+
+  Future<void> onDeviceStatus(BlePairedDevice device, List<int> value) async {
+    try {
+      final payload = bleConnectionService.parseImuNotify(value);
+      final status = DeviceStatusModel.fromJson(payload);
+      if (!isDeviceStatusTimestampValid(status.timestamp)) {
+        debugPrint('device status timestamp invalid: ${status.timestamp}');
+        return;
+      }
+      final result = await deviceStatusIngestService.ingestDeviceStatus(
+        device: device,
+        payload: status,
+      );
+
+      switch (result) {
+        case Error():
+          throw result.error;
+        case Ok():
+          break;
+      }
+    } catch (e) {
+      debugPrint('device status ingest failed: $e');
+    }
   }
 
   Future<bool> ensureConnectPermission() async {
@@ -83,7 +128,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
       switch (imuResult) {
         case Error():
           debugPrint('subscribe_failed ${imuResult.error}');
-          break;
+          return;
         case Ok():
           debugPrint('auto connect success');
       }
@@ -99,72 +144,118 @@ final bleForegroundControlProvider = Provider<void>((ref) {
           } catch (e) {
             debugPrint('parse record notify failed: $e');
           }
-        }
+        },
       );
 
       switch (recordImuResult) {
         case Error():
           debugPrint('record_subscribe_failed ${recordImuResult.error}');
-          break;
+          return;
         case Ok():
           debugPrint('auto connect success');
       }
 
-
-
       // Read device ID
-      final deviceIdResult = await bleConnectionService.readStringCharacteristic(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: deviceIdCharUuid,
-      );
+      final deviceIdResult = await bleConnectionService
+          .readStringCharacteristic(
+            device,
+            serviceUuid: serviceUuid,
+            characteristicUuid: deviceIdCharUuid,
+          );
+      var boundDevice = device;
       switch (deviceIdResult) {
         case Error():
           debugPrint('read device id failed: ${deviceIdResult.error}');
-          break;
+          return;
         case Ok():
-          unawaited(settings.addOrUpdatePairedDevice(device.copyWith(deviceId: deviceIdResult.value)));
+          boundDevice = device.copyWith(deviceId: deviceIdResult.value);
+          unawaited(settings.addOrUpdatePairedDevice(boundDevice));
           debugPrint('device id: ${deviceIdResult.value}');
+      }
+      final deviceId = boundDevice.deviceId!;
+
+      // Write base timestamp
+      final timestampResult = await bleConnectionService.writeBaseTimestamp(
+        device,
+      );
+      switch (timestampResult) {
+        case Error():
+          debugPrint('write base timestamp failed: ${timestampResult.error}');
+          return;
+        case Ok():
+          debugPrint('base timestamp synced');
       }
 
       // Read fall detect
-      final fallDetectResult = await bleConnectionService.subscribeNotify(device, serviceUuid: serviceUuid, characteristicUuid: fallDetectCharUuid, onData: (value) {
-        try {
-          final deviceId = switch (deviceIdResult) {
-            Error() => 'Unknown',
-            Ok() => deviceIdResult.value,
-          };
-          onFallDetect(value, deviceId);
-        } catch (e) {
-          debugPrint('parse fall detect failed: $e');
-        }
-      });
+      final fallDetectResult = await bleConnectionService.subscribeNotify(
+        device,
+        serviceUuid: serviceUuid,
+        characteristicUuid: fallDetectCharUuid,
+        onData: (value) {
+          try {
+            onFallDetect(value, deviceId);
+          } catch (e) {
+            debugPrint('parse fall detect failed: $e');
+          }
+        },
+      );
 
       switch (fallDetectResult) {
         case Error():
           debugPrint('fall_detect_subscribe_failed ${fallDetectResult.error}');
-          break;
+          return;
         case Ok():
           debugPrint('auto connect success');
+      }
+
+      final deviceStatusResult = await bleConnectionService.subscribeNotify(
+        device,
+        serviceUuid: serviceUuid,
+        characteristicUuid: deviceStatusCharUuid,
+        onData: (value) async {
+          try {
+            await onDeviceStatus(boundDevice, value);
+          } catch (e) {
+            debugPrint('parse device status failed: $e');
+          }
+        },
+      );
+
+      switch (deviceStatusResult) {
+        case Error():
+          debugPrint(
+            'device_status_subscribe_failed ${deviceStatusResult.error}',
+          );
+          return;
+        case Ok():
+          debugPrint('device status subscribe success');
       }
     } finally {
       connecting = false;
     }
   }
 
-  ref.listen<BlePairedDevice?>(settingsProvider.select((s) => s.preferredDevice), (prev, next) {
-    reconnectTimer?.cancel();
+  ref.listen<BlePairedDevice?>(
+    settingsProvider.select((s) => s.preferredDevice),
+    (prev, next) {
+      if (prev?.remoteId == next?.remoteId) return;
 
-    // Disconnect
-    if (prev != null) unawaited(bleConnectionService.disconnect(prev));
-    if (next == null) {
-      unawaited(stopBleService());
-      return;
-    }
+      reconnectTimer?.cancel();
 
-    unawaited(tryAutoConnect(next));
-    reconnectTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-      if (!bleConnectionService.checkConnect(next)) unawaited(tryAutoConnect(next));
-    });
-  }, fireImmediately: true);
+      // Disconnect
+      if (prev != null) unawaited(bleConnectionService.disconnect(prev));
+      if (next == null) {
+        unawaited(stopBleService());
+        return;
+      }
+
+      unawaited(tryAutoConnect(next));
+      reconnectTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+        if (!bleConnectionService.checkConnect(next)) {
+          unawaited(tryAutoConnect(next));
+        }
+      });
+    },
+    fireImmediately: true,
+  );
 });

@@ -84,8 +84,18 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final isSignedIn = user != null;
 
     final accountSettingList = [
-      ListTileData.normal(title: 'sign_in'.tr(), icon: LucideIcons.logIn, onClick: goToLogin, enable: !isSignedIn),
-      ListTileData.normal(title: 'sign_out'.tr(), icon: LucideIcons.logOut, onClick: signOut, enable: isSignedIn),
+      ListTileData.normal(
+        title: 'sign_in'.tr(),
+        icon: LucideIcons.logIn,
+        onClick: goToLogin,
+        enable: !isSignedIn,
+      ),
+      ListTileData.normal(
+        title: 'sign_out'.tr(),
+        icon: LucideIcons.logOut,
+        onClick: signOut,
+        enable: isSignedIn,
+      ),
     ];
 
     final silverSoleSettingList = [
@@ -96,35 +106,11 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         onClick: () => switchIdentity(settings.identity),
         needCheck: true,
         checkTitle: 'switch_identity'.tr(),
-        checkContent: 'change_identity_check_content'.tr(args: [nextIdentity(settings.identity).tr()]),
-        trailing: true,
-      ),
-      /*
-      ListTileData.dropdown(
-        title: 'transmission_method'.tr(),
-        enable: settings.identity == 'transmitter',
-        selected: settings.transmissionMethod.name,
-        icon: getTransmissionIcon(settings.transmissionMethod),
-        onClick: comingSoon,
-        optionsMap: {TransmissionMethod.bluetooth.name: 'bluetooth'.tr(), TransmissionMethod.wifi.name: 'wifi'.tr()},
-        onChanged: (int idx, String key) =>
-            setTransmissionMethod(TransmissionMethodValue.fromValue(key) ?? TransmissionMethod.bluetooth),
-      ),
-       */
-      /*
-      ListTileData.normal(
-        title: 'binding_silversole_device'.tr(),
-        subtitle: settings.deviceId,
-        icon: LucideIcons.link2,
-        onClick: () => showContentDialog(
-          context,
-          title: 'binding'.tr(),
-          content: SizedBox(width: 400, child: DeviceBindingField()),
-          buttonText: 'done'.tr(),
+        checkContent: 'change_identity_check_content'.tr(
+          args: [nextIdentity(settings.identity).tr()],
         ),
         trailing: true,
       ),
-       */
     ];
 
     final generalSettingList = [
@@ -170,17 +156,29 @@ class _PersonPageState extends ConsumerState<PersonPage> {
               ),
               SizedBox(
                 width: double.infinity,
-                child: buildMaterialList(context, title: 'account'.tr(), raw: accountSettingList),
+                child: buildMaterialList(
+                  context,
+                  title: 'account'.tr(),
+                  raw: accountSettingList,
+                ),
               ),
               if (isSignedIn) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: buildMaterialList(context, title: 'device'.tr(), raw: silverSoleSettingList),
+                  child: buildMaterialList(
+                    context,
+                    title: 'device'.tr(),
+                    raw: silverSoleSettingList,
+                  ),
                 ),
               ],
               SizedBox(
                 width: double.infinity,
-                child: buildMaterialList(context, title: 'general'.tr(), raw: generalSettingList),
+                child: buildMaterialList(
+                  context,
+                  title: 'general'.tr(),
+                  raw: generalSettingList,
+                ),
               ),
             ],
           ),

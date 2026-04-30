@@ -32,10 +32,12 @@ class DeviceConnectBottomModal extends ConsumerStatefulWidget {
   const DeviceConnectBottomModal({super.key});
 
   @override
-  ConsumerState<DeviceConnectBottomModal> createState() => _DeviceConnectBottomModalState();
+  ConsumerState<DeviceConnectBottomModal> createState() =>
+      _DeviceConnectBottomModalState();
 }
 
-class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomModal> {
+class _DeviceConnectBottomModalState
+    extends ConsumerState<DeviceConnectBottomModal> {
   final Map<DeviceIdentifier, ScanResult> _scanMap = {};
   StreamSubscription<List<ScanResult>>? _scanSub;
   Timer? _retryTimer;
@@ -62,7 +64,9 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
     _scanSub ??= FlutterBluePlus.scanResults.listen((results) {
       var changed = false;
       for (final r in results) {
-        final name = r.advertisementData.advName.isNotEmpty ? r.advertisementData.advName : r.device.platformName;
+        final name = r.advertisementData.advName.isNotEmpty
+            ? r.advertisementData.advName
+            : r.device.platformName;
         if (!name.toLowerCase().contains('silversole')) continue;
         _scanMap[r.device.remoteId] = r;
         changed = true;
@@ -74,7 +78,10 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
   }
 
   Future<bool> ensureScanPermission() async {
-    final statuses = await [Permission.bluetoothScan, Permission.locationWhenInUse].request();
+    final statuses = await [
+      Permission.bluetoothScan,
+      Permission.locationWhenInUse,
+    ].request();
     final scanGranted = statuses[Permission.bluetoothScan]?.isGranted ?? false;
     if (scanGranted) return true;
     showErrorSnakeBar('Bluetooth scan permission is required.');
@@ -86,7 +93,9 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
     _isScanning = true;
     if (mounted) setState(() {});
     try {
-      await FlutterBluePlus.startScan(androidScanMode: AndroidScanMode.lowLatency);
+      await FlutterBluePlus.startScan(
+        androidScanMode: AndroidScanMode.lowLatency,
+      );
     } on PlatformException catch (e) {
       final message = e.message ?? e.code;
       showErrorSnakeBar(message);
@@ -106,9 +115,12 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
   }
 
   List<ListTileData> getNearbyDevices() {
-    final item = _scanMap.values.toList()..sort((a, b) => b.rssi.compareTo(a.rssi));
+    final item = _scanMap.values.toList()
+      ..sort((a, b) => b.rssi.compareTo(a.rssi));
     return item.map((r) {
-      final name = r.advertisementData.advName.isNotEmpty ? r.advertisementData.advName : r.device.platformName;
+      final name = r.advertisementData.advName.isNotEmpty
+          ? r.advertisementData.advName
+          : r.device.platformName;
       return ListTileData.normal(
         title: name.isEmpty ? 'unknown_device'.tr() : name,
         subtitle: r.device.remoteId.str,
@@ -119,7 +131,8 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
   }
 
   Future<void> connectAndBindDevice(ScanResult result) async {
-    final hasPreferredDevice = ref.read(settingsProvider).preferredDevice != null;
+    final hasPreferredDevice =
+        ref.read(settingsProvider).preferredDevice != null;
     final name = result.advertisementData.advName.isNotEmpty
         ? result.advertisementData.advName
         : result.device.platformName;
@@ -146,6 +159,10 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
       );
     }
     if (shouldSetPreferred) {
+      await FlutterBluePlus.stopScan();
+      await FlutterBluePlus.isScanning
+          .firstWhere((value) => value == false)
+          .timeout(const Duration(seconds: 3));
       await ref.read(settingsProvider.notifier).setPreferredDevice(device);
       showMessage('set_primary_device_success'.tr());
     }
@@ -173,12 +190,23 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 16,
                 children: [
-                  Text('scanning_nearby_devices'.tr(), style: tt.displaySmall?.copyWith(fontWeight: FontWeight.bold)),
-                  Text('select_your_silversole_device'.tr(), style: tt.bodyLarge),
+                  Text(
+                    'scanning_nearby_devices'.tr(),
+                    style: tt.displaySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'select_your_silversole_device'.tr(),
+                    style: tt.bodyLarge,
+                  ),
                 ],
               ),
             ),
-            Padding(padding: const EdgeInsets.symmetric(vertical: 24.0), child: const LinearProgressIndicator()),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24.0),
+              child: const LinearProgressIndicator(),
+            ),
             Expanded(
               child: Padding(
                 padding: hPadding,
@@ -186,10 +214,19 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 12,
                   children: [
-                    Text('nearby_devices'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      'nearby_devices'.tr(),
+                      style: tt.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     Expanded(
                       child: SingleChildScrollView(
-                        child: buildMaterialList(context, raw: getNearbyDevices(), themeColor: cs.surface),
+                        child: buildMaterialList(
+                          context,
+                          raw: getNearbyDevices(),
+                          themeColor: cs.surface,
+                        ),
                       ),
                     ),
                   ],
@@ -198,7 +235,10 @@ class _DeviceConnectBottomModalState extends ConsumerState<DeviceConnectBottomMo
             ),
             Padding(
               padding: hPadding,
-              child: OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: Text('cancel'.tr())),
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('cancel'.tr()),
+              ),
             ),
           ],
         ),
