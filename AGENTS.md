@@ -14,6 +14,10 @@
 - `flutter test` runs unit/widget tests in `test/`.
 - `flutter build apk --debug` builds a debug APK; `flutter build apk --release` for release.
 
+## Flutter UI
+- Prefer `Row(spacing: ...)` and `Column(spacing: ...)` for simple gaps between direct children instead of inserting `const SizedBox(width: ...)` or `const SizedBox(height: ...)` spacer children.
+- Use padding, margins, or layout-specific wrappers only when the gap is asymmetric or not between direct Row/Column children.
+
 ## Coding Style & Naming Conventions
 - Use Dart/Flutter defaults: 2-space indentation, trailing commas where appropriate.
 - Class names in `UpperCamelCase`, file names in `lower_snake_case`.

@@ -114,3 +114,47 @@ sit_down,Sit Down,坐下
 stand_up,Stand Up,起立
 fall,Fall,跌倒
 kick,Kick,踢擊
+view,View,查看
+today,Today,今天
+seven_days,7 Days,7 天
+thirty_days,30 Days,30 天
+foot_pressure_distribution,Foot Pressure Distribution,足底壓力分布
+forefoot,Forefoot,前腳掌
+midfoot,Midfoot,足弓
+heel,Heel,後跟
+average_pressure,Average,平均壓力
+today_status,Today Status,今日狀態
+gait_stable,Gait Stable,步態穩定
+today_pressure_summary,Pressure distribution is normal today with slightly higher right heel pressure,今日壓力分布正常，右腳後跟略高
+stability_score,Stability score,穩定度分數
+fall_risk,Fall risk,跌倒風險
+wearing_status,Wearing status,穿戴狀態
+wearing,Wearing,穿戴中
+today_steps,Today steps,今日步數
+outdoor_time,Outdoor time,戶外時間
+duration_minutes,{} min,{} 分鐘
+abnormal_events,Abnormal events,異常事件
+device_battery,Device battery,裝置電量
+pressure_analysis,Pressure Analysis,壓力分析
+left_right_balance,Left-right balance,左右平衡
+front_back_balance,Front-back balance,前後平衡
+pressure_focus_area,Pressure focus area,壓力關注區域
+gait_rhythm,Gait rhythm,步態節奏
+slightly_right,Slightly right,稍微偏右
+heel_biased,Heel-biased,後跟偏重
+right_heel,Right heel,右後跟
+normal,Normal,正常
+notice,Notice,注意
+stable,Stable,穩定
+seven_day_stability_trend,7-Day Stability Trend,7 日穩定度趨勢
+week,Week,週
+month,Month,月
+mon,Mon,週一
+tue,Tue,週二
+wed,Wed,週三
+thu,Thu,週四
+fri,Fri,週五
+sat,Sat,週六
+sun,Sun,週日
+ai_care_suggestion,AI Care Suggestion,AI 照護建議
+update_test,update_test,update_test,

@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.0
+更新內容:
+- 重建分析頁儀表板，加入足底壓力分布、今日狀態、壓力分析、穩定度趨勢與 AI 照護建議區塊。
+- 首頁近期資料卡片新增查看入口，可開啟原有即時資料圖表與錄製匯出頁。
+- 新增分析頁相關繁中與英文介面文字。
+
+Updates:
+- Rebuilt the Analytics dashboard with foot pressure distribution, today status, pressure analysis, stability trend, and AI care suggestion sections.
+- Added a View entry on the home recent data card to open the existing live chart and recording export page.
+- Added Traditional Chinese and English UI strings for the Analytics page.
+
 ## v1.3.0
 更新內容:
 - 新增登入狀態導向，未登入時導向登入頁

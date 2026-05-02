@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
@@ -20,6 +21,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/device-recent-warnings',
         builder: (_, _) => DeviceRecentWarningsPage(),
+      ),
+      GoRoute(
+        path: '/analytics-detail',
+        builder: (_, _) => AnalyticsDetailPage(),
       ),
     ],
     redirect: (_, state) {

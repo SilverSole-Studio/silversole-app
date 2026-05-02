@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/app_settings.dart';
@@ -14,7 +15,8 @@ class RecentDataChartCard extends ConsumerStatefulWidget {
   const RecentDataChartCard({super.key});
 
   @override
-  ConsumerState<RecentDataChartCard> createState() => _RecentDataChartCardState();
+  ConsumerState<RecentDataChartCard> createState() =>
+      _RecentDataChartCardState();
 }
 
 class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
@@ -56,13 +58,25 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   @override
   Widget build(BuildContext context) {
     Color getColor(int i) => Colors.accents[i % Colors.accents.length];
-    final labels = ['pressure', 'ax', 'ay', 'az', 'gx', 'gy', 'gz', 'pitch', 'roll', 'battery'];
+    final labels = [
+      'pressure',
+      'ax',
+      'ay',
+      'az',
+      'gx',
+      'gy',
+      'gz',
+      'pitch',
+      'roll',
+      'battery',
+    ];
 
     return SizedBox(
       width: double.infinity,
       child: Card(
         elevation: 0,
         child: InkWell(
+          onTap: () => context.push('/analytics-detail'),
           splashColor: Colors.transparent,
           hoverColor: Colors.transparent,
           focusColor: Colors.transparent,
@@ -72,14 +86,30 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 18,
               children: [
-                Text('device_recent_data'.tr(), style: context.tt.titleSmall.bold),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'device_recent_data'.tr(),
+                        style: context.tt.titleSmall.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.push('/analytics-detail'),
+                      child: Text('view'.tr()),
+                    ),
+                  ],
+                ),
                 ImuChartSection(type: ChardDisplayType.all),
                 Wrap(
                   spacing: 8,
                   children: [
                     for (int i = 0; i < labels.length; i++)
                       Chip(
-                        avatar: CircleAvatar(backgroundColor: getColor(i), radius: 5),
+                        avatar: CircleAvatar(
+                          backgroundColor: getColor(i),
+                          radius: 5,
+                        ),
                         label: Text(labels[i]),
                       ),
                   ],
