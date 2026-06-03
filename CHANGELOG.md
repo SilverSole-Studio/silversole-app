@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.5.0
+更新內容:
+- 新增足底壓力可視化頁面，可從底部導覽列查看三點壓力熱圖與即時感測值。
+- 將 IMU pressure 資料模型改為三感測器陣列，並在即時圖表中分別繪製每個壓力感測器曲線。
+- 修正登入成功後的導向流程，避免從初始登入路由返回時觸發無可返回頁面的錯誤。
+- 新增壓力可視化相關繁中與英文介面文字。
+
+Updates:
+- Added a foot pressure visualization page with a bottom navigation entry, three-point pressure heat map, and live sensor readouts.
+- Changed the IMU pressure payload model to a three-sensor array and plotted each pressure sensor separately in live charts.
+- Fixed successful sign-in navigation to avoid popping from an initial sign-in route with no previous page.
+- Added Traditional Chinese and English UI strings for pressure visualization.
+
 ## v1.4.0
 更新內容:
 - 重建分析頁儀表板，加入足底壓力分布、今日狀態、壓力分析、穩定度趨勢與 AI 照護建議區塊。
