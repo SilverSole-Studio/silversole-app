@@ -11,8 +11,18 @@ Widget appNavigationBar({
     onDestinationSelected: onDestinationSelected,
     destinations: [
       NavigationDestination(icon: Icon(Icons.home), label: 'home'.tr()),
-      NavigationDestination(icon: Icon(LucideIcons.monitorSmartphone), label: 'devices'.tr()),
-      NavigationDestination(icon: Icon(Icons.analytics), label: 'analytics'.tr()),
+      NavigationDestination(
+        icon: Icon(LucideIcons.monitorSmartphone),
+        label: 'devices'.tr(),
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.analytics),
+        label: 'analytics'.tr(),
+      ),
+      NavigationDestination(
+        icon: Icon(LucideIcons.footprints),
+        label: 'pressure_visualization'.tr(),
+      ),
       NavigationDestination(icon: Icon(Icons.settings), label: 'settings'.tr()),
     ],
   );

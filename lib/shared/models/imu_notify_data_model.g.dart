@@ -16,7 +16,9 @@ _ImuNotifyDataModel _$ImuNotifyDataModelFromJson(Map<String, dynamic> json) =>
       gz: (json['gz'] as num).toInt(),
       pitch: (json['pitch'] as num?)?.toDouble(),
       roll: (json['roll'] as num?)?.toDouble(),
-      pressure: (json['pressure'] as num).toInt(),
+      pressure: (json['pressure'] as List<dynamic>)
+          .map((e) => (e as num).toInt())
+          .toList(),
       batteryPercent: (json['battery_percent'] as num).toInt(),
       isCharging: json['is_charging'] as bool,
     );

@@ -14,10 +14,11 @@ abstract class ImuNotifyDataModel with _$ImuNotifyDataModel {
     required int gz,
     double? pitch,
     double? roll,
-    required int pressure,
+    required List<int> pressure,
     @JsonKey(name: 'battery_percent') required int batteryPercent,
     @JsonKey(name: 'is_charging') required bool isCharging,
   }) = _ImuNotifyDataModel;
 
-  factory ImuNotifyDataModel.fromJson(Map<String, dynamic> json) => _$ImuNotifyDataModelFromJson(json);
+  factory ImuNotifyDataModel.fromJson(Map<String, dynamic> json) =>
+      _$ImuNotifyDataModelFromJson(json);
 }

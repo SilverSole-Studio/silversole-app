@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ImuNotifyDataModel {
 
- int get ax; int get ay; int get az; int get gx; int get gy; int get gz; double? get pitch; double? get roll; int get pressure;@JsonKey(name: 'battery_percent') int get batteryPercent;@JsonKey(name: 'is_charging') bool get isCharging;
+ int get ax; int get ay; int get az; int get gx; int get gy; int get gz; double? get pitch; double? get roll; List<int> get pressure;@JsonKey(name: 'battery_percent') int get batteryPercent;@JsonKey(name: 'is_charging') bool get isCharging;
 /// Create a copy of ImuNotifyDataModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,12 +28,12 @@ $ImuNotifyDataModelCopyWith<ImuNotifyDataModel> get copyWith => _$ImuNotifyDataM
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImuNotifyDataModel&&(identical(other.ax, ax) || other.ax == ax)&&(identical(other.ay, ay) || other.ay == ay)&&(identical(other.az, az) || other.az == az)&&(identical(other.gx, gx) || other.gx == gx)&&(identical(other.gy, gy) || other.gy == gy)&&(identical(other.gz, gz) || other.gz == gz)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.batteryPercent, batteryPercent) || other.batteryPercent == batteryPercent)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImuNotifyDataModel&&(identical(other.ax, ax) || other.ax == ax)&&(identical(other.ay, ay) || other.ay == ay)&&(identical(other.az, az) || other.az == az)&&(identical(other.gx, gx) || other.gx == gx)&&(identical(other.gy, gy) || other.gy == gy)&&(identical(other.gz, gz) || other.gz == gz)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&const DeepCollectionEquality().equals(other.pressure, pressure)&&(identical(other.batteryPercent, batteryPercent) || other.batteryPercent == batteryPercent)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ax,ay,az,gx,gy,gz,pitch,roll,pressure,batteryPercent,isCharging);
+int get hashCode => Object.hash(runtimeType,ax,ay,az,gx,gy,gz,pitch,roll,const DeepCollectionEquality().hash(pressure),batteryPercent,isCharging);
 
 @override
 String toString() {
@@ -48,7 +48,7 @@ abstract mixin class $ImuNotifyDataModelCopyWith<$Res>  {
   factory $ImuNotifyDataModelCopyWith(ImuNotifyDataModel value, $Res Function(ImuNotifyDataModel) _then) = _$ImuNotifyDataModelCopyWithImpl;
 @useResult
 $Res call({
- int ax, int ay, int az, int gx, int gy, int gz, double? pitch, double? roll, int pressure,@JsonKey(name: 'battery_percent') int batteryPercent,@JsonKey(name: 'is_charging') bool isCharging
+ int ax, int ay, int az, int gx, int gy, int gz, double? pitch, double? roll, List<int> pressure,@JsonKey(name: 'battery_percent') int batteryPercent,@JsonKey(name: 'is_charging') bool isCharging
 });
 
 
@@ -76,7 +76,7 @@ as int,gz: null == gz ? _self.gz : gz // ignore: cast_nullable_to_non_nullable
 as int,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as double?,roll: freezed == roll ? _self.roll : roll // ignore: cast_nullable_to_non_nullable
 as double?,pressure: null == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
-as int,batteryPercent: null == batteryPercent ? _self.batteryPercent : batteryPercent // ignore: cast_nullable_to_non_nullable
+as List<int>,batteryPercent: null == batteryPercent ? _self.batteryPercent : batteryPercent // ignore: cast_nullable_to_non_nullable
 as int,isCharging: null == isCharging ? _self.isCharging : isCharging // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -163,7 +163,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  int pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  List<int> pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ImuNotifyDataModel() when $default != null:
 return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitch,_that.roll,_that.pressure,_that.batteryPercent,_that.isCharging);case _:
@@ -184,7 +184,7 @@ return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitc
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  int pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  List<int> pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)  $default,) {final _that = this;
 switch (_that) {
 case _ImuNotifyDataModel():
 return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitch,_that.roll,_that.pressure,_that.batteryPercent,_that.isCharging);case _:
@@ -204,7 +204,7 @@ return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitc
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  int pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int ax,  int ay,  int az,  int gx,  int gy,  int gz,  double? pitch,  double? roll,  List<int> pressure, @JsonKey(name: 'battery_percent')  int batteryPercent, @JsonKey(name: 'is_charging')  bool isCharging)?  $default,) {final _that = this;
 switch (_that) {
 case _ImuNotifyDataModel() when $default != null:
 return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitch,_that.roll,_that.pressure,_that.batteryPercent,_that.isCharging);case _:
@@ -219,7 +219,7 @@ return $default(_that.ax,_that.ay,_that.az,_that.gx,_that.gy,_that.gz,_that.pitc
 @JsonSerializable()
 
 class _ImuNotifyDataModel implements ImuNotifyDataModel {
-  const _ImuNotifyDataModel({required this.ax, required this.ay, required this.az, required this.gx, required this.gy, required this.gz, this.pitch, this.roll, required this.pressure, @JsonKey(name: 'battery_percent') required this.batteryPercent, @JsonKey(name: 'is_charging') required this.isCharging});
+  const _ImuNotifyDataModel({required this.ax, required this.ay, required this.az, required this.gx, required this.gy, required this.gz, this.pitch, this.roll, required final  List<int> pressure, @JsonKey(name: 'battery_percent') required this.batteryPercent, @JsonKey(name: 'is_charging') required this.isCharging}): _pressure = pressure;
   factory _ImuNotifyDataModel.fromJson(Map<String, dynamic> json) => _$ImuNotifyDataModelFromJson(json);
 
 @override final  int ax;
@@ -230,7 +230,13 @@ class _ImuNotifyDataModel implements ImuNotifyDataModel {
 @override final  int gz;
 @override final  double? pitch;
 @override final  double? roll;
-@override final  int pressure;
+ final  List<int> _pressure;
+@override List<int> get pressure {
+  if (_pressure is EqualUnmodifiableListView) return _pressure;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_pressure);
+}
+
 @override@JsonKey(name: 'battery_percent') final  int batteryPercent;
 @override@JsonKey(name: 'is_charging') final  bool isCharging;
 
@@ -247,12 +253,12 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ImuNotifyDataModel&&(identical(other.ax, ax) || other.ax == ax)&&(identical(other.ay, ay) || other.ay == ay)&&(identical(other.az, az) || other.az == az)&&(identical(other.gx, gx) || other.gx == gx)&&(identical(other.gy, gy) || other.gy == gy)&&(identical(other.gz, gz) || other.gz == gz)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&(identical(other.pressure, pressure) || other.pressure == pressure)&&(identical(other.batteryPercent, batteryPercent) || other.batteryPercent == batteryPercent)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ImuNotifyDataModel&&(identical(other.ax, ax) || other.ax == ax)&&(identical(other.ay, ay) || other.ay == ay)&&(identical(other.az, az) || other.az == az)&&(identical(other.gx, gx) || other.gx == gx)&&(identical(other.gy, gy) || other.gy == gy)&&(identical(other.gz, gz) || other.gz == gz)&&(identical(other.pitch, pitch) || other.pitch == pitch)&&(identical(other.roll, roll) || other.roll == roll)&&const DeepCollectionEquality().equals(other._pressure, _pressure)&&(identical(other.batteryPercent, batteryPercent) || other.batteryPercent == batteryPercent)&&(identical(other.isCharging, isCharging) || other.isCharging == isCharging));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,ax,ay,az,gx,gy,gz,pitch,roll,pressure,batteryPercent,isCharging);
+int get hashCode => Object.hash(runtimeType,ax,ay,az,gx,gy,gz,pitch,roll,const DeepCollectionEquality().hash(_pressure),batteryPercent,isCharging);
 
 @override
 String toString() {
@@ -267,7 +273,7 @@ abstract mixin class _$ImuNotifyDataModelCopyWith<$Res> implements $ImuNotifyDat
   factory _$ImuNotifyDataModelCopyWith(_ImuNotifyDataModel value, $Res Function(_ImuNotifyDataModel) _then) = __$ImuNotifyDataModelCopyWithImpl;
 @override @useResult
 $Res call({
- int ax, int ay, int az, int gx, int gy, int gz, double? pitch, double? roll, int pressure,@JsonKey(name: 'battery_percent') int batteryPercent,@JsonKey(name: 'is_charging') bool isCharging
+ int ax, int ay, int az, int gx, int gy, int gz, double? pitch, double? roll, List<int> pressure,@JsonKey(name: 'battery_percent') int batteryPercent,@JsonKey(name: 'is_charging') bool isCharging
 });
 
 
@@ -294,8 +300,8 @@ as int,gy: null == gy ? _self.gy : gy // ignore: cast_nullable_to_non_nullable
 as int,gz: null == gz ? _self.gz : gz // ignore: cast_nullable_to_non_nullable
 as int,pitch: freezed == pitch ? _self.pitch : pitch // ignore: cast_nullable_to_non_nullable
 as double?,roll: freezed == roll ? _self.roll : roll // ignore: cast_nullable_to_non_nullable
-as double?,pressure: null == pressure ? _self.pressure : pressure // ignore: cast_nullable_to_non_nullable
-as int,batteryPercent: null == batteryPercent ? _self.batteryPercent : batteryPercent // ignore: cast_nullable_to_non_nullable
+as double?,pressure: null == pressure ? _self._pressure : pressure // ignore: cast_nullable_to_non_nullable
+as List<int>,batteryPercent: null == batteryPercent ? _self.batteryPercent : batteryPercent // ignore: cast_nullable_to_non_nullable
 as int,isCharging: null == isCharging ? _self.isCharging : isCharging // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

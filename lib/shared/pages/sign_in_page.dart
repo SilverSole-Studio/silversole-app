@@ -26,8 +26,6 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   final _formKey = GlobalKey<FormState>();
   bool _autoValidate = false;
 
-  void back() => context.pop();
-
   void setEmail(String value) => setState(() => email = value);
 
   void setPassword(String value) => setState(() => password = value);
@@ -48,7 +46,12 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           final data = res.value;
           ref.read(authUserProvider.notifier).setUser(data);
           showMessage('sign_in_success'.tr());
-          back();
+          // Sign-in succeeded: the user is now authenticated, so navigate
+          // straight to home. Using context.go('/') (instead of context.pop())
+          // works whether sign-in was pushed onto a stack or was the initial
+          // route a guest was redirected to — the latter has nothing to pop and
+          // previously threw "GoError: There is nothing to pop".
+          if (mounted) context.go('/');
         case Error():
           showErrorSnakeBar(res.error.toString());
       }

@@ -29,8 +29,13 @@ class ImuChartSection extends ConsumerWidget {
           growable: false,
         );
 
+    // pressure is now a 3-sensor array; plot one line per sensor, falling back
+    // to 0 if the payload carries fewer values than expected.
+    List<FlSpot> pressureSpots(int sensor) =>
+        buildSpots((d) => sensor < d.pressure.length ? d.pressure[sensor] : 0);
+
     final spotsList = [
-      [buildSpots((d) => d.pressure)],
+      [pressureSpots(0), pressureSpots(1), pressureSpots(2)],
       [
         buildSpots((d) => d.ax),
         buildSpots((d) => d.ay),
