@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -38,7 +38,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   void setPassword(String value) => setState(() => password = value);
 
-  void setConfirmPassword(String value) => setState(() => confirmPassword = value);
+  void setConfirmPassword(String value) =>
+      setState(() => confirmPassword = value);
 
   void signInGoogle() => comingSoon();
 
@@ -73,14 +74,24 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: back, icon: const Icon(LucideIcons.arrowLeft)),
+        leading: IconButton(
+          onPressed: back,
+          icon: const Icon(LucideIcons.arrowLeft),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(48, 0, 48, MediaQuery.of(context).viewInsets.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            48,
+            0,
+            48,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
           child: Form(
             key: _formKey,
-            autovalidateMode: _autoValidate ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
+            autovalidateMode: _autoValidate
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,8 +103,16 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 8,
                     children: [
-                      Text('sign_up'.tr(), style: tt.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
-                      Text('sign_up_intro'.tr(), style: tt.titleSmall?.copyWith(color: Colors.grey)),
+                      Text(
+                        'sign_up'.tr(),
+                        style: tt.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'sign_up_intro'.tr(),
+                        style: tt.titleSmall?.copyWith(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -104,7 +123,8 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(LucideIcons.mail),
                   ),
-                  validator: (val) => fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
+                  validator: (val) =>
+                      fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
                   onChanged: (value) {
                     clearValidatorHint();
                     setEmail(value);
@@ -130,7 +150,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(LucideIcons.lock),
                   ),
-                  validator: (val) => fieldEmptyValidator(val) ?? confirmPasswordMatchValidator(val ?? '', password),
+                  validator: (val) =>
+                      fieldEmptyValidator(val) ??
+                      confirmPasswordMatchValidator(val ?? '', password),
                   onChanged: (value) {
                     clearValidatorHint();
                     setConfirmPassword(value);
@@ -152,7 +174,10 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                           ),
                   ),
                 ),
-                Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: textOnDivider(context, 'or'.tr())),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: textOnDivider(context, 'or'.tr()),
+                ),
                 googleSignInButton(context, onPressed: signInGoogle),
               ],
             ),
@@ -180,7 +205,10 @@ Widget textOnDivider(BuildContext context, String text) {
   );
 }
 
-Widget googleSignInButton(BuildContext context, {required VoidCallback onPressed}) {
+Widget googleSignInButton(
+  BuildContext context, {
+  required VoidCallback onPressed,
+}) {
   return SizedBox(
     width: double.infinity,
     child: ElevatedButton(
@@ -192,9 +220,17 @@ Widget googleSignInButton(BuildContext context, {required VoidCallback onPressed
           children: [
             Align(
               alignment: Alignment.centerLeft,
-              child: SvgPicture.asset('assets/images/google_logo.svg', width: 20, height: 20),
+              child: SvgPicture.asset(
+                'assets/images/google_logo.svg',
+                width: 20,
+                height: 20,
+              ),
             ),
-            Text('sign_in_with_google'.tr(), style: Theme.of(context).textTheme.bodyLarge, textAlign: TextAlign.center),
+            Text(
+              'sign_in_with_google'.tr(),
+              style: Theme.of(context).textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

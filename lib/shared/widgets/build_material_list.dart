@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 
-Widget buildMaterialList(BuildContext context, {String? title, required List<ListTileData> raw, Color? themeColor}) {
+Widget buildMaterialList(
+  BuildContext context, {
+  String? title,
+  required List<ListTileData> raw,
+  Color? themeColor,
+}) {
   const outerRadius = 16.0;
   const innerRadius = 4.0;
   final scheme = Theme.of(context).colorScheme;
@@ -23,11 +28,14 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)
           Material(
-            color: themeColor ?? Theme.of(context).colorScheme.surfaceContainerLow,
+            color:
+                themeColor ?? Theme.of(context).colorScheme.surfaceContainerLow,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(i == 0 ? outerRadius : innerRadius),
-                bottom: Radius.circular(i == list.length - 1 ? outerRadius : innerRadius),
+                bottom: Radius.circular(
+                  i == list.length - 1 ? outerRadius : innerRadius,
+                ),
               ),
             ),
             child: Padding(
@@ -36,7 +44,9 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
                 normal: (data) => ListTile(
                   leading: Icon(data.icon),
                   title: Text(data.title),
-                  subtitle: data.subtitle != null ? Text(data.subtitle ?? '') : null,
+                  subtitle: data.subtitle != null
+                      ? Text(data.subtitle ?? '')
+                      : null,
                   splashColor: splashColor,
                   hoverColor: hoverColor,
                   focusColor: hoverColor,
@@ -52,12 +62,16 @@ Widget buildMaterialList(BuildContext context, {String? title, required List<Lis
                     else
                       data.onClick(),
                   },
-                  trailing: data.trailing ? const Icon(LucideIcons.chevronRight) : null,
+                  trailing: data.trailing
+                      ? const Icon(LucideIcons.chevronRight)
+                      : null,
                 ),
                 dropdown: (data) => ListTile(
                   leading: Icon(data.icon),
                   title: Text(data.title),
-                  subtitle: data.selected != null ? Text(data.optionsMap[data.selected] ?? '') : null,
+                  subtitle: data.selected != null
+                      ? Text(data.optionsMap[data.selected] ?? '')
+                      : null,
                   splashColor: splashColor,
                   hoverColor: hoverColor,
                   focusColor: hoverColor,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 
@@ -37,18 +37,12 @@ Widget buildMaterialPopupMenu(
           normal: (data) => PopupMenuItem<ListTileData>(
             value: data,
             enabled: data.enable,
-            child: ListTile(
-              leading: Icon(data.icon),
-              title: Text(data.title),
-            ),
+            child: ListTile(leading: Icon(data.icon), title: Text(data.title)),
           ),
           dropdown: (data) => PopupMenuItem<ListTileData>(
             value: data,
             enabled: false,
-            child: ListTile(
-              leading: Icon(data.icon),
-              title: Text(data.title),
-            ),
+            child: ListTile(leading: Icon(data.icon), title: Text(data.title)),
           ),
         ),
     ],

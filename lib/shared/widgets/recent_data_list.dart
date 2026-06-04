@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/sole_record_data_model.dart';
@@ -36,7 +36,10 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
     }
     final soleService = ref.read(soleProvider);
     debugPrint('getRecentData');
-    final result = await soleService.getRecentDeviceData(deviceId: settings.deviceId ?? '', limit: 10);
+    final result = await soleService.getRecentDeviceData(
+      deviceId: settings.deviceId ?? '',
+      limit: 10,
+    );
     debugPrint(result.toString());
 
     switch (result) {
@@ -84,8 +87,14 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('device_recent_data'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-              ElevatedButton(onPressed: () => getRecentData(), child: Text('refresh'.tr())),
+              Text(
+                'device_recent_data'.tr(),
+                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton(
+                onPressed: () => getRecentData(),
+                child: Text('refresh'.tr()),
+              ),
             ],
           ),
           for (var i = 0; i < _items.length; i++)
@@ -94,7 +103,9 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(i == 0 ? outerRadius : innerRadius),
-                  bottom: Radius.circular(i == _items.length - 1 ? outerRadius : innerRadius),
+                  bottom: Radius.circular(
+                    i == _items.length - 1 ? outerRadius : innerRadius,
+                  ),
                 ),
               ),
               child: Padding(
@@ -108,18 +119,34 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                           Row(
                             spacing: 4,
                             children: [
-                              Icon(LucideIcons.dot, color: _items[i].wearStatus ? Colors.green : Colors.red, size: 40),
+                              Icon(
+                                LucideIcons.dot,
+                                color: _items[i].wearStatus
+                                    ? Colors.green
+                                    : Colors.red,
+                                size: 40,
+                              ),
                               Text(
-                                DateFormat('yyyy/MM/dd HH:mm:ss').format(_items[i].receivedAt.toLocal()),
-                                style: tt.titleSmall?.copyWith(color: Colors.grey),
+                                DateFormat(
+                                  'yyyy/MM/dd HH:mm:ss',
+                                ).format(_items[i].receivedAt.toLocal()),
+                                style: tt.titleSmall?.copyWith(
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
                           Row(
                             spacing: 4,
                             children: [
-                              Chip(avatar: Icon(LucideIcons.moveVertical), label: Text(_items[i].pitch.toString())),
-                              Chip(avatar: Icon(LucideIcons.moveHorizontal), label: Text(_items[i].roll.toString())),
+                              Chip(
+                                avatar: Icon(LucideIcons.moveVertical),
+                                label: Text(_items[i].pitch.toString()),
+                              ),
+                              Chip(
+                                avatar: Icon(LucideIcons.moveHorizontal),
+                                label: Text(_items[i].roll.toString()),
+                              ),
                               /*
                               Chip(
                                 avatar: const Icon(LucideIcons.mapPin),

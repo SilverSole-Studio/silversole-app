@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
@@ -24,7 +24,10 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final tt = Theme.of(context).textTheme;
     final screenHeight = MediaQuery.sizeOf(context).height;
     final safePadding = MediaQuery.paddingOf(context).vertical;
-    final bodyHeight = (screenHeight - safePadding - 220).clamp(220.0, screenHeight);
+    final bodyHeight = (screenHeight - safePadding - 220).clamp(
+      220.0,
+      screenHeight,
+    );
     return SizedBox(
       height: bodyHeight,
       child: Center(
@@ -34,7 +37,10 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           children: [
             SvgPicture.asset('assets/images/undraw_void_wez2.svg', width: 300),
             const SizedBox(height: 32),
-            Text('no_primary_device_title'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'no_primary_device_title'.tr(),
+              style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
             Text(
               'no_primary_device_body'.tr(),
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -65,14 +71,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
 
-
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {},
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 16.0,
+            ),
             child: Column(
               spacing: 16,
               children: [
@@ -81,7 +89,10 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                   children: [
                     CircleAvatar(
                       backgroundColor: cs.primaryContainer,
-                      child: Icon(LucideIcons.user, color: cs.onPrimaryContainer),
+                      child: Icon(
+                        LucideIcons.user,
+                        color: cs.onPrimaryContainer,
+                      ),
                     ),
                     Text(
                       'SilverSole',
@@ -91,10 +102,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                       ),
                     ),
                     Expanded(child: const SizedBox()),
-                    IconButton(onPressed: comingSoon, icon: Icon(LucideIcons.bell)),
+                    IconButton(
+                      onPressed: comingSoon,
+                      icon: Icon(LucideIcons.bell),
+                    ),
                   ],
                 ),
-                if (preferredDevice != null) activeBody(preferredDevice) else notActiveBody(),
+                if (preferredDevice != null)
+                  activeBody(preferredDevice)
+                else
+                  notActiveBody(),
               ],
             ),
           ),

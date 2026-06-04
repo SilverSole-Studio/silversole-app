@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
@@ -47,7 +47,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
     showConfirmLeaveDialog(
       context,
       title: 'set_primary_device_title'.tr(),
-      text: 'set_primary_device_content'.tr(namedArgs: {'deviceName': target.name}),
+      text: 'set_primary_device_content'.tr(
+        namedArgs: {'deviceName': target.name},
+      ),
       onConfirm: () async {
         await settings.setPreferredDevice(target);
         showMessage('set_primary_device_success'.tr());
@@ -69,7 +71,10 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
           autofocus: true,
           textInputAction: TextInputAction.done,
           maxLength: 24,
-          decoration: InputDecoration(hintText: 'device_name'.tr(), counterText: ''),
+          decoration: InputDecoration(
+            hintText: 'device_name'.tr(),
+            counterText: '',
+          ),
           onChanged: (v) => newName = v.trim(),
         ),
         onClick: () => result = true,
@@ -79,7 +84,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
         controller.dispose();
       });
     }
-    if (!mounted || !result || newName.isEmpty || newName == device.name) return;
+    if (!mounted || !result || newName.isEmpty || newName == device.name) {
+      return;
+    }
     final settings = ref.read(settingsProvider.notifier);
     await settings.addOrUpdatePairedDevice(device.copyWith(name: newName));
     showMessage('rename_device_success'.tr());
@@ -100,9 +107,15 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('devices'.tr(), style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        title: Text(
+          'devices'.tr(),
+          style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
         actions: [
-          IconButton(onPressed: debugStartService, icon: Icon(Icons.play_arrow)),
+          IconButton(
+            onPressed: debugStartService,
+            icon: Icon(Icons.play_arrow),
+          ),
           IconButton(onPressed: debugStopService, icon: Icon(Icons.stop)),
         ],
       ),
@@ -117,7 +130,10 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
           onRefresh: () async {},
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 16.0,
+            ),
             child: Column(
               spacing: 16,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,7 +147,10 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                   elevation: const WidgetStatePropertyAll(0),
                 ),
                 const SizedBox(height: 16),
-                Text('current_devices'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  'current_devices'.tr(),
+                  style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
                 ...pairedDevicesList.map(
                   (item) => DeviceStatusCard(
                     type: StatusCardType.menu,

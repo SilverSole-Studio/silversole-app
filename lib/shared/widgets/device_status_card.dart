@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
@@ -38,7 +38,6 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
 class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
   ProviderSubscription<AppSettings>? _sub;
   bool _load = false;
-
 
   @override
   void initState() {

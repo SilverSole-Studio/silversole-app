@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
@@ -43,8 +43,12 @@ class _MapCardState extends ConsumerState<MapCard> {
   }
 
   Future<void> _loadStyle() async {
-    final dark = await rootBundle.loadString('assets/map_styles/map_style_dark.json');
-    final light = await rootBundle.loadString('assets/map_styles/map_style_light.json');
+    final dark = await rootBundle.loadString(
+      'assets/map_styles/map_style_dark.json',
+    );
+    final light = await rootBundle.loadString(
+      'assets/map_styles/map_style_light.json',
+    );
     if (!mounted) return;
     setState(() {
       lightStyle = light;
@@ -65,19 +69,32 @@ class _MapCardState extends ConsumerState<MapCard> {
     double? minLat, maxLat, minLng, maxLng;
 
     for (final p in list) {
-      minLat = minLat == null ? p.latitude : (p.latitude < minLat ? p.latitude : minLat);
-      maxLat = maxLat == null ? p.latitude : (p.latitude > maxLat ? p.latitude : maxLat);
-      minLng = minLng == null ? p.longitude : (p.longitude < minLng ? p.longitude : minLng);
-      maxLng = maxLng == null ? p.longitude : (p.longitude > maxLng ? p.longitude : maxLng);
+      minLat = minLat == null
+          ? p.latitude
+          : (p.latitude < minLat ? p.latitude : minLat);
+      maxLat = maxLat == null
+          ? p.latitude
+          : (p.latitude > maxLat ? p.latitude : maxLat);
+      minLng = minLng == null
+          ? p.longitude
+          : (p.longitude < minLng ? p.longitude : minLng);
+      maxLng = maxLng == null
+          ? p.longitude
+          : (p.longitude > maxLng ? p.longitude : maxLng);
     }
 
-    return LatLngBounds(southwest: LatLng(minLat!, minLng!), northeast: LatLng(maxLat!, maxLng!));
+    return LatLngBounds(
+      southwest: LatLng(minLat!, minLng!),
+      northeast: LatLng(maxLat!, maxLng!),
+    );
   }
 
   Future<void> _fitAll(List<LatLng> points) async {
     if (points.isEmpty) return;
     if (points.length == 1) {
-      await _controller?.animateCamera(CameraUpdate.newLatLngZoom(points.first, 16));
+      await _controller?.animateCamera(
+        CameraUpdate.newLatLngZoom(points.first, 16),
+      );
       return;
     }
     final bounds = _boundsFromLatLngList(points);
@@ -110,18 +127,28 @@ class _MapCardState extends ConsumerState<MapCard> {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       showErrorSnakeBar('get_phone_location_permission_failed'.tr());
       return null;
     }
 
     LocationSettings settings;
     if (Platform.isAndroid) {
-      settings = AndroidSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+      settings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
     } else if (Platform.isIOS || Platform.isMacOS) {
-      settings = AppleSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+      settings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
     } else {
-      settings = const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 0);
+      settings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
     }
 
     return Geolocator.getCurrentPosition(locationSettings: settings);
@@ -141,13 +168,18 @@ class _MapCardState extends ConsumerState<MapCard> {
     final result = await service.getRecentDeviceLocation(deviceId: deviceId);
     switch (result) {
       case Ok<List<DeviceLocationModel>>():
-        final points = result.value.map((it) => LatLng(it.lat, it.lng)).toList();
+        final points = result.value
+            .map((it) => LatLng(it.lat, it.lng))
+            .toList();
         _fitAll(points);
         if (!mounted) return;
         setState(() {
           _marker.clear();
           final locations = result.value.map(
-            (it) => Marker(markerId: MarkerId(it.id.toString()), position: LatLng(it.lat, it.lng)),
+            (it) => Marker(
+              markerId: MarkerId(it.id.toString()),
+              position: LatLng(it.lat, it.lng),
+            ),
           );
           _marker.addAll(locations);
         });
@@ -171,9 +203,16 @@ class _MapCardState extends ConsumerState<MapCard> {
               zoomControlsEnabled: false,
               // myLocationButtonEnabled: _hasLocationPermission,
               // myLocationEnabled: _hasLocationPermission,
-              initialCameraPosition: CameraPosition(target: initialCenter, zoom: _zoom),
+              initialCameraPosition: CameraPosition(
+                target: initialCenter,
+                zoom: _zoom,
+              ),
               onMapCreated: (c) => _controller = c,
-              gestureRecognizers: {Factory<OneSequenceGestureRecognizer>(() => EagerGestureRecognizer())},
+              gestureRecognizers: {
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              },
             ),
           ),
           if (_hasLocationPermission)

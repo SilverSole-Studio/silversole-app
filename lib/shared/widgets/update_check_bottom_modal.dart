@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/update_info_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,7 +39,8 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
   final ts = Theme.of(context).textTheme;
   final cs = Theme.of(context).colorScheme;
   const releasePath = Constants.latestReleaseUrl;
-  final downloadPath = '${Constants.releaseDownloadUrl}/$latestVersion/$filename';
+  final downloadPath =
+      '${Constants.releaseDownloadUrl}/$latestVersion/$filename';
 
   void clickToJump(String uriStr) {
     final uri = Uri.parse(uriStr);
@@ -70,7 +71,10 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                 child: Text(
                   // '發現新版本 $latestVersion',
                   'new_version'.tr(args: [latestVersion.toString()]),
-                  style: ts.headlineMedium?.copyWith(color: cs.primaryFixed, fontWeight: FontWeight.w600),
+                  style: ts.headlineMedium?.copyWith(
+                    color: cs.primaryFixed,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
 
@@ -79,7 +83,10 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                 constraints: const BoxConstraints(maxHeight: 250),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(changelog ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(
+                    changelog ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
 
@@ -91,14 +98,15 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                   children: [
                     outlineButtonWithTheme(
                       title: filename ?? 'app-release.apk',
-                      subtitle: '${bytesToMiB(size ?? 0).toStringAsFixed(2)} MB',
+                      subtitle:
+                          '${bytesToMiB(size ?? 0).toStringAsFixed(2)} MB',
                       icon: LucideIcons.download,
                       onPressed: () => clickToJump(downloadPath),
                     ),
                     outlineButtonWithTheme(
                       title: 'Github Release ',
                       subtitle: latestVersion.toString(),
-                      icon: LucideIcons.github,
+                      icon: Icons.open_in_new,
                       onPressed: () => clickToJump(releasePath),
                     ),
                   ],
@@ -127,8 +135,13 @@ Widget outlineButtonWithTheme({
     child: ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
       leading: Icon(icon, size: 28),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-      subtitle: subtitle.trim().isEmpty ? null : Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w400)),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+      ),
+      subtitle: subtitle.trim().isEmpty
+          ? null
+          : Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w400)),
     ),
   );
 }

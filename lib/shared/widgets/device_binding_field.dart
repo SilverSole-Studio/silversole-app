@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/data/sole_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
@@ -39,14 +39,21 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
       final userProvider = ref.read(authUserProvider);
       if (userProvider == null) throw Exception('not_signed_in'.tr());
       final soleService = ref.read(soleProvider);
-      final result = await soleService.bindingDevice(userProvider.uuid, deviceId);
+      final result = await soleService.bindingDevice(
+        userProvider.uuid,
+        deviceId,
+      );
       switch (result) {
         case Ok<BindingResult>():
           final message = result.value == BindingResult.alreadyBound
               ? 'device_already_binding'.tr()
               : 'binding_success'.tr();
           await saveLocalValue(LocalSavableKey.deviceId, deviceId);
-          ref.read(authUserProvider.notifier).setUser(UserData(email: userProvider.email, uuid: userProvider.uuid));
+          ref
+              .read(authUserProvider.notifier)
+              .setUser(
+                UserData(email: userProvider.email, uuid: userProvider.uuid),
+              );
           ref.read(settingsProvider.notifier).setDeviceId(deviceId);
           showMessage(message);
         case Error():
@@ -82,7 +89,9 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
       width: double.infinity,
       child: Form(
         key: formKey,
-        autovalidateMode: autoValidate ? AutovalidateMode.onUserInteraction : AutovalidateMode.disabled,
+        autovalidateMode: autoValidate
+            ? AutovalidateMode.onUserInteraction
+            : AutovalidateMode.disabled,
         child: Row(
           spacing: 12,
           children: [
@@ -102,7 +111,9 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 56),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: isBinding ? null : bindingDevice,
               child: Text('binding'.tr()),

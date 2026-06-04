@@ -1,13 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
 import 'package:silversole/shared/widgets/rader_dot.dart';
 
 enum StatusCardType { normal, statusDisplay, menu }
-
 
 Widget statusCard(
   BuildContext context, {
@@ -56,7 +55,12 @@ Widget statusCard(
                     // Icon
                     Icon(icon, size: 30, color: cs.onSurfaceVariant),
                     // Data
-                    Text(title, style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(
+                      title,
+                      style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -81,13 +85,9 @@ Widget statusCard(
   }
 
   Widget statusTag(bool active) {
-    final bgColor = active
-        ? cs.primaryContainer
-        : cs.surfaceContainerHighest;
+    final bgColor = active ? cs.primaryContainer : cs.surfaceContainerHighest;
 
-    final textColor = active
-        ? cs.onPrimaryContainer
-        : cs.onSurfaceVariant;
+    final textColor = active ? cs.onPrimaryContainer : cs.onSurfaceVariant;
     final text = active ? 'online'.tr() : 'offline'.tr();
     return SizedBox(
       height: 32,
@@ -114,7 +114,7 @@ Widget statusCard(
                   TextSpan(text: text),
                 ],
               ),
-            )
+            ),
           ),
         ),
       ),
@@ -182,8 +182,14 @@ Widget statusCard(
 
                           // Right Tool Widget
                           switch (type) {
-                            StatusCardType.statusDisplay => active != null ? statusTag(active) : statusLoading(),
-                            StatusCardType.menu => buildMaterialPopupMenu(context, raw: menuItems),
+                            StatusCardType.statusDisplay =>
+                              active != null
+                                  ? statusTag(active)
+                                  : statusLoading(),
+                            StatusCardType.menu => buildMaterialPopupMenu(
+                              context,
+                              raw: menuItems,
+                            ),
                             _ => const SizedBox.shrink(),
                           },
                         ],
@@ -211,13 +217,21 @@ Widget statusCard(
                 spacing: 8,
                 children: [
                   subStatusCard(
-                    icon: (detail.isCharging ?? false) ? LucideIcons.batteryCharging : LucideIcons.batteryMedium,
-                    title: detail.lastBatteryPercent != null ? '${detail.lastBatteryPercent}%' : 'no_data'.tr(),
+                    icon: (detail.isCharging ?? false)
+                        ? LucideIcons.batteryCharging
+                        : LucideIcons.batteryMedium,
+                    title: detail.lastBatteryPercent != null
+                        ? '${detail.lastBatteryPercent}%'
+                        : 'no_data'.tr(),
                     hasProgress: true,
                     progress: ((detail.lastBatteryPercent ?? 0) / 100),
                     subtitle: '12hrs remaining',
                   ),
-                  subStatusCard(icon: LucideIcons.wifi, title: 'strong'.tr(), subtitle: '8 sec ago'),
+                  subStatusCard(
+                    icon: LucideIcons.wifi,
+                    title: 'strong'.tr(),
+                    subtitle: '8 sec ago',
+                  ),
                 ],
               ),
           ],
