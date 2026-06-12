@@ -35,6 +35,13 @@ abstract final class AppPalette {
   /// Positive / healthy status (wear OK, normal).
   static const Color success = Color(0xFF1E9E5A);
 
+  // ── Neutral page background ─────────────────────────────────────────────
+  /// Light-mode page body: a soft, very light cool gray (matches the
+  /// reference app). Pure-white cards float above it. Intentionally a touch
+  /// cooler than pure grayscale — this applies only to the page body, not the
+  /// `surface*` ramp (which stays grayscale).
+  static const Color pageLight = Color(0xFFF7F8FA);
+
   // ── Domain data-viz ramps (carry clinical meaning — DO NOT recolor) ─────
   /// Jet colormap for the foot-pressure heatmap (low → high pressure).
   static const List<Color> pressureJet = [

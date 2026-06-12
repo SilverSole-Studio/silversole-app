@@ -57,11 +57,10 @@ ThemeData appTheme(Brightness brightness) {
     useMaterial3: true,
     colorScheme: scheme,
     textTheme: textTheme,
-    // Page body is a soft gray in light mode so pure-white cards float above
-    // it (the conventional "cards on a gray page" look). Dark keeps the deep
-    // navy body with lighter cards.
-    scaffoldBackgroundColor:
-        isLight ? scheme.surfaceContainer : scheme.surface,
+    // Page body is a soft light gray in light mode (AppPalette.pageLight,
+    // #F7F8FA) so pure-white cards float above it. Dark keeps the deep navy
+    // body with lighter cards.
+    scaffoldBackgroundColor: isLight ? AppPalette.pageLight : scheme.surface,
     splashFactory: InkSparkle.splashFactory,
     extensions: <ThemeExtension<dynamic>>[AppTokens.of(brightness)],
 
