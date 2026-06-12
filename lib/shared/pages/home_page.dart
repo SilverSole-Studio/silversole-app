@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
+import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/pressure_visualization_page.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
@@ -36,6 +37,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final pages = [
       const HomeBody(),
+      const MapPage(),
       const DevicesPage(),
       const AnalyticsPage(),
       const PressureVisualizationPage(),

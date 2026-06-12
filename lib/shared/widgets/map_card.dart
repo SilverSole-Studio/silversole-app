@@ -26,7 +26,6 @@ class MapCard extends ConsumerStatefulWidget {
 }
 
 class _MapCardState extends ConsumerState<MapCard> {
-  String? lightStyle;
   String? darkStyle;
 
   final _marker = <Marker>{};
@@ -44,15 +43,13 @@ class _MapCardState extends ConsumerState<MapCard> {
   }
 
   Future<void> _loadStyle() async {
+    // Only dark mode uses a custom style; light mode keeps Google Maps'
+    // default (colorful) appearance.
     final dark = await rootBundle.loadString(
       'assets/map_styles/map_style_dark.json',
     );
-    final light = await rootBundle.loadString(
-      'assets/map_styles/map_style_light.json',
-    );
     if (!mounted) return;
     setState(() {
-      lightStyle = light;
       darkStyle = dark;
     });
   }
@@ -235,7 +232,7 @@ class _MapCardState extends ConsumerState<MapCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final style = isDark ? darkStyle : lightStyle;
+    final style = isDark ? darkStyle : null;
 
     return SizedBox(
       width: double.infinity,

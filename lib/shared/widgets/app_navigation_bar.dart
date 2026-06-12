@@ -23,6 +23,10 @@ Widget appNavigationBar({
           destinations: [
             NavigationDestination(icon: Icon(Icons.home), label: 'home'.tr()),
             NavigationDestination(
+              icon: Icon(LucideIcons.map),
+              label: 'map'.tr(),
+            ),
+            NavigationDestination(
               icon: Icon(LucideIcons.monitorSmartphone),
               label: 'devices'.tr(),
             ),
