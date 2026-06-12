@@ -57,7 +57,11 @@ ThemeData appTheme(Brightness brightness) {
     useMaterial3: true,
     colorScheme: scheme,
     textTheme: textTheme,
-    scaffoldBackgroundColor: scheme.surface,
+    // Page body is a soft gray in light mode so pure-white cards float above
+    // it (the conventional "cards on a gray page" look). Dark keeps the deep
+    // navy body with lighter cards.
+    scaffoldBackgroundColor:
+        isLight ? scheme.surfaceContainer : scheme.surface,
     splashFactory: InkSparkle.splashFactory,
     extensions: <ThemeExtension<dynamic>>[AppTokens.of(brightness)],
 
@@ -72,16 +76,23 @@ ThemeData appTheme(Brightness brightness) {
       titleTextStyle: textTheme.titleLarge,
     ),
 
-    // ── Cards: 20dp radius; soft shadow in light, color-step in dark ─────
+    // ── Cards: pure-white (light) / lighter slate (dark), 20dp radius, a
+    //    hairline border + a faint shadow so they read against the page ────
     cardTheme: CardThemeData(
-      color: scheme.surfaceContainerLow,
+      color: isLight ? Colors.white : scheme.surfaceContainerLow,
       surfaceTintColor: Colors.transparent,
-      elevation: isLight ? 1.5 : 0,
+      elevation: isLight ? 0.5 : 0,
       shadowColor: isLight
-          ? Colors.black.withValues(alpha: 0.10)
+          ? Colors.black.withValues(alpha: 0.05)
           : Colors.transparent,
       margin: EdgeInsets.zero,
-      shape: AppRadius.cardShape,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppRadius.cardR,
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: isLight ? 0.9 : 0.5),
+          width: 1,
+        ),
+      ),
       clipBehavior: Clip.antiAlias,
     ),
 

@@ -21,10 +21,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
-
     return Scaffold(
-      backgroundColor: cs.surface,
       appBar: AppBar(
         title: Text('analytics'.tr(), style: context.tt.titleLarge),
         actions: [
