@@ -10,7 +10,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/theme/theme.dart';
-import 'package:silversole/core/utils/useful_extension.dart';
 
 /// Full-screen map tab. For now this is just a full-bleed Google Map with a
 /// "locate me" control. Light mode uses Google Maps' default (colorful) style;
@@ -103,12 +102,12 @@ class _MapPageState extends ConsumerState<MapPage> {
           if (_hasLocationPermission)
             SafeArea(
               child: Align(
-                alignment: Alignment.topRight,
+                alignment: Alignment.bottomRight,
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.base),
+                  // Brand-blue squircle from the FAB theme (DESIGN.md §C8).
                   child: FloatingActionButton.small(
                     heroTag: 'fab_map_page',
-                    backgroundColor: context.cs.surfaceContainer,
                     onPressed: _goToMyLocation,
                     child: const Icon(LucideIcons.locateFixed),
                   ),
