@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
@@ -125,17 +127,10 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text(
-          'person'.tr(),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'Oxanium',
-            fontVariations: const [FontVariation('wght', 600)],
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text('person'.tr(), style: context.tt.titleLarge),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.base),
         child: SizedBox(
           width: double.infinity,
           child: Column(

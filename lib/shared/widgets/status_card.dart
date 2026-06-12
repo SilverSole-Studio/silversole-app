@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
@@ -44,10 +45,10 @@ Widget statusCard(
           color: cs.surfaceContainerHigh,
           elevation: 0,
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppSpacing.base),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 8,
+              spacing: AppSpacing.sm,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,15 +56,10 @@ Widget statusCard(
                     // Icon
                     Icon(icon, size: 30, color: cs.onSurfaceVariant),
                     // Data
-                    Text(
-                      title,
-                      style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(title, style: tt.titleMedium),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 if (hasProgress)
                   LinearProgressIndicator(
                     year2023: false, //ignore: deprecated_member_use
@@ -95,7 +91,7 @@ Widget statusCard(
         elevation: 0,
         color: bgColor,
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 12),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Center(
             child: RichText(
               text: TextSpan(
@@ -126,7 +122,7 @@ Widget statusCard(
       width: 70,
       height: 32,
       child: Card(
-        color: Colors.grey[800],
+        color: cs.onSurfaceVariant,
         child: Center(
           child: SizedBox(
             width: 24,
@@ -150,35 +146,27 @@ Widget statusCard(
       hoverColor: hoverColor,
       focusColor: hoverColor,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppSpacing.base),
         child: Column(
-          spacing: 16,
+          spacing: AppSpacing.base,
           children: [
             Row(
-              spacing: 16,
+              spacing: AppSpacing.base,
               children: [
                 Icon(icon),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
-                    spacing: 4,
+                    spacing: AppSpacing.xs,
                     children: [
                       Row(
                         textBaseline: TextBaseline.alphabetic,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        spacing: 4,
+                        spacing: AppSpacing.xs,
                         children: [
                           // Title
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontFamily: 'oxanium',
-                              fontWeight: FontWeight.bold,
-                              fontVariations: [FontVariation('wght', 600)],
-                            ),
-                          ),
+                          Text(title, style: tt.titleLarge),
 
                           // Right Tool Widget
                           switch (type) {
@@ -201,9 +189,7 @@ Widget statusCard(
                           '$model • ID: $id',
                           overflow: TextOverflow.ellipsis,
                           style: tt.labelLarge?.copyWith(
-                            fontFamily: 'Oxanium',
-                            color: Colors.grey,
-                            fontVariations: [const FontVariation('wght', 500)],
+                            color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -214,7 +200,7 @@ Widget statusCard(
             ),
             if (addition && detail != null)
               Row(
-                spacing: 8,
+                spacing: AppSpacing.sm,
                 children: [
                   subStatusCard(
                     icon: (detail.isCharging ?? false)

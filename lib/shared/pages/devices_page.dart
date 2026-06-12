@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
@@ -100,17 +102,12 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final settings = ref.watch(settingsProvider);
     final pairedDevicesList = settings.pairedDevicesList;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'devices'.tr(),
-          style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        title: Text('devices'.tr(), style: context.tt.titleLarge),
         actions: [
           IconButton(
             onPressed: debugStartService,
@@ -131,26 +128,26 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 16.0,
+              horizontal: AppSpacing.base,
+              vertical: AppSpacing.base,
             ),
             child: Column(
-              spacing: 16,
+              spacing: AppSpacing.base,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SearchBar(
                   leading: Container(
-                    margin: EdgeInsets.only(left: 8),
-                    child: Icon(LucideIcons.search, color: cs.onSurfaceVariant),
+                    margin: const EdgeInsets.only(left: AppSpacing.sm),
+                    child: Icon(
+                      LucideIcons.search,
+                      color: context.cs.onSurfaceVariant,
+                    ),
                   ),
                   hintText: 'search_device'.tr(),
                   elevation: const WidgetStatePropertyAll(0),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'current_devices'.tr(),
-                  style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                ),
+                const SizedBox(height: AppSpacing.base),
+                Text('current_devices'.tr(), style: context.tt.titleSmall),
                 ...pairedDevicesList.map(
                   (item) => DeviceStatusCard(
                     type: StatusCardType.menu,

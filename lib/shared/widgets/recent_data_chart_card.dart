@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -57,7 +58,8 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
 
   @override
   Widget build(BuildContext context) {
-    Color getColor(int i) => Colors.accents[i % Colors.accents.length];
+    Color getColor(int i) =>
+        AppPalette.chartSeries[i % AppPalette.chartSeries.length];
     final labels = [
       'pressure',
       'ax',
@@ -74,7 +76,6 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        elevation: 0,
         child: InkWell(
           onTap: () => context.push('/analytics-detail'),
           splashColor: Colors.transparent,

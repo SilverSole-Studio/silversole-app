@@ -7,6 +7,8 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/update_info_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:silversole/core/theme/theme.dart';
+
 import '../../constants.dart';
 import '../../core/error/result.dart';
 import '../../core/utils/update_checker.dart';
@@ -67,14 +69,11 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
               // New Version Title
               Container(
                 // margin: const EdgeInsets.symmetric(vertical: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
                 child: Text(
                   // '發現新版本 $latestVersion',
                   'new_version'.tr(args: [latestVersion.toString()]),
-                  style: ts.headlineMedium?.copyWith(
-                    color: cs.primaryFixed,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: ts.headlineMedium?.copyWith(color: cs.primaryFixed),
                 ),
               ),
 
@@ -82,19 +81,21 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 250),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    changelog ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+                  child: Text(changelog ?? '', style: ts.titleSmall),
                 ),
               ),
 
               // Download Button
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.base,
+                  0,
+                  AppSpacing.base,
+                  AppSpacing.base,
+                ),
                 child: Column(
-                  spacing: 8,
+                  spacing: AppSpacing.sm,
                   children: [
                     outlineButtonWithTheme(
                       title: filename ?? 'app-release.apk',
@@ -127,21 +128,13 @@ Widget outlineButtonWithTheme({
   required VoidCallback onPressed,
 }) {
   return OutlinedButton(
-    style: OutlinedButton.styleFrom(
-      alignment: Alignment.centerLeft,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    ),
+    style: OutlinedButton.styleFrom(alignment: Alignment.centerLeft),
     onPressed: onPressed,
     child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       leading: Icon(icon, size: 28),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-      ),
-      subtitle: subtitle.trim().isEmpty
-          ? null
-          : Text(subtitle, style: const TextStyle(fontWeight: FontWeight.w400)),
+      title: Text(title),
+      subtitle: subtitle.trim().isEmpty ? null : Text(subtitle),
     ),
   );
 }

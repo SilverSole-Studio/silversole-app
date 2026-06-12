@@ -6,6 +6,7 @@ import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/data/sole_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/field_validator.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/sole_provider.dart';
@@ -101,7 +102,6 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'silversole_device_id'.tr(),
-                  border: OutlineInputBorder(),
                   prefixIcon: Icon(LucideIcons.key),
                 ),
                 validator: (val) => fieldEmptyValidator(val),
@@ -111,8 +111,8 @@ class _DeviceBindingFieldState extends ConsumerState<DeviceBindingField> {
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.subR,
                 ),
               ),
               onPressed: isBinding ? null : bindingDevice,

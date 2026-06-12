@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/brand_gradient_text.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
@@ -20,8 +23,6 @@ class HomeBody extends ConsumerStatefulWidget {
 
 class _HomeBodyState extends ConsumerState<HomeBody> {
   Widget notActiveBody() {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final screenHeight = MediaQuery.sizeOf(context).height;
     final safePadding = MediaQuery.paddingOf(context).vertical;
     final bodyHeight = (screenHeight - safePadding - 220).clamp(
@@ -33,17 +34,19 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 16,
+          spacing: AppSpacing.base,
           children: [
             SvgPicture.asset('assets/images/undraw_void_wez2.svg', width: 300),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.xxl),
             Text(
               'no_primary_device_title'.tr(),
-              style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style: context.tt.titleLarge,
             ),
             Text(
               'no_primary_device_body'.tr(),
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              style: context.tt.bodySmall?.copyWith(
+                color: context.cs.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -54,7 +57,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
 
   Widget activeBody(BlePairedDevice device) {
     return Column(
-      spacing: 16,
+      spacing: AppSpacing.base,
       children: [
         HomeDeviceStatusSection(device: device),
         MapCard(),
@@ -67,7 +70,6 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
 
@@ -77,15 +79,12 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           onRefresh: () async {},
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 16.0,
-            ),
+            padding: const EdgeInsets.all(AppSpacing.base),
             child: Column(
-              spacing: 16,
+              spacing: AppSpacing.base,
               children: [
                 Row(
-                  spacing: 16,
+                  spacing: AppSpacing.base,
                   children: [
                     CircleAvatar(
                       backgroundColor: cs.primaryContainer,
@@ -94,12 +93,9 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                         color: cs.onPrimaryContainer,
                       ),
                     ),
-                    Text(
+                    BrandGradientText(
                       'SilverSole',
-                      style: tt.titleLarge?.copyWith(
-                        fontFamily: 'oxanium',
-                        fontVariations: [FontVariation('wght', 700)],
-                      ),
+                      style: context.tt.headlineSmall,
                     ),
                     Expanded(child: const SizedBox()),
                     IconButton(

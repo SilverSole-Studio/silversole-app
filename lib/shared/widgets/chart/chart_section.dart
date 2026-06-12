@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/core/theme/theme.dart';
 
 enum ChardDisplayType { all, single, optional }
 
@@ -36,7 +37,8 @@ class ChardSection extends ConsumerStatefulWidget {
 }
 
 class _ChardSectionState extends ConsumerState<ChardSection> {
-  Color getColor(int i) => Colors.accents[i % Colors.accents.length];
+  Color getColor(int i) =>
+      AppPalette.chartSeries[i % AppPalette.chartSeries.length];
 
   double getMaxY() {
     try {

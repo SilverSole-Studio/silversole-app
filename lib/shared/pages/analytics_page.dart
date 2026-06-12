@@ -4,7 +4,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/widgets/section_card.dart';
 
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
@@ -24,10 +26,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: Text(
-          'analytics'.tr(),
-          style: context.tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
+        title: Text('analytics'.tr(), style: context.tt.titleLarge),
         actions: [
           IconButton(
             onPressed: () {},
@@ -37,9 +36,14 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.base,
+            AppSpacing.sm,
+            AppSpacing.base,
+            AppSpacing.base,
+          ),
           child: Column(
-            spacing: 8,
+            spacing: AppSpacing.sm,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -100,10 +104,6 @@ class _RangeSelector extends StatelessWidget {
       showSelectedIcon: false,
       style: SegmentedButton.styleFrom(
         visualDensity: VisualDensity.compact,
-        backgroundColor: context.cs.surfaceContainerHigh,
-        selectedBackgroundColor: context.cs.primaryContainer,
-        selectedForegroundColor: context.cs.onPrimaryContainer,
-        foregroundColor: context.cs.onSurfaceVariant,
       ),
       segments: [
         for (var i = 0; i < labels.length; i++)
@@ -160,10 +160,7 @@ class _AnalyticsCard extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        elevation: 0,
-        color: context.cs.surfaceContainer,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(padding: const EdgeInsets.all(16), child: child),
+        child: Padding(padding: const EdgeInsets.all(AppSpacing.base), child: child),
       ),
     );
   }
@@ -176,18 +173,15 @@ class _PressureDistributionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = context.cs;
 
-    return _AnalyticsCard(
+    return SectionCard(
+      title: 'foot_pressure_distribution'.tr(),
       child: Column(
-        spacing: 12,
+        spacing: AppSpacing.md,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'foot_pressure_distribution'.tr(),
-            style: context.tt.titleMedium?.bold,
-          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 16,
+            spacing: AppSpacing.base,
             children: [
               Expanded(
                 flex: 5,
@@ -214,18 +208,11 @@ class _PressureDistributionCard extends StatelessWidget {
               Container(
                 width: 170,
                 height: 10,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
+                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: AppRadius.subR,
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF2F56B3),
-                      Color(0xFF126BFF),
-                      Color(0xFF4AC663),
-                      Color(0xFFFFE735),
-                      Color(0xFFFF8A1D),
-                      Color(0xFFFF2D20),
-                    ],
+                    colors: AppPalette.pressureGradient,
                   ),
                 ),
               ),
@@ -272,10 +259,10 @@ class _PressureValueRow extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: AppSpacing.sm),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.fieldR,
       ),
       child: Column(
         spacing: 2,
@@ -291,9 +278,7 @@ class _PressureValueRow extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.tt.titleMedium?.bold?.copyWith(
-              fontFamily: 'Oxanium',
-            ),
+            style: context.tt.titleMedium,
           ),
         ],
       ),
@@ -308,14 +293,14 @@ class _TodayStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = context.cs;
 
-    return _AnalyticsCard(
+    return SectionCard(
+      title: 'today_status'.tr(),
       child: Column(
-        spacing: 16,
+        spacing: AppSpacing.base,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('today_status'.tr(), style: context.tt.titleSmall?.bold),
           Row(
-            spacing: 16,
+            spacing: AppSpacing.base,
             children: [
               CircleAvatar(
                 radius: 30,
@@ -333,10 +318,7 @@ class _TodayStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       'gait_stable'.tr(),
-                      style: context.tt.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Oxanium',
-                      ),
+                      style: context.tt.headlineSmall,
                     ),
                     Text(
                       'today_pressure_summary'.tr(),
@@ -349,7 +331,7 @@ class _TodayStatusCard extends StatelessWidget {
               ),
             ],
           ),
-          Divider(color: cs.outlineVariant.withValues(alpha: 0.5), height: 1),
+          Divider(color: cs.outlineVariant, height: 1),
           Row(
             children: [
               Expanded(
@@ -407,9 +389,7 @@ class _StatusStat extends StatelessWidget {
               ),
               Text(
                 value,
-                style: context.tt.titleMedium?.bold?.copyWith(
-                  fontFamily: 'Oxanium',
-                ),
+                style: context.tt.titleMedium,
               ),
             ],
           ),
@@ -425,8 +405,8 @@ class _VerticalDivider extends StatelessWidget {
     return Container(
       width: 1,
       height: 44,
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: context.cs.outlineVariant.withValues(alpha: 0.45),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+      color: context.cs.outlineVariant,
     );
   }
 }
@@ -475,20 +455,17 @@ class _MetricTile extends StatelessWidget {
     final cs = context.cs;
 
     return Card(
-      elevation: 0,
-      color: cs.surfaceContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(10),
         child: Row(
-          spacing: 8,
+          spacing: AppSpacing.sm,
           children: [
             Container(
               width: 42,
               height: 42,
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppRadius.fieldR,
               ),
               child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
             ),
@@ -512,9 +489,7 @@ class _MetricTile extends StatelessWidget {
                       child: Text(
                         value,
                         maxLines: 1,
-                        style: context.tt.titleLarge?.bold?.copyWith(
-                          fontFamily: 'Oxanium',
-                        ),
+                        style: context.tt.titleLarge,
                       ),
                     ),
                   ),
@@ -533,12 +508,12 @@ class _PressureAnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _AnalyticsCard(
+    return SectionCard(
+      title: 'pressure_analysis'.tr(),
       child: Column(
         spacing: 10,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('pressure_analysis'.tr(), style: context.tt.titleSmall?.bold),
           _AnalysisRow(
             icon: LucideIcons.scale,
             label: 'left_right_balance'.tr(),
@@ -614,10 +589,7 @@ class _AnalysisRow extends StatelessWidget {
         if (showDivider)
           Padding(
             padding: const EdgeInsets.only(left: 36, top: 10),
-            child: Divider(
-              color: cs.outlineVariant.withValues(alpha: 0.45),
-              height: 1,
-            ),
+            child: Divider(color: cs.outlineVariant, height: 1),
           ),
       ],
     );
@@ -669,26 +641,17 @@ class _StabilityTrendCard extends StatelessWidget {
     final cs = context.cs;
     final values = [58.0, 74.0, 66.0, 84.0, 76.0, 89.0, 78.0];
 
-    return _AnalyticsCard(
+    return SectionCard(
+      title: 'seven_day_stability_trend'.tr(),
+      trailing: _MiniToggle(
+        labels: ['week'.tr(), 'month'.tr()],
+        selectedIndex: selectedIndex,
+        onSelected: onSelected,
+      ),
       child: Column(
-        spacing: 12,
+        spacing: AppSpacing.md,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'seven_day_stability_trend'.tr(),
-                  style: context.tt.titleSmall?.bold,
-                ),
-              ),
-              _MiniToggle(
-                labels: ['week'.tr(), 'month'.tr()],
-                selectedIndex: selectedIndex,
-                onSelected: onSelected,
-              ),
-            ],
-          ),
           SizedBox(
             height: 170,
             child: LineChart(
@@ -701,19 +664,15 @@ class _StabilityTrendCard extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: 25,
                   getDrawingHorizontalLine: (_) => FlLine(
-                    color: cs.outlineVariant.withValues(alpha: 0.28),
+                    color: cs.outlineVariant,
                     strokeWidth: 1,
                   ),
                 ),
                 borderData: FlBorderData(
                   show: true,
                   border: Border(
-                    left: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.35),
-                    ),
-                    bottom: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.35),
-                    ),
+                    left: BorderSide(color: cs.outlineVariant),
+                    bottom: BorderSide(color: cs.outlineVariant),
                   ),
                 ),
                 titlesData: FlTitlesData(
@@ -825,10 +784,6 @@ class _MiniToggle extends StatelessWidget {
       showSelectedIcon: false,
       style: SegmentedButton.styleFrom(
         visualDensity: VisualDensity.compact,
-        backgroundColor: context.cs.surfaceContainerHighest,
-        selectedBackgroundColor: context.cs.primaryContainer,
-        selectedForegroundColor: context.cs.onPrimaryContainer,
-        foregroundColor: context.cs.onSurfaceVariant,
       ),
       segments: [
         for (var i = 0; i < labels.length; i++)

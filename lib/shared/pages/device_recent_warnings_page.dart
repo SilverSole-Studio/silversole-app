@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 
 class DeviceRecentWarningsPage extends ConsumerStatefulWidget {
   const DeviceRecentWarningsPage({super.key});
@@ -14,12 +16,12 @@ class DeviceRecentWarningsPage extends ConsumerStatefulWidget {
 class _DeviceRecentWarningsPageState
     extends ConsumerState<DeviceRecentWarningsPage> {
   Widget hintBindingPage() {
-    final tt = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
+    final tt = context.tt;
+    final colorScheme = context.cs;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        spacing: 16,
+        spacing: AppSpacing.base,
         children: [
           CircleAvatar(
             radius: 28,
@@ -30,10 +32,7 @@ class _DeviceRecentWarningsPageState
               size: 28,
             ),
           ),
-          Text(
-            'not_binding'.tr(),
-            style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          Text('not_binding'.tr(), style: tt.titleLarge),
         ],
       ),
     );
@@ -45,11 +44,7 @@ class _DeviceRecentWarningsPageState
       appBar: AppBar(
         title: Text(
           'device_recent_warnings'.tr(),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontFamily: 'Oxanium',
-            fontVariations: const [FontVariation('wght', 600)],
-            fontWeight: FontWeight.bold,
-          ),
+          style: context.tt.titleLarge,
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/app_palette.dart';
 
 /// Renders the 3 plantar pressure sensors of a (right) foot as an interpolated
 /// heat map, in the visual language of a clinical pressure plate.
@@ -319,7 +320,7 @@ class _FootHeatmapPainter extends CustomPainter {
       );
     } else {
       // Pre-image: fill with the low end of the scale so the shape is visible.
-      canvas.drawColor(const Color(0xFF00007F), BlendMode.srcOver);
+      canvas.drawColor(AppPalette.pressureJet.first, BlendMode.srcOver);
     }
     canvas.restore();
 

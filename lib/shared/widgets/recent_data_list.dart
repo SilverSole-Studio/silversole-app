@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/sole_record_data_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -74,8 +76,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    const outerRadius = 16.0;
+    const outerRadius = AppRadius.banner;
     const innerRadius = 4.0;
 
     return Padding(
@@ -89,7 +90,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
             children: [
               Text(
                 'device_recent_data'.tr(),
-                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                style: context.tt.titleSmall.bold,
               ),
               ElevatedButton(
                 onPressed: () => getRecentData(),
@@ -99,7 +100,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
           ),
           for (var i = 0; i < _items.length; i++)
             Material(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              color: context.cs.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(i == 0 ? outerRadius : innerRadius),
@@ -122,16 +123,16 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                               Icon(
                                 LucideIcons.dot,
                                 color: _items[i].wearStatus
-                                    ? Colors.green
-                                    : Colors.red,
+                                    ? context.tokens.success
+                                    : context.tokens.alert,
                                 size: 40,
                               ),
                               Text(
                                 DateFormat(
                                   'yyyy/MM/dd HH:mm:ss',
                                 ).format(_items[i].receivedAt.toLocal()),
-                                style: tt.titleSmall?.copyWith(
-                                  color: Colors.grey,
+                                style: context.tt.titleSmall?.copyWith(
+                                  color: context.cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -162,10 +163,8 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                     ),
                     Text(
                       _items[i].pressure.toString(),
-                      style: tt.displaySmall?.copyWith(
-                        fontFamily: 'Oxanium',
-                        color: Colors.grey,
-                        fontVariations: [FontVariation('wght', 500)],
+                      style: context.tt.displaySmall?.copyWith(
+                        color: context.cs.onSurfaceVariant,
                       ),
                     ),
                   ],

@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
@@ -28,7 +30,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
         height: 12,
         child: LinearProgressIndicator(
           value: isOn ? 1 : 0,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.subR,
           year2023: false, // ignore: deprecated_member_use
           stopIndicatorRadius: 0,
         ),
@@ -40,7 +42,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     final cs = Theme.of(context).colorScheme;
 
     return Column(
-      spacing: 8,
+      spacing: AppSpacing.sm,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('alert_severity'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
@@ -63,17 +65,13 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     return Row(
-      spacing: 8,
+      spacing: AppSpacing.sm,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
           eventCount.toString(),
-          style: tt.displayMedium?.copyWith(
-            fontFamily: "Oxanium",
-            fontVariations: [FontVariation('wght', 900)],
-            color: color,
-          ),
+          style: tt.displaySmall?.copyWith(color: color),
         ),
         Text('safety_events_detected'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
       ],
@@ -84,7 +82,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    final color = eventCount > 3 ? Colors.red : Theme.of(context).colorScheme.primary;
+    final color = eventCount > 3 ? context.tokens.alert : cs.primary;
     final splashColor = cs.primary.withValues(alpha: 0.04);
     final hoverColor = cs.primary.withValues(alpha: 0.02);
     final settings = ref.watch(settingsProvider);
@@ -122,7 +120,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
                 buildCenterContent(eventCount: eventCount, color: color),
                 buildIndicator(
                   progress: eventCount.toDouble() / 2.0,
-                  bgColor: eventCount == 0 ? Colors.greenAccent[700] : null,
+                  bgColor: eventCount == 0 ? context.tokens.success : null,
                   color: color,
                 ),
               ],

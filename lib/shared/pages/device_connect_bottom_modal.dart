@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
@@ -172,9 +174,7 @@ class _DeviceConnectBottomModalState
 
   @override
   Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    const hPadding = EdgeInsets.symmetric(horizontal: 16);
+    const hPadding = EdgeInsets.symmetric(horizontal: AppSpacing.base);
 
     return SizedBox.expand(
       child: Padding(
@@ -182,50 +182,46 @@ class _DeviceConnectBottomModalState
         child: Column(
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 16,
+          spacing: AppSpacing.base,
           children: [
             Padding(
               padding: hPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 16,
+                spacing: AppSpacing.base,
                 children: [
                   Text(
                     'scanning_nearby_devices'.tr(),
-                    style: tt.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: context.tt.displaySmall,
                   ),
                   Text(
                     'select_your_silversole_device'.tr(),
-                    style: tt.bodyLarge,
+                    style: context.tt.bodyLarge,
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: const LinearProgressIndicator(),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: LinearProgressIndicator(),
             ),
             Expanded(
               child: Padding(
                 padding: hPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 12,
+                  spacing: AppSpacing.md,
                   children: [
                     Text(
                       'nearby_devices'.tr(),
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.tt.titleSmall,
                     ),
                     Expanded(
                       child: SingleChildScrollView(
                         child: buildMaterialList(
                           context,
                           raw: getNearbyDevices(),
-                          themeColor: cs.surface,
+                          themeColor: context.cs.surface,
                         ),
                       ),
                     ),

@@ -11,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/error/error_logger.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/sole_provider.dart';
@@ -195,7 +196,7 @@ class _MapCardState extends ConsumerState<MapCard> {
       child: Stack(
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: AppRadius.subR,
             child: GoogleMap(
               style: style,
               markers: _marker,
@@ -240,9 +241,8 @@ class _MapCardState extends ConsumerState<MapCard> {
       width: double.infinity,
       height: 200,
       child: Card(
-        elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           child: googleMap(style),
         ),
       ),

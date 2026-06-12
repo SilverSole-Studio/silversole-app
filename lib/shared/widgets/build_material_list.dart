@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 
@@ -9,7 +11,7 @@ Widget buildMaterialList(
   required List<ListTileData> raw,
   Color? themeColor,
 }) {
-  const outerRadius = 16.0;
+  const outerRadius = AppRadius.banner;
   const innerRadius = 4.0;
   final scheme = Theme.of(context).colorScheme;
   final splashColor = scheme.primary.withValues(alpha: 0.08);
@@ -23,7 +25,7 @@ Widget buildMaterialList(
       if (title != null)
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+          child: Text(title, style: context.tt.titleMedium),
         ),
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)

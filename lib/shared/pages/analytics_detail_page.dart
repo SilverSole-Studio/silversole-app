@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
@@ -254,7 +255,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
       appBar: AppBar(
         title: Text(
           'analytics'.tr(),
-          style: context.tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: context.tt.titleLarge,
         ),
       ),
       body: SafeArea(
@@ -263,8 +264,8 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 16.0,
+              horizontal: AppSpacing.base,
+              vertical: AppSpacing.base,
             ),
             child: Column(
               spacing: 16,
@@ -299,7 +300,6 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                     ),
                     Expanded(
                       child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(elevation: 0),
                         onPressed: stopRecord,
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 32),
@@ -321,7 +321,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                   child: Card.filled(
                     color: context.cs.surfaceContainer,
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(AppSpacing.base),
                       child: Column(
                         spacing: 32,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,10 +343,6 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: context.cs.primary,
-                                    elevation: 0,
-                                  ),
                                   onPressed: recordList.isEmpty
                                       ? null
                                       : () => exportRecorded(recordList),

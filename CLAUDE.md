@@ -35,6 +35,17 @@ dart run build_runner build --delete-conflicting-outputs
 
 State management is **Riverpod v3**. The pattern throughout is: a `Provider` exposes a plain service class from `lib/core/`, and UI/notifiers consume it. E.g. `soleProvider → SilverSoleService(supabase)`, `bleConnectProvider → BleConnectionService()`.
 
+### Theme & design system
+
+The UI design system lives in `lib/core/theme/` (barrel: `theme.dart`). **Build UI with stock Material widgets — the theme styles them.** Don't write `TextStyle`/`.copyWith(fontFamily/fontWeight)` chains or hardcode hex.
+
+- **One color knob.** `app_palette.dart` holds every raw color. Re-theme the whole app by changing `AppPalette.brandSeed` (royal blue `#2F6BFF`). Accent drives `primary/secondary/tertiary`; all neutral surfaces/outlines stay grayscale (light surface `#FCFCFC`, `surfaceTint` transparent) — enforced by `test/theme_test.dart`.
+- **`app_theme.dart`** builds light/dark `ThemeData`: `ColorScheme.fromSeed` + grayscale-neutral lock + a full `textTheme` + **every component theme** (Card, Filled/Elevated/Outlined buttons, Chip, NavigationBar, AppBar, FAB, Input, Divider, SegmentedButton, BottomSheet, Dialog) + registers `AppTokens`.
+- **Access via `context` helpers** (`core/utils/useful_extension.dart`): `context.cs` (ColorScheme), `context.tt` (TextTheme — every slot pre-sized/weighted in Oxanium; pick the slot instead of `copyWith`), `context.tokens` (`AppTokens`: `rewardGold`, `onReward`, `dataOrange`, `alert`, `success`, `brandCyan`, `brandGradient`). Scales: `AppSpacing.*`, `AppRadius.*` (+ ready-made `.cardR`/`.pillShape`/etc.).
+- **Custom (non-ColorScheme) colors** go on the `AppTokens` `ThemeExtension` (`app_tokens.dart`); functional hues are theme-independent. Domain data-viz ramps (`AppPalette.pressureJet/pressureGradient/chartSeries`) carry clinical meaning — reuse them, don't recolor.
+- **Composites** for recurring DESIGN.md patterns: `SectionCard` (titled card + optional trailing `→`), `StatRow`, `BrandGradientText`. Chip selection uses Material `inverseSurface` → dark-in-light / white-in-dark automatically.
+- Selected-chip, FAB squircle, blue-active nav, and soft card shadow all come from the theme — don't re-style per widget. Visual language reference: `DESIGN.md`.
+
 ### `Result<T>` instead of exceptions
 
 `lib/core/error/result.dart` defines a sealed `Result<T>` (`Ok` / `Error`). Service methods return `Result` and callers `switch` over it rather than try/catch. Follow this convention for new service methods.

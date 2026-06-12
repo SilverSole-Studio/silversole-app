@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 
@@ -89,9 +90,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   child: Center(
                     child: Text(
                       'silversole'.tr(),
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontFamily: 'Oxanium',
-                        fontVariations: const [FontVariation('wght', 600)],
+                      style: context.tt.displayLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -100,7 +100,6 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'email'.tr(),
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(LucideIcons.mail),
                   ),
                   validator: (val) =>
@@ -111,7 +110,6 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'password'.tr(),
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(LucideIcons.lock),
                   ),
                   validator: (val) => fieldEmptyValidator(val),
@@ -128,7 +126,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Theme.of(context).colorScheme.outline,
+                              color: context.cs.outline,
                             ),
                           ), // ignore: deprecated_member_use
                   ),
@@ -143,7 +141,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   children: [
                     Text(
                       'no_account_prompt'.tr(),
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(color: context.cs.onSurfaceVariant),
                     ),
                     TextButton(
                       onPressed: goToSignUp,
@@ -170,7 +168,7 @@ Widget textOnDivider(BuildContext context, String text) {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: Text(text, style: const TextStyle(color: Colors.grey)),
+          child: Text(text, style: TextStyle(color: context.cs.onSurfaceVariant)),
         ),
       ],
     ),
@@ -200,7 +198,7 @@ Widget googleSignInButton(
             ),
             Text(
               'sign_in_with_google'.tr(),
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: context.tt.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ],
