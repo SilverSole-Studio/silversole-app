@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/app_tokens.dart';
 
 extension TextStyleExtension on TextStyle? {
   TextStyle? get bold => this?.copyWith(fontWeight: FontWeight.bold);
 }
 
-extension ThemeExtension on BuildContext {
+/// Shorthand theme access from a [BuildContext].
+///
+/// * `context.tt` — text theme (every slot pre-sized/weighted; see
+///   `app_typography.dart`).
+/// * `context.cs` — color scheme (brand accent + grayscale neutrals).
+/// * `context.tokens` — custom [AppTokens] (reward gold, data orange, alert,
+///   success, brand cyan + gradient) that don't fit a ColorScheme role.
+extension ContextThemeX on BuildContext {
   TextTheme get tt => Theme.of(this).textTheme;
   ColorScheme get cs => Theme.of(this).colorScheme;
+  AppTokens get tokens => Theme.of(this).extension<AppTokens>()!;
 }
 
 extension ListExtension<T> on List<T> {

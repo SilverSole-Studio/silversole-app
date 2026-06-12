@@ -243,7 +243,13 @@ class _FootPressureHeatmapState extends State<FootPressureHeatmap> {
     return AspectRatio(
       aspectRatio: _gridW / _gridH,
       child: CustomPaint(
-        painter: _FootHeatmapPainter(image: _image, pressure: widget.pressure),
+        painter: _FootHeatmapPainter(
+          image: _image,
+          pressure: widget.pressure,
+          outlineColor: Theme.of(
+            context,
+          ).colorScheme.outline.withValues(alpha: 0.6),
+        ),
         size: Size.infinite,
       ),
     );
@@ -287,10 +293,15 @@ Path footPath(Size size) {
 }
 
 class _FootHeatmapPainter extends CustomPainter {
-  _FootHeatmapPainter({required this.image, required this.pressure});
+  _FootHeatmapPainter({
+    required this.image,
+    required this.pressure,
+    required this.outlineColor,
+  });
 
   final ui.Image? image;
   final List<int> pressure;
+  final Color outlineColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -318,7 +329,7 @@ class _FootHeatmapPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
-        ..color = Colors.white.withValues(alpha: 0.35),
+        ..color = outlineColor,
     );
 
     // Sensor markers.
@@ -343,5 +354,6 @@ class _FootHeatmapPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _FootHeatmapPainter oldDelegate) =>
       !identical(oldDelegate.image, image) ||
+      oldDelegate.outlineColor != outlineColor ||
       !_FootPressureHeatmapState._listEquals(oldDelegate.pressure, pressure);
 }

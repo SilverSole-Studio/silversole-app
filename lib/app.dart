@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/routing/router.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
@@ -24,12 +25,8 @@ class App extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       locale: context.locale,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF6750A4),
-        brightness: Brightness.dark,
-      ),
+      theme: appTheme(Brightness.light),
+      darkTheme: appTheme(Brightness.dark),
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
     );

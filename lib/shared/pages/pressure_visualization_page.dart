@@ -28,12 +28,8 @@ class PressureVisualizationPage extends ConsumerWidget {
             children: [
               Expanded(
                 child: Center(
-                  child: Container(
+                  child: Padding(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
                     child: FootPressureHeatmap(pressure: pressure),
                   ),
                 ),

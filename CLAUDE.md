@@ -50,12 +50,26 @@ This spans several files; read them together:
 5. **Device status / heartbeat** — status notifications → `DeviceStatusIngestService` → Supabase **Edge Function `heartbeat`** (not a direct table write) to persist battery/heartbeat. Stale payloads (timestamp >10 min off) are dropped.
 6. **Fall detection** — fall-detect notifications are emitted on `fallEventBusProvider` (an event bus), decoupled from the connection logic.
 
-> Note: `TelemetryIngestService` and `TelemetryUploadBuffer` are currently **stubs** (`enqueue`/`flushQueue`/`uploadOne` are empty, contain `TODO`s). The live-telemetry path above is what actually runs. Don't assume the queue/upload layer is functional.
+#### Pipeline implementation status (reviewed 2026-06)
+
+After `bleForegroundControlProvider` the flow fans out into five branches. Their actual state (verified by code review — don't assume more is wired up than this):
+
+- **Live IMU — working end-to-end.** notify → `parseImuNotify` → `ImuNotifyDataModel` → `LiveTelemetryNotifier.updateImuNotifyData` (rolling window, last 100) → `telemetryViewProvider` → `ImuChartSection`, `PressureVisualizationPage`, `HomeDeviceStatusSection`.
+- **Record — works device↔app, no cloud.** `AnalyticsDetailPage` writes `record-request=1` to start; record notify accumulates via `updateRecordImuNotifyData` (**unbounded — the trim to a max length is commented out**); shown in `RecordImuChartSection` and exported only as a shareable JSON file (`buildRecordJson` → `createFileAndShare`). Recordings are never uploaded.
+- **Device status / heartbeat — upload works, read-back disabled.** notify → timestamp validation (>10 min drift dropped) → `DeviceStatusIngestService` → Edge Function `heartbeat` → `devices` table. However the UI read-back is dead: `DeviceStatusCard.refreshDeviceStatus()` is fully commented out, `HomeDeviceStatusSection` fabricates the battery/heartbeat detail from the last live IMU sample, and "online" is judged from live-telemetry freshness (`TelemetryFacade.checkDeviceOnline`, 35 s window) — not from the DB heartbeat the app just uploaded.
+- **Fall detection — in-memory only.** notify `"1"` → `FallEventBus` → `WarningCard` increments an in-memory counter that resets on app restart. No history persistence, no per-device separation, no upload (`TODO` in `warning_card.dart`).
+- **Upload queue — not implemented.** `TelemetryIngestService` is an **orphan**: no provider wraps it and nothing in the app calls it. `enqueue()` is empty, `flushQueue()`/`uploadOne()` return `Ok` without doing anything, `scheduleRetry()` is empty, and `TelemetryUploadBuffer` is an empty class. The `QueuedTelemetry` freezed model is already defined and ready to reuse when this gets built. Consequently **the app never writes `silversole_record_data`** — `RecentDataList` and the analytics pages read a table only external tooling can populate.
+
+Known gaps / dead code related to this flow:
+
+- `SilverSoleService.bindingDevice` only checks the device exists in `devices` — the `user_devices` insert is commented out, so binding is never persisted.
+- `TelemetryQueryService` is entirely unused and duplicates `SilverSoleService`'s queries.
+- `LiveTelemetryNotifier._load()` is empty (no local restore), and `TelemetrySource.supabase` is never assigned — only `bleLive`.
 
 ### Backend (Supabase)
 
 - **Auth**: `AuthService` (`core/auth`) wraps Supabase email/password. `authUserProvider` exposes the current `UserData?` and listens to `onAuthStateChange`. The router (`core/routing/router.dart`) redirects guests to `/sign-in` and signed-in users away from auth pages.
-- **Queries**: `SilverSoleService` and `TelemetryQueryService` (`core/data`) read tables `devices`, `silversole_record_data`, `device_locations`, `user_devices`. They guard on `currentUser`/empty deviceId and map `PostgrestException` codes to localized messages — notably RLS denials (`42501` → `'rls_denied'.tr()`). Do not change RLS-related handling without understanding these mappings.
+- **Queries**: `SilverSoleService` (`core/data`) reads tables `devices`, `silversole_record_data`, `device_locations`, `user_devices`. It guards on `currentUser`/empty deviceId and maps `PostgrestException` codes to localized messages — notably RLS denials (`42501` → `'rls_denied'.tr()`). Do not change RLS-related handling without understanding these mappings. (`TelemetryQueryService` duplicates these queries and is unused — see pipeline status above.)
 
 ### Local persistence
 
