@@ -15,6 +15,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
   final String model;
   final String id;
   final bool activeDisplay;
+  final bool frosted;
   final DeviceStatusDetailModel? detail;
   final List<ListTileData> menuItems;
   final VoidCallback? onClick;
@@ -26,6 +27,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
     required this.model,
     required this.id,
     required this.activeDisplay,
+    this.frosted = false,
     this.detail,
     this.menuItems = const <ListTileData>[],
     this.onClick,
@@ -101,6 +103,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       menuItems: widget.menuItems,
       active: facade.checkDeviceOnline(widget.detail?.lastHeartbeatAt),
       addition: true,
+      frosted: widget.frosted,
       detail: widget.detail,
       onTap: widget.onClick ?? () {},
     );

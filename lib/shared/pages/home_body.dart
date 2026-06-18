@@ -8,7 +8,6 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/widgets/brand_gradient_text.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
 import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
@@ -38,10 +37,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           children: [
             SvgPicture.asset('assets/images/undraw_void_wez2.svg', width: 300),
             const SizedBox(height: AppSpacing.xxl),
-            Text(
-              'no_primary_device_title'.tr(),
-              style: context.tt.titleLarge,
-            ),
+            Text('no_primary_device_title'.tr(), style: context.tt.titleLarge),
             Text(
               'no_primary_device_body'.tr(),
               style: context.tt.bodySmall?.copyWith(
@@ -69,49 +65,80 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final settings = ref.watch(settingsProvider);
     final preferredDevice = settings.preferredDevice;
 
     return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {},
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSpacing.base),
-            child: Column(
-              spacing: AppSpacing.base,
-              children: [
-                Row(
-                  spacing: AppSpacing.base,
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: cs.primaryContainer,
-                      child: Icon(
-                        LucideIcons.user,
-                        color: cs.onPrimaryContainer,
+      body: Stack(
+        children: [
+          // Regional hero gradient: tints the top ~25–45% of the screen and
+          // fades downward to enrich the page color (DESIGN.md hero accent).
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                height: MediaQuery.sizeOf(context).height * 0.45,
+                decoration: BoxDecoration(
+                  // Gentle diagonal multi-hue wash (brand blue → tertiary
+                  // accent → cyan) that fades to transparent above the
+                  // container's lower edge, so there's no hard cut on the left.
+                  gradient: LinearGradient(
+                    begin: const Alignment(-0.3, -1.0),
+                    end: const Alignment(0.3, 1.0),
+                    colors: [
+                      context.tokens.brandGradient.first.withValues(
+                        alpha: 0.30,
                       ),
-                    ),
-                    BrandGradientText(
-                      'SilverSole',
-                      style: context.tt.headlineSmall,
-                    ),
-                    Expanded(child: const SizedBox()),
-                    IconButton(
-                      onPressed: comingSoon,
-                      icon: Icon(LucideIcons.bell),
-                    ),
-                  ],
+                      context.cs.tertiary.withValues(alpha: 0.18),
+                      context.tokens.brandGradient.last.withValues(alpha: 0.10),
+                      context.tokens.brandGradient.last.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.32, 0.55, 0.82],
+                  ),
                 ),
-                if (preferredDevice != null)
-                  activeBody(preferredDevice)
-                else
-                  notActiveBody(),
-              ],
+              ),
             ),
           ),
-        ),
+          SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async {},
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.base,
+                  AppSpacing.xxl,
+                  AppSpacing.base,
+                  AppSpacing.base,
+                ),
+                child: Column(
+                  spacing: AppSpacing.base,
+                  children: [
+                    Row(
+                      spacing: AppSpacing.base,
+                      children: [
+                        Text(
+                          'welcome_back'.tr(),
+                          style: context.tt.displaySmall,
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: comingSoon,
+                          icon: Icon(LucideIcons.bell),
+                        ),
+                      ],
+                    ),
+                    if (preferredDevice != null)
+                      activeBody(preferredDevice)
+                    else
+                      notActiveBody(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

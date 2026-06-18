@@ -33,6 +33,7 @@ class HomeDeviceStatusSection extends ConsumerWidget {
       model: device.displayModel ?? 'unknown_model'.tr(),
       id: device.remoteId,
       activeDisplay: true,
+      frosted: true,
       detail: detail,
     );
   }

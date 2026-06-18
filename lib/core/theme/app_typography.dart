@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 /// App typography. Every [TextTheme] slot carries its size + weight (per
 /// DESIGN.md §3), so widgets use `context.tt.titleMedium` etc. directly —
-/// no more `.copyWith(fontWeight: ..., fontFamily: 'Oxanium')` chains.
+/// no more `.copyWith(fontWeight: ...)` chains.
 ///
-/// Oxanium is a variable font (wght axis); weight is set via [FontVariation]
-/// plus a matching [FontWeight] for fallback metrics.
+/// Text renders in [fontFamily] — Google Sans, bundled as a variable font
+/// (assets/fonts, declared in pubspec.yaml under `fonts:`). Latin glyphs +
+/// digits use Google Sans; scripts it doesn't cover (e.g. Chinese) fall back
+/// to the platform system font automatically. Weight is carried by
+/// [FontWeight] via the font's `wght` axis.
 abstract final class AppTypography {
-  static const String fontFamily = 'Oxanium';
+  /// The bundled app font family. Must match the `family:` in pubspec.yaml.
+  static const String fontFamily = 'Google Sans';
 
   static FontWeight _fw(int wght) {
     if (wght >= 800) return FontWeight.w800;
@@ -23,7 +27,6 @@ abstract final class AppTypography {
       fontSize: size,
       height: height,
       fontWeight: _fw(wght),
-      fontVariations: [FontVariation('wght', wght.toDouble())],
     );
   }
 

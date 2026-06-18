@@ -188,7 +188,6 @@ class _MapCardState extends ConsumerState<MapCard> {
   }
 
   Widget googleMap(String? style) {
-    final cs = Theme.of(context).colorScheme;
     return SizedBox.expand(
       child: Stack(
         children: [
@@ -219,7 +218,6 @@ class _MapCardState extends ConsumerState<MapCard> {
               top: 4,
               child: FloatingActionButton.small(
                 heroTag: 'fab_map_card',
-                backgroundColor: cs.surfaceContainer,
                 onPressed: controlMapWithPhonePosition,
                 child: const Icon(LucideIcons.locateFixed),
               ),

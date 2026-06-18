@@ -31,6 +31,16 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   Timer? reconnectTimer;
   bool connecting = false;
 
+  // Throttle BLE subscribe-failure logs: print once when a connect attempt
+  // starts failing, then stay quiet until the next full success — otherwise
+  // the 6s reconnect loop spams the same timeout every retry.
+  bool subscribeFailureLogged = false;
+  void logSubscribeFailureOnce(String message) {
+    if (subscribeFailureLogged) return;
+    subscribeFailureLogged = true;
+    debugPrint(message);
+  }
+
   void onData(List<int> value) {
     final json = bleConnectionService.parseImuNotify(value);
     final data = ImuNotifyDataModel.fromJson(json);
@@ -127,7 +137,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       switch (imuResult) {
         case Error():
-          debugPrint('subscribe_failed ${imuResult.error}');
+          logSubscribeFailureOnce('subscribe_failed ${imuResult.error}');
           return;
         case Ok():
           debugPrint('auto connect success');
@@ -149,7 +159,9 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       switch (recordImuResult) {
         case Error():
-          debugPrint('record_subscribe_failed ${recordImuResult.error}');
+          logSubscribeFailureOnce(
+            'record_subscribe_failed ${recordImuResult.error}',
+          );
           return;
         case Ok():
           debugPrint('auto connect success');
@@ -202,7 +214,9 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       switch (fallDetectResult) {
         case Error():
-          debugPrint('fall_detect_subscribe_failed ${fallDetectResult.error}');
+          logSubscribeFailureOnce(
+            'fall_detect_subscribe_failed ${fallDetectResult.error}',
+          );
           return;
         case Ok():
           debugPrint('auto connect success');
@@ -223,12 +237,13 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       switch (deviceStatusResult) {
         case Error():
-          debugPrint(
+          logSubscribeFailureOnce(
             'device_status_subscribe_failed ${deviceStatusResult.error}',
           );
           return;
         case Ok():
           debugPrint('device status subscribe success');
+          subscribeFailureLogged = false; // full connect → re-arm the log
       }
     } finally {
       connecting = false;

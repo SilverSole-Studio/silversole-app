@@ -1,5 +1,8 @@
 key,en,zh_TW
 home,Home,主頁
+welcome_back,Welcome back,歡迎回來
+toggle,Toggle,切換
+last_connected,Last connected: {},上次連線：{}
 person,Person,個人
 account,Account,帳號
 not_signed_in,Not signed in,尚未登入

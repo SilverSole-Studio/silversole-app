@@ -101,9 +101,9 @@ flutter:
     - assets/map_styles/
 
   fonts:
-    - family: Oxanium
+    - family: Google Sans
       fonts:
-        - asset: assets/fonts/Oxanium-VariableFont_wght.ttf
+        - asset: assets/fonts/GoogleSans-VariableFont.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

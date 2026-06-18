@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
@@ -37,7 +38,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final pages = [
       const HomeBody(),
-      const MapPage(),
+      // const MapPage(),
       const DevicesPage(),
       const AnalyticsPage(),
       const PressureVisualizationPage(),
@@ -47,6 +48,22 @@ class _HomePageState extends ConsumerState<HomePage> {
       bottomNavigationBar: appNavigationBar(
         selectedIndex: _page,
         onDestinationSelected: (index) => setState(() => _page = index),
+        icons: const [
+          Icons.home,
+          // LucideIcons.map,
+          LucideIcons.monitorSmartphone,
+          Icons.analytics,
+          LucideIcons.footprints,
+          Icons.settings,
+        ],
+        labels: const [
+          'home',
+          // 'map',
+          'devices',
+          'analytics',
+          'pressure_visualization',
+          'settings',
+        ],
       ),
       body: IndexedStack(index: _page, children: pages),
     );

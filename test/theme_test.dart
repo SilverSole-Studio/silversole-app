@@ -78,7 +78,12 @@ void main() {
         expect(theme.textTheme.titleLarge?.fontSize, equals(20));
         expect(theme.textTheme.bodyMedium?.fontSize, equals(15));
         expect(theme.textTheme.labelSmall?.fontSize, equals(11));
-        expect(theme.textTheme.titleMedium?.fontFamily, equals('Oxanium'));
+        // No longer pinned to the bundled Oxanium; the assembled theme falls
+        // back to the platform/system font (Roboto on Android, SF on iOS).
+        expect(
+          theme.textTheme.titleMedium?.fontFamily,
+          isNot(equals('Oxanium')),
+        );
       });
     }
 

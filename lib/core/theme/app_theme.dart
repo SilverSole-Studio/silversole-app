@@ -56,6 +56,9 @@ ThemeData appTheme(Brightness brightness) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    // Global default family (also carried by every TextTheme slot via
+    // AppTypography); Latin uses Google Sans, other scripts fall back.
+    fontFamily: AppTypography.fontFamily,
     textTheme: textTheme,
     // Page body is a soft light gray in light mode (AppPalette.pageLight,
     // #F7F8FA) so pure-white cards float above it. Dark keeps the deep navy

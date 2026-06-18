@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:silversole/core/theme/app_tokens.dart';
 
 extension TextStyleExtension on TextStyle? {
-  TextStyle? get bold => this?.copyWith(fontWeight: FontWeight.bold);
+  TextStyle? get bold => this?.copyWith(fontWeight: FontWeight.w700);
 }
 
 /// Shorthand theme access from a [BuildContext].

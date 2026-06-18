@@ -1,11 +1,16 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 Widget appNavigationBar({
   required int selectedIndex,
   required void Function(int index) onDestinationSelected,
+  required List<IconData> icons,
+  required List<String> labels,
 }) {
+  assert(
+    icons.length == labels.length,
+    'icons and labels must have the same length',
+  );
   return Builder(
     builder: (context) {
       // Hairline divider above the bar (drawn over the bar's background so it
@@ -14,34 +19,20 @@ Widget appNavigationBar({
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
         ),
         child: NavigationBar(
           selectedIndex: selectedIndex,
           onDestinationSelected: onDestinationSelected,
           destinations: [
-            NavigationDestination(icon: Icon(Icons.home), label: 'home'.tr()),
-            NavigationDestination(
-              icon: Icon(LucideIcons.map),
-              label: 'map'.tr(),
-            ),
-            NavigationDestination(
-              icon: Icon(LucideIcons.monitorSmartphone),
-              label: 'devices'.tr(),
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.analytics),
-              label: 'analytics'.tr(),
-            ),
-            NavigationDestination(
-              icon: Icon(LucideIcons.footprints),
-              label: 'pressure_visualization'.tr(),
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings),
-              label: 'settings'.tr(),
-            ),
+            for (var i = 0; i < icons.length; i++)
+              NavigationDestination(
+                icon: Icon(icons[i]),
+                label: labels[i].tr(),
+              ),
           ],
         ),
       );

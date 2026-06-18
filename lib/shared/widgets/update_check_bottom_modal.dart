@@ -73,7 +73,7 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                 child: Text(
                   // '發現新版本 $latestVersion',
                   'new_version'.tr(args: [latestVersion.toString()]),
-                  style: ts.headlineMedium?.copyWith(color: cs.primaryFixed),
+                  style: ts.headlineMedium?.copyWith(color: cs.primary),
                 ),
               ),
 
