@@ -90,7 +90,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   child: Center(
                     child: Text(
                       'silversole'.tr(),
-                      style: context.tt.displayLarge?.copyWith(
+                      style: context.textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -126,7 +126,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: context.cs.outline,
+                              color: context.colorScheme.outline,
                             ),
                           ), // ignore: deprecated_member_use
                   ),
@@ -141,7 +141,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   children: [
                     Text(
                       'no_account_prompt'.tr(),
-                      style: TextStyle(color: context.cs.onSurfaceVariant),
+                      style: TextStyle(color: context.colorScheme.onSurfaceVariant),
                     ),
                     TextButton(
                       onPressed: goToSignUp,
@@ -168,7 +168,10 @@ Widget textOnDivider(BuildContext context, String text) {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: Text(text, style: TextStyle(color: context.cs.onSurfaceVariant)),
+          child: Text(
+            text,
+            style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+          ),
         ),
       ],
     ),
@@ -198,7 +201,7 @@ Widget googleSignInButton(
             ),
             Text(
               'sign_in_with_google'.tr(),
-              style: context.tt.bodyLarge,
+              style: context.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ],

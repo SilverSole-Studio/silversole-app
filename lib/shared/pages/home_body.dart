@@ -8,8 +8,8 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/device_carousel.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
-import 'package:silversole/shared/widgets/map_card.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
 import 'package:silversole/shared/widgets/warning_card.dart';
 
@@ -37,11 +37,14 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
           children: [
             SvgPicture.asset('assets/images/undraw_void_wez2.svg', width: 300),
             const SizedBox(height: AppSpacing.xxl),
-            Text('no_primary_device_title'.tr(), style: context.tt.titleLarge),
+            Text(
+              'no_primary_device_title'.tr(),
+              style: context.textTheme.titleLarge,
+            ),
             Text(
               'no_primary_device_body'.tr(),
-              style: context.tt.bodySmall?.copyWith(
-                color: context.cs.onSurfaceVariant,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -55,8 +58,8 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     return Column(
       spacing: AppSpacing.base,
       children: [
+        const DeviceCarousel(),
         HomeDeviceStatusSection(device: device),
-        MapCard(),
         WarningCard(key: ValueKey(device.remoteId)),
         RecentDataChartCard(),
       ],
@@ -69,6 +72,13 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final preferredDevice = settings.preferredDevice;
 
     return Scaffold(
+      // "Mission" button — a target/objective icon. Placeholder action for now.
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'fab_home_mission',
+        onPressed: comingSoon,
+        tooltip: 'mission'.tr(),
+        child: const Icon(LucideIcons.target),
+      ),
       body: Stack(
         children: [
           // Regional hero gradient: tints the top ~25–45% of the screen and
@@ -91,7 +101,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                       context.tokens.brandGradient.first.withValues(
                         alpha: 0.30,
                       ),
-                      context.cs.tertiary.withValues(alpha: 0.18),
+                      context.colorScheme.tertiary.withValues(alpha: 0.18),
                       context.tokens.brandGradient.last.withValues(alpha: 0.10),
                       context.tokens.brandGradient.last.withValues(alpha: 0.0),
                     ],
@@ -120,7 +130,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                       children: [
                         Text(
                           'welcome_back'.tr(),
-                          style: context.tt.displaySmall,
+                          style: context.textTheme.displaySmall,
                         ),
                         const Spacer(),
                         IconButton(

@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/devices_page.dart';
+import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
-import 'package:silversole/shared/pages/pressure_visualization_page.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
 
@@ -38,10 +38,10 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final pages = [
       const HomeBody(),
-      // const MapPage(),
+      const MapPage(),
       const DevicesPage(),
       const AnalyticsPage(),
-      const PressureVisualizationPage(),
+      const GamePage(),
       const PersonPage(),
     ];
     return Scaffold(
@@ -50,18 +50,18 @@ class _HomePageState extends ConsumerState<HomePage> {
         onDestinationSelected: (index) => setState(() => _page = index),
         icons: const [
           Icons.home,
-          // LucideIcons.map,
+          LucideIcons.map,
           LucideIcons.monitorSmartphone,
           Icons.analytics,
-          LucideIcons.footprints,
+          LucideIcons.gamepad2,
           Icons.settings,
         ],
         labels: const [
           'home',
-          // 'map',
+          'map',
           'devices',
           'analytics',
-          'pressure_visualization',
+          'entertainment',
           'settings',
         ],
       ),

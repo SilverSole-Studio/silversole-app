@@ -192,11 +192,11 @@ class _DeviceConnectBottomModalState
                 children: [
                   Text(
                     'scanning_nearby_devices'.tr(),
-                    style: context.tt.displaySmall,
+                    style: context.textTheme.displaySmall,
                   ),
                   Text(
                     'select_your_silversole_device'.tr(),
-                    style: context.tt.bodyLarge,
+                    style: context.textTheme.bodyLarge,
                   ),
                 ],
               ),
@@ -214,14 +214,14 @@ class _DeviceConnectBottomModalState
                   children: [
                     Text(
                       'nearby_devices'.tr(),
-                      style: context.tt.titleSmall,
+                      style: context.textTheme.titleLarge,
                     ),
                     Expanded(
                       child: SingleChildScrollView(
                         child: buildMaterialList(
                           context,
                           raw: getNearbyDevices(),
-                          themeColor: context.cs.surface,
+                          themeColor: context.colorScheme.surface,
                         ),
                       ),
                     ),

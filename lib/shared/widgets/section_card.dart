@@ -45,7 +45,7 @@ class SectionCard extends StatelessWidget {
               children: [
                 if (title != null)
                   Expanded(
-                    child: Text(title!, style: context.tt.titleMedium),
+                    child: Text(title!, style: context.textTheme.titleMedium),
                   )
                 else
                   const Spacer(),

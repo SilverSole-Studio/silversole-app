@@ -18,11 +18,13 @@ class BrandGradientText extends StatelessWidget {
       begin: Alignment.centerLeft,
       end: Alignment.centerRight,
     );
-    final baseStyle = (style ?? context.tt.displaySmall) ?? const TextStyle();
+    final baseStyle =
+        (style ?? context.textTheme.displaySmall) ?? const TextStyle();
     return ShaderMask(
       blendMode: BlendMode.srcIn,
-      shaderCallback: (bounds) =>
-          gradient.createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+      shaderCallback: (bounds) => gradient.createShader(
+        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+      ),
       child: Text(
         text,
         textAlign: textAlign,

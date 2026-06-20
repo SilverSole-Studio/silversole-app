@@ -20,7 +20,7 @@ class PressureVisualizationPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'pressure_visualization'.tr(),
-          style: context.tt.titleLarge,
+          style: context.textTheme.titleLarge,
         ),
       ),
       body: SafeArea(
@@ -89,22 +89,19 @@ class _SensorCard extends StatelessWidget {
         horizontal: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: context.cs.surfaceContainerHighest,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: AppRadius.fieldR,
       ),
       child: Column(
         children: [
           Text(
             label,
-            style: context.tt.labelMedium?.copyWith(
-              color: context.cs.onSurfaceVariant,
+            style: context.textTheme.labelMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
-            style: context.tt.titleLarge,
-          ),
+          Text(value, style: context.textTheme.titleLarge),
         ],
       ),
     );
@@ -116,8 +113,8 @@ class _PressureLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = context.tt.labelSmall?.copyWith(
-      color: context.cs.onSurfaceVariant,
+    final style = context.textTheme.labelSmall?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
     );
     return Column(
       children: [

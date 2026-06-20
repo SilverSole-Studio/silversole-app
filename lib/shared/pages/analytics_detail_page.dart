@@ -55,13 +55,13 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: selectedIndex == i
-                    ? context.cs.surfaceContainerHighest
-                    : context.cs.surfaceContainerLow,
+                    ? context.colorScheme.surfaceContainerHighest
+                    : context.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(
                   selectedIndex == i ? 50 : 4,
                 ),
               ),
-              child: Text(label, style: context.tt.bodyLarge.bold),
+              child: Text(label, style: context.textTheme.bodyLarge.bold),
             ),
           );
         }),
@@ -253,10 +253,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'analytics'.tr(),
-          style: context.tt.titleLarge,
-        ),
+        title: Text('analytics'.tr(), style: context.textTheme.titleLarge),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -319,7 +316,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                 SizedBox(
                   width: double.infinity,
                   child: Card.filled(
-                    color: context.cs.surfaceContainer,
+                    color: context.colorScheme.surfaceContainer,
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.base),
                       child: Column(
@@ -328,7 +325,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                         children: [
                           Text(
                             'record'.tr(),
-                            style: context.tt.titleSmall.bold,
+                            style: context.textTheme.titleSmall.bold,
                           ),
                           if (_isRecording)
                             RecordImuChartSection(type: ChardDisplayType.all),
@@ -336,7 +333,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
                             'already_recording_with_count'.tr(
                               args: [recordCount.toString()],
                             ),
-                            style: context.tt.titleMedium,
+                            style: context.textTheme.titleMedium,
                           ),
                           if (!_isRecording)
                             Row(

@@ -3,9 +3,12 @@ import 'dart:math' as math;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
 class AnalyticsPage extends StatefulWidget {
@@ -21,65 +24,88 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('analytics'.tr(), style: context.tt.titleLarge),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(LucideIcons.calendarDays),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.base,
-            AppSpacing.sm,
-            AppSpacing.base,
-            AppSpacing.base,
-          ),
-          child: Column(
-            spacing: AppSpacing.sm,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                spacing: 10,
-                children: [
-                  Expanded(
-                    child: _RangeSelector(
-                      labels: [
-                        'today'.tr(),
-                        'seven_days'.tr(),
-                        'thirty_days'.tr(),
-                      ],
-                      selectedIndex: _selectedRangeIndex,
-                      onSelected: (index) {
-                        setState(() => _selectedRangeIndex = index);
-                      },
-                    ),
-                  ),
-                  _MetricSelector(label: 'pressure'.tr()),
-                ],
-              ),
-              const _PressureDistributionCard(),
-              const _TodayStatusCard(),
-              const _MetricGrid(),
-              const _PressureAnalysisCard(),
-              _StabilityTrendCard(
-                selectedIndex: _selectedTrendIndex,
-                onSelected: (index) {
-                  setState(() => _selectedTrendIndex = index);
-                },
-              ),
-              const _CareSuggestionCard(
-                suggestion:
-                    '整體步態今日穩定。右腳後跟壓力略高，可能與行走平衡或鞋墊擺放有關。建議今晚檢查鞋墊是否放置正確，並留意是否有任何腳跟不適。',
-              ),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('analytics'.tr(), style: context.textTheme.titleLarge),
+          bottom: TabBar(
+            labelStyle: context.textTheme.titleMedium,
+            unselectedLabelStyle: context.textTheme.titleMedium,
+            tabs: [
+              Tab(text: 'vitality_metrics'.tr()),
+              Tab(text: 'pressure_visualization'.tr()),
             ],
           ),
         ),
+        body: SafeArea(
+          child: TabBarView(
+            children: [_vitalityTab(), const _PressureVizTab()],
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _vitalityTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.base,
+        AppSpacing.sm,
+        AppSpacing.base,
+        AppSpacing.base,
+      ),
+      child: Column(
+        spacing: AppSpacing.sm,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            spacing: 10,
+            children: [
+              Expanded(
+                child: _RangeSelector(
+                  labels: ['today'.tr(), 'seven_days'.tr(), 'thirty_days'.tr()],
+                  selectedIndex: _selectedRangeIndex,
+                  onSelected: (index) {
+                    setState(() => _selectedRangeIndex = index);
+                  },
+                ),
+              ),
+              // _MetricSelector(label: 'pressure'.tr()),
+            ],
+          ),
+          // const _PressureDistributionCard(),
+          const _TodayStatusCard(),
+          const _MetricGrid(),
+          const _PressureAnalysisCard(),
+          _StabilityTrendCard(
+            selectedIndex: _selectedTrendIndex,
+            onSelected: (index) {
+              setState(() => _selectedTrendIndex = index);
+            },
+          ),
+          const _CareSuggestionCard(
+            suggestion:
+                '整體步態今日穩定。右腳後跟壓力略高，可能與行走平衡或鞋墊擺放有關。建議今晚檢查鞋墊是否放置正確，並留意是否有任何腳跟不適。',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "壓力可視化" tab — just the live foot-pressure heat map.
+class _PressureVizTab extends ConsumerWidget {
+  const _PressureVizTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(telemetryViewProvider);
+    final imu = state.recentImu;
+    final pressure = imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0];
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.base),
+      child: Center(child: FootPressureHeatmap(pressure: pressure)),
     );
   }
 }
@@ -99,9 +125,7 @@ class _RangeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return SegmentedButton<int>(
       showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-      ),
+      style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
       segments: [
         for (var i = 0; i < labels.length; i++)
           ButtonSegment<int>(
@@ -157,7 +181,10 @@ class _AnalyticsCard extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        child: Padding(padding: const EdgeInsets.all(AppSpacing.base), child: child),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.base),
+          child: child,
+        ),
       ),
     );
   }
@@ -168,7 +195,7 @@ class _PressureDistributionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return SectionCard(
       title: 'foot_pressure_distribution'.tr(),
@@ -198,7 +225,7 @@ class _PressureDistributionCard extends StatelessWidget {
             children: [
               Text(
                 'low'.tr(),
-                style: context.tt.bodyMedium?.copyWith(
+                style: context.textTheme.bodyMedium?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
               ),
@@ -215,7 +242,7 @@ class _PressureDistributionCard extends StatelessWidget {
               ),
               Text(
                 'high'.tr(),
-                style: context.tt.bodyMedium?.copyWith(
+                style: context.textTheme.bodyMedium?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
               ),
@@ -252,11 +279,14 @@ class _PressureValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: AppSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: AppRadius.fieldR,
@@ -269,13 +299,15 @@ class _PressureValueRow extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+            style: context.textTheme.labelSmall?.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
           ),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: context.tt.titleMedium,
+            style: context.textTheme.titleMedium,
           ),
         ],
       ),
@@ -288,7 +320,7 @@ class _TodayStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return SectionCard(
       title: 'today_status'.tr(),
@@ -315,11 +347,11 @@ class _TodayStatusCard extends StatelessWidget {
                   children: [
                     Text(
                       'gait_stable'.tr(),
-                      style: context.tt.headlineSmall,
+                      style: context.textTheme.headlineSmall,
                     ),
                     Text(
                       'today_pressure_summary'.tr(),
-                      style: context.tt.bodyMedium?.copyWith(
+                      style: context.textTheme.bodyMedium?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
                     ),
@@ -367,7 +399,7 @@ class _StatusStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return Row(
       spacing: 10,
@@ -380,14 +412,11 @@ class _StatusStat extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: context.tt.bodySmall?.copyWith(
+                style: context.textTheme.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
               ),
-              Text(
-                value,
-                style: context.tt.titleMedium,
-              ),
+              Text(value, style: context.textTheme.titleMedium),
             ],
           ),
         ),
@@ -403,7 +432,7 @@ class _VerticalDivider extends StatelessWidget {
       width: 1,
       height: 44,
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      color: context.cs.outlineVariant,
+      color: context.colorScheme.outlineVariant,
     );
   }
 }
@@ -449,7 +478,7 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return Card(
       child: Padding(
@@ -475,7 +504,7 @@ class _MetricTile extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.tt.bodySmall?.copyWith(
+                    style: context.textTheme.bodySmall?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
                   ),
@@ -486,7 +515,7 @@ class _MetricTile extends StatelessWidget {
                       child: Text(
                         value,
                         maxLines: 1,
-                        style: context.tt.titleLarge,
+                        style: context.textTheme.titleLarge,
                       ),
                     ),
                   ),
@@ -565,7 +594,7 @@ class _AnalysisRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return Column(
       children: [
@@ -573,10 +602,10 @@ class _AnalysisRow extends StatelessWidget {
           spacing: 12,
           children: [
             Icon(icon, color: cs.onSurfaceVariant, size: 20),
-            Expanded(child: Text(label, style: context.tt.bodyLarge)),
+            Expanded(child: Text(label, style: context.textTheme.bodyLarge)),
             Text(
               value,
-              style: context.tt.bodyMedium?.copyWith(
+              style: context.textTheme.bodyMedium?.copyWith(
                 color: cs.onSurfaceVariant,
               ),
             ),
@@ -601,7 +630,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return Container(
       constraints: const BoxConstraints(minWidth: 66),
@@ -615,7 +644,7 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: context.tt.labelMedium?.copyWith(
+        style: context.textTheme.labelMedium?.copyWith(
           color: highlighted ? cs.primary : cs.onSurfaceVariant,
           fontWeight: FontWeight.bold,
         ),
@@ -635,7 +664,7 @@ class _StabilityTrendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
     final values = [58.0, 74.0, 66.0, 84.0, 76.0, 89.0, 78.0];
 
     return SectionCard(
@@ -660,10 +689,8 @@ class _StabilityTrendCard extends StatelessWidget {
                 gridData: FlGridData(
                   drawVerticalLine: false,
                   horizontalInterval: 25,
-                  getDrawingHorizontalLine: (_) => FlLine(
-                    color: cs.outlineVariant,
-                    strokeWidth: 1,
-                  ),
+                  getDrawingHorizontalLine: (_) =>
+                      FlLine(color: cs.outlineVariant, strokeWidth: 1),
                 ),
                 borderData: FlBorderData(
                   show: true,
@@ -686,7 +713,7 @@ class _StabilityTrendCard extends StatelessWidget {
                       reservedSize: 32,
                       getTitlesWidget: (value, _) => Text(
                         value.toInt().toString(),
-                        style: context.tt.labelSmall?.bold?.copyWith(
+                        style: context.textTheme.labelSmall?.bold?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),
                       ),
@@ -715,7 +742,7 @@ class _StabilityTrendCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
                             labels[index],
-                            style: context.tt.labelSmall?.copyWith(
+                            style: context.textTheme.labelSmall?.copyWith(
                               color: cs.onSurfaceVariant,
                             ),
                           ),
@@ -779,9 +806,7 @@ class _MiniToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return SegmentedButton<int>(
       showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(
-        visualDensity: VisualDensity.compact,
-      ),
+      style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
       segments: [
         for (var i = 0; i < labels.length; i++)
           ButtonSegment<int>(
@@ -808,7 +833,7 @@ class _CareSuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.cs;
+    final cs = context.colorScheme;
 
     return _AnalyticsCard(
       child: Row(
@@ -823,11 +848,11 @@ class _CareSuggestionCard extends StatelessWidget {
               children: [
                 Text(
                   'ai_care_suggestion'.tr(),
-                  style: context.tt.titleSmall?.bold,
+                  style: context.textTheme.titleSmall?.bold,
                 ),
                 Text(
                   suggestion,
-                  style: context.tt.bodyMedium?.copyWith(
+                  style: context.textTheme.bodyMedium?.copyWith(
                     color: cs.onSurfaceVariant,
                     height: 1.5,
                   ),

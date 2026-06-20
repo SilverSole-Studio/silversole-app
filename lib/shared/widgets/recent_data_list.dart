@@ -90,7 +90,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
             children: [
               Text(
                 'device_recent_data'.tr(),
-                style: context.tt.titleSmall.bold,
+                style: context.textTheme.titleSmall.bold,
               ),
               ElevatedButton(
                 onPressed: () => getRecentData(),
@@ -100,7 +100,7 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
           ),
           for (var i = 0; i < _items.length; i++)
             Material(
-              color: context.cs.surfaceContainerLow,
+              color: context.colorScheme.surfaceContainerLow,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(i == 0 ? outerRadius : innerRadius),
@@ -131,8 +131,8 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                                 DateFormat(
                                   'yyyy/MM/dd HH:mm:ss',
                                 ).format(_items[i].receivedAt.toLocal()),
-                                style: context.tt.titleSmall?.copyWith(
-                                  color: context.cs.onSurfaceVariant,
+                                style: context.textTheme.titleSmall?.copyWith(
+                                  color: context.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -163,8 +163,8 @@ class _RecentDataListState extends ConsumerState<RecentDataList> {
                     ),
                     Text(
                       _items[i].pressure.toString(),
-                      style: context.tt.displaySmall?.copyWith(
-                        color: context.cs.onSurfaceVariant,
+                      style: context.textTheme.displaySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],

@@ -16,8 +16,8 @@ class DeviceRecentWarningsPage extends ConsumerStatefulWidget {
 class _DeviceRecentWarningsPageState
     extends ConsumerState<DeviceRecentWarningsPage> {
   Widget hintBindingPage() {
-    final tt = context.tt;
-    final colorScheme = context.cs;
+    final tt = context.textTheme;
+    final colorScheme = context.colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,7 +44,7 @@ class _DeviceRecentWarningsPageState
       appBar: AppBar(
         title: Text(
           'device_recent_warnings'.tr(),
-          style: context.tt.titleLarge,
+          style: context.textTheme.titleLarge,
         ),
       ),
     );

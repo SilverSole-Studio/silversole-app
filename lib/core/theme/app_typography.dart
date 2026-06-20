@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// App typography. Every [TextTheme] slot carries its size + weight (per
-/// DESIGN.md §3), so widgets use `context.tt.titleMedium` etc. directly —
+/// DESIGN.md §3), so widgets use `context.textTheme.titleMedium` etc. directly —
 /// no more `.copyWith(fontWeight: ...)` chains.
 ///
 /// Text renders in [fontFamily] — Google Sans, bundled as a variable font

@@ -25,7 +25,7 @@ Widget buildMaterialList(
       if (title != null)
         Padding(
           padding: const EdgeInsets.only(bottom: 8.0),
-          child: Text(title, style: context.tt.titleMedium),
+          child: Text(title, style: context.textTheme.titleMedium),
         ),
       for (var i = 0; i < list.length; i++)
         if (list[i].enable)

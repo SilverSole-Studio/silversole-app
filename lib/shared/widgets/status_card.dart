@@ -12,6 +12,9 @@ import 'package:silversole/shared/widgets/rader_dot.dart';
 
 enum StatusCardType { normal, statusDisplay, menu }
 
+/// Actions in the device-status card's overflow menu.
+enum _DeviceMenuAction { rename, settings, delete }
+
 Widget statusCard(
   BuildContext context, {
   StatusCardType type = StatusCardType.normal,
@@ -154,7 +157,10 @@ Widget statusCard(
     hoverColor: hoverColor,
     focusColor: hoverColor,
     child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.base),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical: AppSpacing.xs,
+      ),
       child: type == StatusCardType.statusDisplay
           ? _statusDisplayBody(
               context,
@@ -290,15 +296,6 @@ Widget _statusDisplayBody(
       crossAxisAlignment: CrossAxisAlignment.center,
       spacing: AppSpacing.lg,
       children: [
-        SizedBox(
-          width: 108,
-          height: 82,
-          child: Image.asset(
-            'assets/images/silversole_full.png',
-            fit: BoxFit.contain,
-            cacheWidth: 324,
-          ),
-        ),
         Expanded(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -319,37 +316,64 @@ Widget _statusDisplayBody(
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  FilledButton(
-                    onPressed: () {},
-                    style: FilledButton.styleFrom(
-                      backgroundColor: cs.surfaceContainerHighest,
-                      foregroundColor: cs.onSurfaceVariant,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: AppRadius.cardR,
-                      ),
+                  PopupMenuButton<_DeviceMenuAction>(
+                    position: PopupMenuPosition.under,
+                    tooltip: '',
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: AppRadius.cardR,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xs,
-                        vertical: AppSpacing.xs,
+                    onSelected: (action) {
+                      // TODO: wire device actions (rename / settings / delete).
+                      switch (action) {
+                        case _DeviceMenuAction.rename:
+                          break;
+                        case _DeviceMenuAction.settings:
+                          break;
+                        case _DeviceMenuAction.delete:
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: _DeviceMenuAction.rename,
+                        child: Row(
+                          spacing: AppSpacing.md,
+                          children: [
+                            const Icon(LucideIcons.pencil, size: 18),
+                            Text('rename_device'.tr()),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        spacing: AppSpacing.xs,
-                        children: [
-                          const Icon(LucideIcons.refreshCw, size: 14),
-                          Text(
-                            'toggle'.tr(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: tt.labelMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+                      PopupMenuItem(
+                        value: _DeviceMenuAction.settings,
+                        child: Row(
+                          spacing: AppSpacing.md,
+                          children: [
+                            const Icon(LucideIcons.settings, size: 18),
+                            Text('device_settings'.tr()),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: _DeviceMenuAction.delete,
+                        child: Row(
+                          spacing: AppSpacing.md,
+                          children: [
+                            Icon(LucideIcons.trash2, size: 18, color: cs.error),
+                            Text(
+                              'delete_device'.tr(),
+                              style: TextStyle(color: cs.error),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      child: Icon(
+                        LucideIcons.moreVertical,
+                        size: 18,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -384,16 +408,16 @@ Widget _statusDisplayBody(
                 spacing: AppSpacing.md,
                 children: [
                   Expanded(
-                    child: ClipRRect(
+                    child: LinearProgressIndicator(
+                      year2023: false, // ignore: deprecated_member_use
+                      value: batteryValue,
+                      minHeight: 14,
+                      // Rounds each segment's ends (incl. the gap-facing ones).
                       borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        year2023: false, // ignore: deprecated_member_use
-                        value: batteryValue,
-                        stopIndicatorRadius: 0,
-                        minHeight: 14,
-                        backgroundColor: cs.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
-                      ),
+                      stopIndicatorRadius: 0,
+                      trackGap: 4,
+                      backgroundColor: cs.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
                     ),
                   ),
                   Text(

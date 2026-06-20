@@ -48,3 +48,6 @@ app.*.map.json
 .env.*
 
 mockups/
+
+# Throwaway visual-preview goldens + their disposable *_preview test drivers.
+dev_previews/

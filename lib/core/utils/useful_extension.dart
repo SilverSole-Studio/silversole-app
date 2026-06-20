@@ -7,14 +7,14 @@ extension TextStyleExtension on TextStyle? {
 
 /// Shorthand theme access from a [BuildContext].
 ///
-/// * `context.tt` — text theme (every slot pre-sized/weighted; see
+/// * `context.textTheme` — text theme (every slot pre-sized/weighted; see
 ///   `app_typography.dart`).
-/// * `context.cs` — color scheme (brand accent + grayscale neutrals).
+/// * `context.colorScheme` — color scheme (brand accent + grayscale neutrals).
 /// * `context.tokens` — custom [AppTokens] (reward gold, data orange, alert,
 ///   success, brand cyan + gradient) that don't fit a ColorScheme role.
 extension ContextThemeX on BuildContext {
-  TextTheme get tt => Theme.of(this).textTheme;
-  ColorScheme get cs => Theme.of(this).colorScheme;
+  TextTheme get textTheme => Theme.of(this).textTheme;
+  ColorScheme get colorScheme => Theme.of(this).colorScheme;
   AppTokens get tokens => Theme.of(this).extension<AppTokens>()!;
 }
 

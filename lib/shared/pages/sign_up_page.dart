@@ -71,7 +71,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    final tt = context.tt;
+    final tt = context.textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -108,7 +108,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                       Text(
                         'sign_up_intro'.tr(),
                         style: tt.titleSmall?.copyWith(
-                          color: context.cs.onSurfaceVariant,
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -164,7 +164,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: context.cs.outline,
+                              color: context.colorScheme.outline,
                             ),
                           ),
                   ),
@@ -193,7 +193,10 @@ Widget textOnDivider(BuildContext context, String text) {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           color: Theme.of(context).scaffoldBackgroundColor,
-          child: Text(text, style: TextStyle(color: context.cs.onSurfaceVariant)),
+          child: Text(
+            text,
+            style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+          ),
         ),
       ],
     ),
@@ -223,7 +226,7 @@ Widget googleSignInButton(
             ),
             Text(
               'sign_in_with_google'.tr(),
-              style: context.tt.bodyLarge,
+              style: context.textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
           ],

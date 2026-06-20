@@ -107,7 +107,7 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('devices'.tr(), style: context.tt.titleLarge),
+        title: Text('devices'.tr(), style: context.textTheme.titleLarge),
         actions: [
           IconButton(
             onPressed: debugStartService,
@@ -140,14 +140,17 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                     margin: const EdgeInsets.only(left: AppSpacing.sm),
                     child: Icon(
                       LucideIcons.search,
-                      color: context.cs.onSurfaceVariant,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   hintText: 'search_device'.tr(),
                   elevation: const WidgetStatePropertyAll(0),
                 ),
                 const SizedBox(height: AppSpacing.base),
-                Text('current_devices'.tr(), style: context.tt.titleSmall),
+                Text(
+                  'current_devices'.tr(),
+                  style: context.textTheme.titleSmall,
+                ),
                 ...pairedDevicesList.map(
                   (item) => DeviceStatusCard(
                     type: StatusCardType.menu,

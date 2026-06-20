@@ -92,7 +92,7 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
                     Expanded(
                       child: Text(
                         'device_recent_data'.tr(),
-                        style: context.tt.titleSmall.bold,
+                        style: context.textTheme.titleSmall.bold,
                       ),
                     ),
                     TextButton(

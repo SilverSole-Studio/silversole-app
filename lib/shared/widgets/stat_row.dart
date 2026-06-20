@@ -21,7 +21,7 @@ class StatRow extends StatelessWidget {
     for (var i = 0; i < items.length; i++) {
       if (i > 0) {
         children.add(
-          Container(width: 1, height: 28, color: context.cs.outlineVariant),
+          Container(width: 1, height: 28, color: context.colorScheme.outlineVariant),
         );
       }
       children.add(
@@ -32,19 +32,22 @@ class StatRow extends StatelessWidget {
             children: [
               Text(
                 items[i].label,
-                style: context.tt.bodySmall?.copyWith(
-                  color: context.cs.onSurfaceVariant,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
-              Text(items[i].value, style: context.tt.headlineSmall),
+              Text(items[i].value, style: context.textTheme.headlineSmall),
             ],
           ),
         ),
       );
     }
     return IntrinsicHeight(
-      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: children),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: children,
+      ),
     );
   }
 }

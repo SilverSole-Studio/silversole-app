@@ -127,7 +127,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text('person'.tr(), style: context.tt.titleLarge),
+        title: Text('person'.tr(), style: context.textTheme.titleLarge),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.base),
