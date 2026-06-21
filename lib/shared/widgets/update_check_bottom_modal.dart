@@ -30,9 +30,10 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
       filename = result.value.name;
       size = result.value.size;
     case Error():
+      // Passive on-launch update check — fail silently. A network hiccup
+      // (timeout / offline) shouldn't pop a technical error at the user; just
+      // log it for devs and skip the dialog.
       debugPrint('[UpdateCheck] fetch failed: ${result.error}');
-      if (!context.mounted) return;
-      showErrorSnakeBar(result.error.toString());
       return;
   }
   if (!isUpdateAvailable(currentVersion, latestVersion)) return;

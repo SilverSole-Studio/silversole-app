@@ -6,6 +6,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/3d_model_preview.dart';
 
@@ -73,9 +74,12 @@ class _DeviceCarouselState extends ConsumerState<DeviceCarousel> {
     final addIndex = devices.length;
     final preferredIdx = _preferredIndex(devices);
 
-    // Released on the trailing "+" page: snap back to the last device.
+    // Released on the trailing "+" page: open the add-device modal immediately
+    // (same flow as the Devices page FAB) and let the snap-back animate behind
+    // it — awaiting the 280ms snap-back first made the modal feel slow.
     if (index == addIndex) {
-      await _animateTo(addIndex - 1);
+      showDeviceConnectBottomModal(context);
+      _animateTo(addIndex - 1);
       return;
     }
 
@@ -199,16 +203,26 @@ class _DotsIndicator extends StatelessWidget {
       spacing: AppSpacing.sm,
       children: [
         for (var i = 0; i < count; i++)
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
+          if (i == count - 1)
+            // Trailing "add device" page: a plus instead of a dot.
+            Icon(
+              LucideIcons.plus,
+              size: 14,
               color: i == active
                   ? context.colorScheme.primary
-                  : context.colorScheme.outlineVariant.withValues(alpha: 0.7),
+                  : context.colorScheme.outlineVariant.withValues(alpha: 0.9),
+            )
+          else
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: i == active
+                    ? context.colorScheme.primary
+                    : context.colorScheme.outlineVariant.withValues(alpha: 0.7),
+              ),
             ),
-          ),
       ],
     );
   }

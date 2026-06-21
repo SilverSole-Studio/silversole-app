@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
+import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
@@ -25,6 +26,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/analytics-detail',
         builder: (_, _) => AnalyticsDetailPage(),
+      ),
+      GoRoute(
+        path: '/game-webview',
+        builder: (_, state) {
+          final args = (state.extra as Map?) ?? const {};
+          return GameWebViewPage(
+            url: (args['url'] as String?) ?? 'https://example.com',
+            title: args['title'] as String?,
+          );
+        },
       ),
     ],
     redirect: (_, state) {

@@ -39,7 +39,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final pages = [
       const HomeBody(),
       const MapPage(),
-      const DevicesPage(),
+      // const DevicesPage(),
       const AnalyticsPage(),
       const GamePage(),
       const PersonPage(),
@@ -51,7 +51,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         icons: const [
           Icons.home,
           LucideIcons.map,
-          LucideIcons.monitorSmartphone,
+          // LucideIcons.monitorSmartphone,
           Icons.analytics,
           LucideIcons.gamepad2,
           Icons.settings,
@@ -59,7 +59,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         labels: const [
           'home',
           'map',
-          'devices',
+          // 'devices',
           'analytics',
           'entertainment',
           'settings',

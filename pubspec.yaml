@@ -60,6 +60,7 @@ dependencies:
   fl_chart: ^1.1.1
   flutter_blue_plus: ^2.1.1
   collection: ^1.19.1
+  flutter_inappwebview: ^6.1.5
 
 dev_dependencies:
   flutter_test:
@@ -97,6 +98,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/images/games/
     - assets/translations/
     - assets/map_styles/
 
