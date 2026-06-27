@@ -11,7 +11,6 @@ import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_status_model.dart';
 import 'package:silversole/shared/models/fall_detect_event_model.dart';
-import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
 import 'package:silversole/shared/providers/device_status_ingest_provider.dart';
@@ -42,14 +41,12 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   }
 
   void onData(List<int> value) {
-    final json = bleConnectionService.parseImuNotify(value);
-    final data = ImuNotifyDataModel.fromJson(json);
+    final data = bleConnectionService.parseImuNotify(value);
     live.updateImuNotifyData(data);
-    // debugPrint('notify: $data');
   }
 
   void onRecordData(List<int> value) {
-    final json = bleConnectionService.parseImuNotify(value);
+    final json = bleConnectionService.parseJsonNotify(value);
     final data = RecordImuNotifyDataModel.fromJson(json);
     live.updateRecordImuNotifyData(data);
     debugPrint('record notify: $data');
@@ -81,7 +78,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
   Future<void> onDeviceStatus(BlePairedDevice device, List<int> value) async {
     try {
-      final payload = bleConnectionService.parseImuNotify(value);
+      final payload = bleConnectionService.parseJsonNotify(value);
       final status = DeviceStatusModel.fromJson(payload);
       if (!isDeviceStatusTimestampValid(status.timestamp)) {
         debugPrint('device status timestamp invalid: ${status.timestamp}');
