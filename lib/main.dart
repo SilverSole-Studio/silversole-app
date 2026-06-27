@@ -22,7 +22,13 @@ Future<void> main() async {
     url: dotenv.env[Constants.supabaseUrlKey] ?? '',
     anonKey: dotenv.env[Constants.supabasePublicDefaultKey] ?? '',
   );
-  await Permission.locationWhenInUse.request();
+  // Desktop platforms (macOS) have no permission_handler implementation for
+  // this channel; skip rather than crash before runApp.
+  try {
+    await Permission.locationWhenInUse.request();
+  } on MissingPluginException {
+    // No-op: permission not requestable on this platform.
+  }
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(
     ProviderScope(

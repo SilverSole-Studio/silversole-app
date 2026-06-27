@@ -80,14 +80,21 @@ class _DeviceConnectBottomModalState
   }
 
   Future<bool> ensureScanPermission() async {
-    final statuses = await [
-      Permission.bluetoothScan,
-      Permission.locationWhenInUse,
-    ].request();
-    final scanGranted = statuses[Permission.bluetoothScan]?.isGranted ?? false;
-    if (scanGranted) return true;
-    showErrorSnakeBar('Bluetooth scan permission is required.');
-    return false;
+    try {
+      final statuses = await [
+        Permission.bluetoothScan,
+        Permission.locationWhenInUse,
+      ].request();
+      final scanGranted =
+          statuses[Permission.bluetoothScan]?.isGranted ?? false;
+      if (scanGranted) return true;
+      showErrorSnakeBar('Bluetooth scan permission is required.');
+      return false;
+    } on MissingPluginException {
+      // Desktop (macOS) has no permission_handler implementation; CoreBluetooth
+      // prompts for Bluetooth on the first scan, so just proceed.
+      return true;
+    }
   }
 
   Future<void> startScan() async {
