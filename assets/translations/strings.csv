@@ -176,3 +176,8 @@ sun,Sun,週日
 ai_care_suggestion,AI Care Suggestion,AI 照護建議
 update_test,update_test,update_test,
 pressure_visualization,Pressure Map,壓力可視化
+time_ago_seconds,{} seconds ago,{} 秒前
+time_ago_minutes,{} minutes ago,{} 分鐘前
+time_ago_hours,{} hours ago,{} 小時前
+time_ago_days,{} days ago,{} 天前
+time_ago_over_7_days,over 7 days ago,7 天以上

@@ -268,6 +268,20 @@ Widget statusCard(
   );
 }
 
+/// Formats how long ago the device was last seen as a coarse relative label.
+/// Buckets, in order: seconds → minutes → hours → days → "over 7 days".
+String _formatLastSeen(DateTime lastSeen) {
+  final diff = DateTime.now().difference(lastSeen);
+  final seconds = diff.inSeconds < 0 ? 0 : diff.inSeconds;
+  if (seconds < 60) return 'time_ago_seconds'.tr(args: ['$seconds']);
+  if (diff.inMinutes < 60) {
+    return 'time_ago_minutes'.tr(args: ['${diff.inMinutes}']);
+  }
+  if (diff.inHours < 24) return 'time_ago_hours'.tr(args: ['${diff.inHours}']);
+  if (diff.inDays < 7) return 'time_ago_days'.tr(args: ['${diff.inDays}']);
+  return 'time_ago_over_7_days'.tr();
+}
+
 /// Redesigned device-status body: transparent product image + name + a
 /// "toggle" action button + a thick battery bar. Used only for the
 /// [StatusCardType.statusDisplay] device card.
@@ -284,9 +298,7 @@ Widget _statusDisplayBody(
   // TODO: 80 is a placeholder until real battery data is wired through.
   final battery = detail?.lastBatteryPercent ?? 80;
   final lastSeen = detail?.lastHeartbeatAt;
-  final lastSeenText = lastSeen != null
-      ? DateFormat('MM/dd HH:mm').format(lastSeen.toLocal())
-      : '--';
+  final lastSeenText = lastSeen != null ? _formatLastSeen(lastSeen) : '--';
 
   final batteryValue = (battery / 100).clamp(0.0, 1.0);
 
@@ -380,7 +392,8 @@ Widget _statusDisplayBody(
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
-              // 2) "Last connected" line, directly under the title.
+              // 2) Connection line: green "online" when connected, otherwise
+              // the "last connected" timestamp.
               Row(
                 spacing: AppSpacing.sm,
                 children: [
@@ -390,11 +403,13 @@ Widget _statusDisplayBody(
                   ),
                   Expanded(
                     child: Text(
-                      'last_connected'.tr(args: [lastSeenText]),
+                      online
+                          ? 'online'.tr()
+                          : 'last_connected'.tr(args: [lastSeenText]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
+                        color: online ? tokens.success : cs.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
