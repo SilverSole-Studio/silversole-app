@@ -7,6 +7,7 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/device_carousel.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
@@ -72,13 +73,21 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final preferredDevice = settings.preferredDevice;
 
     return Scaffold(
-      // "Mission" button — a target/objective icon. Placeholder action for now.
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'fab_home_mission',
-        onPressed: comingSoon,
-        tooltip: 'mission'.tr(),
-        child: const Icon(LucideIcons.target),
-      ),
+      // With no primary device the FAB becomes an "add device" action that
+      // opens the BLE pairing modal; otherwise it's the "Mission" placeholder.
+      floatingActionButton: preferredDevice == null
+          ? FloatingActionButton(
+              heroTag: 'fab_home_add_device',
+              onPressed: () => showDeviceConnectBottomModal(context),
+              tooltip: 'add_device'.tr(),
+              child: const Icon(LucideIcons.plus),
+            )
+          : FloatingActionButton(
+              heroTag: 'fab_home_mission',
+              onPressed: comingSoon,
+              tooltip: 'mission'.tr(),
+              child: const Icon(LucideIcons.target),
+            ),
       body: Stack(
         children: [
           // Regional hero gradient: tints the top ~25–45% of the screen and
