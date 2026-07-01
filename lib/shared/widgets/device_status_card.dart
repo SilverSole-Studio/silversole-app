@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -17,6 +19,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
   final bool activeDisplay;
   final bool frosted;
   final DeviceStatusDetailModel? detail;
+  final DateTime? lastConnectedAt;
   final List<ListTileData> menuItems;
   final VoidCallback? onClick;
 
@@ -29,6 +32,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
     required this.activeDisplay,
     this.frosted = false,
     this.detail,
+    this.lastConnectedAt,
     this.menuItems = const <ListTileData>[],
     this.onClick,
   });
@@ -40,6 +44,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
 class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
   ProviderSubscription<AppSettings>? _sub;
   bool _load = false;
+  Timer? _offlineTimer;
 
   @override
   void initState() {
@@ -51,10 +56,36 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
         // refreshDeviceStatus(deviceId);
       }
     }, fireImmediately: true);
+    _armOfflineTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant DeviceStatusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Fresh telemetry → new lastHeartbeatAt → push the offline flip back out.
+    if (oldWidget.detail?.lastHeartbeatAt != widget.detail?.lastHeartbeatAt) {
+      _armOfflineTimer();
+    }
+  }
+
+  /// Schedules a one-shot rebuild for the moment the device would fall outside
+  /// the online window, so the card flips online → offline on its own without
+  /// a manual refresh. Re-armed whenever fresh telemetry arrives.
+  void _armOfflineTimer() {
+    _offlineTimer?.cancel();
+    final lastSeen = widget.detail?.lastHeartbeatAt;
+    if (lastSeen == null) return;
+    final remaining =
+        TelemetryFacade.onlineWindow - DateTime.now().difference(lastSeen);
+    if (remaining <= Duration.zero) return; // already offline
+    _offlineTimer = Timer(remaining, () {
+      if (mounted) setState(() {}); // re-evaluate checkDeviceOnline
+    });
   }
 
   @override
   void dispose() {
+    _offlineTimer?.cancel();
     super.dispose();
     _sub?.close();
   }
@@ -105,6 +136,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       addition: true,
       frosted: widget.frosted,
       detail: widget.detail,
+      lastConnectedAt: widget.lastConnectedAt,
       onTap: widget.onClick ?? () {},
     );
   }

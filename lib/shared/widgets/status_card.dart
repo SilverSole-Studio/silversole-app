@@ -25,6 +25,7 @@ Widget statusCard(
   bool addition = true,
   bool frosted = false,
   DeviceStatusDetailModel? detail,
+  DateTime? lastConnectedAt,
   List<ListTileData> menuItems = const <ListTileData>[],
   bool? active,
   VoidCallback? onTap,
@@ -167,6 +168,7 @@ Widget statusCard(
               title: title,
               active: active,
               detail: detail,
+              lastConnectedAt: lastConnectedAt,
             )
           : Column(
               spacing: AppSpacing.base,
@@ -290,6 +292,7 @@ Widget _statusDisplayBody(
   required String title,
   required bool? active,
   required DeviceStatusDetailModel? detail,
+  DateTime? lastConnectedAt,
 }) {
   final cs = Theme.of(context).colorScheme;
   final tt = Theme.of(context).textTheme;
@@ -297,7 +300,10 @@ Widget _statusDisplayBody(
   final online = active ?? false;
   // TODO: 80 is a placeholder until real battery data is wired through.
   final battery = detail?.lastBatteryPercent ?? 80;
-  final lastSeen = detail?.lastHeartbeatAt;
+  // Prefer the freshest live-telemetry time; fall back to the persisted
+  // last-connected timestamp so the card shows real data even before any
+  // live stream (e.g. right after an app restart).
+  final lastSeen = detail?.lastHeartbeatAt ?? lastConnectedAt;
   final lastSeenText = lastSeen != null ? _formatLastSeen(lastSeen) : '--';
 
   final batteryValue = (battery / 100).clamp(0.0, 1.0);

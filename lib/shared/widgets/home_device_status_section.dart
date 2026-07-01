@@ -35,6 +35,7 @@ class HomeDeviceStatusSection extends ConsumerWidget {
       activeDisplay: true,
       frosted: true,
       detail: detail,
+      lastConnectedAt: device.lastConnectedAt,
     );
   }
 }

@@ -177,7 +177,13 @@ final bleForegroundControlProvider = Provider<void>((ref) {
           debugPrint('read device id failed: ${deviceIdResult.error}');
           return;
         case Ok():
-          boundDevice = device.copyWith(deviceId: deviceIdResult.value);
+          // Persist the moment we (re)connected so the status card can show a
+          // real "last connected" time. Same remoteId, so this does not
+          // re-trigger the preferredDevice listener / reconnect loop.
+          boundDevice = device.copyWith(
+            deviceId: deviceIdResult.value,
+            lastConnectedAt: DateTime.now(),
+          );
           unawaited(settings.addOrUpdatePairedDevice(boundDevice));
           debugPrint('device id: ${deviceIdResult.value}');
       }
