@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/live_telemetry_state.dart';
@@ -20,7 +21,7 @@ class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
     state = state.copyWith(
       recentImu: trimmed,
       source: TelemetrySource.bleLive,
-      updatedAt: DateTime.now(),
+      updatedAt: clock.now(),
       errorMessage: null,
     );
   }
@@ -31,7 +32,7 @@ class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
     state = state.copyWith(
       record: next,
       source: TelemetrySource.bleLive,
-      updatedAt: DateTime.now(),
+      updatedAt: clock.now(),
       errorMessage: null,
     );
   }
