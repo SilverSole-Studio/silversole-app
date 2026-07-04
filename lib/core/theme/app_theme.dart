@@ -8,7 +8,8 @@ import 'package:silversole/core/theme/app_typography.dart';
 /// Builds the app [ThemeData] for a given [brightness].
 ///
 /// Color model (unchanged philosophy — see test/theme_test.dart):
-///  * Accent roles (primary/secondary/tertiary) come from [AppPalette.brandSeed].
+///  * [AppPalette.brandSeed] is pinned as `primary` (exact brand blue, both
+///    modes); secondary/tertiary/containers still derive from it via fromSeed.
 ///  * All neutral surfaces/outlines are locked to a grayscale ramp via the
 ///    monochrome scheme variant, so the body stays white/gray for any accent.
 ///  * Light surface is #FCFCFC (off-white, not pure white). No elevation tint.
@@ -30,6 +31,11 @@ ThemeData appTheme(Brightness brightness) {
     brightness: brightness,
   );
   final scheme = accents.copyWith(
+    // Pin the main action color to the exact brand blue in BOTH modes (M3
+    // would otherwise desaturate it in light and lighten it in dark). White
+    // foreground keeps AA contrast on it.
+    primary: AppPalette.brandSeed,
+    onPrimary: Colors.white,
     surface: isLight ? const Color(0xFFFCFCFC) : neutrals.surface,
     onSurface: neutrals.onSurface,
     onSurfaceVariant: neutrals.onSurfaceVariant,

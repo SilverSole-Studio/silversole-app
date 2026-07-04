@@ -7,9 +7,11 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/device_carousel.dart';
+import 'package:silversole/shared/widgets/foot_health_check_card.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
 import 'package:silversole/shared/widgets/warning_card.dart';
@@ -61,6 +63,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       children: [
         const DeviceCarousel(),
         HomeDeviceStatusSection(device: device),
+        const FootHealthCheckCard(),
         WarningCard(key: ValueKey(device.remoteId)),
         RecentDataChartCard(),
       ],
@@ -84,7 +87,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
             )
           : FloatingActionButton(
               heroTag: 'fab_home_mission',
-              onPressed: comingSoon,
+              onPressed: () => showDailyMissionsBottomSheet(context),
               tooltip: 'mission'.tr(),
               child: const Icon(LucideIcons.target),
             ),

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/constants.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 
@@ -65,14 +66,16 @@ class GamePage extends StatelessWidget {
     // Placeholder catalog — a 2-column grid with n rows of game cards.
     // (name, high score, thumbnail asset, url)
     const fallbackThumb = 'assets/images/silversole_full.png';
-    // TODO: point each game at its real web build; example.com for now.
-    const url = 'https://h5.silversole.dongyu.company/';
+    // Base URL: debug → local Cocos preview, release → prod subdomain;
+    // override with --dart-define=GAME_URL. (Keeps the trailing slash.)
+    final url = Constants.gameUrl;
     final demoGames = [
       (
         'skiing_game'.tr(),
         '8',
         'assets/images/games/skiing_game_preview.png',
-        "${url}skiing",
+        // "${url}skiing",
+        url,
       ),
       ('Balance Run', '12', fallbackThumb, url),
       ('Heel Hero', '5', fallbackThumb, url),

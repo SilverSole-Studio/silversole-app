@@ -181,3 +181,20 @@ time_ago_minutes,{} minutes ago,{} 分鐘前
 time_ago_hours,{} hours ago,{} 小時前
 time_ago_days,{} days ago,{} 天前
 time_ago_over_7_days,over 7 days ago,7 天以上
+foot_health_check_title,One-Minute Foot Health Check,一分鐘足壓健檢
+foot_health_check_cta,Start Health Check,立即開始健檢
+foot_health_check_last,Last {},上次 {}
+foot_health_check_status_good,Good condition,狀態良好
+foot_health_check_today_steps,{} steps today,今日 {} 步
+score_unit,pts,分
+daily_missions_title,Daily missions,每日任務
+daily_missions_subtitle,{} left today — finish all for a +100 bonus,今天還有 {} 項，全部完成再 +100 加碼！
+daily_missions_footer,Coins you earn redeem for shop vouchers and rewards,賺到的活力幣，可到商店換折價券與獎勵
+mission_go,Go,去完成
+mission_claimed,Claimed,已領取
+mission_done,Done,已完成
+mission_walk_title,Walk {} steps,走滿 {} 步
+mission_balance_title,Complete a balance training,完成一次平衡訓練
+mission_balance_subtitle,Play “Balance Penguin” to finish,玩「重心企鵝」即可達成
+mission_balance_game,Balance Penguin,重心企鵝
+mission_measure_title,Measure foot pressure once,量測一次足壓

@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug only: allow cleartext (http) so the WebView can load the local
+         Cocos preview server (e.g. http://10.0.2.2:7456). Release builds use the
+         main manifest and stay https-only. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

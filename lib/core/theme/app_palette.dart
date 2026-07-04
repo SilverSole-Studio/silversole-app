@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 /// grayscale regardless (see `app_theme.dart`).
 abstract final class AppPalette {
   // ── Brand ──────────────────────────────────────────────────────────────
-  /// The accent seed. Drives primary/secondary/tertiary via
-  /// `ColorScheme.fromSeed`. Swap ONLY this to re-theme the accent.
-  /// Royal blue, per DESIGN.md.
-  static const Color brandSeed = Color(0xFF2F6BFF);
+  /// The accent seed. Drives secondary/tertiary/containers via
+  /// `ColorScheme.fromSeed`, and is pinned verbatim as `primary` in
+  /// `app_theme.dart` so the main action color renders as this exact royal
+  /// blue (not an M3 tonal derivative) in both light and dark. Swap ONLY this
+  /// to re-theme the accent.
+  static const Color brandSeed = Color(0xFF2F6AFD);
 
   /// Highlight cyan — hero emphasis words, gradient end, logo tail.
   static const Color brandCyan = Color(0xFF29B6E8);
