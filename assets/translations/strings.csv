@@ -105,6 +105,26 @@ device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_status,Good condition · {} steps today,狀態良好 · 今日 {} 步
 fall_guard_summary,{} events in 7 days · {} family notified,近 7 日 {} 事件 · 已通知 {} 位家屬
+games_hub_title,Move with Chu,陪粗哥動一動
+pick_a_game,Pick one to play,選一款來玩
+mission_almost_done,Almost done,快完成了
+mission_walk_steps,Walk {} steps ({}),走 {} 步（{}）
+mission_play_game,Play {},玩 {}
+coin_reward,+{} coins,+{} 幣
+garden,Garden,菜園
+garden_nutrient,Nutrient {},養分 {}
+shop,Shop,商店
+shop_coins,{} coins,{} 幣
+family,Family,家庭
+family_cheers,{} cheers,{} 則加油
+game_go,GO,GO
+game_group_hop,Group Hop,帶團跳
+game_chase_zombie,Chase Zombies,趕殭屍
+game_catch_fish,Chu Catches Fish,粗哥接魚
+game_ride_bike,Ride Along,騎鐵馬
+game_paddle_canoe,Paddle Boat,划龍舟
+game_rhythm_step,Rhythm Step,節奏踏步
+game_memory_quiz,Memory Quiz,記憶問答
 transmission_method,Transmission Method,傳輸方式
 bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點

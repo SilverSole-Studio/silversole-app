@@ -109,6 +109,13 @@ flutter:
     # mascot/), and anything listed here is bundled into the APK. Add a folder
     # when the screen that needs it ships.
     - assets/mascot-assets/icons/
+    # Game cover art — used by BOTH themes (cover art is content, not theming).
+    - assets/mascot-assets/cards/
+    # Village shortcuts on the games hub. Individual files, not the whole
+    # farm/ folder (~11MB), since only these three are rendered.
+    - assets/mascot-assets/farm/ent_farm.png
+    - assets/mascot-assets/farm/ent_shop.png
+    - assets/mascot-assets/farm/ent_mailbox.png
     - assets/mascot-assets/hero.png
     - assets/mascot-assets/happy.png
     - assets/mascot-assets/checking.png

@@ -8,6 +8,7 @@ import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
+import 'package:silversole/shared/pages/theme_two/game_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
@@ -47,8 +48,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       isMascot ? const HomeBodyT2() : const HomeBody(),
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),
+      isMascot ? const GamePageT2() : const GamePage(),
       const AnalyticsPage(),
-      const GamePage(),
       const PersonPage(),
     ];
     return Scaffold(
@@ -59,16 +60,16 @@ class _HomePageState extends ConsumerState<HomePage> {
           Icons.home,
           LucideIcons.map,
           // LucideIcons.monitorSmartphone,
-          Icons.analytics,
           LucideIcons.gamepad2,
+          Icons.analytics,
           Icons.settings,
         ],
         labels: const [
           'home',
           'map',
           // 'devices',
+          'game',
           'analytics',
-          'entertainment',
           'settings',
         ],
       ),
