@@ -28,25 +28,25 @@ List<GameEntry> gameCatalog() {
   final url = Constants.gameUrl;
   const art = 'assets/mascot-assets/cards';
   return [
-    GameEntry(nameKey: 'game_group_hop', art: '$art/card_hop.png', url: url),
+    GameEntry(nameKey: 'game_group_hop', art: '$art/card_hop.webp', url: url),
     GameEntry(
       nameKey: 'game_chase_zombie',
-      art: '$art/card_zombie.png',
+      art: '$art/card_zombie.webp',
       url: url,
     ),
-    GameEntry(nameKey: 'game_catch_fish', art: '$art/card_fish.png', url: url),
-    GameEntry(nameKey: 'skiing_game', art: '$art/card_ski.png', url: url),
-    GameEntry(nameKey: 'game_ride_bike', art: '$art/card_bike.png', url: url),
+    GameEntry(nameKey: 'game_catch_fish', art: '$art/card_fish.webp', url: url),
+    GameEntry(nameKey: 'skiing_game', art: '$art/card_ski.webp', url: url),
+    GameEntry(nameKey: 'game_ride_bike', art: '$art/card_bike.webp', url: url),
     GameEntry(
       nameKey: 'game_paddle_canoe',
-      art: '$art/card_canoe.png',
+      art: '$art/card_canoe.webp',
       url: url,
     ),
     GameEntry(
       nameKey: 'game_rhythm_step',
-      art: '$art/card_rhythm.png',
+      art: '$art/card_rhythm.webp',
       url: url,
     ),
-    GameEntry(nameKey: 'game_memory_quiz', art: '$art/card_quiz.png', url: url),
+    GameEntry(nameKey: 'game_memory_quiz', art: '$art/card_quiz.webp', url: url),
   ];
 }

@@ -37,7 +37,7 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
   Future<void> _loadMarker() async {
     final icon = await AssetMapBitmap.create(
       const ImageConfiguration(size: Size(52, 52)),
-      'assets/mascot-assets/happy.png',
+      'assets/mascot-assets/happy.webp',
     );
     if (!mounted) return;
     setState(() => _mascotMarker = icon);
@@ -83,7 +83,7 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
               MascotCard(
                 child: Row(
                   children: [
-                    Image.asset('assets/mascot-assets/happy.png', height: 52),
+                    Image.asset('assets/mascot-assets/happy.webp', height: 52),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

@@ -93,7 +93,7 @@ class _MissionCard extends StatelessWidget {
           Row(
             children: [
               Image.asset(
-                'assets/mascot-assets/icons/home_play.png',
+                'assets/mascot-assets/icons/home_play.webp',
                 height: 34,
               ),
               const SizedBox(width: 8),
@@ -116,7 +116,7 @@ class _MissionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _MissionRow(
-            icon: 'assets/mascot-assets/icons/nav_analysis.png',
+            icon: 'assets/mascot-assets/icons/nav_analysis.webp',
             label: 'mission_walk_steps'.tr(
               args: ['${HomeBodyT2.mockStepGoal}', '${HomeBodyT2.mockSteps}'],
             ),
@@ -128,7 +128,7 @@ class _MissionCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           _MissionRow(
-            icon: 'assets/mascot-assets/cards/card_fish.png',
+            icon: 'assets/mascot-assets/cards/card_fish.webp',
             label: 'mission_play_game'.tr(args: ['game_catch_fish'.tr()]),
             trailing: MascotPill(
               child: Text(
@@ -189,7 +189,7 @@ class _VillageRow extends StatelessWidget {
       children: [
         Expanded(
           child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_farm.png',
+            art: 'assets/mascot-assets/farm/ent_farm.webp',
             title: 'garden'.tr(),
             subtitle: 'garden_nutrient'.tr(
               args: ['${GamePageT2._mockNutrient}'],
@@ -199,7 +199,7 @@ class _VillageRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_shop.png',
+            art: 'assets/mascot-assets/farm/ent_shop.webp',
             title: 'shop'.tr(),
             subtitle: 'shop_coins'.tr(args: ['${GamePageT2._mockCoins}']),
           ),
@@ -207,7 +207,7 @@ class _VillageRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_mailbox.png',
+            art: 'assets/mascot-assets/farm/ent_mailbox.webp',
             title: 'family'.tr(),
             subtitle: 'family_cheers'.tr(args: ['${GamePageT2._mockCheers}']),
             subtitleIcon: '❤️',

@@ -104,7 +104,7 @@ class _GreetingHeader extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Image.asset(
-          'assets/mascot-assets/hero.png',
+          'assets/mascot-assets/hero.webp',
           height: 88,
           fit: BoxFit.contain,
         ),
@@ -133,7 +133,7 @@ class _DailyMissionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/mascot-assets/icons/home_play.png',
+                'assets/mascot-assets/icons/home_play.webp',
                 height: 62,
               ),
               const SizedBox(width: 10),
@@ -318,7 +318,7 @@ class _FootCheckCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Image.asset('assets/mascot-assets/checking.png', height: 86),
+              Image.asset('assets/mascot-assets/checking.webp', height: 86),
             ],
           ),
           const SizedBox(height: 14),
@@ -362,7 +362,7 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
     return MascotCard(
       child: Row(
         children: [
-          Image.asset('assets/mascot-assets/icons/home_shield.png', height: 54),
+          Image.asset('assets/mascot-assets/icons/home_shield.webp', height: 54),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

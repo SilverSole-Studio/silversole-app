@@ -113,14 +113,14 @@ flutter:
     - assets/mascot-assets/cards/
     # Village shortcuts on the games hub. Individual files, not the whole
     # farm/ folder (~11MB), since only these three are rendered.
-    - assets/mascot-assets/farm/ent_farm.png
-    - assets/mascot-assets/farm/ent_shop.png
-    - assets/mascot-assets/farm/ent_mailbox.png
-    - assets/mascot-assets/hero.png
-    - assets/mascot-assets/happy.png
-    - assets/mascot-assets/checking.png
-    - assets/mascot-assets/determined.png
-    - assets/mascot-assets/insole.png
+    - assets/mascot-assets/farm/ent_farm.webp
+    - assets/mascot-assets/farm/ent_shop.webp
+    - assets/mascot-assets/farm/ent_mailbox.webp
+    - assets/mascot-assets/hero.webp
+    - assets/mascot-assets/happy.webp
+    - assets/mascot-assets/checking.webp
+    - assets/mascot-assets/determined.webp
+    - assets/mascot-assets/insole.webp
 
   fonts:
     - family: Google Sans
