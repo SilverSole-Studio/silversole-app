@@ -19,12 +19,19 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// restyle: the two designs group their content differently. Both read the
 /// same providers, so there is one source of truth for the data.
 ///
-/// Only blocks backed by real data are rendered. Figures the app does not
-/// measure yet (step count, streak, health score) show 0 rather than a
-/// plausible-looking number, and the mockup's weather strip is omitted
-/// entirely — there is no weather source and none is planned.
+/// Figures the app does not measure yet (step count, streak, health score,
+/// family contacts) are placeholders marked with TODO. The mockup's weather
+/// strip is intentionally absent — there is no weather source and none is
+/// planned.
 class HomeBodyT2 extends ConsumerWidget {
   const HomeBodyT2({super.key});
+
+  /// Placeholders until the pedometer / scoring / contacts features exist.
+  static const mockSteps = 4210;
+  static const mockStepGoal = 3500;
+  static const mockStreakDays = 6;
+  static const mockScore = 81;
+  static const mockFamilyNotified = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,10 +40,10 @@ class HomeBodyT2 extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 16,
+            spacing: 14,
             children: [
               const _GreetingHeader(),
               const _DailyMissionCard(),
@@ -67,6 +74,7 @@ class _GreetingHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authUserProvider);
     final now = DateTime.now();
+    final locale = context.locale.toString();
     // The account only gives us an email; use its local part as a display
     // name until a real profile name exists.
     final name = user?.email.split('@').first ?? 'silversole'.tr();
@@ -77,12 +85,14 @@ class _GreetingHeader extends ConsumerWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                DateFormat('MMMd（E）', context.locale.toString()).format(now),
+                '${DateFormat.MMMd(locale).format(now)} · '
+                '${DateFormat.E(locale).format(now)}',
                 style: context.textTheme.bodyMedium,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 '${_greetingKey(now.hour).tr()}，$name',
                 style: context.textTheme.headlineLarge,
@@ -92,10 +102,10 @@ class _GreetingHeader extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Image.asset(
           'assets/mascot-assets/hero.png',
-          height: 84,
+          height: 88,
           fit: BoxFit.contain,
         ),
       ],
@@ -108,70 +118,89 @@ class _GreetingHeader extends ConsumerWidget {
 class _DailyMissionCard extends StatelessWidget {
   const _DailyMissionCard();
 
-  // TODO: no pedometer and no streak history yet — show 0 until they exist.
-  static const int _steps = 0;
-  static const int _stepGoal = 3500;
-  static const int _streakDays = 0;
-
   @override
   Widget build(BuildContext context) {
-    final progress = _stepGoal == 0
-        ? 0.0
-        : (_steps / _stepGoal).clamp(0.0, 1.0);
+    const steps = HomeBodyT2.mockSteps;
+    const goal = HomeBodyT2.mockStepGoal;
 
     return MascotCard(
       color: AppPaletteT2.cardWarm,
       onTap: () => showDailyMissionsBottomSheet(context),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Image.asset('assets/mascot-assets/icons/home_play.png', height: 56),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/mascot-assets/icons/home_play.png',
+                height: 62,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'today_mission'.tr(),
-                        style: context.textTheme.titleLarge,
-                      ),
-                    ),
-                    MascotPill(
-                      child: Text(
-                        'streak_days'.tr(args: ['$_streakDays']),
-                        style: context.textTheme.labelLarge,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 14,
-                          backgroundColor: AppPaletteT2.card,
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppPaletteT2.safe,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'today_mission'.tr(),
+                            style: context.textTheme.titleLarge,
                           ),
                         ),
-                      ),
+                        MascotPill(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🔥', style: TextStyle(fontSize: 14)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'streak_days'.tr(
+                                  args: ['${HomeBodyT2.mockStreakDays}'],
+                                ),
+                                style: context.textTheme.labelLarge,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      'steps_progress'.tr(args: ['$_steps', '$_stepGoal']),
-                      style: context.textTheme.labelLarge,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: MascotProgressBar(
+                            value: steps / goal,
+                            height: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'steps_progress'.tr(args: ['$steps', '$goal']),
+                          style: context.textTheme.labelLarge,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  'mission_cta'.tr(),
+                  style: context.textTheme.bodyLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 20),
+            ],
           ),
         ],
       ),
@@ -191,6 +220,7 @@ class _DeviceCard extends ConsumerWidget {
     final online = ref.watch(deviceOnlineProvider);
     final recent = ref.watch(telemetryViewProvider).recentImu;
     final battery = recent.isEmpty ? 0 : recent.last.batteryPercent;
+    final name = device?.name ?? 'not_binding'.tr();
 
     return MascotCard(
       color: AppPaletteT2.gold,
@@ -201,12 +231,13 @@ class _DeviceCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  device?.name ?? 'not_binding'.tr(),
+                  '$name ${'device_product_name'.tr()}',
                   style: context.textTheme.headlineMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 width: 14,
                 height: 14,
@@ -218,28 +249,18 @@ class _DeviceCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
-            online ? 'online'.tr() : 'offline'.tr(),
+            online ? 'device_synced'.tr() : 'offline'.tr(),
             style: context.textTheme.bodyMedium?.copyWith(
               color: AppPaletteT2.ink,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: (battery / 100).clamp(0.0, 1.0),
-                    minHeight: 18,
-                    backgroundColor: AppPaletteT2.card,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppPaletteT2.safe,
-                    ),
-                  ),
-                ),
+                child: MascotProgressBar(value: battery / 100, height: 20),
               ),
               const SizedBox(width: 12),
               Text('$battery%', style: context.textTheme.headlineMedium),
@@ -256,9 +277,6 @@ class _DeviceCard extends ConsumerWidget {
 class _FootCheckCard extends StatelessWidget {
   const _FootCheckCard();
 
-  // TODO: the check itself is not implemented; 0 until it produces a score.
-  static const int _score = 0;
-
   @override
   Widget build(BuildContext context) {
     return MascotCard(
@@ -266,31 +284,44 @@ class _FootCheckCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('foot_check_title'.tr(), style: context.textTheme.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '$_score',
-                      style: context.textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppPaletteT2.ink,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '${HomeBodyT2.mockScore}',
+                          style: context.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppPaletteT2.ink,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'score_unit'.tr(),
+                          style: context.textTheme.bodyLarge,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
-                    Text('score_unit'.tr(), style: context.textTheme.bodyLarge),
+                    const SizedBox(height: 8),
+                    Text(
+                      'foot_check_status'.tr(args: ['${HomeBodyT2.mockSteps}']),
+                      style: context.textTheme.bodyMedium,
+                    ),
                   ],
                 ),
               ),
-              Image.asset('assets/mascot-assets/checking.png', height: 74),
+              Image.asset('assets/mascot-assets/checking.png', height: 86),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -308,8 +339,8 @@ class _FootCheckCard extends StatelessWidget {
 // ── 5. Fall guard ─────────────────────────────────────────────────────────
 
 /// Mirrors `WarningCard`'s counting model: falls seen since the app started.
-/// There is no persisted history, so this deliberately does not claim a
-/// 7-day window.
+/// The "7 days" framing and the family count are mockup copy — there is no
+/// persisted history and no contacts feature yet.
 class _FallGuardCard extends ConsumerStatefulWidget {
   const _FallGuardCard();
 
@@ -331,8 +362,8 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
     return MascotCard(
       child: Row(
         children: [
-          Image.asset('assets/mascot-assets/icons/home_shield.png', height: 52),
-          const SizedBox(width: 12),
+          Image.asset('assets/mascot-assets/icons/home_shield.png', height: 54),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,14 +372,18 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
                   'fall_guard_active'.tr(),
                   style: context.textTheme.titleMedium,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  'fall_guard_events'.tr(args: ['$_eventCount']),
+                  'fall_guard_summary'.tr(
+                    args: ['$_eventCount', '${HomeBodyT2.mockFamilyNotified}'],
+                  ),
                   style: context.textTheme.bodyMedium,
+                  maxLines: 2,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           MascotPill(
             color: safe ? AppPaletteT2.card : AppPaletteT2.danger,
             child: Text(

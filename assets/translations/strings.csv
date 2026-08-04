@@ -100,6 +100,11 @@ no_location_yet,No location yet,尚無定位資料
 in_safe_zone,In the safe zone — all good!,在安全範圍內，放心！
 safe_zone_hint,Family is notified when leaving the set area,離開設定範圍會通知家屬
 set_safe_zone,Set safe zone,設定安全範圍
+mission_cta,Play one more round of “Chu Catches Fish” to finish,再玩一場「粗哥接魚」就完成
+device_synced,Connected · just synced,已連線 · 剛剛同步
+device_product_name,SilverSole Insole,銀足鞋墊
+foot_check_status,Good condition · {} steps today,狀態良好 · 今日 {} 步
+fall_guard_summary,{} events in 7 days · {} family notified,近 7 日 {} 事件 · 已通知 {} 位家屬
 transmission_method,Transmission Method,傳輸方式
 bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點

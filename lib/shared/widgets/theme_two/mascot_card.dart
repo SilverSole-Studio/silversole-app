@@ -41,6 +41,53 @@ class MascotCard extends StatelessWidget {
   }
 }
 
+/// Progress bar in this theme's language: an outlined track with a rounded
+/// fill inside it. Material's LinearProgressIndicator draws no border, so the
+/// outline is applied here rather than per call site.
+class MascotProgressBar extends StatelessWidget {
+  const MascotProgressBar({
+    super.key,
+    required this.value,
+    this.height = 18,
+    this.fill = AppPaletteT2.safe,
+    this.track = AppPaletteT2.card,
+  });
+
+  /// 0..1; values outside are clamped.
+  final double value;
+  final double height;
+  final Color fill;
+  final Color track;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(999);
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: track,
+        borderRadius: radius,
+        border: Border.all(color: AppPaletteT2.ink, width: 2),
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            // heightFactor is required: without it the DecoratedBox has no
+            // intrinsic size and the fill collapses to zero height.
+            heightFactor: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: fill, borderRadius: radius),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A small outlined pill used for statuses and counters (「連續 6 天」,「安全」).
 class MascotPill extends StatelessWidget {
   const MascotPill({
