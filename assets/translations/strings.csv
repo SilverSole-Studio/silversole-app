@@ -94,6 +94,12 @@ foot_check_title,One-minute foot pressure check,一分鐘足壓健檢
 start_check_now,Start check now,立即開始健檢
 fall_guard_active,Fall guard active,跌倒守護運作中
 fall_guard_events,{} events,{} 件事件
+mascot_where_title,Where is Chu?,粗哥在哪？
+last_located,Last located · {},最後定位 · {}
+no_location_yet,No location yet,尚無定位資料
+in_safe_zone,"In the safe zone, all good!",在安全範圍內，放心！
+safe_zone_hint,Family is notified when leaving the set area,離開設定範圍會通知家屬
+set_safe_zone,Set safe zone,設定安全範圍
 transmission_method,Transmission Method,傳輸方式
 bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點

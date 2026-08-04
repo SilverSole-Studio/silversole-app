@@ -1,120 +1,121 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/relative_time.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/models/device_location_model.dart';
+import 'package:silversole/shared/providers/device_location_provider.dart';
+import 'package:silversole/shared/widgets/safe_zone_map_view.dart';
 
-/// Full-screen map tab. For now this is just a full-bleed Google Map with a
-/// "locate me" control. Light mode uses Google Maps' default (colorful) style;
-/// dark mode uses the custom dark JSON.
-class MapPage extends ConsumerStatefulWidget {
+/// Fallback camera target when the device has never reported a position.
+const kMapFallbackCenter = LatLng(25.0330, 121.5654);
+
+/// Demo safe-zone radius, in meters. Front-end only — not configurable and not
+/// evaluated against the device's position yet.
+const kDemoSafeRadius = 300.0;
+
+/// Map tab, classic theme: where the device was last seen, a demo safe-zone
+/// ring, and the (not yet implemented) safe-zone setup entry.
+class MapPage extends ConsumerWidget {
   const MapPage({super.key});
 
   @override
-  ConsumerState<MapPage> createState() => _MapPageState();
-}
-
-class _MapPageState extends ConsumerState<MapPage> {
-  String? _darkStyle;
-  GoogleMapController? _controller;
-  bool _hasLocationPermission = false;
-
-  static const LatLng _initialCenter = LatLng(25.0330, 121.5654);
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStyle();
-    _checkPermission();
-  }
-
-  Future<void> _loadStyle() async {
-    final dark = await rootBundle.loadString(
-      'assets/map_styles/map_style_dark.json',
-    );
-    if (!mounted) return;
-    setState(() => _darkStyle = dark);
-  }
-
-  Future<void> _checkPermission() async {
-    final status = await Permission.locationWhenInUse.status;
-    if (!mounted) return;
-    setState(() {
-      _hasLocationPermission = status.isGranted || status.isLimited;
-    });
-  }
-
-  Future<void> _goToMyLocation() async {
-    if (!await Geolocator.isLocationServiceEnabled()) return;
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      return;
-    }
-
-    final LocationSettings settings;
-    if (Platform.isAndroid) {
-      settings = AndroidSettings(accuracy: LocationAccuracy.high);
-    } else if (Platform.isIOS || Platform.isMacOS) {
-      settings = AppleSettings(accuracy: LocationAccuracy.high);
-    } else {
-      settings = const LocationSettings(accuracy: LocationAccuracy.high);
-    }
-
-    final pos = await Geolocator.getCurrentPosition(locationSettings: settings);
-    await _controller?.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(pos.latitude, pos.longitude), 16),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final location = ref.watch(latestDeviceLocationProvider);
 
     return Scaffold(
-      body: Stack(
-        children: [
-          GoogleMap(
-            style: isDark ? _darkStyle : null,
-            zoomControlsEnabled: false,
-            initialCameraPosition: const CameraPosition(
-              target: _initialCenter,
-              zoom: 14,
-            ),
-            onMapCreated: (c) => _controller = c,
-            gestureRecognizers: {
-              Factory<OneSequenceGestureRecognizer>(
-                () => EagerGestureRecognizer(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.base),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: AppSpacing.base,
+            children: [
+              Text('map'.tr(), style: context.textTheme.headlineMedium),
+              Text(
+                _subtitle(location.value),
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
-            },
-          ),
-          if (_hasLocationPermission)
-            SafeArea(
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.base),
-                  // Brand-blue squircle from the FAB theme (DESIGN.md §C8).
-                  child: FloatingActionButton.small(
-                    heroTag: 'fab_map_page',
-                    onPressed: _goToMyLocation,
-                    child: const Icon(LucideIcons.locateFixed),
+              ClipRRect(
+                borderRadius: AppRadius.cardR,
+                child: SizedBox(
+                  height: 380,
+                  child: SafeZoneMapView(
+                    center: _centerOf(location.value),
+                    safeRadiusMeters: kDemoSafeRadius,
                   ),
                 ),
               ),
-            ),
-        ],
+              const _SafeZoneStatusCard(),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: comingSoon,
+                  icon: const Icon(LucideIcons.mapPin),
+                  label: Text('set_safe_zone'.tr()),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _subtitle(DeviceLocationModel? location) => location == null
+    ? 'no_location_yet'.tr()
+    : 'last_located'.tr(args: [formatTimeAgo(location.receivedAt)]);
+
+LatLng _centerOf(DeviceLocationModel? location) =>
+    location == null ? kMapFallbackCenter : LatLng(location.lat, location.lng);
+
+class _SafeZoneStatusCard extends StatelessWidget {
+  const _SafeZoneStatusCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.base),
+          child: Row(
+            spacing: AppSpacing.base,
+            children: [
+              Icon(
+                LucideIcons.shieldCheck,
+                color: context.tokens.success,
+                size: 32,
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'in_safe_zone'.tr(),
+                      style: context.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'safe_zone_hint'.tr(),
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
