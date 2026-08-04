@@ -40,6 +40,12 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     debugPrint(message);
   }
 
+  // A wire-format mismatch fails on every packet, so throttle the failure log
+  // and carry the raw bytes — the payload is what identifies the wrong format.
+  var imuFailCount = 0;
+  String toHex(List<int> v) =>
+      v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+
   void onData(List<int> value) {
     final data = bleConnectionService.parseImuNotify(value);
     live.updateImuNotifyData(data);
@@ -127,7 +133,15 @@ final bleForegroundControlProvider = Provider<void>((ref) {
           try {
             onData(value);
           } catch (e) {
-            debugPrint('parse notify failed: $e');
+            // Always report the first failure, then throttle: a format
+            // mismatch fails on every packet and would spam ~20 lines/s.
+            imuFailCount++;
+            if (imuFailCount == 1 || imuFailCount % 20 == 0) {
+              debugPrint(
+                'parse notify FAILED #$imuFailCount len=${value.length} '
+                'hex=[${toHex(value)}] err=$e',
+              );
+            }
           }
         },
       );
