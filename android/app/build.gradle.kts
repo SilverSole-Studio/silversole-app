@@ -53,6 +53,15 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("release")
+            resValue("string", "app_name", "silversole")
+        }
+        debug {
+            // Install debug builds side by side with the released app instead of
+            // replacing it. Only the applicationId changes — `namespace` (and so
+            // the Kotlin package, the BLE MethodChannel name, and the foreground
+            // service actions) stays com.andongni.silversole.
+            applicationIdSuffix = ".debug"
+            resValue("string", "app_name", "SilverSole Dev")
         }
     }
 }
