@@ -96,6 +96,16 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final email = user?.email ?? 'not_signed_in'.tr();
     final uuid = user?.uuid ?? '-';
     final isSignedIn = user != null;
+    // The mascot theme wants its settings rows as white outlined buttons;
+    // the classic theme keeps the grouped, borderless slab.
+    final isMascot = settings.themeVariant == AppThemeVariant.mascot;
+    final listFill = isMascot ? AppPaletteT2.card : null;
+    final listSide = isMascot
+        ? const BorderSide(
+            color: AppPaletteT2.ink,
+            width: AppPaletteT2.outlineWidth,
+          )
+        : null;
 
     final accountSettingList = [
       ListTileData.normal(
@@ -175,6 +185,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                   context,
                   title: 'account'.tr(),
                   raw: accountSettingList,
+                  themeColor: listFill,
+                  side: listSide,
                 ),
               ),
               if (isSignedIn) ...[
@@ -184,6 +196,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                     context,
                     title: 'device'.tr(),
                     raw: silverSoleSettingList,
+                    themeColor: listFill,
+                    side: listSide,
                   ),
                 ),
               ],
@@ -193,6 +207,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                   context,
                   title: 'general'.tr(),
                   raw: generalSettingList,
+                  themeColor: listFill,
+                  side: listSide,
                 ),
               ),
             ],

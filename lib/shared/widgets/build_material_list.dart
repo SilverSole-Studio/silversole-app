@@ -5,14 +5,21 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 
+/// Renders a settings group.
+///
+/// [side] draws an outline around each row and, when set, rounds every corner
+/// and spaces the rows apart so they read as separate outlined buttons rather
+/// than one grouped slab. The mascot theme passes it; the classic theme leaves
+/// it null and keeps the original grouped look.
 Widget buildMaterialList(
   BuildContext context, {
   String? title,
   required List<ListTileData> raw,
   Color? themeColor,
+  BorderSide? side,
 }) {
   const outerRadius = AppRadius.banner;
-  const innerRadius = 4.0;
+  final innerRadius = side == null ? 4.0 : outerRadius;
   final scheme = Theme.of(context).colorScheme;
   final splashColor = scheme.primary.withValues(alpha: 0.08);
   final hoverColor = scheme.primary.withValues(alpha: 0.04);
@@ -20,7 +27,7 @@ Widget buildMaterialList(
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
-    spacing: 4,
+    spacing: side == null ? 4 : 10,
     children: [
       if (title != null)
         Padding(
@@ -39,6 +46,7 @@ Widget buildMaterialList(
                   i == list.length - 1 ? outerRadius : innerRadius,
                 ),
               ),
+              side: side ?? BorderSide.none,
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
