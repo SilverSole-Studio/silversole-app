@@ -269,3 +269,25 @@ mission_balance_title,Complete a balance training,完成一次平衡訓練
 mission_balance_subtitle,Play “Balance Penguin” to finish,玩「重心企鵝」即可達成
 mission_balance_game,Balance Penguin,重心企鵝
 mission_measure_title,Measure foot pressure once,量測一次足壓
+my_devices,My devices,我的裝置
+device_hero_caption,SilverSole Smart Insole · L / R,SilverSole 智慧鞋墊 · 左 / 右
+signal_good,Connected · Strong signal,已連線 · 訊號良好
+firmware_version,Firmware,韌體版本
+firmware_detail,{} · Live sync {} Hz,{} · 即時同步 {} Hz
+firmware_up_to_date,Up to date,已是最新
+device_pair_new,Pair new device,配對新裝置
+no_paired_devices,No devices paired yet,尚未配對任何裝置
+shop_title,Vitality Coin Shop,活力幣商店
+your_coins,Your vitality coins,你的活力幣
+real_prize_quota,Real-prize quota used {}/{} NTD this month,本月真獎額度已用 {}/{} 元
+shop_section_gacha,Daily gacha,每日扭蛋
+shop_item_gacha,A random outfit shard — one spin a day,隨機造型碎片，每天回來轉一次
+shop_section_prize,Real prizes · digital vouchers (NT$50 per month · PRO only),真獎 · 數位券（每月上限 NT$50 · PRO 限定）
+shop_item_coffee,Convenience-store coffee voucher,超商咖啡券
+shop_item_voucher,NT$50 shopping credit,購物金 50 元
+shop_prize_value,Real prize · worth NT${},真獎 · 價值 NT${}
+shop_section_skin,Outfits (also swappable for shards in the Garden),粗哥造型（也可以在菜園用碎片換）
+shop_item_skin_sport,Sportswear outfit,運動服造型
+shop_item_skin_chef,Chef outfit,廚師造型
+shop_skin_wearable,Wearable as soon as you buy it,買了就能穿
+device_name,Device name,裝置名稱

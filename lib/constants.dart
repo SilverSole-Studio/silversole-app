@@ -18,7 +18,7 @@ abstract class Constants {
   /// Override at run time with `--dart-define=GAME_URL=...` (e.g. point it at
   /// the Cocos preview server). Otherwise: debug → local dev server, release →
   /// the production site.
-  /// Keep the trailing slash — game paths are built as `'${gameUrl}skiing'`.
+  /// Keep the trailing slash — `GameEntry.url` builds `'${gameUrl}game/<slug>/'`.
   static const String _gameUrlOverride = String.fromEnvironment('GAME_URL');
   static String get gameUrl => _gameUrlOverride.isNotEmpty
       ? _gameUrlOverride

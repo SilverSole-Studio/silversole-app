@@ -124,7 +124,14 @@ flutter:
     - assets/mascot-assets/farm/ent_farm.webp
     - assets/mascot-assets/farm/ent_shop.webp
     - assets/mascot-assets/farm/ent_mailbox.webp
-    - assets/mascot-assets/hero.webp
+    - assets/mascot-assets/applaud.webp
+    # Shop: coin + the items in `shopCatalog()`.
+    - assets/mascot-assets/fx/fx_coin.webp
+    - assets/mascot-assets/shop/sh_gacha.webp
+    - assets/mascot-assets/shop/sh_coffee.webp
+    - assets/mascot-assets/shop/sh_voucher.webp
+    - assets/mascot-assets/shop/sh_skin_sport.webp
+    - assets/mascot-assets/shop/sh_skin_chef.webp
     - assets/mascot-assets/happy.webp
     - assets/mascot-assets/checking.webp
     - assets/mascot-assets/determined.webp

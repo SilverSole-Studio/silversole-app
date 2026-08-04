@@ -19,11 +19,9 @@ class StatRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final children = <Widget>[];
     for (var i = 0; i < items.length; i++) {
-      if (i > 0) {
-        children.add(
-          Container(width: 1, height: 28, color: context.colorScheme.outlineVariant),
-        );
-      }
+      // Full-height rule between columns; color, thickness and the horizontal
+      // gap around it all come from `dividerTheme`.
+      if (i > 0) children.add(const VerticalDivider());
       children.add(
         Expanded(
           child: Column(
@@ -43,9 +41,12 @@ class StatRow extends StatelessWidget {
         ),
       );
     }
+    // IntrinsicHeight + stretch: every column is as tall as the tallest one, so
+    // the labels line up along the top and the rule spans the full height
+    // instead of floating in the middle.
     return IntrinsicHeight(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: children,
       ),
     );

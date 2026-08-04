@@ -36,6 +36,9 @@ abstract final class AppPaletteT2 {
   /// Positive / safe status (progress fill, "安全" badge).
   static const Color safe = Color(0xFF3E9E52);
 
+  /// Tinted fill behind [safe] text, e.g. the "已是最新" firmware pill.
+  static const Color safeSoft = Color(0xFFE3F3E6);
+
   /// Warning / streak flame.
   static const Color flame = Color(0xFFF2622E);
 

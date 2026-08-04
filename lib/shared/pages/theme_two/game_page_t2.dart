@@ -5,6 +5,7 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/game_entry.dart';
+import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
@@ -16,7 +17,7 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 class GamePageT2 extends StatelessWidget {
   const GamePageT2({super.key});
 
-  static const _mockCoins = 1240;
+  // Coins come from MockShop so the hub and the shop agree.
   static const _mockNutrient = 4;
   static const _mockCheers = 2;
   static const _mockGameReward = 30;
@@ -194,6 +195,7 @@ class _VillageRow extends StatelessWidget {
             subtitle: 'garden_nutrient'.tr(
               args: ['${GamePageT2._mockNutrient}'],
             ),
+            onTap: comingSoon,
           ),
         ),
         const SizedBox(width: 10),
@@ -201,7 +203,8 @@ class _VillageRow extends StatelessWidget {
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_shop.webp',
             title: 'shop'.tr(),
-            subtitle: 'shop_coins'.tr(args: ['${GamePageT2._mockCoins}']),
+            subtitle: 'shop_coins'.tr(args: ['${MockShop.coins}']),
+            onTap: () => context.push('/shop'),
           ),
         ),
         const SizedBox(width: 10),
@@ -211,6 +214,7 @@ class _VillageRow extends StatelessWidget {
             title: 'family'.tr(),
             subtitle: 'family_cheers'.tr(args: ['${GamePageT2._mockCheers}']),
             subtitleIcon: '❤️',
+            onTap: comingSoon,
           ),
         ),
       ],
@@ -223,19 +227,21 @@ class _VillageCard extends StatelessWidget {
     required this.art,
     required this.title,
     required this.subtitle,
+    required this.onTap,
     this.subtitleIcon,
   });
 
   final String art;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
   final String? subtitleIcon;
 
   @override
   Widget build(BuildContext context) {
     return MascotCard(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-      onTap: comingSoon,
+      onTap: onTap,
       child: Column(
         children: [
           Image.asset(art, height: 58, fit: BoxFit.contain),

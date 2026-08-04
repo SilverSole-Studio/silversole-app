@@ -8,7 +8,7 @@ class GameEntry {
   const GameEntry({
     required this.nameKey,
     required this.art,
-    required this.url,
+    required this.slug,
   });
 
   /// Translation key for the display name.
@@ -18,35 +18,60 @@ class GameEntry {
   /// content, not decoration, so the classic theme shows it too.
   final String art;
 
+  /// This title's folder under the H5 site, e.g. `hop`.
+  final String slug;
+
   /// Opened in the in-app HTML5 web view.
-  final String url;
+  ///
+  /// Built from [Constants.gameUrl] rather than stored, so the debug build's
+  /// local Cocos preview and a `--dart-define=GAME_URL=...` override still
+  /// reach the right title.
+  String get url => '${Constants.gameUrl}game/$slug/';
 }
 
-/// The catalog. Every entry currently points at the one shipped HTML5 build
-/// ([Constants.gameUrl]); per-title URLs land when those games exist.
+/// The catalog. Every title lives at `<base>/game/<slug>/`.
 List<GameEntry> gameCatalog() {
-  final url = Constants.gameUrl;
   const art = 'assets/mascot-assets/cards';
   return [
-    GameEntry(nameKey: 'game_group_hop', art: '$art/card_hop.webp', url: url),
-    GameEntry(
+    const GameEntry(
+      nameKey: 'game_group_hop',
+      art: '$art/card_hop.webp',
+      slug: 'hop',
+    ),
+    const GameEntry(
       nameKey: 'game_chase_zombie',
       art: '$art/card_zombie.webp',
-      url: url,
+      slug: 'zombie',
     ),
-    GameEntry(nameKey: 'game_catch_fish', art: '$art/card_fish.webp', url: url),
-    GameEntry(nameKey: 'skiing_game', art: '$art/card_ski.webp', url: url),
-    GameEntry(nameKey: 'game_ride_bike', art: '$art/card_bike.webp', url: url),
-    GameEntry(
+    const GameEntry(
+      nameKey: 'game_catch_fish',
+      art: '$art/card_fish.webp',
+      slug: 'fish',
+    ),
+    const GameEntry(
+      nameKey: 'skiing_game',
+      art: '$art/card_ski.webp',
+      slug: 'ski',
+    ),
+    const GameEntry(
+      nameKey: 'game_ride_bike',
+      art: '$art/card_bike.webp',
+      slug: 'bike',
+    ),
+    const GameEntry(
       nameKey: 'game_paddle_canoe',
       art: '$art/card_canoe.webp',
-      url: url,
+      slug: 'canoe',
     ),
-    GameEntry(
+    const GameEntry(
       nameKey: 'game_rhythm_step',
       art: '$art/card_rhythm.webp',
-      url: url,
+      slug: 'rhythm',
     ),
-    GameEntry(nameKey: 'game_memory_quiz', art: '$art/card_quiz.webp', url: url),
+    const GameEntry(
+      nameKey: 'game_memory_quiz',
+      art: '$art/card_quiz.webp',
+      slug: 'quiz',
+    ),
   ];
 }

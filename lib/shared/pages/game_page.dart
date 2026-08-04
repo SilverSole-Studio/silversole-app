@@ -6,6 +6,7 @@ import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/game_entry.dart';
+import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -236,13 +237,15 @@ class _VillageRow extends StatelessWidget {
             art: 'assets/mascot-assets/farm/ent_farm.webp',
             title: 'garden'.tr(),
             subtitle: 'garden_nutrient'.tr(args: ['4']),
+            onTap: comingSoon,
           ),
         ),
         Expanded(
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_shop.webp',
             title: 'shop'.tr(),
-            subtitle: 'shop_coins'.tr(args: ['1240']),
+            subtitle: 'shop_coins'.tr(args: ['${MockShop.coins}']),
+            onTap: () => context.push('/shop'),
           ),
         ),
         Expanded(
@@ -250,6 +253,7 @@ class _VillageRow extends StatelessWidget {
             art: 'assets/mascot-assets/farm/ent_mailbox.webp',
             title: 'family'.tr(),
             subtitle: 'family_cheers'.tr(args: ['2']),
+            onTap: comingSoon,
           ),
         ),
       ],
@@ -262,11 +266,13 @@ class _VillageCard extends StatelessWidget {
     required this.art,
     required this.title,
     required this.subtitle,
+    required this.onTap,
   });
 
   final String art;
   final String title;
   final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -274,7 +280,7 @@ class _VillageCard extends StatelessWidget {
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: comingSoon,
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.base,

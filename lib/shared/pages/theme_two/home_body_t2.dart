@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -11,6 +12,9 @@ import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/core/theme/app_palette.dart';
+import 'package:silversole/shared/widgets/chart/chart_section.dart';
+import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Home screen for the illustrated "mascot" theme.
@@ -50,6 +54,7 @@ class HomeBodyT2 extends ConsumerWidget {
               _DeviceCard(device: device),
               const _FootCheckCard(),
               const _FallGuardCard(),
+              const _RecentDataCard(),
             ],
           ),
         ),
@@ -104,7 +109,7 @@ class _GreetingHeader extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         Image.asset(
-          'assets/mascot-assets/hero.webp',
+          'assets/mascot-assets/applaud.webp',
           height: 88,
           fit: BoxFit.contain,
         ),
@@ -224,6 +229,7 @@ class _DeviceCard extends ConsumerWidget {
 
     return MascotCard(
       color: AppPaletteT2.gold,
+      onTap: () => context.push('/my-devices'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -362,7 +368,10 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
     return MascotCard(
       child: Row(
         children: [
-          Image.asset('assets/mascot-assets/icons/home_shield.webp', height: 54),
+          Image.asset(
+            'assets/mascot-assets/icons/home_shield.webp',
+            height: 54,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -391,6 +400,99 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
               style: context.textTheme.labelLarge?.copyWith(
                 color: safe ? AppPaletteT2.safe : AppPaletteT2.card,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 6. Recent device data ─────────────────────────────────────────────────
+
+/// Live IMU trace + a legend, tapping through to the detail panel.
+///
+/// Real data — the mascot theme's counterpart to `RecentDataChartCard`. The
+/// line colors come from `AppPalette.chartSeries` in both themes: they encode
+/// which channel is which, so they are not restyled per theme.
+class _RecentDataCard extends StatelessWidget {
+  const _RecentDataCard();
+
+  @override
+  Widget build(BuildContext context) {
+    Color colorOf(int i) =>
+        AppPalette.chartSeries[i % AppPalette.chartSeries.length];
+
+    return MascotCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      onTap: () => context.push('/analytics-detail'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'device_recent_data'.tr(),
+                  style: context.textTheme.titleMedium,
+                ),
+              ),
+              Text('view'.tr(), style: context.textTheme.labelLarge),
+              const Icon(Icons.chevron_right, size: 20),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ImuChartSection(type: ChardDisplayType.all),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (var i = 0; i < imuChannelLabels.length; i++)
+                _LegendChip(color: colorOf(i), label: imuChannelLabels[i]),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small outlined swatch + channel name, this theme's answer to the classic
+/// card's Material chips.
+class _LegendChip extends StatelessWidget {
+  const _LegendChip({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppPaletteT2.card,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppPaletteT2.ink, width: 1),
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontSize: 12,
+              color: AppPaletteT2.ink,
             ),
           ),
         ],

@@ -33,8 +33,11 @@ class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          // stretch, not start: cards whose content is narrower than the
+          // screen (the "pending" card) would otherwise shrink-wrap and sit
+          // half-width next to the full-width ones.
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'analytics_title'.tr(),

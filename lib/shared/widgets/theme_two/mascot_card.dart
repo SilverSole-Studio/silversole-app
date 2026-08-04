@@ -42,8 +42,12 @@ class MascotCard extends StatelessWidget {
 }
 
 /// Progress bar in this theme's language: an outlined track with a rounded
-/// fill inside it. Material's LinearProgressIndicator draws no border, so the
-/// outline is applied here rather than per call site.
+/// fill floating inside it. Material's LinearProgressIndicator draws no
+/// border, so the outline is applied here rather than per call site.
+///
+/// The fill does NOT touch the outline — [_inset] leaves a ring of [track]
+/// visible all the way around it, which is what makes the bar read as a
+/// capsule holding a pill rather than a two-tone block.
 class MascotProgressBar extends StatelessWidget {
   const MascotProgressBar({
     super.key,
@@ -52,6 +56,9 @@ class MascotProgressBar extends StatelessWidget {
     this.fill = AppPaletteT2.safe,
     this.track = AppPaletteT2.card,
   });
+
+  /// Gap between the outline and the fill, on every side.
+  static const double _inset = 2;
 
   /// 0..1; values outside are clamped.
   final double value;
@@ -69,8 +76,8 @@ class MascotProgressBar extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(color: AppPaletteT2.ink, width: 2),
       ),
-      child: ClipRRect(
-        borderRadius: radius,
+      child: Padding(
+        padding: const EdgeInsets.all(_inset),
         child: Align(
           alignment: Alignment.centerLeft,
           child: FractionallySizedBox(

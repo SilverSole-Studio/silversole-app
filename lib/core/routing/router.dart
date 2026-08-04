@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
+import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
+import 'package:silversole/shared/pages/shop_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -25,8 +27,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/analytics-detail',
-        builder: (_, _) => AnalyticsDetailPage(),
+        builder: (_, _) => const AnalyticsDetailRoute(),
       ),
+      GoRoute(path: '/my-devices', builder: (_, _) => const DevicesRoute()),
+      GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
       GoRoute(
         path: '/game-webview',
         builder: (_, state) {

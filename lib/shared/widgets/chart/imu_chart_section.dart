@@ -6,6 +6,25 @@ import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/chart/chart_section.dart';
 
+/// One label per line [ImuChartSection] draws, in draw order.
+///
+/// The legend only lines up with the chart if this matches `spotsList` below
+/// one-for-one — pressure is three sensors, so it contributes three lines.
+const imuChannelLabels = [
+  'p0',
+  'p1',
+  'p2',
+  'ax',
+  'ay',
+  'az',
+  'gx',
+  'gy',
+  'gz',
+  'pitch',
+  'roll',
+  'battery',
+];
+
 class ImuChartSection extends ConsumerWidget {
   final ChardDisplayType type;
   final List<int> selectedList;

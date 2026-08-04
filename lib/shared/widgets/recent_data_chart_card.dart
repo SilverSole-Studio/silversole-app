@@ -60,18 +60,9 @@ class _RecentDataChartCardState extends ConsumerState<RecentDataChartCard> {
   Widget build(BuildContext context) {
     Color getColor(int i) =>
         AppPalette.chartSeries[i % AppPalette.chartSeries.length];
-    final labels = [
-      'pressure',
-      'ax',
-      'ay',
-      'az',
-      'gx',
-      'gy',
-      'gz',
-      'pitch',
-      'roll',
-      'battery',
-    ];
+    // One entry per plotted line; a single "pressure" entry used to stand for
+    // three sensors, which shifted every later swatch off its line.
+    const labels = imuChannelLabels;
 
     return SizedBox(
       width: double.infinity,
