@@ -8,6 +8,7 @@ import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
+import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/game_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
@@ -49,7 +50,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),
       isMascot ? const GamePageT2() : const GamePage(),
-      const AnalyticsPage(),
+      isMascot ? const AnalyticsPageT2() : const AnalyticsPage(),
       const PersonPage(),
     ];
     return Scaffold(

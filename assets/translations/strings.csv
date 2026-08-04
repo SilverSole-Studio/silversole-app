@@ -125,6 +125,33 @@ game_ride_bike,Ride Along,騎鐵馬
 game_paddle_canoe,Paddle Boat,划龍舟
 game_rhythm_step,Rhythm Step,節奏踏步
 game_memory_quiz,Memory Quiz,記憶問答
+analytics_title,How is your walking?,走得怎麼樣？
+vitality_gait,Vitality gait,活力步態
+pressure_distribution,Pressure map,足壓分佈
+range_day,Day,日
+range_week,Week,週
+range_month,Month,月
+range_quarter,90 days,90天
+gait_diary,Gait diary,步態日記
+steps_label,Steps,步數
+balance_label,Balance,平衡
+weekly_trend,This week's vitality trend,本週活力趨勢
+weekly_summary,{} steps this week · {}% more than last week,本週共 {} 步 · 比上週多 {}%
+long_term_pending,Long-term trends are still crunching — almost there!,長期趨勢整理中，快好了！
+stride_length,Stride length,步幅長度
+lr_symmetry,Left-right symmetry,左右對稱
+stance_swing,Stance / Swing,站立 / 擺動
+drag_count,Foot drags,拖地次數
+drag_today,{} times today,今日 {} 次
+my_game_badges,My game badges,我的遊戲徽章
+badge_locked,Locked,未解鎖
+badge_fish,Fishing Master,接魚達人
+badge_quiz,Quiz Whiz,問答高手
+badge_canoe,Boat Rower,划船好手
+badge_bike,Road Rider,單車騎士
+badge_drums,Rhythm Star,節奏之星
+badge_bat,Home Runner,全壘打王
+badge_zombie,Zombie Slayer,殭屍剋星
 transmission_method,Transmission Method,傳輸方式
 bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點

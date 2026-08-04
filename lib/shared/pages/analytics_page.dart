@@ -1,16 +1,26 @@
-import 'dart:math' as math;
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/models/analytics_view_data.dart';
+import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart'
+    show BadgeTile;
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
+import 'package:silversole/shared/widgets/stat_row.dart';
 
+/// Analytics, classic theme.
+///
+/// Mirrors the mascot screen's structure — gait summary over a selectable
+/// window, gait metrics, badge wall, and the live pressure map — using this
+/// theme's own vocabulary: stock [SegmentedButton]s styled by the theme,
+/// [SectionCard], [StatRow], and the blue accent for data.
+///
+/// Only the pressure map is real (live BLE FSR values). Gait figures come from
+/// [MockGait]; month and quarter have no aggregation yet and say so.
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
 
@@ -19,702 +29,152 @@ class AnalyticsPage extends StatefulWidget {
 }
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
-  int _selectedRangeIndex = 0;
-  int _selectedTrendIndex = 0;
+  bool _showPressure = false;
+  AnalyticsRange _range = AnalyticsRange.day;
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('analytics'.tr(), style: context.textTheme.titleLarge),
-          bottom: TabBar(
-            labelStyle: context.textTheme.titleMedium,
-            unselectedLabelStyle: context.textTheme.titleMedium,
-            tabs: [
-              Tab(text: 'vitality_metrics'.tr()),
-              Tab(text: 'pressure_visualization'.tr()),
-            ],
-          ),
-        ),
-        body: SafeArea(
-          child: TabBarView(
-            children: [_vitalityTab(), const _PressureVizTab()],
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'analytics_title'.tr(),
+          style: context.textTheme.titleLarge,
         ),
       ),
-    );
-  }
-
-  Widget _vitalityTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.base,
-        AppSpacing.sm,
-        AppSpacing.base,
-        AppSpacing.base,
-      ),
-      child: Column(
-        spacing: AppSpacing.sm,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            spacing: 10,
-            children: [
-              Expanded(
-                child: _RangeSelector(
-                  labels: ['today'.tr(), 'seven_days'.tr(), 'thirty_days'.tr()],
-                  selectedIndex: _selectedRangeIndex,
-                  onSelected: (index) {
-                    setState(() => _selectedRangeIndex = index);
-                  },
-                ),
-              ),
-              // _MetricSelector(label: 'pressure'.tr()),
-            ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.base,
+            0,
+            AppSpacing.base,
+            AppSpacing.xl,
           ),
-          // const _PressureDistributionCard(),
-          const _TodayStatusCard(),
-          const _MetricGrid(),
-          const _PressureAnalysisCard(),
-          _StabilityTrendCard(
-            selectedIndex: _selectedTrendIndex,
-            onSelected: (index) {
-              setState(() => _selectedTrendIndex = index);
-            },
-          ),
-          const _CareSuggestionCard(
-            suggestion:
-                '整體步態今日穩定。右腳後跟壓力略高，可能與行走平衡或鞋墊擺放有關。建議今晚檢查鞋墊是否放置正確，並留意是否有任何腳跟不適。',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// "壓力可視化" tab — just the live foot-pressure heat map.
-class _PressureVizTab extends ConsumerWidget {
-  const _PressureVizTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(telemetryViewProvider);
-    final imu = state.recentImu;
-    final pressure = imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0];
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.base),
-      child: Center(child: FootPressureHeatmap(pressure: pressure)),
-    );
-  }
-}
-
-class _RangeSelector extends StatelessWidget {
-  const _RangeSelector({
-    required this.labels,
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  final List<String> labels;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<int>(
-      showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
-      segments: [
-        for (var i = 0; i < labels.length; i++)
-          ButtonSegment<int>(
-            value: i,
-            label: Text(
-              labels[i],
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-      ],
-      selected: {selectedIndex},
-      onSelectionChanged: (selection) {
-        onSelected(selection.first);
-      },
-    );
-  }
-}
-
-class _MetricSelector extends StatelessWidget {
-  const _MetricSelector({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return MenuAnchor(
-      menuChildren: [MenuItemButton(onPressed: () {}, child: Text(label))],
-      builder: (context, controller, child) {
-        return FilledButton.tonalIcon(
-          onPressed: () {
-            if (controller.isOpen) {
-              controller.close();
-            } else {
-              controller.open();
-            }
-          },
-          icon: const Icon(LucideIcons.chevronDown, size: 18),
-          label: Text(label, overflow: TextOverflow.ellipsis, maxLines: 1),
-        );
-      },
-    );
-  }
-}
-
-class _AnalyticsCard extends StatelessWidget {
-  const _AnalyticsCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _PressureDistributionCard extends StatelessWidget {
-  const _PressureDistributionCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return SectionCard(
-      title: 'foot_pressure_distribution'.tr(),
-      child: Column(
-        spacing: AppSpacing.md,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: AppSpacing.base,
-            children: [
-              Expanded(
-                flex: 5,
-                child: SizedBox(
-                  height: 190,
-                  child: CustomPaint(
-                    painter: _FootPressurePainter(colorScheme: cs),
-                    child: const SizedBox.expand(),
-                  ),
-                ),
-              ),
-              const Expanded(flex: 4, child: _PressureValueList()),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'low'.tr(),
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-              Container(
-                width: 170,
-                height: 10,
-                margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  borderRadius: AppRadius.subR,
-                  gradient: const LinearGradient(
-                    colors: AppPalette.pressureGradient,
-                  ),
-                ),
-              ),
-              Text(
-                'high'.tr(),
-                style: context.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PressureValueList extends StatelessWidget {
-  const _PressureValueList();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      spacing: 8,
-      children: [
-        _PressureValueRow(label: 'forefoot'.tr(), value: '48 kPa'),
-        _PressureValueRow(label: 'midfoot'.tr(), value: '22 kPa'),
-        _PressureValueRow(label: 'heel'.tr(), value: '71 kPa'),
-        _PressureValueRow(label: 'average_pressure'.tr(), value: '47 kPa'),
-      ],
-    );
-  }
-}
-
-class _PressureValueRow extends StatelessWidget {
-  const _PressureValueRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withValues(alpha: 0.55),
-        borderRadius: AppRadius.fieldR,
-      ),
-      child: Column(
-        spacing: 2,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
-          ),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.textTheme.titleMedium,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TodayStatusCard extends StatelessWidget {
-  const _TodayStatusCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return SectionCard(
-      title: 'today_status'.tr(),
-      child: Column(
-        spacing: AppSpacing.base,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            spacing: AppSpacing.base,
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: cs.primaryContainer,
-                child: Icon(
-                  LucideIcons.shieldCheck,
-                  color: cs.onPrimaryContainer,
-                  size: 34,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  spacing: 4,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'gait_stable'.tr(),
-                      style: context.textTheme.headlineSmall,
-                    ),
-                    Text(
-                      'today_pressure_summary'.tr(),
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Divider(color: cs.outlineVariant, height: 1),
-          Row(
-            children: [
-              Expanded(
-                child: _StatusStat(
-                  icon: LucideIcons.shieldCheck,
-                  label: 'stability_score'.tr(),
-                  value: '86',
-                ),
-              ),
-              _VerticalDivider(),
-              Expanded(
-                child: _StatusStat(
-                  icon: LucideIcons.footprints,
-                  label: 'fall_risk'.tr(),
-                  value: 'low'.tr(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusStat extends StatelessWidget {
-  const _StatusStat({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return Row(
-      spacing: 10,
-      children: [
-        Icon(icon, color: cs.onSurfaceVariant, size: 28),
-        Expanded(
           child: Column(
-            spacing: 2,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: AppSpacing.base,
             children: [
-              Text(
-                label,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-              Text(value, style: context.textTheme.titleMedium),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _VerticalDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 44,
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-      color: context.colorScheme.outlineVariant,
-    );
-  }
-}
-
-class _MetricGrid extends StatelessWidget {
-  const _MetricGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      mainAxisSpacing: 4,
-      crossAxisSpacing: 4,
-      shrinkWrap: true,
-      childAspectRatio: 2.25,
-      physics: const NeverScrollableScrollPhysics(),
-      children: [
-        _MetricTile(
-          icon: LucideIcons.footprints,
-          label: 'today_steps'.tr(),
-          value: '3,842',
-        ),
-        _MetricTile(
-          icon: LucideIcons.sun,
-          label: 'outdoor_time'.tr(),
-          value: 'duration_minutes'.tr(args: ['42']),
-        ),
-      ],
-    );
-  }
-}
-
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          spacing: AppSpacing.sm,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerHighest,
-                borderRadius: AppRadius.fieldR,
-              ),
-              child: Icon(icon, color: cs.onSurfaceVariant, size: 24),
-            ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+              SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text('vitality_gait'.tr()),
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        value,
-                        maxLines: 1,
-                        style: context.textTheme.titleLarge,
-                      ),
-                    ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text('pressure_distribution'.tr()),
                   ),
                 ],
+                selected: {_showPressure},
+                onSelectionChanged: (s) =>
+                    setState(() => _showPressure = s.first),
               ),
-            ),
-          ],
+              if (_showPressure)
+                const _PressurePanel()
+              else ...[
+                SegmentedButton<AnalyticsRange>(
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  segments: [
+                    for (final r in AnalyticsRange.values)
+                      ButtonSegment(
+                        value: r,
+                        label: Text(
+                          r.labelKey.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  selected: {_range},
+                  onSelectionChanged: (s) => setState(() => _range = s.first),
+                ),
+                _RangePanel(range: _range),
+                const _MetricsCard(),
+                const _BadgeWall(),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _PressureAnalysisCard extends StatelessWidget {
-  const _PressureAnalysisCard();
+// ── Range panels ──────────────────────────────────────────────────────────
+
+class _RangePanel extends StatelessWidget {
+  const _RangePanel({required this.range});
+
+  final AnalyticsRange range;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!range.isReady) return const _PendingCard();
+    return range == AnalyticsRange.day ? const _DayCard() : const _WeekCard();
+  }
+}
+
+class _DayCard extends StatelessWidget {
+  const _DayCard();
 
   @override
   Widget build(BuildContext context) {
     return SectionCard(
-      title: 'pressure_analysis'.tr(),
-      child: Column(
-        spacing: 10,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _AnalysisRow(
-            icon: LucideIcons.scale,
-            label: 'left_right_balance'.tr(),
-            value: 'slightly_right'.tr(),
-            status: 'normal'.tr(),
-            highlighted: false,
-          ),
-          _AnalysisRow(
-            icon: LucideIcons.moveHorizontal,
-            label: 'front_back_balance'.tr(),
-            value: 'heel_biased'.tr(),
-            status: 'notice'.tr(),
-            highlighted: true,
-          ),
-          _AnalysisRow(
-            icon: LucideIcons.circleDot,
-            label: 'pressure_focus_area'.tr(),
-            value: 'right_heel'.tr(),
-            status: 'notice'.tr(),
-            highlighted: true,
-          ),
-          _AnalysisRow(
-            icon: LucideIcons.activity,
-            label: 'gait_rhythm'.tr(),
-            value: 'stable'.tr(),
-            status: 'stable'.tr(),
-            highlighted: false,
-            showDivider: false,
-          ),
-        ],
-      ),
+      title: 'gait_diary'.tr(),
+      child: StatRow([
+        StatItem('steps_label'.tr(), '${MockGait.todaySteps}'),
+        StatItem('balance_label'.tr(), MockGait.balanceGrade),
+      ]),
     );
   }
 }
 
-class _AnalysisRow extends StatelessWidget {
-  const _AnalysisRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.status,
-    required this.highlighted,
-    this.showDivider = true,
-  });
+class _WeekCard extends StatelessWidget {
+  const _WeekCard();
 
-  final IconData icon;
-  final String label;
-  final String value;
-  final String status;
-  final bool highlighted;
-  final bool showDivider;
+  static const _weekdayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return Column(
-      children: [
-        Row(
-          spacing: 12,
-          children: [
-            Icon(icon, color: cs.onSurfaceVariant, size: 20),
-            Expanded(child: Text(label, style: context.textTheme.bodyLarge)),
-            Text(
-              value,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-            _StatusBadge(text: status, highlighted: highlighted),
-          ],
-        ),
-        if (showDivider)
-          Padding(
-            padding: const EdgeInsets.only(left: 36, top: 10),
-            child: Divider(color: cs.outlineVariant, height: 1),
-          ),
-      ],
-    );
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.text, required this.highlighted});
-
-  final String text;
-  final bool highlighted;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return Container(
-      constraints: const BoxConstraints(minWidth: 66),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: highlighted
-            ? cs.primaryContainer.withValues(alpha: 0.35)
-            : cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Text(
-        text,
-        style: context.textTheme.labelMedium?.copyWith(
-          color: highlighted ? cs.primary : cs.onSurfaceVariant,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _StabilityTrendCard extends StatelessWidget {
-  const _StabilityTrendCard({
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-    final values = [58.0, 74.0, 66.0, 84.0, 76.0, 89.0, 78.0];
+    final steps = MockGait.weekSteps;
+    final accent = context.colorScheme.primary;
 
     return SectionCard(
-      title: 'seven_day_stability_trend'.tr(),
-      trailing: _MiniToggle(
-        labels: ['week'.tr(), 'month'.tr()],
-        selectedIndex: selectedIndex,
-        onSelected: onSelected,
-      ),
+      title: 'weekly_trend'.tr(),
       child: Column(
-        spacing: AppSpacing.md,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 170,
+            height: 180,
             child: LineChart(
               LineChartData(
                 minY: 0,
-                maxY: 100,
-                minX: 0,
-                maxX: 6,
+                maxY: 8000,
                 gridData: FlGridData(
-                  drawVerticalLine: false,
-                  horizontalInterval: 25,
-                  getDrawingHorizontalLine: (_) =>
-                      FlLine(color: cs.outlineVariant, strokeWidth: 1),
-                ),
-                borderData: FlBorderData(
                   show: true,
-                  border: Border(
-                    left: BorderSide(color: cs.outlineVariant),
-                    bottom: BorderSide(color: cs.outlineVariant),
+                  drawVerticalLine: false,
+                  horizontalInterval: 4000,
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: context.colorScheme.outlineVariant,
+                    strokeWidth: 1,
                   ),
                 ),
+                borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  topTitles: const AxisTitles(),
+                  rightTitles: const AxisTitles(),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 25,
-                      reservedSize: 32,
+                      interval: 4000,
+                      reservedSize: 42,
                       getTitlesWidget: (value, _) => Text(
-                        value.toInt().toString(),
-                        style: context.textTheme.labelSmall?.bold?.copyWith(
-                          color: cs.onSurfaceVariant,
+                        '${value.toInt()}',
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -722,29 +182,16 @@ class _StabilityTrendCard extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      interval: 1,
                       reservedSize: 28,
                       getTitlesWidget: (value, _) {
-                        final labels = [
-                          'mon'.tr(),
-                          'tue'.tr(),
-                          'wed'.tr(),
-                          'thu'.tr(),
-                          'fri'.tr(),
-                          'sat'.tr(),
-                          'sun'.tr(),
-                        ];
-                        final index = value.toInt();
-                        if (index < 0 || index >= labels.length) {
+                        final i = value.toInt();
+                        if (i < 0 || i >= _weekdayKeys.length) {
                           return const SizedBox.shrink();
                         }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            labels[index],
-                            style: context.textTheme.labelSmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                            ),
+                        return Text(
+                          _weekdayKeys[i].tr(),
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         );
                       },
@@ -754,111 +201,117 @@ class _StabilityTrendCard extends StatelessWidget {
                 lineBarsData: [
                   LineChartBarData(
                     spots: [
-                      for (var i = 0; i < values.length; i++)
-                        FlSpot(i.toDouble(), values[i]),
+                      for (var i = 0; i < steps.length; i++)
+                        FlSpot(i.toDouble(), steps[i].toDouble()),
                     ],
-                    color: cs.primary,
-                    barWidth: 3,
                     isCurved: true,
+                    color: accent,
+                    barWidth: 3,
                     dotData: FlDotData(
-                      getDotPainter: (spot, percent, barData, index) =>
-                          FlDotCirclePainter(
-                            radius: 5,
-                            color: cs.primaryContainer,
-                            strokeWidth: 2,
-                            strokeColor: cs.primary,
-                          ),
+                      show: true,
+                      getDotPainter: (spot, _, _, index) => FlDotCirclePainter(
+                        radius: 4,
+                        color: index == steps.length - 1
+                            ? context.tokens.success
+                            : accent,
+                        strokeWidth: 0,
+                      ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          cs.primary.withValues(alpha: 0.24),
-                          cs.primary.withValues(alpha: 0.02),
-                        ],
-                      ),
+                      color: accent.withValues(alpha: 0.12),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniToggle extends StatelessWidget {
-  const _MiniToggle({
-    required this.labels,
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  final List<String> labels;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<int>(
-      showSelectedIcon: false,
-      style: SegmentedButton.styleFrom(visualDensity: VisualDensity.compact),
-      segments: [
-        for (var i = 0; i < labels.length; i++)
-          ButtonSegment<int>(
-            value: i,
-            label: Text(
-              labels[i],
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-      ],
-      selected: {selectedIndex},
-      onSelectionChanged: (selection) {
-        onSelected(selection.first);
-      },
-    );
-  }
-}
-
-class _CareSuggestionCard extends StatelessWidget {
-  const _CareSuggestionCard({required this.suggestion});
-
-  final String suggestion;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = context.colorScheme;
-
-    return _AnalyticsCard(
-      child: Row(
-        spacing: 14,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.sparkles, color: cs.primary, size: 32),
-          Expanded(
-            child: Column(
-              spacing: 8,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ai_care_suggestion'.tr(),
-                  style: context.textTheme.titleSmall?.bold,
-                ),
-                Text(
-                  suggestion,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'weekly_summary'.tr(
+              args: [
+                _grouped(MockGait.weekTotal),
+                '${MockGait.weekDeltaPercent}',
               ],
             ),
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 31800 -> 31,800. Grouped here rather than in the CSV, where a comma
+  /// would split the row.
+  static String _grouped(int value) {
+    final digits = value.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(digits[i]);
+    }
+    return buffer.toString();
+  }
+}
+
+class _PendingCard extends StatelessWidget {
+  const _PendingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.base),
+        child: Column(
+          children: [
+            Icon(
+              Icons.hourglass_top_rounded,
+              size: 48,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'long_term_pending'.tr(),
+              textAlign: TextAlign.center,
+              style: context.textTheme.titleMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Metrics ───────────────────────────────────────────────────────────────
+
+class _MetricsCard extends StatelessWidget {
+  const _MetricsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SectionCard(
+      child: Column(
+        children: [
+          _MetricRow(
+            label: 'stride_length'.tr(),
+            value: '${MockGait.strideLengthCm} cm',
+          ),
+          const Divider(height: AppSpacing.lg),
+          _MetricRow(
+            label: 'lr_symmetry'.tr(),
+            value: '${MockGait.symmetryScore} ${'score_unit'.tr()}',
+          ),
+          const Divider(height: AppSpacing.lg),
+          _MetricRow(
+            label: 'stance_swing'.tr(),
+            value: '${MockGait.stancePercent} / ${MockGait.swingPercent}',
+          ),
+          const Divider(height: AppSpacing.lg),
+          _MetricRow(
+            label: 'drag_count'.tr(),
+            value: 'drag_today'.tr(args: ['${MockGait.dragCount}']),
           ),
         ],
       ),
@@ -866,83 +319,70 @@ class _CareSuggestionCard extends StatelessWidget {
   }
 }
 
-class _FootPressurePainter extends CustomPainter {
-  const _FootPressurePainter({required this.colorScheme});
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({required this.label, required this.value});
 
-  final ColorScheme colorScheme;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    _drawInsole(canvas, Offset(size.width * 0.45, size.height * 0.5));
-  }
-
-  void _drawInsole(Canvas canvas, Offset center) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(-math.pi / 28);
-
-    final basePaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          const Color(0xFF2E67FF).withValues(alpha: 0.76),
-          const Color(0xFF173D8C).withValues(alpha: 0.88),
-        ],
-      ).createShader(const Rect.fromLTWH(-46, -82, 92, 164));
-
-    final outlinePaint = Paint()
-      ..color = colorScheme.primary.withValues(alpha: 0.28)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    final insole = Path()
-      ..moveTo(-8, -78)
-      ..cubicTo(-38, -72, -44, -42, -34, -8)
-      ..cubicTo(-25, 22, -29, 61, -2, 78)
-      ..cubicTo(20, 92, 42, 70, 37, 38)
-      ..cubicTo(33, 13, 18, -7, 29, -36)
-      ..cubicTo(39, -64, 18, -83, -8, -78)
-      ..close();
-    canvas.drawPath(insole, basePaint);
-    canvas.drawPath(insole, outlinePaint);
-
-    _drawHotSpot(canvas, const Offset(4, -40), 34, const [
-      Color(0xFFFFED2E),
-      Color(0xFF3FD764),
-      Color(0xFF126BFF),
-    ]);
-    _drawHotSpot(canvas, const Offset(10, 44), 34, const [
-      Color(0xFFFF2D20),
-      Color(0xFFFFE735),
-      Color(0xFF126BFF),
-    ]);
-    _drawHotSpot(canvas, const Offset(-16, -4), 24, const [
-      Color(0xFF54D569),
-      Color(0xFF126BFF),
-    ]);
-
-    canvas.restore();
-  }
-
-  void _drawHotSpot(
-    Canvas canvas,
-    Offset center,
-    double radius,
-    List<Color> colors,
-  ) {
-    final paint = Paint()
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6)
-      ..shader = RadialGradient(
-        colors: [
-          ...colors.map((color) => color.withValues(alpha: 0.9)),
-          Colors.transparent,
-        ],
-      ).createShader(Rect.fromCircle(center: center, radius: radius));
-
-    canvas.drawCircle(center, radius, paint);
-  }
+  final String label;
+  final String value;
 
   @override
-  bool shouldRepaint(covariant _FootPressurePainter oldDelegate) {
-    return oldDelegate.colorScheme != colorScheme;
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Text(value, style: context.textTheme.titleMedium),
+      ],
+    );
+  }
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────
+
+class _BadgeWall extends StatelessWidget {
+  const _BadgeWall();
+
+  @override
+  Widget build(BuildContext context) {
+    final badges = badgeCatalog();
+    return SectionCard(
+      title: 'my_game_badges'.tr(),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          mainAxisSpacing: AppSpacing.sm,
+          crossAxisSpacing: AppSpacing.sm,
+          childAspectRatio: 0.95,
+        ),
+        itemCount: badges.length,
+        itemBuilder: (context, i) => BadgeTile(
+          badge: badges[i],
+          lockColor: context.colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pressure ──────────────────────────────────────────────────────────────
+
+/// The live foot-pressure heat map — the one panel here backed by real data.
+class _PressurePanel extends ConsumerWidget {
+  const _PressurePanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imu = ref.watch(telemetryViewProvider).recentImu;
+    final pressure = imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0];
+    return SectionCard(
+      child: Center(child: FootPressureHeatmap(pressure: pressure)),
+    );
   }
 }

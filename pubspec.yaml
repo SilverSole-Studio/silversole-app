@@ -111,6 +111,14 @@ flutter:
     - assets/mascot-assets/icons/
     # Game cover art — used by BOTH themes (cover art is content, not theming).
     - assets/mascot-assets/cards/
+    # Achievement badges shown on the analytics wall (7 of the 12 in badges/).
+    - assets/mascot-assets/badges/badge_fish.webp
+    - assets/mascot-assets/badges/badge_quiz.webp
+    - assets/mascot-assets/badges/badge_canoe.webp
+    - assets/mascot-assets/badges/badge_bike.webp
+    - assets/mascot-assets/badges/badge_drums.webp
+    - assets/mascot-assets/badges/badge_bat.webp
+    - assets/mascot-assets/badges/badge_zombie.webp
     # Village shortcuts on the games hub. Individual files, not the whole
     # farm/ folder (~11MB), since only these three are rendered.
     - assets/mascot-assets/farm/ent_farm.webp
