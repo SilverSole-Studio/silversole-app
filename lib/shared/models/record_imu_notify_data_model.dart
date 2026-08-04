@@ -13,12 +13,13 @@ abstract class RecordImuNotifyDataModel with _$RecordImuNotifyDataModel {
     required int gx,
     required int gy,
     required int gz,
-    required int pressure,
+    required List<int> pressure,
     @JsonKey(name: 'wear_status') required bool wearStatus,
     @JsonKey(name: 'battery_percent') required int batteryPercent,
   }) = _RecordImuNotifyDataModel;
 
-  factory RecordImuNotifyDataModel.fromJson(Map<String, dynamic> json) => _$RecordImuNotifyDataModelFromJson(json);
+  factory RecordImuNotifyDataModel.fromJson(Map<String, dynamic> json) =>
+      _$RecordImuNotifyDataModelFromJson(json);
 }
 
 // flutter pub run build_runner build --delete-conflicting-outputs

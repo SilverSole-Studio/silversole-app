@@ -158,7 +158,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
   ///   "start_ts_ms": 1700000000000,
   ///   "sample_rate_hz": 50,
   ///   "samples": [
-  ///     [ts_ms, ax, ay, az, gx, gy, gz, pressure, wear_status, battery_percent],
+  ///     [ts_ms, ax, ay, az, gx, gy, gz, p0, p1, p2, wear_status, battery_percent],
   ///     [...],
   ///     ...
   ///   ]
@@ -167,6 +167,10 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
   String buildRecordJson(List<RecordImuNotifyDataModel> recordList) {
     final startTs = recordList.first.timestamp;
     final sampleRate = 200;
+    // Pressure is a 3-sensor array; pad/truncate to a fixed width so every
+    // sample row keeps the same number of columns.
+    List<int> pressure3(List<int> p) =>
+        List.generate(3, (i) => i < p.length ? p[i] : 0, growable: false);
     final samples = recordList
         .map(
           (e) => [
@@ -177,7 +181,7 @@ class _AnalyticsDetailPageState extends ConsumerState<AnalyticsDetailPage> {
             e.gx,
             e.gy,
             e.gz,
-            e.pressure,
+            ...pressure3(e.pressure),
             e.wearStatus,
             e.batteryPercent,
           ],

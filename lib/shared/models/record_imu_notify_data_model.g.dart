@@ -16,7 +16,9 @@ _RecordImuNotifyDataModel _$RecordImuNotifyDataModelFromJson(
   gx: (json['gx'] as num).toInt(),
   gy: (json['gy'] as num).toInt(),
   gz: (json['gz'] as num).toInt(),
-  pressure: (json['pressure'] as num).toInt(),
+  pressure: (json['pressure'] as List<dynamic>)
+      .map((e) => (e as num).toInt())
+      .toList(),
   wearStatus: json['wear_status'] as bool,
   batteryPercent: (json['battery_percent'] as num).toInt(),
 );
