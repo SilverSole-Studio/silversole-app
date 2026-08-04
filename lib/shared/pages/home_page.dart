@@ -72,7 +72,14 @@ class _HomePageState extends ConsumerState<HomePage> {
           'settings',
         ],
       ),
-      body: IndexedStack(index: _page, children: pages),
+      // One tab in the tree at a time. IndexedStack kept every tab mounted,
+      // which left the map's Android platform view laid out off-screen;
+      // swapping page types under it on a theme switch corrupted the render
+      // tree (RenderAndroidView calling localToGlobal on an unlaid-out box,
+      // then removeRenderObjectChild asserting on a stale child). Per-tab
+      // scroll position is not preserved as a result — page content is
+      // rebuilt from the same providers, so nothing is lost but the offset.
+      body: pages[_page],
     );
   }
 }
