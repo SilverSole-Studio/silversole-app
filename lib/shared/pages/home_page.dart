@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
-import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
+import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
 
@@ -36,8 +38,12 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Each theme owns its own home implementation; the rest of the tabs are
+    // shared until they get a mascot version too.
+    final isMascot =
+        ref.watch(settingsProvider).themeVariant == AppThemeVariant.mascot;
     final pages = [
-      const HomeBody(),
+      isMascot ? const HomeBodyT2() : const HomeBody(),
       const MapPage(),
       // const DevicesPage(),
       const AnalyticsPage(),

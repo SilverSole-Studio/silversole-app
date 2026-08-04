@@ -62,6 +62,7 @@ dependencies:
   collection: ^1.19.1
   flutter_inappwebview: ^6.1.5
   clock: ^1.1.1
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -103,11 +104,29 @@ flutter:
     - assets/images/games/
     - assets/translations/
     - assets/map_styles/
+    # Mascot theme art. Register ONLY the folders actually rendered — the full
+    # assets/mascot-assets/ tree is ~56MB (game/, farm/, cards/, badges/,
+    # mascot/), and anything listed here is bundled into the APK. Add a folder
+    # when the screen that needs it ships.
+    - assets/mascot-assets/icons/
+    - assets/mascot-assets/hero.png
+    - assets/mascot-assets/happy.png
+    - assets/mascot-assets/checking.png
+    - assets/mascot-assets/determined.png
+    - assets/mascot-assets/insole.png
 
   fonts:
     - family: Google Sans
       fonts:
         - asset: assets/fonts/GoogleSans-VariableFont.ttf
+    # Voice of the mascot theme; ships with the art pack.
+    - family: DM Sans
+      fonts:
+        - asset: assets/mascot-assets/fonts/DMSans-Regular.ttf
+        - asset: assets/mascot-assets/fonts/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/mascot-assets/fonts/DMSans-Bold.ttf
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

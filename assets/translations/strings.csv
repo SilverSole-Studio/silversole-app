@@ -81,6 +81,19 @@ general,General,一般
 search_device,Search device,搜尋裝置
 current_devices,Current devices,目前裝置
 dark_mode,Dark Mode,深色模式
+switch_theme,Switch Theme,切換主題
+theme_classic,Classic,經典
+theme_mascot,Mascot,插畫
+greeting_morning,Good morning,早安
+greeting_afternoon,Good afternoon,午安
+greeting_evening,Good evening,晚安
+today_mission,Today's mission,今日任務
+streak_days,{} day streak,連續 {} 天
+steps_progress,{} / {} steps,{} / {} 步
+foot_check_title,One-minute foot pressure check,一分鐘足壓健檢
+start_check_now,Start check now,立即開始健檢
+fall_guard_active,Fall guard active,跌倒守護運作中
+fall_guard_events,{} events,{} 件事件
 transmission_method,Transmission Method,傳輸方式
 bluetooth,Bluetooth,藍牙
 hotspot,Hotspot,熱點

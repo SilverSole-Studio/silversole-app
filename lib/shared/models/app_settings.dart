@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 
 part 'app_settings.freezed.dart';
@@ -13,13 +14,16 @@ abstract class AppSettings with _$AppSettings {
     String? identity,
     String? deviceId,
     @Default(true) bool darkMode,
-    @Default(TransmissionMethod.bluetooth) TransmissionMethod transmissionMethod,
+    @Default(AppThemeVariant.classic) AppThemeVariant themeVariant,
+    @Default(TransmissionMethod.bluetooth)
+    TransmissionMethod transmissionMethod,
     @Default(<BlePairedDevice>[]) List<BlePairedDevice> pairedDevicesList,
   }) = _AppSettings;
 
   const AppSettings._();
 
-  BlePairedDevice? get preferredDevice => pairedDevicesList.firstWhereOrNull((d) => d.isPreferred);
+  BlePairedDevice? get preferredDevice =>
+      pairedDevicesList.firstWhereOrNull((d) => d.isPreferred);
 }
 
 extension TransmissionMethodValue on TransmissionMethod {

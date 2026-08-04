@@ -54,6 +54,18 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setIdentity(nextIdentity(old));
   }
 
+  /// Two variants only, so tapping toggles between them.
+  Future<void> switchThemeVariant() async {
+    final current = ref.read(settingsProvider).themeVariant;
+    await ref
+        .read(settingsProvider.notifier)
+        .setThemeVariant(
+          current == AppThemeVariant.mascot
+              ? AppThemeVariant.classic
+              : AppThemeVariant.mascot,
+        );
+  }
+
   Future<void> switchDarkMode() async {
     final darkMode = ref.read(settingsProvider);
     ref.read(settingsProvider.notifier).setDarkMode(!darkMode.darkMode);
@@ -121,6 +133,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
         icon: LucideIcons.moon,
         onClick: switchDarkMode,
+      ),
+      ListTileData.normal(
+        title: 'switch_theme'.tr(),
+        subtitle: settings.themeVariant == AppThemeVariant.mascot
+            ? 'theme_mascot'.tr()
+            : 'theme_classic'.tr(),
+        icon: LucideIcons.palette,
+        onClick: switchThemeVariant,
       ),
     ];
 

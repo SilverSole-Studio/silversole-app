@@ -3,8 +3,11 @@
 library;
 
 export 'app_palette.dart';
+export 'app_palette_t2.dart';
 export 'app_radius.dart';
 export 'app_spacing.dart';
 export 'app_theme.dart';
+export 'app_theme_t2.dart';
+export 'app_theme_variant.dart';
 export 'app_tokens.dart';
 export 'app_typography.dart';

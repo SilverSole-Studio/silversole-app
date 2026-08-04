@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
+import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
@@ -27,7 +28,14 @@ class SettingsNotifier extends Notifier<AppSettings> {
     if (darkModeRaw == null) {
       await saveLocalValue(LocalSavableKey.darkMode, 'true');
     }
-    final methodString = await loadLocalValue(LocalSavableKey.transmissionMethod);
+    // Defaults to classic; only an explicit opt-in switches the whole app to
+    // the mascot design.
+    final themeVariant = AppThemeVariant.fromName(
+      await loadLocalValue(LocalSavableKey.themeVariant),
+    );
+    final methodString = await loadLocalValue(
+      LocalSavableKey.transmissionMethod,
+    );
     final transmissionMethod = switch (methodString) {
       'bluetooth' => TransmissionMethod.bluetooth,
       'wifi' => TransmissionMethod.wifi,
@@ -38,9 +46,15 @@ class SettingsNotifier extends Notifier<AppSettings> {
       identity: identity,
       deviceId: deviceId,
       darkMode: darkMode,
+      themeVariant: themeVariant,
       transmissionMethod: transmissionMethod,
       pairedDevicesList: pairedDevicesList,
     );
+  }
+
+  Future<void> setThemeVariant(AppThemeVariant variant) async {
+    await saveLocalValue(LocalSavableKey.themeVariant, variant.name);
+    state = state.copyWith(themeVariant: variant);
   }
 
   Future<void> setIdentity(String value) async {
@@ -87,4 +101,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
   }
 }
 
-final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(SettingsNotifier.new);
+final settingsProvider = NotifierProvider<SettingsNotifier, AppSettings>(
+  SettingsNotifier.new,
+);

@@ -16,6 +16,7 @@ class App extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final router = ref.watch(routerProvider);
     final darkMode = settings.darkMode;
+    final isMascot = settings.themeVariant == AppThemeVariant.mascot;
 
     ref.watch(bleForegroundControlProvider);
 
@@ -25,9 +26,17 @@ class App extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       locale: context.locale,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      theme: appTheme(Brightness.light),
-      darkTheme: appTheme(Brightness.dark),
-      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: isMascot
+          ? appThemeT2(Brightness.light)
+          : appTheme(Brightness.light),
+      darkTheme: isMascot
+          ? appThemeT2(Brightness.dark)
+          : appTheme(Brightness.dark),
+      // The mascot design is light-only for now, so pin it to light rather
+      // than render a half-designed dark screen.
+      themeMode: isMascot
+          ? ThemeMode.light
+          : (darkMode ? ThemeMode.dark : ThemeMode.light),
       routerConfig: router,
     );
   }

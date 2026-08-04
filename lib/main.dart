@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -17,6 +18,10 @@ Future<void> main() async {
   // Use LogLevel.error instead if you want to keep genuine BLE errors.
   FlutterBluePlus.setLogLevel(LogLevel.none);
   await EasyLocalization.ensureInitialized();
+  // Required before any DateFormat with an explicit locale (e.g. the zh_TW
+  // weekday/month names on the home screen); without it intl throws
+  // LocaleDataException at runtime.
+  await initializeDateFormatting();
   await dotenv.load(fileName: '.env');
   await Supabase.initialize(
     url: dotenv.env[Constants.supabaseUrlKey] ?? '',
