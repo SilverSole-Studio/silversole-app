@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.7.0
+
+更新內容:
+
+- 新增第二主題（吉祥物主題）：奶油底色、粗黑外框與 DM Sans 字體，首頁、地圖、遊戲、分析、設定五個分頁都有專屬版面，可在設定中隨時切換，原本的藍色主題完整保留。
+- 新增「我的裝置」面板：從首頁的裝置卡點入，顯示已配對裝置、即時電量與連線狀態、韌體資訊；主題二可直接從面板配對新裝置。
+- 新增「活力幣商店」：從遊戲頁的商店入口進入，分為每日扭蛋、數位券與造型三類，開啟時活力幣會從 0 累加到目前數量。
+- 遊戲頁改版：八款遊戲各自連到專屬的 H5 網址，不再全部指向同一個位址。
+- 分析頁改版：活力步態與壓力分布兩個分頁、步態指標卡與遊戲徽章牆。
+- 主題二首頁新增「裝置近期資料」卡片，並有專屬的即時資料面板，可切換頻道、錄製與匯出。
+- 錄製資料改為完整保存三顆壓力感測器的數值。
+- 即時 IMU 數據加入 10 筆移動平均濾波，圖表不再劇烈跳動。
+- Debug 版本可與正式版同時安裝在同一支手機上。
+- 修正在切換主題或深色模式時，地圖分頁造成應用程式崩潰的問題。
+- 修正近期資料圖表的圖例色塊與實際線條顏色對不上的問題。
+- 修正步態日記卡片的分隔線位置，以及主題二部分卡片未撐滿寬度的問題。
+- 吉祥物素材改用 WebP，縮小安裝檔體積。
+
+Updates:
+
+- Added a second theme (the illustrated mascot theme): cream canvas, heavy dark outlines, and DM Sans, with its own layout for Home, Map, Games, Analytics, and Settings. Switch at any time from Settings; the original blue theme is untouched.
+- Added a "My devices" panel, opened from the home device card: paired devices, live battery and connection status, and firmware info. The mascot theme can pair a new device straight from the panel.
+- Added the Vitality Coin Shop, reached from the Games hub: daily gacha, digital vouchers, and outfits, with the coin balance counting up from zero on open.
+- Games hub: each of the eight titles now opens its own H5 URL instead of a single shared address.
+- Analytics rebuild: vitality-gait and pressure-distribution tabs, a gait metrics card, and the game badge wall.
+- Added a "recent device data" card to the mascot home, with its own live telemetry panel for channel switching, recording, and export.
+- Recordings now keep all three pressure sensor values.
+- Live IMU is smoothed with a 10-sample moving average, so charts no longer jump.
+- Debug builds install alongside the released app on the same phone.
+- Fixed a crash on the Map tab when switching theme or dark mode.
+- Fixed the recent-data chart legend, whose swatches did not match the plotted lines.
+- Fixed the gait diary card's divider placement and several mascot-theme cards that did not fill the width.
+- Mascot artwork ships as WebP, shrinking the install size.
+
 ## v1.6.0
 
 更新內容:
