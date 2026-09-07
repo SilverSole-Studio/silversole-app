@@ -104,6 +104,8 @@ flutter:
     - assets/images/games/
     - assets/translations/
     - assets/map_styles/
+    # Canned motion clips replayed by the pressure map's demo menu.
+    - assets/foot-pressure-heatmpt-samples/
     # Mascot theme art. Register ONLY the folders actually rendered — the full
     # assets/mascot-assets/ tree is ~56MB (game/, farm/, cards/, badges/,
     # mascot/), and anything listed here is bundled into the APK. Add a folder

@@ -291,3 +291,8 @@ shop_item_skin_sport,Sportswear outfit,運動服造型
 shop_item_skin_chef,Chef outfit,廚師造型
 shop_skin_wearable,Wearable as soon as you buy it,買了就能穿
 device_name,Device name,裝置名稱
+demo_motion,Sample,樣本
+demo_motion_off,Stop sample,關閉樣本
+left_foot,Left foot,左腳
+right_foot,Right foot,右腳
+both_feet,Both feet,雙腳

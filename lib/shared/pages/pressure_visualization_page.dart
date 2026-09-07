@@ -1,21 +1,24 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
+import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
+import 'package:silversole/shared/widgets/pressure_readouts.dart';
 
-class PressureVisualizationPage extends ConsumerWidget {
+class PressureVisualizationPage extends StatefulWidget {
   const PressureVisualizationPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(telemetryViewProvider);
-    final imu = state.recentImu;
-    final hasData = imu.isNotEmpty;
-    final pressure = hasData ? imu.last.pressure : const <int>[0, 0, 0];
+  State<PressureVisualizationPage> createState() =>
+      _PressureVisualizationPageState();
+}
 
+class _PressureVisualizationPageState extends State<PressureVisualizationPage> {
+  FootView _feet = FootView.both;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -26,83 +29,56 @@ class PressureVisualizationPage extends ConsumerWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.base),
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: FootPressureHeatmap(pressure: pressure),
+          child: PressureDemoScope(
+            builder: (context, reading, header) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                header,
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: FootPressureHeatmap(
+                        pressure: reading.right,
+                        leftPressure: reading.left,
+                        feet: _feet,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.base),
-              _SensorReadouts(pressure: pressure, hasData: hasData),
-              const SizedBox(height: AppSpacing.base),
-              const _PressureLegend(),
-            ],
+                const SizedBox(height: AppSpacing.base),
+                SegmentedButton<FootView>(
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  segments: [
+                    for (final f in FootView.values)
+                      ButtonSegment(
+                        value: f,
+                        label: Text(
+                          f.labelKey.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  selected: {_feet},
+                  onSelectionChanged: (s) => setState(() => _feet = s.first),
+                ),
+                const SizedBox(height: AppSpacing.base),
+                PressureReadouts(
+                  feet: _feet,
+                  right: reading.right,
+                  left: reading.left,
+                  hasData: reading.hasData,
+                ),
+                const SizedBox(height: AppSpacing.base),
+                const _PressureLegend(),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SensorReadouts extends StatelessWidget {
-  const _SensorReadouts({required this.pressure, required this.hasData});
-
-  final List<int> pressure;
-  final bool hasData;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < kSensorLabels.length; i++)
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                right: i == kSensorLabels.length - 1 ? 0 : AppSpacing.sm,
-              ),
-              child: _SensorCard(
-                label: kSensorLabels[i],
-                value: hasData && i < pressure.length ? '${pressure[i]}' : '--',
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _SensorCard extends StatelessWidget {
-  const _SensorCard({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.md,
-        horizontal: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: AppRadius.fieldR,
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: context.textTheme.labelMedium?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(value, style: context.textTheme.titleLarge),
-        ],
       ),
     );
   }

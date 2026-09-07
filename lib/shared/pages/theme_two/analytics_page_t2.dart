@@ -1,12 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/analytics_view_data.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
+import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
+import 'package:silversole/shared/widgets/pressure_readouts.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Analytics, mascot theme: a gait summary over a selectable window, the gait
@@ -25,6 +25,7 @@ class AnalyticsPageT2 extends StatefulWidget {
 
 class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
   bool _showPressure = false;
+  FootView _feet = FootView.both;
   AnalyticsRange _range = AnalyticsRange.day;
 
   @override
@@ -50,9 +51,15 @@ class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
                 onSelected: (i) => setState(() => _showPressure = i == 1),
               ),
               const SizedBox(height: 10),
-              if (_showPressure)
-                const _PressurePanel()
-              else ...[
+              if (_showPressure) ...[
+                _Segmented(
+                  labels: [for (final f in FootView.values) f.labelKey.tr()],
+                  selected: _feet.index,
+                  onSelected: (i) => setState(() => _feet = FootView.values[i]),
+                ),
+                const SizedBox(height: 14),
+                _PressurePanel(feet: _feet),
+              ] else ...[
                 _Segmented(
                   labels: [
                     for (final r in AnalyticsRange.values) r.labelKey.tr(),
@@ -494,15 +501,36 @@ class BadgeTile extends StatelessWidget {
 
 // ── Pressure ──────────────────────────────────────────────────────────────
 
-class _PressurePanel extends ConsumerWidget {
-  const _PressurePanel();
+class _PressurePanel extends StatelessWidget {
+  const _PressurePanel({required this.feet});
+
+  final FootView feet;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final imu = ref.watch(telemetryViewProvider).recentImu;
-    final pressure = imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0];
-    return MascotCard(
-      child: Center(child: FootPressureHeatmap(pressure: pressure)),
+  Widget build(BuildContext context) {
+    return PressureDemoScope(
+      builder: (context, reading, header) => MascotCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            Center(
+              child: FootPressureHeatmap(
+                pressure: reading.right,
+                leftPressure: reading.left,
+                feet: feet,
+              ),
+            ),
+            const SizedBox(height: 14),
+            PressureReadouts(
+              feet: feet,
+              right: reading.right,
+              left: reading.left,
+              hasData: reading.hasData,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

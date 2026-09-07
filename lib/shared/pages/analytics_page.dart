@@ -1,14 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/analytics_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart'
     show BadgeTile;
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
+import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
+import 'package:silversole/shared/widgets/pressure_readouts.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 import 'package:silversole/shared/widgets/stat_row.dart';
 
@@ -30,6 +30,7 @@ class AnalyticsPage extends StatefulWidget {
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
   bool _showPressure = false;
+  FootView _feet = FootView.both;
   AnalyticsRange _range = AnalyticsRange.day;
 
   @override
@@ -69,9 +70,28 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 onSelectionChanged: (s) =>
                     setState(() => _showPressure = s.first),
               ),
-              if (_showPressure)
-                const _PressurePanel()
-              else ...[
+              if (_showPressure) ...[
+                SegmentedButton<FootView>(
+                  showSelectedIcon: false,
+                  style: SegmentedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  segments: [
+                    for (final f in FootView.values)
+                      ButtonSegment(
+                        value: f,
+                        label: Text(
+                          f.labelKey.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  selected: {_feet},
+                  onSelectionChanged: (s) => setState(() => _feet = s.first),
+                ),
+                _PressurePanel(feet: _feet),
+              ] else ...[
                 SegmentedButton<AnalyticsRange>(
                   showSelectedIcon: false,
                   style: SegmentedButton.styleFrom(
@@ -373,16 +393,38 @@ class _BadgeWall extends StatelessWidget {
 
 // ── Pressure ──────────────────────────────────────────────────────────────
 
-/// The live foot-pressure heat map — the one panel here backed by real data.
-class _PressurePanel extends ConsumerWidget {
-  const _PressurePanel();
+/// The live foot-pressure heat map — the one panel here backed by real data,
+/// with an example menu that replays a canned motion instead.
+class _PressurePanel extends StatelessWidget {
+  const _PressurePanel({required this.feet});
+
+  final FootView feet;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final imu = ref.watch(telemetryViewProvider).recentImu;
-    final pressure = imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0];
-    return SectionCard(
-      child: Center(child: FootPressureHeatmap(pressure: pressure)),
+  Widget build(BuildContext context) {
+    return PressureDemoScope(
+      builder: (context, reading, header) => SectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            Center(
+              child: FootPressureHeatmap(
+                pressure: reading.right,
+                leftPressure: reading.left,
+                feet: feet,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.base),
+            PressureReadouts(
+              feet: feet,
+              right: reading.right,
+              left: reading.left,
+              hasData: reading.hasData,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
