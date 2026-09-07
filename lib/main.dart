@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization_loader/easy_localization_loader.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -14,9 +15,10 @@ import 'constants.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Silence flutter_blue_plus' internal `[FBP] ...` console logs.
-  // Use LogLevel.error instead if you want to keep genuine BLE errors.
-  FlutterBluePlus.setLogLevel(LogLevel.none);
+  // Release builds stay silent; debug keeps `[FBP] ...` errors, which is where
+  // GATT status codes behind a dropped link show up. Raise to LogLevel.verbose
+  // when tracing a connection problem.
+  FlutterBluePlus.setLogLevel(kDebugMode ? LogLevel.error : LogLevel.none);
   await EasyLocalization.ensureInitialized();
   // Required before any DateFormat with an explicit locale (e.g. the zh_TW
   // weekday/month names on the home screen); without it intl throws

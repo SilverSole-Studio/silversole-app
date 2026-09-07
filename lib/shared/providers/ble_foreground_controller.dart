@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:silversole/core/ble/ble_connection_service.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
-import 'package:silversole/core/ble/ble_uuids.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_status_model.dart';
@@ -27,18 +28,15 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   final settings = ref.read(settingsProvider.notifier);
   final live = ref.read(liveTelemetryProvider.notifier);
 
-  Timer? reconnectTimer;
-  bool connecting = false;
+  // The sole as we currently know it. Refreshed on every (re)connection by
+  // onReady, before any notify handler below can run.
+  BlePairedDevice? boundDevice;
 
-  // Throttle BLE subscribe-failure logs: print once when a connect attempt
-  // starts failing, then stay quiet until the next full success — otherwise
-  // the 6s reconnect loop spams the same timeout every retry.
-  bool subscribeFailureLogged = false;
-  void logSubscribeFailureOnce(String message) {
-    if (subscribeFailureLogged) return;
-    subscribeFailureLogged = true;
-    debugPrint(message);
-  }
+  // Only arms when arming the session itself fails (permission revoked, the
+  // connectionState listener throwing). Connecting and reconnecting is the
+  // service's own backoff loop — do not add a second one here.
+  Timer? retryTimer;
+  var retryAttempt = 0;
 
   // A wire-format mismatch fails on every packet, so throttle the failure log
   // and carry the raw bytes — the payload is what identifies the wrong format.
@@ -46,30 +44,51 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   String toHex(List<int> v) =>
       v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
 
-  void onData(List<int> value) {
-    final data = bleConnectionService.parseImuNotify(value);
-    live.updateImuNotifyData(data);
-  }
-
-  void onRecordData(List<int> value) {
-    final json = bleConnectionService.parseJsonNotify(value);
-    final data = RecordImuNotifyDataModel.fromJson(json);
-    live.updateRecordImuNotifyData(data);
-    debugPrint('record notify: $data');
-  }
-
-  void onFallDetect(List<int> value, String deviceId) {
-    final isFall = utf8.decode(value) == "1";
-    if (!isFall) return;
-    ref
-        .read(fallEventBusProvider)
-        .emit(
-          FallDetectEvent(
-            timestamp: DateTime.now(),
-            deviceId: deviceId,
-            detect: true,
-          ),
+  void onImu(List<int> value) {
+    try {
+      final data = bleConnectionService.parseImuNotify(value);
+      live.updateImuNotifyData(data);
+    } catch (e) {
+      // Always report the first failure, then throttle: a format mismatch
+      // fails on every packet and would spam ~20 lines/s.
+      imuFailCount++;
+      if (imuFailCount == 1 || imuFailCount % 20 == 0) {
+        debugPrint(
+          'parse notify FAILED #$imuFailCount len=${value.length} '
+          'hex=[${toHex(value)}] err=$e',
         );
+      }
+    }
+  }
+
+  void onRecordImu(List<int> value) {
+    try {
+      final json = bleConnectionService.parseJsonNotify(value);
+      final data = RecordImuNotifyDataModel.fromJson(json);
+      live.updateRecordImuNotifyData(data);
+      debugPrint('record notify: $data');
+    } catch (e) {
+      debugPrint('parse record notify failed: $e');
+    }
+  }
+
+  void onFallDetect(List<int> value) {
+    try {
+      if (utf8.decode(value) != '1') return;
+      final deviceId = boundDevice?.deviceId;
+      if (deviceId == null) return;
+      ref
+          .read(fallEventBusProvider)
+          .emit(
+            FallDetectEvent(
+              timestamp: DateTime.now(),
+              deviceId: deviceId,
+              detect: true,
+            ),
+          );
+    } catch (e) {
+      debugPrint('parse fall detect failed: $e');
+    }
   }
 
   bool isDeviceStatusTimestampValid(
@@ -82,7 +101,9 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     return diffMs <= tolerance.inMilliseconds;
   }
 
-  Future<void> onDeviceStatus(BlePairedDevice device, List<int> value) async {
+  Future<void> onDeviceStatus(List<int> value) async {
+    final device = boundDevice;
+    if (device == null) return;
     try {
       final payload = bleConnectionService.parseJsonNotify(value);
       final status = DeviceStatusModel.fromJson(payload);
@@ -111,182 +132,86 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     return stats.isGranted;
   }
 
-  Future<void> tryAutoConnect(BlePairedDevice device) async {
-    if (connecting) return;
-    connecting = true;
-    try {
-      // Permission
-      final granted = await ensureConnectPermission();
-      if (!granted) {
-        debugPrint('bluetoothConnect permission denied'.tr());
-        return;
-      }
+  // attach and scheduleRetry call each other, and Dart has no forward
+  // references for local functions — so one of the pair has to be a variable.
+  late final Future<void> Function(BlePairedDevice device) attach;
 
-      await startBleService();
+  void scheduleRetry(BlePairedDevice device) {
+    retryTimer?.cancel();
+    // 2, 4, 8, 16, 30, 30… — a failed attach means the adapter or the
+    // permission is unavailable, so back off instead of hammering it.
+    final seconds = math.min(1 << (retryAttempt + 1), 30);
+    retryAttempt++;
+    debugPrint('sole attach retry in ${seconds}s');
+    retryTimer = Timer(
+      Duration(seconds: seconds),
+      () => unawaited(attach(device)),
+    );
+  }
 
-      // Read IMU data
-      final imuResult = await bleConnectionService.subscribeNotify(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: notifyCharUuid,
-        onData: (value) {
-          try {
-            onData(value);
-          } catch (e) {
-            // Always report the first failure, then throttle: a format
-            // mismatch fails on every packet and would spam ~20 lines/s.
-            imuFailCount++;
-            if (imuFailCount == 1 || imuFailCount % 20 == 0) {
-              debugPrint(
-                'parse notify FAILED #$imuFailCount len=${value.length} '
-                'hex=[${toHex(value)}] err=$e',
-              );
-            }
-          }
-        },
-      );
+  attach = (BlePairedDevice device) async {
+    retryTimer?.cancel();
+    boundDevice = device;
 
-      switch (imuResult) {
-        case Error():
-          logSubscribeFailureOnce('subscribe_failed ${imuResult.error}');
-          return;
-        case Ok():
-          debugPrint('auto connect success');
-      }
+    final granted = await ensureConnectPermission();
+    if (!granted) {
+      debugPrint('bluetoothConnect permission denied'.tr());
+      scheduleRetry(device);
+      return;
+    }
 
-      // Read record IMU data
-      final recordImuResult = await bleConnectionService.subscribeNotify(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: recordNotifyCharUuid,
-        onData: (value) {
-          try {
-            onRecordData(value);
-          } catch (e) {
-            debugPrint('parse record notify failed: $e');
-          }
-        },
-      );
+    await startBleService();
 
-      switch (recordImuResult) {
-        case Error():
-          logSubscribeFailureOnce(
-            'record_subscribe_failed ${recordImuResult.error}',
-          );
-          return;
-        case Ok():
-          debugPrint('auto connect success');
-      }
-
-      // Read device ID
-      final deviceIdResult = await bleConnectionService
-          .readStringCharacteristic(
-            device,
-            serviceUuid: serviceUuid,
-            characteristicUuid: deviceIdCharUuid,
-          );
-      var boundDevice = device;
-      switch (deviceIdResult) {
-        case Error():
-          debugPrint('read device id failed: ${deviceIdResult.error}');
-          return;
-        case Ok():
+    final result = await bleConnectionService.attach(
+      device,
+      handlers: BleSessionHandlers(
+        onImu: onImu,
+        onRecordImu: onRecordImu,
+        onFallDetect: onFallDetect,
+        onDeviceStatus: (value) => unawaited(onDeviceStatus(value)),
+        onReady: (deviceId) {
           // Persist the moment we (re)connected so the status card can show a
           // real "last connected" time. Same remoteId, so this does not
-          // re-trigger the preferredDevice listener / reconnect loop.
-          boundDevice = device.copyWith(
-            deviceId: deviceIdResult.value,
+          // re-trigger the preferredDevice listener.
+          final updated = (boundDevice ?? device).copyWith(
+            deviceId: deviceId ?? boundDevice?.deviceId,
             lastConnectedAt: DateTime.now(),
           );
-          unawaited(settings.addOrUpdatePairedDevice(boundDevice));
-          debugPrint('device id: ${deviceIdResult.value}');
-      }
-      final deviceId = boundDevice.deviceId!;
-
-      // Write base timestamp
-      final timestampResult = await bleConnectionService.writeBaseTimestamp(
-        device,
-      );
-      switch (timestampResult) {
-        case Error():
-          debugPrint('write base timestamp failed: ${timestampResult.error}');
-          return;
-        case Ok():
-          debugPrint('base timestamp synced');
-      }
-
-      // Read fall detect
-      final fallDetectResult = await bleConnectionService.subscribeNotify(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: fallDetectCharUuid,
-        onData: (value) {
-          try {
-            onFallDetect(value, deviceId);
-          } catch (e) {
-            debugPrint('parse fall detect failed: $e');
-          }
+          boundDevice = updated;
+          unawaited(settings.addOrUpdatePairedDevice(updated));
+          debugPrint('sole session ready: deviceId=${updated.deviceId}');
         },
-      );
+        onDisconnected: (reason) => debugPrint('sole disconnected: $reason'),
+      ),
+    );
 
-      switch (fallDetectResult) {
-        case Error():
-          logSubscribeFailureOnce(
-            'fall_detect_subscribe_failed ${fallDetectResult.error}',
-          );
-          return;
-        case Ok():
-          debugPrint('auto connect success');
-      }
-
-      final deviceStatusResult = await bleConnectionService.subscribeNotify(
-        device,
-        serviceUuid: serviceUuid,
-        characteristicUuid: deviceStatusCharUuid,
-        onData: (value) async {
-          try {
-            await onDeviceStatus(boundDevice, value);
-          } catch (e) {
-            debugPrint('parse device status failed: $e');
-          }
-        },
-      );
-
-      switch (deviceStatusResult) {
-        case Error():
-          logSubscribeFailureOnce(
-            'device_status_subscribe_failed ${deviceStatusResult.error}',
-          );
-          return;
-        case Ok():
-          debugPrint('device status subscribe success');
-          subscribeFailureLogged = false; // full connect → re-arm the log
-      }
-    } finally {
-      connecting = false;
+    switch (result) {
+      case Error():
+        debugPrint('sole attach failed: ${result.error}');
+        scheduleRetry(device);
+      case Ok():
+        retryAttempt = 0;
+        debugPrint('sole session attached');
     }
-  }
+  };
 
   ref.listen<BlePairedDevice?>(
     settingsProvider.select((s) => s.preferredDevice),
     (prev, next) {
       if (prev?.remoteId == next?.remoteId) return;
 
-      reconnectTimer?.cancel();
+      retryTimer?.cancel();
+      retryAttempt = 0;
+      boundDevice = null;
 
-      // Disconnect
-      if (prev != null) unawaited(bleConnectionService.disconnect(prev));
       if (next == null) {
-        unawaited(stopBleService());
+        unawaited(
+          bleConnectionService.detach().whenComplete(() => stopBleService()),
+        );
         return;
       }
 
-      unawaited(tryAutoConnect(next));
-      reconnectTimer = Timer.periodic(const Duration(seconds: 6), (_) {
-        if (!bleConnectionService.checkConnect(next)) {
-          unawaited(tryAutoConnect(next));
-        }
-      });
+      unawaited(attach(next));
     },
     fireImmediately: true,
   );

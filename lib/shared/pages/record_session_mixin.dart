@@ -37,12 +37,7 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     final ble = ref.read(bleConnectProvider);
     final telemetryNotifier = ref.read(liveTelemetryProvider.notifier);
     telemetryNotifier.clearRecordImuNotifyData();
-    final result = await ble.writeBoolCharacteristic(
-      preferredDevice,
-      serviceUuid: serviceUuid,
-      characteristicUuid: recordRequestCharUuid,
-      value: true,
-    );
+    final result = await ble.writeBool(recordRequestCharUuid, true);
 
     switch (result) {
       case Error():
@@ -68,12 +63,7 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     }
 
     final ble = ref.read(bleConnectProvider);
-    final result = await ble.writeBoolCharacteristic(
-      preferredDevice,
-      serviceUuid: serviceUuid,
-      characteristicUuid: recordRequestCharUuid,
-      value: false,
-    );
+    final result = await ble.writeBool(recordRequestCharUuid, false);
 
     switch (result) {
       case Error():
@@ -94,11 +84,7 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     }
 
     final ble = ref.read(bleConnectProvider);
-    final result = await ble.readStringCharacteristic(
-      preferredDevice,
-      serviceUuid: serviceUuid,
-      characteristicUuid: recordRequestCharUuid,
-    );
+    final result = await ble.readString(recordRequestCharUuid);
 
     switch (result) {
       case Error():
