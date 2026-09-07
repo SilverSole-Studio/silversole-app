@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:silversole/constants.dart';
 
 /// One playable title in the games hub.
@@ -26,7 +27,19 @@ class GameEntry {
   /// Built from [Constants.gameUrl] rather than stored, so the debug build's
   /// local Cocos preview and a `--dart-define=GAME_URL=...` override still
   /// reach the right title.
-  String get url => '${Constants.gameUrl}game/$slug/';
+  ///
+  /// Debug builds append `?sole=debug`, which makes the game show a corner
+  /// panel with the live sole signal: which source it picked (FSR vs tilt),
+  /// the raw FSR total, `pitch` / `roll`, the deviation from the neutral
+  /// posture, and the event count. That distinguishes "no signal reaching the
+  /// page" from "signal is there but the thresholds are off" — the two failure
+  /// modes look identical from the game alone. Release builds never get it.
+  String get url {
+    final base = '${Constants.gameUrl}game/$slug/';
+    if (!kDebugMode) return base;
+    // GAME_URL may already carry a query string, so pick the right separator.
+    return '$base${base.contains('?') ? '&' : '?'}sole=debug';
+  }
 }
 
 /// The catalog. Every title lives at `<base>/game/<slug>/`.

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 abstract class Constants {
   /// Dev escape hatch: land guests on the home screen instead of bouncing them
   /// to `/sign-in`, so device/BLE work does not need a Supabase session.
@@ -28,17 +26,23 @@ abstract class Constants {
 
   /// Base URL for the H5 mini-games loaded in [GameWebViewPage].
   ///
-  /// Override at run time with `--dart-define=GAME_URL=...` (e.g. point it at
-  /// the Cocos preview server). Otherwise: debug → local dev server, release →
-  /// the production site.
+  /// Debug and release both point at the deployed site. Debug used to default
+  /// to a local Cocos preview on :7456, which silently broke every game once
+  /// the H5 build moved to Cloudflare — the preview server is usually not even
+  /// running, so debug builds just opened a dead URL.
+  ///
+  /// To serve the games from your machine instead (repo: `silversole-little-
+  /// games-html-demo`, `./serve.sh`), point this at it for that run:
+  ///
+  ///     adb reverse tcp:8080 tcp:8080          # once per USB session
+  ///     flutter run --dart-define=GAME_URL=http://localhost:8080/
+  ///
+  /// `--dart-define` is baked in at launch — a hot restart will not pick up a
+  /// change to it.
+  ///
   /// Keep the trailing slash — `GameEntry.url` builds `'${gameUrl}game/<slug>/'`.
   static const String _gameUrlOverride = String.fromEnvironment('GAME_URL');
   static String get gameUrl => _gameUrlOverride.isNotEmpty
       ? _gameUrlOverride
-      // Debug → local Cocos preview. Requires `adb reverse tcp:7456 tcp:7456`
-      // (run once per session); works on both USB devices and emulators.
-      // (10.0.2.2 would only work on an emulator — this device is USB.)
-      : (kDebugMode
-            ? 'http://localhost:7456/'
-            : 'https://h5.silversole.dongyu.company/');
+      : 'https://h5.silversole.dongyu.company/';
 }
