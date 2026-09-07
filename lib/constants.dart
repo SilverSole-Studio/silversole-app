@@ -1,6 +1,19 @@
 import 'package:flutter/foundation.dart';
 
 abstract class Constants {
+  /// Dev escape hatch: land guests on the home screen instead of bouncing them
+  /// to `/sign-in`, so device/BLE work does not need a Supabase session.
+  ///
+  /// Honoured in **debug builds only** — the router ANDs this with
+  /// [kDebugMode], so a release build always enforces the gate no matter what
+  /// this is set to. Every screen that needs a user already degrades to a
+  /// `not_signed_in` message, so the app is usable as a guest; anything backed
+  /// by Supabase (recent data, binding, analytics) will simply stay empty.
+  ///
+  /// Set to `false` to get the normal sign-in flow back. `/sign-in` is still
+  /// reachable by hand while this is on.
+  static const bool skipAuthGate = true;
+
   static const String supabaseUrlKey = 'PUBLIC_SUPABASE_URL';
   static const String supabasePublicDefaultKey =
       'PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY';
