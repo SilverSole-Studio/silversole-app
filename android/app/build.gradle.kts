@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.andongni.silversole"
+    namespace = "com.dongyutech.silversole"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.andongni.silversole"
+        applicationId = "com.dongyutech.silversole"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -59,7 +59,7 @@ android {
             // Install debug builds side by side with the released app instead of
             // replacing it. Only the applicationId changes — `namespace` (and so
             // the Kotlin package, the BLE MethodChannel name, and the foreground
-            // service actions) stays com.andongni.silversole.
+            // service actions) stays com.dongyutech.silversole.
             applicationIdSuffix = ".debug"
             resValue("string", "app_name", "SilverSole Dev")
         }

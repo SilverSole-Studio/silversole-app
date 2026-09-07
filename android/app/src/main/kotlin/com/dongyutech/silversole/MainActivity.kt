@@ -1,15 +1,15 @@
-package com.andongni.silversole
+package com.dongyutech.silversole
 
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import com.andongni.silversole.ble.BleForegroundService
+import com.dongyutech.silversole.ble.BleForegroundService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 
 class MainActivity : FlutterActivity() {
-    private val bleCannel = "com.andongni.silversole/ble_service"
+    private val bleCannel = "com.dongyutech.silversole/ble_service"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

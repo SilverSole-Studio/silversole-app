@@ -1,16 +1,16 @@
-package com.andongni.silversole.ble
+package com.dongyutech.silversole.ble
 
 import android.app.*
 import android.content.Intent
 import android.os.*
 import androidx.core.app.NotificationCompat
-import com.andongni.silversole.MainActivity
-import com.andongni.silversole.R
+import com.dongyutech.silversole.MainActivity
+import com.dongyutech.silversole.R
 
 class BleForegroundService : Service() {
     companion object {
-        const val ACTION_START = "com.andongni.silversole.ble.START"
-        const val ACTION_STOP = "com.andongni.silversole.ble.STOP"
+        const val ACTION_START = "com.dongyutech.silversole.ble.START"
+        const val ACTION_STOP = "com.dongyutech.silversole.ble.STOP"
         private const val CHANNEL_ID = "ble_foreground_channel"
         private const val NOTIFICATION_ID = 1001
     }
