@@ -51,3 +51,7 @@ mockups/
 
 # Throwaway visual-preview goldens + their disposable *_preview test drivers.
 dev_previews/
+
+# Claude Code's scratch worktrees. Keeps the rest of .claude/ (launch.json,
+# agents, skills) versionable while leaving this out.
+.claude/worktrees/
