@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
@@ -21,13 +22,14 @@ class RecordImuChartSection extends ConsumerWidget {
     final data = ref.watch(telemetryViewProvider).record;
     final recent = data.takeLast(ChardSection.defaultVisiblePointCount);
     final startIndex = data.length - recent.length;
-    List<FlSpot> buildSpots(num Function(RecordImuNotifyDataModel d) pick) =>
-        List.generate(
-          recent.length,
-          (i) =>
-              FlSpot((startIndex + i).toDouble(), pick(recent[i]).toDouble()),
-          growable: false,
-        );
+    // A null pick becomes a null spot, which fl_chart draws as a gap.
+    List<FlSpot> buildSpots(num? Function(RecordImuNotifyDataModel d) pick) =>
+        List.generate(recent.length, (i) {
+          final y = pick(recent[i]);
+          return y == null
+              ? FlSpot.nullSpot
+              : FlSpot((startIndex + i).toDouble(), y.toDouble());
+        }, growable: false);
 
     // pressure is a 3-sensor array; plot one line per sensor, falling back to
     // 0 if the payload carries fewer values than expected.
@@ -46,7 +48,7 @@ class RecordImuChartSection extends ConsumerWidget {
         buildSpots((d) => d.gy),
         buildSpots((d) => d.gz),
       ],
-      [buildSpots((d) => d.batteryPercent)],
+      [buildSpots((d) => d.batteryPercent.validBatteryPercent)],
     ];
 
     const dataMax = [4500.0, 20000.0, 20000.0, 100.0];

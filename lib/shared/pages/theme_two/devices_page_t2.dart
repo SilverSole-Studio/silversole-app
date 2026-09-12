@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_view_data.dart';
@@ -161,13 +162,16 @@ class _DeviceRowTile extends StatelessWidget {
           const SizedBox(width: 10),
           SizedBox(
             width: 88,
-            child: MascotProgressBar(value: (battery ?? 0) / 100, height: 18),
+            child: MascotProgressBar(
+              value: battery?.batteryFraction ?? 0,
+              height: 18,
+            ),
           ),
           const SizedBox(width: 8),
           SizedBox(
             width: 52,
             child: Text(
-              battery != null ? '$battery%' : '--',
+              battery?.batteryLabel ?? '-',
               textAlign: TextAlign.right,
               style: context.textTheme.titleMedium,
             ),

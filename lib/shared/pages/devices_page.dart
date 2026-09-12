@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
@@ -330,7 +331,7 @@ class _DeviceRowTile extends StatelessWidget {
           width: 72,
           child: LinearProgressIndicator(
             year2023: false, // ignore: deprecated_member_use
-            value: (battery ?? 0) / 100,
+            value: battery?.batteryFraction ?? 0,
             minHeight: 10,
             borderRadius: BorderRadius.circular(999),
             stopIndicatorRadius: 0,
@@ -345,7 +346,7 @@ class _DeviceRowTile extends StatelessWidget {
         SizedBox(
           width: 46,
           child: Text(
-            battery != null ? '$battery%' : '--',
+            battery?.batteryLabel ?? '-',
             textAlign: TextAlign.right,
             style: context.textTheme.titleMedium,
           ),

@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
@@ -230,11 +231,10 @@ Widget statusCard(
                         icon: (detail.isCharging ?? false)
                             ? LucideIcons.batteryCharging
                             : LucideIcons.batteryMedium,
-                        title: detail.lastBatteryPercent != null
-                            ? '${detail.lastBatteryPercent}%'
-                            : 'no_data'.tr(),
+                        title: detail.lastBatteryPercent?.batteryLabel ?? '-',
                         hasProgress: true,
-                        progress: ((detail.lastBatteryPercent ?? 0) / 100),
+                        progress:
+                            detail.lastBatteryPercent?.batteryFraction ?? 0,
                         subtitle: '12hrs remaining',
                       ),
                       subStatusCard(
@@ -293,7 +293,7 @@ Widget _statusDisplayBody(
   final lastSeen = detail?.lastHeartbeatAt ?? lastConnectedAt;
   final lastSeenText = lastSeen != null ? formatTimeAgo(lastSeen) : '--';
 
-  final batteryValue = (battery / 100).clamp(0.0, 1.0);
+  final batteryValue = battery.batteryFraction;
 
   return ConstrainedBox(
     constraints: const BoxConstraints(minHeight: 120),
@@ -429,7 +429,7 @@ Widget _statusDisplayBody(
                     ),
                   ),
                   Text(
-                    '$battery%',
+                    battery.batteryLabel,
                     style: tt.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: cs.primary,

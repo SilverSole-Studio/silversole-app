@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
@@ -266,10 +267,16 @@ class _DeviceCard extends ConsumerWidget {
           Row(
             children: [
               Expanded(
-                child: MascotProgressBar(value: battery / 100, height: 20),
+                child: MascotProgressBar(
+                  value: battery.batteryFraction,
+                  height: 20,
+                ),
               ),
               const SizedBox(width: 12),
-              Text('$battery%', style: context.textTheme.headlineMedium),
+              Text(
+                battery.batteryLabel,
+                style: context.textTheme.headlineMedium,
+              ),
             ],
           ),
         ],
