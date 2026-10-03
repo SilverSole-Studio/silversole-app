@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/battery_level.dart';
+import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_view_data.dart';
@@ -49,6 +51,7 @@ class DevicesPageT2 extends ConsumerWidget {
               _DeviceListCard(rows: rows),
               const _FirmwareCard(),
               const _PairButton(),
+              if (rows.isNotEmpty) const _ClearAllButton(),
             ],
           ),
         ),
@@ -250,6 +253,50 @@ class _PairButton extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text('device_pair_new'.tr(), style: context.textTheme.titleLarge),
+        ],
+      ),
+    );
+  }
+}
+
+// ── 5. Forget every pairing ───────────────────────────────────────────────
+
+/// The sole advertises a new MAC on every boot, so this list grows one entry
+/// per reboot. Clearing it also stops auto-connect until the next manual
+/// pairing.
+class _ClearAllButton extends ConsumerWidget {
+  const _ClearAllButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return MascotCard(
+      onTap: () => showConfirmLeaveDialog(
+        context,
+        title: 'clear_all_devices_title'.tr(),
+        text: 'clear_all_devices_content'.tr(),
+        confirmText: 'clear_all_devices'.tr(),
+        confirmType: ConfirmType.delete,
+        onConfirm: () async {
+          await ref.read(settingsProvider.notifier).setPairedDevices([]);
+          showMessage('clear_all_devices_success'.tr());
+        },
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.delete_outline,
+            size: 26,
+            color: AppPaletteT2.danger,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            'clear_all_devices'.tr(),
+            style: context.textTheme.titleLarge?.copyWith(
+              color: AppPaletteT2.danger,
+            ),
+          ),
         ],
       ),
     );

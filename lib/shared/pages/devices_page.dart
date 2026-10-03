@@ -123,6 +123,24 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
     showMessage('rename_device_success'.tr());
   }
 
+  /// Forgets every paired device. The sole advertises a new MAC on every boot,
+  /// so this list grows a fresh entry per reboot; clearing it also stops
+  /// auto-connect until the next manual pairing.
+  void clearAllDevices() {
+    final settings = ref.read(settingsProvider.notifier);
+    showConfirmLeaveDialog(
+      context,
+      title: 'clear_all_devices_title'.tr(),
+      text: 'clear_all_devices_content'.tr(),
+      confirmText: 'clear_all_devices'.tr(),
+      confirmType: ConfirmType.delete,
+      onConfirm: () async {
+        await settings.setPairedDevices([]);
+        showMessage('clear_all_devices_success'.tr());
+      },
+    );
+  }
+
   Future<void> deleteDevice(BlePairedDevice device) async {
     final settings = ref.read(settingsProvider.notifier);
     await settings.removePairedDevice(device);
@@ -177,6 +195,15 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                 onSetPreferred: setPreferredDevice,
               ),
               const _FirmwareCard(),
+              if (rows.isNotEmpty)
+                TextButton.icon(
+                  onPressed: clearAllDevices,
+                  icon: const Icon(LucideIcons.trash2),
+                  label: Text('clear_all_devices'.tr()),
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.colorScheme.error,
+                  ),
+                ),
             ],
           ),
         ),

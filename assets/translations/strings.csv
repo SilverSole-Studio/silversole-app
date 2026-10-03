@@ -178,6 +178,10 @@ delete_device_success,Device deleted successfully,裝置已刪除
 rename_device,Rename device,重新命名裝置
 device_settings,Device settings,裝置設定
 delete_device,Delete device,刪除裝置
+clear_all_devices,Clear all pairings,清除全部配對
+clear_all_devices_title,Clear all paired devices?,要清除全部配對嗎？
+clear_all_devices_content,The app will forget every paired device and stop connecting automatically until you pair one again.,App 會忘記所有已配對的裝置並停止自動連線，直到你再次配對。
+clear_all_devices_success,All pairings cleared,已清除全部配對
 switch_device_title,Switch device?,切換裝置？
 switch_device_body,Switch to {}?,要切換到 {} 嗎？
 add_device,Add device,新增裝置
