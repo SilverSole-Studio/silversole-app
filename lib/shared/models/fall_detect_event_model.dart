@@ -11,7 +11,8 @@ abstract class FallDetectEvent with _$FallDetectEvent {
     required bool detect,
   }) = _FallDetectEvent;
 
-  factory FallDetectEvent.fromJson(Map<String, dynamic> json) => _$FallDetectEventFromJson(json);
+  factory FallDetectEvent.fromJson(Map<String, dynamic> json) =>
+      _$FallDetectEventFromJson(json);
 }
 
 // flutter pub run build_runner build --delete-conflicting-outputs

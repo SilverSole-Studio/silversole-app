@@ -141,7 +141,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   children: [
                     Text(
                       'no_account_prompt'.tr(),
-                      style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     TextButton(
                       onPressed: goToSignUp,

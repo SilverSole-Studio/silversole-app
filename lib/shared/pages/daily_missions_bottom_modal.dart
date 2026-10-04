@@ -180,7 +180,8 @@ class _MissionRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: mission.progress,
                     minHeight: 6,
-                    backgroundColor: context.colorScheme.surfaceContainerHighest,
+                    backgroundColor:
+                        context.colorScheme.surfaceContainerHighest,
                     // Reward gold: missions are a rewards feature (DESIGN.md
                     // reserves gold for rewards/points).
                     valueColor: AlwaysStoppedAnimation<Color>(

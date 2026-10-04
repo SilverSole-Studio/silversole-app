@@ -16,7 +16,12 @@ Future<void> showBasicDialog(
     builder: (dialogContext) => AlertDialog(
       title: Text(title),
       content: Text(text),
-      actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: Text(buttonText ?? 'confirm'.tr()))],
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(buttonText ?? 'confirm'.tr()),
+        ),
+      ],
     ),
   );
 
@@ -44,12 +49,17 @@ Future<void> showContentDialog(
       title: Text(title),
       content: content,
       actions: [
-        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(dismissText ?? 'cancel'.tr())),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(dismissText ?? 'cancel'.tr()),
+        ),
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),
           child: Text(
             confirmText ?? 'confirm'.tr(),
-            style: TextStyle(color: confirmType == ConfirmType.primary ? cs.primary : cs.error),
+            style: TextStyle(
+              color: confirmType == ConfirmType.primary ? cs.primary : cs.error,
+            ),
           ),
         ),
       ],
@@ -82,12 +92,17 @@ Future<void> showConfirmLeaveDialog(
       title: Text(title),
       content: Text(text),
       actions: [
-        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(dismissText ?? 'cancel'.tr())),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(dismissText ?? 'cancel'.tr()),
+        ),
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),
           child: Text(
             confirmText ?? 'confirm'.tr(),
-            style: TextStyle(color: confirmType == ConfirmType.primary ? cs.primary : cs.error),
+            style: TextStyle(
+              color: confirmType == ConfirmType.primary ? cs.primary : cs.error,
+            ),
           ),
         ),
       ],
@@ -120,7 +135,8 @@ Future<void> showOptionsDialog(
           },
           child: Column(
             children: [
-              for (final entry in optionsMap.entries) RadioListTile(title: Text(entry.value), value: entry.key),
+              for (final entry in optionsMap.entries)
+                RadioListTile(title: Text(entry.value), value: entry.key),
             ],
           ),
         ),

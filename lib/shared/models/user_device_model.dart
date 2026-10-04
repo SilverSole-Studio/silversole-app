@@ -14,5 +14,6 @@ abstract class UserDeviceModel with _$UserDeviceModel {
     @JsonKey(name: 'created_at', includeToJson: false) DateTime? createdAt,
   }) = _UserDeviceModel;
 
-  factory UserDeviceModel.fromJson(Map<String, dynamic> json) => _$UserDeviceModelFromJson(json);
+  factory UserDeviceModel.fromJson(Map<String, dynamic> json) =>
+      _$UserDeviceModelFromJson(json);
 }

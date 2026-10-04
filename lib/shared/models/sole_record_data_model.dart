@@ -8,7 +8,8 @@ abstract class SilverSoleRecordModel with _$SilverSoleRecordModel {
   const factory SilverSoleRecordModel({
     @JsonKey(includeToJson: false) required int id,
     @JsonKey(name: 'device_id') required String deviceId,
-    @JsonKey(name: 'received_at', includeToJson: false) required DateTime receivedAt,
+    @JsonKey(name: 'received_at', includeToJson: false)
+    required DateTime receivedAt,
     @JsonKey(name: 'client_ts') int? clientTs,
     @JsonKey(name: 'wear_status') required bool wearStatus,
     @JsonKey(name: 'pressure') required int pressure,
@@ -16,5 +17,6 @@ abstract class SilverSoleRecordModel with _$SilverSoleRecordModel {
     double? roll,
   }) = _SilverSoleRecordModel;
 
-  factory SilverSoleRecordModel.fromJson(Map<String, dynamic> json) => _$SilverSoleRecordModelFromJson(json);
+  factory SilverSoleRecordModel.fromJson(Map<String, dynamic> json) =>
+      _$SilverSoleRecordModelFromJson(json);
 }

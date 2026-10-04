@@ -38,17 +38,27 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     );
   }
 
-  Widget buildIndicator({required double progress, required Color? bgColor, required Color color}) {
+  Widget buildIndicator({
+    required double progress,
+    required Color? bgColor,
+    required Color color,
+  }) {
     final cs = Theme.of(context).colorScheme;
 
     return Column(
       spacing: AppSpacing.sm,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('alert_severity'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+        Text(
+          'alert_severity'.tr(),
+          style: TextStyle(color: cs.onSurfaceVariant),
+        ),
         SizedBox(
           height: 16,
-          child: Row(spacing: 6, children: [bar(progress > 0), bar(progress > 1), bar(progress > 2)]),
+          child: Row(
+            spacing: 6,
+            children: [bar(progress > 0), bar(progress > 1), bar(progress > 2)],
+          ),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -56,7 +66,7 @@ class _WarningCardState extends ConsumerState<WarningCard> {
             Text('low'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
             Text('high'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
           ],
-        )
+        ),
       ],
     );
   }
@@ -73,7 +83,10 @@ class _WarningCardState extends ConsumerState<WarningCard> {
           eventCount.toString(),
           style: tt.displaySmall?.copyWith(color: color),
         ),
-        Text('safety_events_detected'.tr(), style: TextStyle(color: cs.onSurfaceVariant)),
+        Text(
+          'safety_events_detected'.tr(),
+          style: TextStyle(color: cs.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -91,7 +104,9 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     //TODO: save the event to history provider and separate with the deviceId
     ref.listen(fallEventStreamProvider, (_, next) {
       next.whenData((event) {
-        setState(() {eventCount++;});
+        setState(() {
+          eventCount++;
+        });
       });
     });
 
@@ -113,8 +128,19 @@ class _WarningCardState extends ConsumerState<WarningCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('device_recent_warnings'.tr(), style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-                    Text('view_history'.tr(), style: tt.titleSmall?.copyWith(color: cs.primary, fontWeight: FontWeight.bold)),
+                    Text(
+                      'device_recent_warnings'.tr(),
+                      style: tt.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'view_history'.tr(),
+                      style: tt.titleSmall?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 buildCenterContent(eventCount: eventCount, color: color),

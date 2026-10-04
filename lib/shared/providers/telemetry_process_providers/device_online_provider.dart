@@ -45,5 +45,6 @@ class DeviceOnlineNotifier extends Notifier<bool> {
   }
 }
 
-final deviceOnlineProvider =
-    NotifierProvider<DeviceOnlineNotifier, bool>(DeviceOnlineNotifier.new);
+final deviceOnlineProvider = NotifierProvider<DeviceOnlineNotifier, bool>(
+  DeviceOnlineNotifier.new,
+);

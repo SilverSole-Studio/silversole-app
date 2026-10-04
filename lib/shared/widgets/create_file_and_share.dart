@@ -11,9 +11,6 @@ Future<void> createFileAndShare({
   final file = File('${dir.path}/$fileName');
   await file.writeAsString(content);
   await SharePlus.instance.share(
-    ShareParams(
-      files: [XFile(file.path)],
-      text: 'Exported File'
-    )
+    ShareParams(files: [XFile(file.path)], text: 'Exported File'),
   );
 }

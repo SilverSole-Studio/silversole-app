@@ -14,6 +14,6 @@ abstract class QueuedTelemetry with _$QueuedTelemetry {
     @Default(0) int retryCount,
   }) = _QueuedTelemetry;
 
-  factory QueuedTelemetry.fromJson(Map<String, dynamic> json) => _$QueuedTelemetryFromJson(json);
+  factory QueuedTelemetry.fromJson(Map<String, dynamic> json) =>
+      _$QueuedTelemetryFromJson(json);
 }
-

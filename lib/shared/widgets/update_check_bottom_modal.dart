@@ -70,7 +70,9 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
               // New Version Title
               Container(
                 // margin: const EdgeInsets.symmetric(vertical: 20),
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.base,
+                ),
                 child: Text(
                   // '發現新版本 $latestVersion',
                   'new_version'.tr(args: [latestVersion.toString()]),
@@ -82,7 +84,9 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
               ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 250),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.base,
+                  ),
                   child: Text(changelog ?? '', style: ts.titleSmall),
                 ),
               ),

@@ -12,4 +12,6 @@ class TelemetryFacade {
   }
 }
 
-final telemetryFacadeProvider = Provider<TelemetryFacade>((_) => TelemetryFacade());
+final telemetryFacadeProvider = Provider<TelemetryFacade>(
+  (_) => TelemetryFacade(),
+);

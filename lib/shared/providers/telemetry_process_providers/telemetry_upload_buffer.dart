@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class TelemetryUploadBuffer {
+class TelemetryUploadBuffer {}
 
-}
-
-final telemetryUploadBufferProvider = Provider<TelemetryUploadBuffer>((_) => TelemetryUploadBuffer());
+final telemetryUploadBufferProvider = Provider<TelemetryUploadBuffer>(
+  (_) => TelemetryUploadBuffer(),
+);

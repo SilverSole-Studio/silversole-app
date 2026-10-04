@@ -6,7 +6,8 @@ class RadarDot extends StatefulWidget {
   final double baseSize;
   final double endSize;
 
-  const RadarDot({super.key,
+  const RadarDot({
+    super.key,
     required this.active,
     required this.color,
     this.baseSize = 6,
@@ -17,13 +18,17 @@ class RadarDot extends StatefulWidget {
   State<RadarDot> createState() => _RadarDotState();
 }
 
-class _RadarDotState extends State<RadarDot> with SingleTickerProviderStateMixin {
+class _RadarDotState extends State<RadarDot>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     if (widget.active) {
       _controller.repeat();
     }
@@ -76,7 +81,10 @@ class _RadarDotState extends State<RadarDot> with SingleTickerProviderStateMixin
                 ),
               ),
               DecoratedBox(
-                decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
                 child: const SizedBox(width: 6, height: 6),
               ),
             ],

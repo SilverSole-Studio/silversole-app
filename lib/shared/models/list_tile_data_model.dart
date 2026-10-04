@@ -3,7 +3,6 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'list_tile_data_model.freezed.dart';
 
-
 @freezed
 abstract class ListTileData with _$ListTileData {
   const factory ListTileData.normal({
@@ -27,5 +26,4 @@ abstract class ListTileData with _$ListTileData {
     required void Function(int, String) onChanged,
     @Default(true) bool enable,
   }) = _ListTileDropdown;
-
 }
