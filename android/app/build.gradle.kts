@@ -7,6 +7,7 @@ plugins {
 }
 
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -22,10 +23,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     defaultConfig {
@@ -63,6 +60,14 @@ android {
             applicationIdSuffix = ".debug"
             resValue("string", "app_name", "SilverSole Dev")
         }
+    }
+}
+
+// `kotlinOptions` inside `android {}` is an error from Kotlin 2.2 on; the
+// top-level compilerOptions block replaces it.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
