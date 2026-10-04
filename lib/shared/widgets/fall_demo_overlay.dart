@@ -19,6 +19,10 @@ const _pulseInterval = Duration(milliseconds: 500);
 
 /// The red full-screen fall warning for demos.
 ///
+/// Written for the family member holding the phone, not for engineers: no
+/// angles, timings or other sensor readouts — just what happened, in large
+/// type.
+///
 /// While the tilt is being held the phone pulses every [_pulseInterval] so the
 /// judgement can be felt coming, then buzzes once when it fires. Haptics go
 /// through [HapticFeedback], which needs no permission but does follow the
@@ -41,10 +45,8 @@ class FallDemoOverlay extends ConsumerStatefulWidget {
 }
 
 class _FallDemoOverlayState extends ConsumerState<FallDemoOverlay> {
-  /// The judgement the panel is reporting, or null when no panel is up. Keeps
-  /// counting while the sole stays down, then freezes at the moment the wearer
-  /// got back up, so the readout shows how long they were down for.
-  FallTilt? _latched;
+  /// Whether the panel is up.
+  bool _latched = false;
 
   /// Set by the button so the panel does not latch straight back while the sole
   /// is still lying there. Cleared once the judgement clears.
@@ -75,37 +77,32 @@ class _FallDemoOverlayState extends ConsumerState<FallDemoOverlay> {
       _suppressed = false;
       return;
     }
-    if (_suppressed) return;
-    if (_latched == null) unawaited(HapticFeedback.heavyImpact());
-    setState(() => _latched = next);
+    if (_suppressed || _latched) return;
+    unawaited(HapticFeedback.heavyImpact());
+    setState(() => _latched = true);
   }
 
   void _dismiss() => setState(() {
-    _latched = null;
+    _latched = false;
     _suppressed = true;
   });
 
   @override
   Widget build(BuildContext context) {
     ref.listen(fallDemoProvider, _onTilt);
-    final latched = _latched;
 
     return Stack(
       children: [
         widget.child,
-        if (latched != null)
-          Positioned.fill(
-            child: _FallPanel(tilt: latched, onDismiss: _dismiss),
-          ),
+        if (_latched) Positioned.fill(child: _FallPanel(onDismiss: _dismiss)),
       ],
     );
   }
 }
 
 class _FallPanel extends StatelessWidget {
-  const _FallPanel({required this.tilt, required this.onDismiss});
+  const _FallPanel({required this.onDismiss});
 
-  final FallTilt tilt;
   final VoidCallback onDismiss;
 
   @override
@@ -121,31 +118,26 @@ class _FallPanel extends StatelessWidget {
             children: [
               const Spacer(),
               CircleAvatar(
-                radius: 56,
+                radius: 72,
                 backgroundColor: _onAlert.withValues(alpha: 0.2),
                 child: const Icon(
                   LucideIcons.triangleAlert,
-                  size: 56,
+                  size: 72,
                   color: _onAlert,
                 ),
               ),
               Text(
                 'fall_detected_demo'.tr(),
                 textAlign: TextAlign.center,
-                style: context.textTheme.displaySmall.bold?.copyWith(
+                style: context.textTheme.displayMedium.bold?.copyWith(
                   color: _onAlert,
                 ),
               ),
               Text(
-                'fall_demo_readout'.tr(
-                  args: [
-                    tilt.tiltDegrees.toStringAsFixed(0),
-                    (tilt.held.inMilliseconds / 1000).toStringAsFixed(1),
-                  ],
-                ),
+                'fall_demo_body'.tr(),
                 textAlign: TextAlign.center,
-                style: context.textTheme.titleMedium?.copyWith(
-                  color: _onAlert.withValues(alpha: 0.85),
+                style: context.textTheme.headlineSmall?.copyWith(
+                  color: _onAlert,
                 ),
               ),
               const Spacer(),
@@ -154,7 +146,8 @@ class _FallPanel extends StatelessWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: _onAlert,
                   foregroundColor: context.tokens.alert,
-                  minimumSize: const Size.fromHeight(52),
+                  minimumSize: const Size.fromHeight(64),
+                  textStyle: context.textTheme.titleLarge.bold,
                 ),
                 child: Text('fall_demo_dismiss'.tr()),
               ),

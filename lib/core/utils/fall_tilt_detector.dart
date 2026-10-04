@@ -61,7 +61,7 @@ class FallTiltDetector {
     this.thresholdDegrees = 70,
     this.releaseDegrees = 50,
     this.holdDuration = const Duration(seconds: 3),
-    this.loadedPressure = 50,
+    this.loadedPressure = 500,
     this.weightWindow = const Duration(seconds: 10),
   }) : assert(
          releaseDegrees <= thresholdDegrees,
@@ -82,8 +82,9 @@ class FallTiltDetector {
 
   /// An FSR reading at or above this counts as weight on the sole.
   ///
-  /// Deliberately low: a gate that is too tight would stop the demo firing at
-  /// all, and the raw FSR scale is not verified against hardware yet — check
+  /// Set high enough that a sole merely being handled or brushed does not open
+  /// the window — only real body weight does. The raw FSR scale is still not
+  /// verified against hardware; if the demo stops firing while worn, check
   /// the analytics page's pressure channel for real loaded/unloaded values.
   final int loadedPressure;
 

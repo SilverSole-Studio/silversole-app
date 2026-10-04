@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/core/utils/fall_tilt_detector.dart';
 
 /// FSR values well clear of the "being stood on" floor.
-const _loaded = [600, 400, 500];
+const _loaded = [900, 700, 800];
 const _unloaded = [0, 0, 0];
 
 void main() {

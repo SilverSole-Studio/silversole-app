@@ -114,8 +114,8 @@ void main() {
     await judge(_fallen);
     expect(haptics.last, 'HapticFeedbackType.heavyImpact');
     expect(panel(), findsOneWidget);
-    expect(find.text('Fall detected'), findsOneWidget);
-    expect(find.text('Tilt 82° · held 3.0 s'), findsOneWidget);
+    expect(find.text('Your family member may need help'), findsOneWidget);
+    expect(find.textContaining('°'), findsNothing, reason: 'no sensor readout');
 
     final afterFiring = haptics.length;
     await tester.pump(const Duration(seconds: 1));
@@ -124,13 +124,8 @@ void main() {
     // Standing back up must NOT take the panel away — only the button does.
     await judge(FallTilt.idle);
     expect(panel(), findsOneWidget);
-    expect(
-      find.text('Tilt 82° · held 3.0 s'),
-      findsOneWidget,
-      reason: 'the readout freezes on what happened',
-    );
 
-    await tester.tap(find.widgetWithText(FilledButton, "I'm OK"));
+    await tester.tap(find.widgetWithText(FilledButton, 'Got it'));
     await tester.pump();
     expect(panel(), findsNothing);
 
