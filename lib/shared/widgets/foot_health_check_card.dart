@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 
@@ -93,7 +93,7 @@ class _StartButton extends StatelessWidget {
       width: 64,
       height: 64,
       child: IconButton(
-        onPressed: comingSoon,
+        onPressed: () => context.push('/foot-check'),
         tooltip: 'foot_health_check_cta'.tr(),
         iconSize: 28,
         style: IconButton.styleFrom(

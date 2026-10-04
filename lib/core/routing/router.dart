@@ -5,6 +5,9 @@ import 'package:silversole/constants.dart';
 import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
 import 'package:silversole/shared/pages/devices_page.dart';
+import 'package:silversole/core/utils/foot_load_balance.dart';
+import 'package:silversole/shared/pages/foot_check_result_page.dart';
+import 'package:silversole/shared/pages/foot_check_session_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
 import 'package:silversole/shared/pages/shop_page.dart';
@@ -30,6 +33,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/analytics-detail',
         builder: (_, _) => const AnalyticsDetailRoute(),
+      ),
+      GoRoute(
+        path: '/foot-check',
+        builder: (_, _) => const FootCheckSessionPage(),
+      ),
+      GoRoute(
+        path: '/foot-check-result',
+        builder: (_, state) => FootCheckResultPage(
+          // Measured by the session; a direct visit has nothing to report on.
+          report: (state.extra as FootCheckReport?) ?? FootCheckReport.empty,
+        ),
       ),
       GoRoute(path: '/my-devices', builder: (_, _) => const DevicesRoute()),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),

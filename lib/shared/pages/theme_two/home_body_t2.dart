@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -350,7 +349,7 @@ class _FootCheckCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: comingSoon,
+              onPressed: () => context.push('/foot-check'),
               icon: const Icon(Icons.play_arrow_rounded),
               label: Text('start_check_now'.tr()),
             ),

@@ -104,6 +104,36 @@ mission_cta,Play one more round of “Chu Catches Fish” to finish,再玩一場
 device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_status,Good condition · {} steps today,狀態良好 · 今日 {} 步
+foot_check_session_title,One-minute foot check,一分鐘足壓檢測
+foot_check_collecting,Collecting data…,正在採集數據…
+foot_check_complete,Collection complete,採集完成
+foot_check_quit,End early,提前結束
+foot_check_finish,Done,完成
+foot_check_quit_content,The data collected so far will be discarded.,目前採集到的資料會被丟棄。
+foot_check_abandon_title,Leave the check?,要放棄這次檢測嗎？
+foot_check_abandon_confirm,Leave,放棄
+foot_check_finish_early_title,End the collection early?,要提前結束採集嗎？
+foot_check_finish_early_content,The result will be generated from what has been collected so far.,會用目前採集到的資料直接產生結果。
+foot_check_result_title,Check result,檢測結果
+foot_check_result_grade,Overall,整體評估
+foot_check_load_section,Load distribution,受力分佈
+foot_check_forefoot,Forefoot,前足
+foot_check_rearfoot,Rearfoot,後足
+foot_check_medial,Medial,內側
+foot_check_lateral,Lateral,外側
+foot_check_no_data_title,Not enough data,資料不足
+foot_check_no_data_body,The sole did not report enough pressure to judge anything. Put the insole in a shoe and stand or walk on it then run the check again.,這次沒有收到足夠的壓力資料，無法做出判斷。把鞋墊放進鞋裡踩著或走動，再重新檢測一次。
+foot_check_fore_aft_balanced,Front-to-back load is even with no clear lean.,前後受力平均，重心沒有明顯偏前或偏後。
+foot_check_fore_aft_forefoot,More load sits on the forefoot than usual which often goes with a forward lean or tight calves.,前足受力比一般情況多，常見於重心前傾或小腿較緊繃。
+foot_check_fore_aft_rearfoot,More load sits on the heel than usual which often goes with a backward lean.,後足受力比一般情況多，常見於重心略為後傾。
+foot_check_side_balanced,Forefoot load is spread evenly across the ball of the foot.,前足受力在內外側之間分佈平均。
+foot_check_side_medial,Forefoot load leans to the inner edge which is the pattern of mild pronation.,前足受力偏內側，屬於輕微內旋的分佈。
+foot_check_side_lateral,Forefoot load leans to the outer edge which is the pattern of mild supination.,前足受力偏外側，屬於輕微外旋的分佈。
+foot_check_rating_good,Good,好
+foot_check_rating_very_good,Very good,很好
+foot_check_rating_excellent,Excellent,非常好
+foot_check_quit_confirm,End,結束
+foot_check_waiting,Waiting for sole data,等待鞋墊資料
 fall_guard_summary,{} events in 7 days · {} family notified,近 7 日 {} 事件 · 已通知 {} 位家屬
 fall_detected_demo,Fall detected,跌倒判定
 fall_demo_readout,Tilt {}° · held {} s,傾角 {}° · 已持續 {} 秒
