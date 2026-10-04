@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
+import 'package:silversole/core/ble/pressure_channel_fix.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
@@ -365,11 +366,13 @@ class BleConnectionService {
       gz: d.getInt16(10, Endian.little),
       pitch: d.getFloat32(12, Endian.little), // 單位：度
       roll: d.getFloat32(16, Endian.little), // 單位：度
-      pressure: [
+      // Hardware workaround, see fixPressureChannels: this board's heel and
+      // big-toe-ball pads are swapped.
+      pressure: fixPressureChannels([
         d.getInt16(20, Endian.little),
         d.getInt16(22, Endian.little),
         d.getInt16(24, Endian.little),
-      ],
+      ]),
       batteryPercent: d.getUint8(26),
       isCharging: d.getUint8(27) != 0,
     );

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/ble/ble_connection_service.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
+import 'package:silversole/core/ble/pressure_channel_fix.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/utils/battery_level.dart';
@@ -85,7 +86,9 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     try {
       final json = bleConnectionService.parseJsonNotify(value);
       final data = RecordImuNotifyDataModel.fromJson(json);
-      live.updateRecordImuNotifyData(data);
+      live.updateRecordImuNotifyData(
+        data.copyWith(pressure: fixPressureChannels(data.pressure)),
+      );
       debugPrint('record notify: $data');
     } catch (e) {
       debugPrint('parse record notify failed: $e');
