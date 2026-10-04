@@ -105,6 +105,9 @@ device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_status,Good condition · {} steps today,狀態良好 · 今日 {} 步
 fall_guard_summary,{} events in 7 days · {} family notified,近 7 日 {} 事件 · 已通知 {} 位家屬
+fall_detected_demo,Fall detected,跌倒判定
+fall_demo_readout,Tilt {}° · held {} s,傾角 {}° · 已持續 {} 秒
+fall_demo_dismiss,I'm OK,我沒事
 games_hub_title,Move with Chu,陪粗哥動一動
 pick_a_game,Pick one to play,選一款來玩
 mission_almost_done,Almost done,快完成了
