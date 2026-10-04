@@ -87,9 +87,12 @@ void main() {
     // Half a minute in: the clock and the bar both moved.
     await tester.pump(const Duration(seconds: 30));
     expect(find.text('0:30'), findsOneWidget);
+    // The bar agrees with the clock (0:30, so 30-31 s in). Not an exact 0.5:
+    // the timer already ticks during the route transition, whose length
+    // depends on the Flutter version.
     expect(
       tester.widget<LinearProgressIndicator>(progressBar()).value,
-      closeTo(0.5, 0.01),
+      inInclusiveRange(30 / 60, 31 / 60),
     );
 
     // The back button abandons, so it asks — and cancelling stays put.
