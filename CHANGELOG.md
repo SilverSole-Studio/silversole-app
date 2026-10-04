@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.8.0
+
+> ⚠️ 本版更換了應用程式識別碼（`com.dongyutech.silversole`），會以新 App 的形式安裝，無法直接覆蓋舊版。請先移除舊版再安裝，並重新登入與配對鞋墊。
+
+更新內容:
+
+- 新增「一分鐘足壓檢測」：首頁足部健康卡片的開始按鈕現在可以進行 60 秒檢測，下方即時顯示足壓分布，結束後產生前後腳、內外側的受力比例與評等報告；可提前結束，也會在離開前再次確認。
+- 分析頁「步態」分頁改版：拆成「行走能力」與「行走穩定度」兩組指標，提供週、月、季三種時間範圍，每項指標都有 ⓘ 說明；季檢視新增階段趨勢圖。徽章牆移到遊戲頁。
+- 新增跌倒警示（示範版）：鞋墊長時間傾倒時，手機每 0.5 秒震動提示，觸發後顯示全螢幕紅色警示「您的家人可能有緊急狀況」，按「我知道了」才會關閉。
+- 足壓熱力圖支援左右雙腳顯示，並可播放內建範例資料，未連接鞋墊時也能展示。
+- 鞋墊連線改為自動尋找正在廣播的鞋墊：鞋墊重開機後不再連不上，斷線後也會自動重新連線；「我的裝置」新增「清除所有配對」按鈕。
+- 電量顯示更清楚：離線或尚未收到最新電量時，以灰色顯示上次的電量；從未連線過則不顯示數值。
+- 修正鞋墊回報無效電量（255）時，電量條溢出與圖表暴衝的問題。
+- 修正腳跟與大拇趾球的壓力數值對調的問題。
+- 新增中英文隱私權政策。
+
+Updates:
+
+> ⚠️ This release changes the application ID (`com.dongyutech.silversole`), so it installs as a new app rather than upgrading the old one. Uninstall the previous version first, then sign in and pair your sole again.
+
+- Added the one-minute foot-pressure check: the start button on the home foot-health card now runs a 60 s session over a live pressure map and ends on a report of forefoot/rearfoot and medial/lateral load with a rating. It can be ended early, and leaving asks for confirmation.
+- Rebuilt the Analytics gait tab: metrics are split into walking ability and walking stability, across week, month, and quarter views, each with an ⓘ explainer; the quarter view adds a phase trajectory. The badge wall moves to the Games page.
+- Added a fall warning (demo): while the sole stays tipped over, the phone pulses every 0.5 s, then a full-screen red alert reads "Your family member may need help" and stays until "Got it" is tapped.
+- The pressure heat map can show both feet and replay a bundled sample, so it can be demoed with no sole connected.
+- The app now connects to whichever sole is actually advertising, so a rebooted sole is found again and dropped links reconnect on their own; "My devices" gains a "clear all pairings" button.
+- Clearer battery display: while offline or before a fresh reading arrives, the last known level is shown in gray; a sole that has never reported shows no number.
+- Fixed the battery bar overflowing and the chart spiking when the sole reports an invalid (255) level.
+- Fixed heel and big-toe-ball pressure readings being swapped.
+- Added the privacy policy in Traditional Chinese and English.
+
 ## v1.7.0
 
 更新內容:
