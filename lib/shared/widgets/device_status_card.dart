@@ -18,6 +18,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
   final bool frosted;
   final DeviceStatusDetailModel? detail;
   final DateTime? lastConnectedAt;
+  final int? lastKnownBatteryPercent;
   final List<ListTileData> menuItems;
   final VoidCallback? onClick;
 
@@ -31,6 +32,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
     this.frosted = false,
     this.detail,
     this.lastConnectedAt,
+    this.lastKnownBatteryPercent,
     this.menuItems = const <ListTileData>[],
     this.onClick,
   });
@@ -82,6 +84,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       frosted: widget.frosted,
       detail: widget.detail,
       lastConnectedAt: widget.lastConnectedAt,
+      lastKnownBatteryPercent: widget.lastKnownBatteryPercent,
       onTap: widget.onClick ?? () {},
     );
   }

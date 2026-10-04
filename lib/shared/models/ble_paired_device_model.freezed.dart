@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BlePairedDevice {
 
- String? get deviceId; String get remoteId; String get name; String? get displayModel; String? get modelCode; int? get lastRssi; DateTime? get lastConnectedAt; bool get isPreferred;
+ String? get deviceId; String get remoteId; String get name; String? get displayModel; String? get modelCode; int? get lastRssi; DateTime? get lastConnectedAt;/// The last valid battery level this sole reported, shown greyed out while
+/// it is offline or has not sent a fresh reading yet.
+ int? get lastBatteryPercent; bool get isPreferred;
 /// Create a copy of BlePairedDevice
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $BlePairedDeviceCopyWith<BlePairedDevice> get copyWith => _$BlePairedDeviceCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlePairedDevice&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.name, name) || other.name == name)&&(identical(other.displayModel, displayModel) || other.displayModel == displayModel)&&(identical(other.modelCode, modelCode) || other.modelCode == modelCode)&&(identical(other.lastRssi, lastRssi) || other.lastRssi == lastRssi)&&(identical(other.lastConnectedAt, lastConnectedAt) || other.lastConnectedAt == lastConnectedAt)&&(identical(other.isPreferred, isPreferred) || other.isPreferred == isPreferred));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlePairedDevice&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.name, name) || other.name == name)&&(identical(other.displayModel, displayModel) || other.displayModel == displayModel)&&(identical(other.modelCode, modelCode) || other.modelCode == modelCode)&&(identical(other.lastRssi, lastRssi) || other.lastRssi == lastRssi)&&(identical(other.lastConnectedAt, lastConnectedAt) || other.lastConnectedAt == lastConnectedAt)&&(identical(other.lastBatteryPercent, lastBatteryPercent) || other.lastBatteryPercent == lastBatteryPercent)&&(identical(other.isPreferred, isPreferred) || other.isPreferred == isPreferred));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,deviceId,remoteId,name,displayModel,modelCode,lastRssi,lastConnectedAt,isPreferred);
+int get hashCode => Object.hash(runtimeType,deviceId,remoteId,name,displayModel,modelCode,lastRssi,lastConnectedAt,lastBatteryPercent,isPreferred);
 
 @override
 String toString() {
-  return 'BlePairedDevice(deviceId: $deviceId, remoteId: $remoteId, name: $name, displayModel: $displayModel, modelCode: $modelCode, lastRssi: $lastRssi, lastConnectedAt: $lastConnectedAt, isPreferred: $isPreferred)';
+  return 'BlePairedDevice(deviceId: $deviceId, remoteId: $remoteId, name: $name, displayModel: $displayModel, modelCode: $modelCode, lastRssi: $lastRssi, lastConnectedAt: $lastConnectedAt, lastBatteryPercent: $lastBatteryPercent, isPreferred: $isPreferred)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $BlePairedDeviceCopyWith<$Res>  {
   factory $BlePairedDeviceCopyWith(BlePairedDevice value, $Res Function(BlePairedDevice) _then) = _$BlePairedDeviceCopyWithImpl;
 @useResult
 $Res call({
- String? deviceId, String remoteId, String name, String? displayModel, String? modelCode, int? lastRssi, DateTime? lastConnectedAt, bool isPreferred
+ String? deviceId, String remoteId, String name, String? displayModel, String? modelCode, int? lastRssi, DateTime? lastConnectedAt, int? lastBatteryPercent, bool isPreferred
 });
 
 
@@ -65,7 +67,7 @@ class _$BlePairedDeviceCopyWithImpl<$Res>
 
 /// Create a copy of BlePairedDevice
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = freezed,Object? remoteId = null,Object? name = null,Object? displayModel = freezed,Object? modelCode = freezed,Object? lastRssi = freezed,Object? lastConnectedAt = freezed,Object? isPreferred = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? deviceId = freezed,Object? remoteId = null,Object? name = null,Object? displayModel = freezed,Object? modelCode = freezed,Object? lastRssi = freezed,Object? lastConnectedAt = freezed,Object? lastBatteryPercent = freezed,Object? isPreferred = null,}) {
   return _then(_self.copyWith(
 deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as String?,remoteId: null == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -74,7 +76,8 @@ as String,displayModel: freezed == displayModel ? _self.displayModel : displayMo
 as String?,modelCode: freezed == modelCode ? _self.modelCode : modelCode // ignore: cast_nullable_to_non_nullable
 as String?,lastRssi: freezed == lastRssi ? _self.lastRssi : lastRssi // ignore: cast_nullable_to_non_nullable
 as int?,lastConnectedAt: freezed == lastConnectedAt ? _self.lastConnectedAt : lastConnectedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,isPreferred: null == isPreferred ? _self.isPreferred : isPreferred // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastBatteryPercent: freezed == lastBatteryPercent ? _self.lastBatteryPercent : lastBatteryPercent // ignore: cast_nullable_to_non_nullable
+as int?,isPreferred: null == isPreferred ? _self.isPreferred : isPreferred // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -160,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  bool isPreferred)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  int? lastBatteryPercent,  bool isPreferred)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BlePairedDevice() when $default != null:
-return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.isPreferred);case _:
+return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.lastBatteryPercent,_that.isPreferred);case _:
   return orElse();
 
 }
@@ -181,10 +184,10 @@ return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  bool isPreferred)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  int? lastBatteryPercent,  bool isPreferred)  $default,) {final _that = this;
 switch (_that) {
 case _BlePairedDevice():
-return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.isPreferred);case _:
+return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.lastBatteryPercent,_that.isPreferred);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +204,10 @@ return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  bool isPreferred)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? deviceId,  String remoteId,  String name,  String? displayModel,  String? modelCode,  int? lastRssi,  DateTime? lastConnectedAt,  int? lastBatteryPercent,  bool isPreferred)?  $default,) {final _that = this;
 switch (_that) {
 case _BlePairedDevice() when $default != null:
-return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.isPreferred);case _:
+return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_that.modelCode,_that.lastRssi,_that.lastConnectedAt,_that.lastBatteryPercent,_that.isPreferred);case _:
   return null;
 
 }
@@ -216,7 +219,7 @@ return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_tha
 @JsonSerializable()
 
 class _BlePairedDevice implements BlePairedDevice {
-  const _BlePairedDevice({this.deviceId, required this.remoteId, required this.name, this.displayModel, this.modelCode, this.lastRssi, this.lastConnectedAt, this.isPreferred = false});
+  const _BlePairedDevice({this.deviceId, required this.remoteId, required this.name, this.displayModel, this.modelCode, this.lastRssi, this.lastConnectedAt, this.lastBatteryPercent, this.isPreferred = false});
   factory _BlePairedDevice.fromJson(Map<String, dynamic> json) => _$BlePairedDeviceFromJson(json);
 
 @override final  String? deviceId;
@@ -226,6 +229,9 @@ class _BlePairedDevice implements BlePairedDevice {
 @override final  String? modelCode;
 @override final  int? lastRssi;
 @override final  DateTime? lastConnectedAt;
+/// The last valid battery level this sole reported, shown greyed out while
+/// it is offline or has not sent a fresh reading yet.
+@override final  int? lastBatteryPercent;
 @override@JsonKey() final  bool isPreferred;
 
 /// Create a copy of BlePairedDevice
@@ -241,16 +247,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BlePairedDevice&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.name, name) || other.name == name)&&(identical(other.displayModel, displayModel) || other.displayModel == displayModel)&&(identical(other.modelCode, modelCode) || other.modelCode == modelCode)&&(identical(other.lastRssi, lastRssi) || other.lastRssi == lastRssi)&&(identical(other.lastConnectedAt, lastConnectedAt) || other.lastConnectedAt == lastConnectedAt)&&(identical(other.isPreferred, isPreferred) || other.isPreferred == isPreferred));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BlePairedDevice&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.remoteId, remoteId) || other.remoteId == remoteId)&&(identical(other.name, name) || other.name == name)&&(identical(other.displayModel, displayModel) || other.displayModel == displayModel)&&(identical(other.modelCode, modelCode) || other.modelCode == modelCode)&&(identical(other.lastRssi, lastRssi) || other.lastRssi == lastRssi)&&(identical(other.lastConnectedAt, lastConnectedAt) || other.lastConnectedAt == lastConnectedAt)&&(identical(other.lastBatteryPercent, lastBatteryPercent) || other.lastBatteryPercent == lastBatteryPercent)&&(identical(other.isPreferred, isPreferred) || other.isPreferred == isPreferred));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,deviceId,remoteId,name,displayModel,modelCode,lastRssi,lastConnectedAt,isPreferred);
+int get hashCode => Object.hash(runtimeType,deviceId,remoteId,name,displayModel,modelCode,lastRssi,lastConnectedAt,lastBatteryPercent,isPreferred);
 
 @override
 String toString() {
-  return 'BlePairedDevice(deviceId: $deviceId, remoteId: $remoteId, name: $name, displayModel: $displayModel, modelCode: $modelCode, lastRssi: $lastRssi, lastConnectedAt: $lastConnectedAt, isPreferred: $isPreferred)';
+  return 'BlePairedDevice(deviceId: $deviceId, remoteId: $remoteId, name: $name, displayModel: $displayModel, modelCode: $modelCode, lastRssi: $lastRssi, lastConnectedAt: $lastConnectedAt, lastBatteryPercent: $lastBatteryPercent, isPreferred: $isPreferred)';
 }
 
 
@@ -261,7 +267,7 @@ abstract mixin class _$BlePairedDeviceCopyWith<$Res> implements $BlePairedDevice
   factory _$BlePairedDeviceCopyWith(_BlePairedDevice value, $Res Function(_BlePairedDevice) _then) = __$BlePairedDeviceCopyWithImpl;
 @override @useResult
 $Res call({
- String? deviceId, String remoteId, String name, String? displayModel, String? modelCode, int? lastRssi, DateTime? lastConnectedAt, bool isPreferred
+ String? deviceId, String remoteId, String name, String? displayModel, String? modelCode, int? lastRssi, DateTime? lastConnectedAt, int? lastBatteryPercent, bool isPreferred
 });
 
 
@@ -278,7 +284,7 @@ class __$BlePairedDeviceCopyWithImpl<$Res>
 
 /// Create a copy of BlePairedDevice
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = freezed,Object? remoteId = null,Object? name = null,Object? displayModel = freezed,Object? modelCode = freezed,Object? lastRssi = freezed,Object? lastConnectedAt = freezed,Object? isPreferred = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? deviceId = freezed,Object? remoteId = null,Object? name = null,Object? displayModel = freezed,Object? modelCode = freezed,Object? lastRssi = freezed,Object? lastConnectedAt = freezed,Object? lastBatteryPercent = freezed,Object? isPreferred = null,}) {
   return _then(_BlePairedDevice(
 deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
 as String?,remoteId: null == remoteId ? _self.remoteId : remoteId // ignore: cast_nullable_to_non_nullable
@@ -287,7 +293,8 @@ as String,displayModel: freezed == displayModel ? _self.displayModel : displayMo
 as String?,modelCode: freezed == modelCode ? _self.modelCode : modelCode // ignore: cast_nullable_to_non_nullable
 as String?,lastRssi: freezed == lastRssi ? _self.lastRssi : lastRssi // ignore: cast_nullable_to_non_nullable
 as int?,lastConnectedAt: freezed == lastConnectedAt ? _self.lastConnectedAt : lastConnectedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,isPreferred: null == isPreferred ? _self.isPreferred : isPreferred // ignore: cast_nullable_to_non_nullable
+as DateTime?,lastBatteryPercent: freezed == lastBatteryPercent ? _self.lastBatteryPercent : lastBatteryPercent // ignore: cast_nullable_to_non_nullable
+as int?,isPreferred: null == isPreferred ? _self.isPreferred : isPreferred // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

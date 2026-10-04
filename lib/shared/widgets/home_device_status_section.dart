@@ -36,6 +36,7 @@ class HomeDeviceStatusSection extends ConsumerWidget {
       frosted: true,
       detail: detail,
       lastConnectedAt: device.lastConnectedAt,
+      lastKnownBatteryPercent: device.lastBatteryPercent,
       onClick: () => context.push('/my-devices'),
     );
   }

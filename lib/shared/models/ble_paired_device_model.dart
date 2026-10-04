@@ -14,8 +14,13 @@ abstract class BlePairedDevice with _$BlePairedDevice {
     String? modelCode,
     int? lastRssi,
     DateTime? lastConnectedAt,
+
+    /// The last valid battery level this sole reported, shown greyed out while
+    /// it is offline or has not sent a fresh reading yet.
+    int? lastBatteryPercent,
     @Default(false) bool isPreferred,
   }) = _BlePairedDevice;
 
-  factory BlePairedDevice.fromJson(Map<String, dynamic> json) => _$BlePairedDeviceFromJson(json);
+  factory BlePairedDevice.fromJson(Map<String, dynamic> json) =>
+      _$BlePairedDeviceFromJson(json);
 }

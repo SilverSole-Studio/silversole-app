@@ -225,7 +225,12 @@ class _DeviceCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final online = ref.watch(deviceOnlineProvider);
     final recent = ref.watch(telemetryViewProvider).recentImu;
-    final battery = recent.isEmpty ? 0 : recent.last.batteryPercent;
+    // Live while online; otherwise the level remembered for this sole, grayed
+    // out. A sole never connected shows an empty gray bar.
+    final battery = BatteryDisplay.resolve(
+      live: online && recent.isNotEmpty ? recent.last.batteryPercent : null,
+      lastKnown: device?.lastBatteryPercent,
+    );
     final name = device?.name ?? 'not_binding'.tr();
 
     return MascotCard(
@@ -268,14 +273,21 @@ class _DeviceCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: MascotProgressBar(
-                  value: battery.batteryFraction,
+                  value: battery.fraction,
                   height: 20,
+                  fill: battery.isLive
+                      ? AppPaletteT2.safe
+                      : AppPaletteT2.inkFaint,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                battery.batteryLabel,
-                style: context.textTheme.headlineMedium,
+                battery.label,
+                style: battery.isLive
+                    ? context.textTheme.headlineMedium
+                    : context.textTheme.headlineMedium?.copyWith(
+                        color: AppPaletteT2.inkMuted,
+                      ),
               ),
             ],
           ),

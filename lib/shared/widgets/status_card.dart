@@ -28,6 +28,7 @@ Widget statusCard(
   bool frosted = false,
   DeviceStatusDetailModel? detail,
   DateTime? lastConnectedAt,
+  int? lastKnownBatteryPercent,
   List<ListTileData> menuItems = const <ListTileData>[],
   bool? active,
   VoidCallback? onTap,
@@ -171,6 +172,7 @@ Widget statusCard(
               active: active,
               detail: detail,
               lastConnectedAt: lastConnectedAt,
+              lastKnownBatteryPercent: lastKnownBatteryPercent,
             )
           : Column(
               spacing: AppSpacing.base,
@@ -280,20 +282,27 @@ Widget _statusDisplayBody(
   required bool? active,
   required DeviceStatusDetailModel? detail,
   DateTime? lastConnectedAt,
+  int? lastKnownBatteryPercent,
 }) {
   final cs = Theme.of(context).colorScheme;
   final tt = Theme.of(context).textTheme;
   final tokens = Theme.of(context).extension<AppTokens>()!;
   final online = active ?? false;
-  // TODO: 80 is a placeholder until real battery data is wired through.
-  final battery = detail?.lastBatteryPercent ?? 80;
+  // Live while online; otherwise the level remembered from the sole's last
+  // session, grayed out so it reads as "previous" rather than current.
+  final battery = BatteryDisplay.resolve(
+    live: online ? detail?.lastBatteryPercent : null,
+    lastKnown: lastKnownBatteryPercent,
+  );
+  final batteryColor = battery.isLive ? cs.primary : cs.onSurfaceVariant;
+  // A remembered level fills in the track's own gray: the track gap still marks
+  // the level, without the fill reading as current.
+  final batteryFill = battery.isLive ? cs.primary : cs.surfaceContainerHighest;
   // Prefer the freshest live-telemetry time; fall back to the persisted
   // last-connected timestamp so the card shows real data even before any
   // live stream (e.g. right after an app restart).
   final lastSeen = detail?.lastHeartbeatAt ?? lastConnectedAt;
   final lastSeenText = lastSeen != null ? formatTimeAgo(lastSeen) : '--';
-
-  final batteryValue = battery.batteryFraction;
 
   return ConstrainedBox(
     constraints: const BoxConstraints(minHeight: 120),
@@ -418,21 +427,21 @@ Widget _statusDisplayBody(
                   Expanded(
                     child: LinearProgressIndicator(
                       year2023: false, // ignore: deprecated_member_use
-                      value: batteryValue,
+                      value: battery.fraction,
                       minHeight: 14,
                       // Rounds each segment's ends (incl. the gap-facing ones).
                       borderRadius: BorderRadius.circular(999),
                       stopIndicatorRadius: 0,
                       trackGap: 4,
                       backgroundColor: cs.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(batteryFill),
                     ),
                   ),
                   Text(
-                    battery.batteryLabel,
+                    battery.label,
                     style: tt.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: cs.primary,
+                      color: batteryColor,
                     ),
                   ),
                 ],

@@ -9,6 +9,7 @@ import 'package:silversole/core/ble/ble_connection_service.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_status_model.dart';
 import 'package:silversole/shared/models/fall_detect_event_model.dart';
@@ -51,10 +52,22 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   String toHex(List<int> v) =>
       v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
 
+  // Persists the sole's battery level so it can be shown greyed out while the
+  // sole is offline. The IMU stream repeats the same level at 50 Hz, so only a
+  // change is written; boundDevice carries it so onReady's write keeps it.
+  void rememberBattery(int percent) {
+    final device = boundDevice;
+    if (device == null || !percent.isValidBatteryPercent) return;
+    if (device.lastBatteryPercent == percent) return;
+    boundDevice = device.copyWith(lastBatteryPercent: percent);
+    unawaited(settings.setLastBatteryPercent(device.remoteId, percent));
+  }
+
   void onImu(List<int> value) {
     try {
       final data = bleConnectionService.parseImuNotify(value);
       live.updateImuNotifyData(data);
+      rememberBattery(data.batteryPercent);
     } catch (e) {
       // Always report the first failure, then throttle: a format mismatch
       // fails on every packet and would spam ~20 lines/s.
@@ -118,6 +131,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
         debugPrint('device status timestamp invalid: ${status.timestamp}');
         return;
       }
+      rememberBattery(status.body.batteryPercent);
       final result = await deviceStatusIngestService.ingestDeviceStatus(
         device: device,
         payload: status,

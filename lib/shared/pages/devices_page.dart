@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
-import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
@@ -304,7 +303,11 @@ class _DeviceRowTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final device = row.device;
-    final battery = row.batteryPercent;
+    final battery = row.battery;
+    // A remembered (not live) level is grayed out so it reads as "previous".
+    final batteryColor = battery.isLive
+        ? context.colorScheme.primary
+        : context.colorScheme.onSurfaceVariant;
     final lastSeen = device.lastConnectedAt;
     final status = row.online
         ? 'signal_good'.tr()
@@ -358,14 +361,18 @@ class _DeviceRowTile extends StatelessWidget {
           width: 72,
           child: LinearProgressIndicator(
             year2023: false, // ignore: deprecated_member_use
-            value: battery?.batteryFraction ?? 0,
+            value: battery.fraction,
             minHeight: 10,
             borderRadius: BorderRadius.circular(999),
             stopIndicatorRadius: 0,
             trackGap: 4,
             backgroundColor: context.colorScheme.surfaceContainerHighest,
+            // A remembered level fills in the track's own gray; the track gap
+            // still marks the level.
             valueColor: AlwaysStoppedAnimation<Color>(
-              context.colorScheme.primary,
+              battery.isLive
+                  ? context.colorScheme.primary
+                  : context.colorScheme.surfaceContainerHighest,
             ),
           ),
         ),
@@ -373,9 +380,11 @@ class _DeviceRowTile extends StatelessWidget {
         SizedBox(
           width: 46,
           child: Text(
-            battery?.batteryLabel ?? '-',
+            battery.label,
             textAlign: TextAlign.right,
-            style: context.textTheme.titleMedium,
+            style: battery.isLive
+                ? context.textTheme.titleMedium
+                : context.textTheme.titleMedium?.copyWith(color: batteryColor),
           ),
         ),
         buildMaterialPopupMenu(

@@ -32,6 +32,10 @@ abstract final class AppPaletteT2 {
   /// Secondary text.
   static const Color inkMuted = Color(0xFF6B6154);
 
+  /// Progress fill for a stale value, e.g. a remembered (not live) battery
+  /// level: a pale warm gray that reads as "previous" against the white track.
+  static const Color inkFaint = Color(0xFFE2DDD5);
+
   // ── Functional ─────────────────────────────────────────────────────────
   /// Positive / safe status (progress fill, "安全" badge).
   static const Color safe = Color(0xFF3E9E52);

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
-import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -127,7 +126,8 @@ class _DeviceRowTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final battery = row.batteryPercent;
+    // A remembered (not live) level is grayed out so it reads as "previous".
+    final battery = row.battery;
     final lastSeen = row.device.lastConnectedAt;
     final status = row.online
         ? 'signal_good'.tr()
@@ -166,17 +166,22 @@ class _DeviceRowTile extends StatelessWidget {
           SizedBox(
             width: 88,
             child: MascotProgressBar(
-              value: battery?.batteryFraction ?? 0,
+              value: battery.fraction,
               height: 18,
+              fill: battery.isLive ? AppPaletteT2.safe : AppPaletteT2.inkFaint,
             ),
           ),
           const SizedBox(width: 8),
           SizedBox(
             width: 52,
             child: Text(
-              battery?.batteryLabel ?? '-',
+              battery.label,
               textAlign: TextAlign.right,
-              style: context.textTheme.titleMedium,
+              style: battery.isLive
+                  ? context.textTheme.titleMedium
+                  : context.textTheme.titleMedium?.copyWith(
+                      color: AppPaletteT2.inkMuted,
+                    ),
             ),
           ),
         ],

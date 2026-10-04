@@ -1,3 +1,4 @@
+import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 
 /// Firmware facts the devices panel shows but the app cannot read yet: the
@@ -16,7 +17,7 @@ class DeviceRow {
   const DeviceRow({
     required this.device,
     required this.online,
-    this.batteryPercent,
+    required this.battery,
   });
 
   final BlePairedDevice device;
@@ -25,16 +26,16 @@ class DeviceRow {
   /// holds one BLE connection at a time, so at most one row is online.
   final bool online;
 
-  /// Live battery level; null for every device that is not the one streaming,
-  /// since nothing else reports one.
-  final int? batteryPercent;
+  /// Live for the device that is streaming; every other row shows the level
+  /// remembered from its last session.
+  final BatteryDisplay battery;
 }
 
 /// Derives the devices panel's rows.
 ///
 /// [online] and [liveBatteryPercent] describe the live stream, which belongs
-/// to [preferred]; the remaining paired devices are listed but carry no
-/// readings of their own.
+/// to [preferred]; the remaining paired devices carry only their remembered
+/// battery level.
 List<DeviceRow> buildDeviceRows({
   required List<BlePairedDevice> devices,
   required BlePairedDevice? preferred,
@@ -47,9 +48,16 @@ List<DeviceRow> buildDeviceRows({
         DeviceRow(
           device: device,
           online: online,
-          batteryPercent: liveBatteryPercent,
+          battery: BatteryDisplay.resolve(
+            live: online ? liveBatteryPercent : null,
+            lastKnown: device.lastBatteryPercent,
+          ),
         )
       else
-        DeviceRow(device: device, online: false),
+        DeviceRow(
+          device: device,
+          online: false,
+          battery: BatteryDisplay.resolve(lastKnown: device.lastBatteryPercent),
+        ),
   ];
 }
