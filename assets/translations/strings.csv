@@ -333,3 +333,91 @@ demo_motion_off,Stop sample,關閉樣本
 left_foot,Left foot,左腳
 right_foot,Right foot,右腳
 both_feet,Both feet,雙腳
+gait_group_ability,Walking ability,行走能力
+gait_group_stability,Walking stability,走路穩定度
+gait_sect_daily_speed,Daily speed,每日步速
+gait_sect_four_weeks,Four-week trend,四週趨勢
+gait_sect_twelve_weeks,Twelve-week trajectory,十二週軌跡
+gait_sect_phase,Phase,分期
+gait_sect_lr_stance,Left and right stance time,左右腳站立時間
+gait_sect_four_metrics,Four metrics moving together,四項指標同步變化
+gait_hero_speed_week,Average speed · last 7 days,近 7 天平均步速
+gait_hero_speed_month,Average speed · last 30 days,近 30 天平均步速
+gait_hero_speed_quarter,Current speed · last 7 days,目前步速（近 7 天）
+gait_live_daily,Updated daily,每日更新
+gait_delta_vs_week,vs previous 7 days,vs 前 7 天
+gait_delta_vs_month,vs previous 30 days,vs 前 30 天
+gait_delta_vs_quarter,over the last 90 days,近 90 天
+gait_threshold_under,Under the detectable threshold,未達門檻
+gait_threshold_over,Over the detectable threshold,超過門檻
+gait_threshold_rate,About 0.047 slower each month,每月約降 0.047
+gait_phase_stable,Stable,穩定期
+gait_phase_declining,Declining,下降期
+gait_phase_alert,Watch closely,警戒期
+gait_metric_speed,Walking speed,步速
+gait_metric_cadence,Cadence,步頻
+gait_metric_stability,Step stability,步伐穩定度
+gait_metric_double_support,Double support time,雙腳著地時間
+gait_metric_symmetry,Left-right balance,左右平衡
+gait_unit_mps,m/s,m/s
+gait_unit_spm,steps/min,步/分
+gait_unit_percent,%,%
+gait_aux,Supporting,輔助
+gait_sub_flutter,Per-step variation,每步波動
+gait_reading_cadence_flat,About the same as last week,和上週差不多
+gait_reading_ds_week,More time on both feet than last week,比上週更常用雙腳撐著
+gait_reading_ds_month,More time on both feet than last month,比上月更常用雙腳撐著
+gait_reading_sym_week,The left foot stays down a little longer,左腳踩得比右腳久一些
+gait_reading_sym_month,The gap keeps widening so watch the right side,差距持續擴大，建議留意右側
+gait_reading_cv_month,Step rhythm is less even than last month,每一步的節奏比上月更不一致
+gait_fall_title,Falls in the last 3 months,近 3 個月跌倒
+gait_fall_last,Most recent: week 10,最近一次：第 10 週
+gait_fall_last_quarter,Week 10 · same period as the speed drop,第 10 週一次 · 與步速下降同期
+gait_fall_unit,times,次
+gait_note_week,About 14820 steps over the last 7 days — plenty of data. This much only makes the averages trustworthy; step stability needs a month or more to mean anything so it is not shown here.,近 7 天累積 14820 步，資料量充足。這個資料量只夠讓平均值可信；步伐穩定度需要一個月以上才有意義，因此不在本頁顯示。
+gait_note_month,About 61300 steps over the last 30 days. All four metrics are worsening together — slower walking · less even rhythm · more time on both feet · more asymmetry. That combination usually points to falling confidence in balance rather than one joint problem.,近 30 天累積 61300 步。四項指標同向惡化——走得慢、節奏變亂、雙腳同時著地時間變長、左右更不對稱。這個組合通常代表平衡信心下降，而非單一關節問題。
+gait_note_quarter,The decline has run for twelve weeks and passed the detectable threshold in each of the last three. The fall in week 10 happened in the same period.,下降趨勢已持續十二週，最近三週都超過可偵測門檻。第 10 週那次跌倒也發生在同一期間。
+gait_advice_title,Suggested next steps,建議行動
+gait_advice_assessment,Arrange a walking assessment and check whether any medication changed recently,安排一次行走功能評估，並確認近期是否有換藥
+gait_advice_home,Check the home — bathroom grab bars · night lighting · non-slip flooring,居家環境檢視：浴室扶手、夜間照明、地面止滑
+gait_advice_pain,Watch for pain on one side (left-right balance is a supporting observation and not a primary judgement),可一併留意是否有單側疼痛（左右平衡為輔助觀察，非主要判定依據）
+gait_help_speed_title,Walking speed,步速
+gait_help_speed_body,How many metres per second. It reflects overall walking ability and is an early sign of functional decline.,每秒走多少公尺。反映整體行走能力，是功能退化的早期訊號。
+gait_help_speed_note,Walking speed does not predict falls directly. Walking fast does not mean not falling. For fall risk look at the walking-stability group instead.,注意：步速不直接預測跌倒。走得快不等於不會跌倒。要看跌倒風險，請看「走路穩定度」那一區。
+gait_help_speed_evidence,JAMA 2011 pooled 9 cohorts and 34485 older adults: every 0.1 m/s faster came with 12% lower mortality risk. The 2022 world falls guidelines include walking speed in risk assessment.,JAMA 2011 彙整 9 個世代、34485 位長者：步速每快 0.1 m/s，死亡風險降 12%。2022 世界跌倒防治指引已將步速納入風險評估流程。
+gait_help_cadence_title,Cadence,步頻
+gait_help_cadence_body,Steps per minute. Walking slowly usually means either smaller steps or a slower rhythm and this number tells the two apart.,每分鐘走幾步。走得慢通常是步子變小、或步頻變慢，這個數字幫忙區分是哪一種。
+gait_help_cadence_evidence,STURDY 2021 (432 people): every 10 steps/min more in daily life came with a 13.2% lower fall rate.,STURDY 研究 2021（432 人）：日常步頻每高 10 步/分，跌倒率低 13.2%。
+gait_help_stability_title,Step stability,步伐穩定度
+gait_help_stability_body,Whether every step keeps the same rhythm. Speeding up and slowing down means less control.,每一步的節奏是不是一致。忽快忽慢代表控制力下降。
+gait_help_stability_note,This is stride-time variability turned around into a score so higher is better. The conversion is our own way of presenting it and not an existing clinical scale.,這是把「跨步時間變異度」反轉過來的分數，越高越好。分數換算方式是我們為了直覺而設計的呈現，不是既有臨床量表。
+gait_help_stability_evidence,Arch Phys Med Rehabil 2001: 52 older adults wore force-sensing insoles for a year. Stride-time variability was 106±30 ms among those who fell against 49±4 ms among those who did not — 2.2 times apart.,Arch Phys Med Rehabil 2001：52 位長者穿力感應鞋墊追蹤 1 年。跌倒者跨步時間變異度 106±30 ms、未跌倒者 49±4 ms——相差 2.2 倍。與本產品同一類感測方式。
+gait_help_doubleSupport_title,Double support time,雙腳著地時間
+gait_help_doubleSupport_body,The share of walking time with both feet on the ground at once.,走路時，兩隻腳同時踩在地上的時間比例。
+gait_help_doubleSupport_note,Think of walking on ice — you slow down and keep a foot down longer without meaning to. This number measures how much of that is in everyday walking. Higher means less confident. The per-step variation under it is the figure linked more strongly to falls.,想像你走在結冰的路上——會不自覺放慢、並且多留一隻腳在地上。這是身體自己的保險機制。這個數字就是在量「他平常走路時，有多像在走冰面」。數字越高，代表越不放心。下方的「每步波動」才是與跌倒關聯較強的那一個。
+gait_help_doubleSupport_evidence,Age and Ageing 2011 (412 people): what correlated with repeated falls was the variation in double support time and not its average. The average itself is hard to measure well from insoles and needs both feet synchronised precisely.,Age and Ageing 2011（412 人隨機抽樣）：與反覆跌倒相關的是雙腳著地時間的波動，不是平均值。平均值本身在鞋墊上較難量準，需仰賴雙腳精準同步。
+gait_help_symmetry_title,Left-right balance,左右平衡
+gait_help_symmetry_body,How alike the two feet are. 100% means identical.,左腳和右腳的步伐有多一致。100% 代表完全一樣。
+gait_help_symmetry_note,With a blister you favour that foot without noticing. A sore knee or a mild stroke makes the body do the same thing — and the person often cannot tell. The insole notices before they do.,腳底長水泡的時候，你會不自覺少踩那隻腳。膝蓋痛、髖關節退化、輕微中風，身體都會做同一件事——而且本人常常沒察覺。鞋墊會比他自己更早發現。
+gait_help_symmetry_evidence,Weaker evidence: the available prospective study measured its predictive value while walking and doing a cognitive task at the same time which is not the same as natural daily walking. It is a supporting observation only and stays out of the phase decision.,證據較弱：現有前瞻研究（2019，105 人追蹤 2 年）測到的預測力是在「邊走路邊做認知作業」的條件下，與日常自然行走不完全相同。因此本項僅作輔助觀察，不參與分期判定。
+gait_help_threshold_title,Detectable threshold,可偵測門檻
+gait_help_threshold_body,A change smaller than this cannot be told apart from measurement error so it counts as no change at all.,小於這個幅度的變化，無法和量測誤差區分，所以視為「沒有變化」。
+gait_help_threshold_note,The weekly threshold is 0.028 m/s and the monthly one is 0.013. Only past the threshold do we say something really changed. That keeps normal weekly wobble from causing worry.,一週的門檻是 0.028 m/s，一個月是 0.013。只有超過門檻，我們才會說「真的變了」。這是為了避免每週的正常波動造成不必要的擔心。
+gait_help_threshold_evidence,J Am Geriatr Soc 2006: a meaningful change in walking speed is about 0.05 m/s (small) or 0.10 m/s (substantial). The threshold comes from the literature and not from caution on our part.,J Am Geriatr Soc 2006：步速的「有意義變化」小幅約 0.05 m/s、實質約 0.10 m/s。門檻不是我們保守，是文獻定義的。
+gait_help_phase_title,How the phase is decided,分期怎麼判定
+gait_help_phase_body,The first four weeks set this person their own baseline and every week after that is compared against it.,以前 4 週建立這位長輩自己的基線，之後每週比較一次。
+gait_help_phase_note,Three weeks in the same direction with a cumulative change past the threshold becomes a declining or improving phase. A worsening rate above 3% per month becomes the watch phase. One week of wobble never changes the phase and neither does crossing a clinical reference value on its own — that line carries measurement uncertainty and needs a professional to confirm.,連續 3 週同方向、而且累計變化超過門檻 → 下降期或上升期。惡化速率超過每月 3% → 警戒期。單週波動不會改變分期；步速絕對值跨過臨床參考值也不會——那條線帶有量測不確定性，需要專業評估確認。
+gait_help_phase_evidence,The phase labels are our own design and are not clinically validated. The rules under them have a statistical basis but a name like "declining" is a trend hint and not a medical diagnosis.,分期標籤是本產品的設計，沒有臨床驗證。底層規則（不重疊分箱＋可偵測門檻）有統計依據，但「下降期」這個名稱本身是趨勢提示，不是醫療診斷。
+gait_help_binning_title,Why weeks are the unit,為什麼用「週」為單位
+gait_help_binning_body,Every point on the trend chart is one complete week that does not overlap the next.,趨勢圖的每個點都是一個完整且不重疊的星期。
+gait_help_binning_note,A rolling average updated daily would share six sevenths of its data with the point beside it and the smoothed curve would invent a steady decline. A dashed line with a hollow point means the week is not over yet and does not count toward the phase.,如果改用每天更新的滾動平均，相鄰的點會共用 6/7 的資料，曲線被抹平後會產生「連續下降」的假象。虛線與空心點代表本週尚未結束，不列入分期判定。
+gait_help_falls_title,Fall records,跌倒紀錄
+gait_help_falls_body,Falls detected by the insole itself.,由鞋墊自動偵測的跌倒事件。
+gait_help_falls_note,In the literature whether someone has fallen before is the single strongest predictor of falling again — stronger than any gait number. That is why it sits beside the gait metrics.,文獻上，過去是否跌倒是跌倒風險最強的單一指標——比任何步態數字都強。所以它和步態指標放在一起看。
+gait_help_falls_evidence,A reminder: gait metrics can hint at a tendency toward repeated falls and not at which day someone will fall. Studies show gait parameters cannot predict a single fall event.,提醒：步態指標能提示的是反覆跌倒的傾向，不是「哪一天會跌倒」。研究顯示步態參數無法預測單次跌倒事件。
+gait_help_note_label,Worth knowing,注意
+gait_help_evidence_label,Evidence,文獻依據
+gait_week_n,Week {},第 {} 週
+gait_ref_value,Reference {},臨床參考值 {}
+gait_ref_band,Gray band = measurement uncertainty · never stages on its own,灰帶＝量測不確定性 · 不自動判定
+gait_in_progress,This week is still running,本週尚未結束

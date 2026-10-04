@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
@@ -64,6 +65,7 @@ class GamePage extends StatelessWidget {
                 itemCount: games.length,
                 itemBuilder: (context, i) => _GameTile(entry: games[i]),
               ),
+              const BadgeWall(),
             ],
           ),
         ),
