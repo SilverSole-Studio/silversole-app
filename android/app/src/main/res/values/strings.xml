@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ble_service_title">SilverSole is running in background</string>
-    <string name="ble_service_running">BLE service is running</string>
+    <string name="ble_service_title">SilverSole sole connection</string>
+    <string name="ble_service_running">Staying connected to your sole in the background for gait and fall-detection data</string>
 </resources>

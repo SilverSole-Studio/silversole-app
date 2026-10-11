@@ -166,6 +166,18 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     return statuses[Permission.bluetoothScan]?.isGranted ?? false;
   }
 
+  // The service's ongoing notification is what tells the wearer BLE keeps
+  // running in the background (and what Play's foreground-service review looks
+  // for). Android 13+ hides it until this is granted — the service itself runs
+  // either way, so a refusal only costs the notification and never blocks the
+  // connection. Asked once per launch, not on every search retry.
+  var notificationAsked = false;
+  Future<void> ensureNotificationPermission() async {
+    if (notificationAsked) return;
+    notificationAsked = true;
+    await Permission.notification.request();
+  }
+
   // searchAndAttach and the two timers below call each other, and Dart has no
   // forward references for local functions — so one of them has to be a
   // variable.
@@ -232,6 +244,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
         return;
       }
 
+      await ensureNotificationPermission();
       await startBleService();
 
       final pick = pickSole(
