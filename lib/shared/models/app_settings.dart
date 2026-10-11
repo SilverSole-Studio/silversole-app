@@ -18,6 +18,10 @@ abstract class AppSettings with _$AppSettings {
     @Default(TransmissionMethod.bluetooth)
     TransmissionMethod transmissionMethod,
     @Default(<BlePairedDevice>[]) List<BlePairedDevice> pairedDevicesList,
+
+    /// Hidden developer mode (seven taps on the firmware version): reads the
+    /// beta firmware channel and allows a warned downgrade.
+    @Default(false) bool firmwareDevMode,
   }) = _AppSettings;
 
   const AppSettings._();

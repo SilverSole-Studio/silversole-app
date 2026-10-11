@@ -42,6 +42,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
       _ => TransmissionMethod.bluetooth,
     };
     final pairedDevicesList = await loadLocalPairedDevices() ?? [];
+    final firmwareDevMode =
+        await loadLocalValue(LocalSavableKey.firmwareDevMode) == 'true';
     state = state.copyWith(
       identity: identity,
       deviceId: deviceId,
@@ -49,6 +51,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
       themeVariant: themeVariant,
       transmissionMethod: transmissionMethod,
       pairedDevicesList: pairedDevicesList,
+      firmwareDevMode: firmwareDevMode,
     );
   }
 
@@ -75,6 +78,14 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setTransmissionMethod(TransmissionMethod method) async {
     await saveLocalValue(LocalSavableKey.transmissionMethod, method.name);
     state = state.copyWith(transmissionMethod: method);
+  }
+
+  Future<void> setFirmwareDevMode(bool value) async {
+    await saveLocalValue(
+      LocalSavableKey.firmwareDevMode,
+      value ? 'true' : 'false',
+    );
+    state = state.copyWith(firmwareDevMode: value);
   }
 
   Future<void> setPairedDevices(List<BlePairedDevice> devicesList) async {

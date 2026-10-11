@@ -9,7 +9,8 @@ enum LocalSavableKey {
   darkMode('dark_mode'),
   themeVariant('theme_variant'),
   transmissionMethod('transmission_method'),
-  pairedDevices('paired_devices');
+  pairedDevices('paired_devices'),
+  firmwareDevMode('firmware_dev_mode');
 
   const LocalSavableKey(this.value);
 
