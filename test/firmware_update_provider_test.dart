@@ -95,12 +95,24 @@ class _FakeRelease extends FirmwareReleaseService {
       Result.ok(image);
 }
 
+/// A sole whose status characteristic throws the moment it is subscribed to —
+/// a link that drops before `DfuTransfer`'s own try even starts.
+class _BrokenSole extends FakeDfuSole {
+  @override
+  Future<Stream<List<int>>> subscribeStatus() async =>
+      throw StateError('link lost');
+}
+
 /// Builds a container with [connection] and the sole connected, runs [body]
-/// and lets fake time run out, then returns the final state.
+/// and lets fake time run out, then returns the final state. When [midway]
+/// is given, fake time is advanced by [midwayAt] first and [midway] runs
+/// before the remaining time elapses — e.g. to cancel mid-transfer.
 OtaState _run(
   _FakeConnection connection,
   void Function(ProviderContainer c) body, {
   ConnectedSole? sole = _sole,
+  void Function(ProviderContainer c)? midway,
+  Duration midwayAt = const Duration(milliseconds: 50),
 }) {
   late OtaState state;
   fakeAsync((async) {
@@ -115,6 +127,10 @@ OtaState _run(
     );
     if (sole != null) container.read(connectedSoleProvider.notifier).set(sole);
     body(container);
+    if (midway != null) {
+      async.elapse(midwayAt);
+      midway(container);
+    }
     async.elapse(const Duration(minutes: 5));
     state = container.read(firmwareUpdateProvider);
     container.dispose();
@@ -225,4 +241,33 @@ void main() {
     expect(state.failure, DfuFailure.notConnected);
     expect(connection.holds, 0);
   });
+
+  test('a throw from the link itself does not leave the update stuck busy', () {
+    final connection = _FakeConnection(_BrokenSole());
+    final state = _run(
+      connection,
+      (c) => c.read(firmwareUpdateProvider.notifier).installRelease(_manifest),
+    );
+    expect(state.phase, OtaPhase.failed);
+    expect(state.failure, DfuFailure.disconnected);
+    expect(state.busy, isFalse);
+    expect(connection.releases, 1);
+  });
+
+  test(
+    'cancelling during a transfer ends in failed(cancelled) and aborts the sole',
+    () {
+      final sole = FakeDfuSole();
+      final connection = _FakeConnection(sole);
+      late FirmwareUpdateNotifier notifier;
+      final state = _run(connection, (c) {
+        notifier = c.read(firmwareUpdateProvider.notifier);
+        notifier.installRelease(_manifest);
+      }, midway: (c) => notifier.cancel());
+      expect(state.phase, OtaPhase.failed);
+      expect(state.failure, DfuFailure.cancelled);
+      expect(connection.releases, 1);
+      expect(sole.controlWrites, contains(equals(const [0x03])));
+    },
+  );
 }

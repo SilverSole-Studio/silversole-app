@@ -178,6 +178,13 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
         timeout: otaReacquireTimeout,
       );
       state = _verdict(back, expected: image.version);
+    } catch (e) {
+      // Anything that escapes the transfer itself (e.g. subscribeStatus()
+      // throwing when the link drops before DfuTransfer's own try starts)
+      // must not leave the update stuck in a busy phase forever.
+      debugPrint('ota: _install failed: $e');
+      _transfer = null;
+      _fail(DfuFailure.disconnected);
     } finally {
       _transfer = null;
       connection.release();
