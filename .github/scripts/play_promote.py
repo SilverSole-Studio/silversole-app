@@ -15,11 +15,15 @@ update priority, names the production release `v1.9.0`, and commits the edit,
 which sends it to Google's review. With managed publishing off in Play
 Console, it goes live as soon as review passes.
 
-Environment: PLAY_SERVICE_ACCOUNT_JSON, PACKAGE_NAME, and optionally
-FROM_TRACK (default alpha) and GITHUB_OUTPUT (gets rc_tag=...).
+Credentials come from Application Default Credentials — in CI the
+Workload Identity Federation file google-github-actions/auth exports via
+GOOGLE_APPLICATION_CREDENTIALS, locally `gcloud auth application-default
+login` as an account with Play access.
+
+Environment: PACKAGE_NAME, and optionally FROM_TRACK (default alpha) and
+GITHUB_OUTPUT (gets rc_tag=...).
 """
 
-import json
 import os
 import re
 import sys
@@ -56,14 +60,12 @@ def production_release(candidate: dict, version: str) -> dict:
 
 
 class Play:
-    def __init__(self, service_account: dict, package: str):
+    def __init__(self, package: str):
+        import google.auth
         import google.auth.transport.requests
         import requests
-        from google.oauth2 import service_account as sa
 
-        creds = sa.Credentials.from_service_account_info(
-            service_account, scopes=[SCOPE]
-        )
+        creds, _ = google.auth.default(scopes=[SCOPE])
         creds.refresh(google.auth.transport.requests.Request())
         self.session = requests.Session()
         self.session.headers["Authorization"] = f"Bearer {creds.token}"
@@ -85,10 +87,7 @@ def main(argv: list[str]) -> int:
     mode, version = argv
     from_track = os.environ.get("FROM_TRACK", "alpha")
 
-    play = Play(
-        json.loads(os.environ["PLAY_SERVICE_ACCOUNT_JSON"]),
-        os.environ["PACKAGE_NAME"],
-    )
+    play = Play(os.environ["PACKAGE_NAME"])
     edit_id = play.call("POST")["id"]
     track = play.call("GET", f"/{edit_id}/tracks/{from_track}")
     candidate = pick_candidate(track, version)

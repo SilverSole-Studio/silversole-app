@@ -28,9 +28,18 @@ on:
 
 permissions:
   contents: write
+  # Workload Identity Federation: the run trades its GitHub OIDC token for a
+  # short-lived Google credential, so no Play key is stored anywhere.
+  id-token: write
 
 env:
   PACKAGE_NAME: com.dongyutech.silversole
+  # Neither is a secret. The provider only accepts this repo's
+  # flutter-release.yml on main or a v* tag (terraform-infra:
+  # environments/production/silversole), and the service account holds no GCP
+  # role: its only power is the Play Console permissions granted to it.
+  GCP_WORKLOAD_IDENTITY_PROVIDER: projects/350967143148/locations/global/workloadIdentityPools/github-actions/providers/github
+  GCP_SERVICE_ACCOUNT: github-play-release@silversole.iam.gserviceaccount.com
 
 jobs:
   plan:
@@ -178,6 +187,14 @@ jobs:
           name: silversole-${{ env.RELEASE_NAME }}-aab
           path: dist/*.aab
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        if: env.TRACK != 'none'
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
       - name: Write Google Play release notes
         if: env.TRACK != 'none'
         run: |
@@ -189,12 +206,12 @@ jobs:
 
       - name: Upload to Google Play
         if: env.TRACK != 'none'
-        uses: r0adkll/upload-google-play@v1.1.1
+        uses: r0adkll/upload-google-play@v1.1.5
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: ${{ env.PACKAGE_NAME }}
           releaseFiles: dist/*.aab
-          track: ${{ env.TRACK }}
+          tracks: ${{ env.TRACK }}
           status: completed
           # 3 = flexible background update (see InAppUpdatePolicy.kt).
           inAppUpdatePriority: 3
@@ -239,13 +256,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION_NAME: ${{ needs.plan.outputs.version_name }}
-      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Exports GOOGLE_APPLICATION_CREDENTIALS, which play_promote.py picks up.
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
