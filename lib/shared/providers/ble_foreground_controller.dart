@@ -69,8 +69,10 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   // An OTA owns the link between hold() and release(): nothing may search,
   // swap soles or chase a reboot meanwhile.
   var held = false;
-  // Completed by onReady while reacquire() waits for the rebooted sole.
-  Completer<SoleSessionInfo?>? readyWaiter;
+  // Completed by onReady while reacquire() waits for the rebooted sole, for
+  // the remoteId it is waiting on — so a different sole's onReady (a stray
+  // search that slipped in before hold() landed) cannot complete it.
+  ({String remoteId, Completer<SoleSessionInfo?> completer})? readyWaiter;
 
   // A wire-format mismatch fails on every packet, so throttle the failure log
   // and carry the raw bytes — the payload is what identifies the wrong format.
@@ -341,7 +343,11 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
             ),
           );
           final waiter = readyWaiter;
-          if (waiter != null && !waiter.isCompleted) waiter.complete(info);
+          if (waiter != null &&
+              waiter.remoteId == pick.remoteId &&
+              !waiter.completer.isCompleted) {
+            waiter.completer.complete(info);
+          }
           debugPrint(
             'sole session ready: deviceId=${updated.deviceId} '
             'firmware=${info.firmwareVersion}',
@@ -412,8 +418,12 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       }
       debugPrint('sole found: $pick');
 
+      // An update may have taken the link while this search was scanning.
+      if (held) return;
+
       if (await attachTo(pick, current.pairedDevicesList)) {
-        armWatchdog();
+        // ...or while attachTo itself was running the handshake.
+        if (!held) armWatchdog();
       } else {
         scheduleSearch();
       }
@@ -424,44 +434,54 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
 
   /// Brings [target] back after it rebooted into new firmware and returns its
   /// fresh session, or null when it does not show up within [timeout].
+  ///
+  /// Never throws: the caller (an update stuck in its rebooting phase) treats
+  /// null as "could not confirm the sole came back" either way.
   Future<ReacquiredSole?> reacquire(
     BlePairedDevice target,
     Duration timeout,
   ) async {
-    final deadline = clock.now().add(timeout);
-    // The old session's own reconnect would chase the address the sole had
-    // before it rebooted.
-    await bleConnectionService.detach();
-    connectedSole.clear();
-    await Future<void>.delayed(_reacquireSettle);
-
-    final paired = ref.read(settingsProvider).pairedDevicesList;
-    final seen = await scanner.watch(
-      timeout: deadline.difference(clock.now()),
-      stopWhen: (c) => isReacquireTarget(c, target),
-    );
-    final match = matchReacquireTarget(
-      target: target,
-      seen: seen,
-      paired: paired,
-    );
-    if (match == null) {
-      debugPrint('updated sole not found among ${seen.length} soles');
-      return null;
-    }
-
-    final waiter = Completer<SoleSessionInfo?>();
-    readyWaiter = waiter;
     try {
-      if (!await attachTo(match.candidate, paired)) return null;
-      final left = deadline.difference(clock.now());
-      final info = await waiter.future.timeout(
-        left > _minHandshakeWait ? left : _minHandshakeWait,
-        onTimeout: () => null,
+      final deadline = clock.now().add(timeout);
+      // The old session's own reconnect would chase the address the sole had
+      // before it rebooted.
+      await bleConnectionService.detach();
+      connectedSole.clear();
+      await Future<void>.delayed(_reacquireSettle);
+
+      final paired = ref.read(settingsProvider).pairedDevicesList;
+      final seen = await scanner.watch(
+        timeout: deadline.difference(clock.now()),
+        stopWhen: (c) => isReacquireTarget(c, target),
       );
-      return info == null ? null : ReacquiredSole(info, match.confidence);
-    } finally {
-      readyWaiter = null;
+      final match = matchReacquireTarget(
+        target: target,
+        seen: seen,
+        paired: paired,
+      );
+      if (match == null) {
+        debugPrint('updated sole not found among ${seen.length} soles');
+        return null;
+      }
+
+      final completer = Completer<SoleSessionInfo?>();
+      // Keyed by remoteId so a stray search's onReady for a different sole
+      // cannot complete this waiter.
+      readyWaiter = (remoteId: match.candidate.remoteId, completer: completer);
+      try {
+        if (!await attachTo(match.candidate, paired)) return null;
+        final left = deadline.difference(clock.now());
+        final info = await completer.future.timeout(
+          left > _minHandshakeWait ? left : _minHandshakeWait,
+          onTimeout: () => null,
+        );
+        return info == null ? null : ReacquiredSole(info, match.confidence);
+      } finally {
+        readyWaiter = null;
+      }
+    } catch (e) {
+      debugPrint('reacquire failed: $e');
+      return null;
     }
   }
 
