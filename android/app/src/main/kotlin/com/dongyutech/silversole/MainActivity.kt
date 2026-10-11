@@ -31,6 +31,15 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
+                "updateNotification" -> {
+                    BleForegroundService.updateNotification(
+                        this,
+                        call.argument<String>("title") ?: "",
+                        call.argument<String>("text") ?: ""
+                    )
+                    result.success(null)
+                }
+
                 else -> result.notImplemented()
             }
         }

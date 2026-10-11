@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/ble/ble_connection_service.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
+import 'package:silversole/core/ble/sole_notification_text.dart';
 import 'package:silversole/core/ble/pressure_channel_fix.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/core/error/result.dart';
@@ -18,6 +19,7 @@ import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
 import 'package:silversole/shared/providers/device_status_ingest_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 
 import 'settings_provider.dart';
@@ -62,6 +64,44 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     if (device.lastBatteryPercent == percent) return;
     boundDevice = device.copyWith(lastBatteryPercent: percent);
     unawaited(settings.setLastBatteryPercent(device.identityKey, percent));
+  }
+
+  // The service's notification names the sole and says what the home card
+  // says: online or "last connected", plus the battery level. Pushed only when
+  // the text changes, since telemetry ticks at 50 Hz.
+  String? notified;
+  void syncNotification() {
+    final current = ref.read(settingsProvider);
+    final bound = boundDevice;
+    final stored = bound == null
+        ? current.preferredDevice
+        : current.pairedDevicesList.firstWhereOrNull(
+            (d) => d.identityKey == bound.identityKey,
+          );
+    // The stored entry carries a rename; the bound copy the freshest battery.
+    final sole = stored ?? bound;
+    if (sole == null) return;
+
+    final telemetry = ref.read(liveTelemetryProvider);
+    final online = ref.read(deviceOnlineProvider);
+    final content = soleNotificationText(
+      soleName: sole.name,
+      online: online,
+      lastSeen: telemetry.updatedAt ?? sole.lastConnectedAt,
+      battery: BatteryDisplay.resolve(
+        live: online ? telemetry.recentImu.lastOrNull?.batteryPercent : null,
+        lastKnown: bound?.lastBatteryPercent ?? sole.lastBatteryPercent,
+      ),
+    );
+    final key = '${content.title}\n${content.text}';
+    if (key == notified) return;
+    notified = key;
+    unawaited(
+      updateBleNotification(
+        title: content.title,
+        text: content.text,
+      ).catchError((Object e) => debugPrint('notification update: $e')),
+    );
   }
 
   void onImu(List<int> value) {
@@ -246,6 +286,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       await ensureNotificationPermission();
       await startBleService();
+      syncNotification();
 
       final pick = pickSole(
         await scanner.scan(),
@@ -276,6 +317,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
             lastRssi: pick.rssi,
           );
       boundDevice = device;
+      syncNotification();
 
       final result = await bleConnectionService.attach(
         device,
@@ -307,6 +349,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
               lastConnectedAt: DateTime.now(),
             );
             boundDevice = updated;
+            syncNotification();
             unawaited(settings.addOrUpdatePairedDevice(updated));
             debugPrint('sole session ready: deviceId=${updated.deviceId}');
           },
@@ -329,6 +372,23 @@ final bleForegroundControlProvider = Provider<void>((ref) {
       searching = false;
     }
   };
+
+  // What the notification shows moves on its own: the online flag, the battery,
+  // a rename. The ticker keeps "last connected: N min ago" current offline.
+  ref.listen(deviceOnlineProvider, (_, _) => syncNotification());
+  ref.listen(
+    liveTelemetryProvider.select((s) => s.recentImu.lastOrNull?.batteryPercent),
+    (_, _) => syncNotification(),
+  );
+  ref.listen(
+    settingsProvider.select((s) => s.pairedDevicesList),
+    (_, _) => syncNotification(),
+  );
+  final notificationTicker = Timer.periodic(
+    const Duration(seconds: 30),
+    (_) => syncNotification(),
+  );
+  ref.onDispose(notificationTicker.cancel);
 
   // The primary-device pick and "is anything paired at all" are the only
   // settings that change what we should be connected to. Every reconnect
