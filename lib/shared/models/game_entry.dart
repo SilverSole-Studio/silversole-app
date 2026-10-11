@@ -86,5 +86,10 @@ List<GameEntry> gameCatalog() {
       art: '$art/card_quiz.webp',
       slug: 'quiz',
     ),
+    const GameEntry(
+      nameKey: 'game_laojie',
+      art: '$art/card_laojie.webp',
+      slug: 'laojie',
+    ),
   ];
 }
