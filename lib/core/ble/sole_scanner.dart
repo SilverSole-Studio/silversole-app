@@ -157,15 +157,16 @@ class SoleScanner {
   /// returns every sole seen meanwhile.
   ///
   /// One continuous scan rather than repeated [scan] windows: Android refuses
-  /// a sixth startScan within 30 s. And [FlutterBluePlus.onScanResults]
-  /// rather than `scanResults`, so a sole seen before this call — one about
-  /// to reboot into new firmware — is not replayed as if it were on the air
-  /// now.
+  /// a sixth startScan within 30 s. Results stamped before this call are
+  /// ignored, so a sole seen before it — one about to reboot into new
+  /// firmware — is not taken as being on the air now. (onScanResults alone
+  /// does not guarantee this when another scan is already running.)
   Future<List<SoleCandidate>> watch({
     required Duration timeout,
     required bool Function(SoleCandidate sole) stopWhen,
   }) async {
     if (timeout <= Duration.zero) return const [];
+    final since = DateTime.now();
     final found = <String, SoleCandidate>{};
     final matched = Completer<void>();
     StreamSubscription<List<ScanResult>>? sub;
@@ -173,6 +174,7 @@ class SoleScanner {
     try {
       sub = FlutterBluePlus.onScanResults.listen((results) {
         for (final r in results) {
+          if (r.timeStamp.isBefore(since)) continue;
           if (!isSoleName(scanResultName(r))) continue;
           final sole = SoleCandidate.fromScanResult(r);
           found[sole.remoteId] = sole;
