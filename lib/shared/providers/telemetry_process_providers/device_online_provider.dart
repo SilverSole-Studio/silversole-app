@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/shared/providers/firmware_update_provider.dart';
 
 import 'live_telemetry_notifier.dart';
 import 'telemetry_facade_provider.dart';
@@ -17,20 +18,28 @@ import 'telemetry_facade_provider.dart';
 class DeviceOnlineNotifier extends Notifier<bool> {
   Timer? _timer;
 
+  /// A sole being updated pauses its 50 Hz stream and then reboots; it is
+  /// busy, not gone, so it stays online until the update has an outcome.
+  var _updating = false;
+
   @override
   bool build() {
     ref.onDispose(() => _timer?.cancel());
+    _updating = ref.watch(firmwareUpdateProvider.select((s) => s.busy));
     ref.listen(
       liveTelemetryProvider.select((s) => s.updatedAt),
       (_, next) => _reschedule(next),
     );
     final updatedAt = ref.read(liveTelemetryProvider).updatedAt;
     _arm(updatedAt); // build() must not write `state`; only schedule the timer.
-    return ref.read(telemetryFacadeProvider).checkDeviceOnline(updatedAt);
+    return _updating ||
+        ref.read(telemetryFacadeProvider).checkDeviceOnline(updatedAt);
   }
 
   void _reschedule(DateTime? updatedAt) {
-    state = ref.read(telemetryFacadeProvider).checkDeviceOnline(updatedAt);
+    state =
+        _updating ||
+        ref.read(telemetryFacadeProvider).checkDeviceOnline(updatedAt);
     _arm(updatedAt);
   }
 
@@ -41,7 +50,7 @@ class DeviceOnlineNotifier extends Notifier<bool> {
     final remaining =
         TelemetryFacade.onlineWindow - clock.now().difference(updatedAt);
     if (remaining <= Duration.zero) return; // already stale
-    _timer = Timer(remaining, () => state = false);
+    _timer = Timer(remaining, () => state = _updating);
   }
 }
 
