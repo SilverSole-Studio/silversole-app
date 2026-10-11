@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
+import 'package:silversole/core/ble/ota/dfu_link.dart';
 import 'package:silversole/core/ble/pressure_channel_fix.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
@@ -13,6 +14,26 @@ import 'package:silversole/shared/models/imu_notify_data_model.dart';
 
 /// Raw notify payload from the sole.
 typedef BleNotifyHandler = void Function(List<int> value);
+
+/// What one connection's handshake learned about the sole.
+@immutable
+class SoleSessionInfo {
+  const SoleSessionInfo({
+    this.deviceId,
+    this.firmwareVersion,
+    required this.dfuSupported,
+  });
+
+  /// The chip ID, or null on firmware from before the ID existed.
+  final String? deviceId;
+
+  /// The DFU `version` string as the sole reports it, e.g. `0.4.0-rc.1`.
+  final String? firmwareVersion;
+
+  /// False on firmware without the DFU service: it can only be updated by
+  /// wire.
+  final bool dfuSupported;
+}
 
 /// What a caller wants out of one sole session.
 ///
@@ -35,9 +56,9 @@ class BleSessionHandlers {
 
   /// Called once per connection, after the read/write handshake and *before*
   /// any notify is enabled — so the handlers above can rely on the device id.
-  /// [deviceId] is the sole's chip ID, or null when it reported none (firmware
-  /// from before the ID existed, or a failed read).
-  final void Function(String? deviceId)? onReady;
+  /// [SoleSessionInfo.deviceId] is null when the sole reported no chip ID
+  /// (firmware from before the ID existed, or a failed read).
+  final void Function(SoleSessionInfo info)? onReady;
 
   /// Called on every link loss with the platform's disconnect reason
   /// (e.g. `8 GATT_CONN_TIMEOUT`), which is the only way to tell a supervision
@@ -53,10 +74,10 @@ class BleSessionHandlers {
 /// characteristic from that one result. Link loss arrives as a `disconnected`
 /// event and arms a backoff reconnect.
 class BleConnectionService {
-  /// Matches the firmware's `conn_gatt.att_mtu`; the negotiated value is
-  /// `min(request, firmware)` anyway, so asking for more just wastes a
-  /// round-trip.
-  static const _preferredMtu = 64;
+  /// The firmware's `conn_gatt.att_mtu`. OTA needs at least 68 (APPLY is 65
+  /// bytes plus the 3-byte ATT header) and fills each data packet up to
+  /// `mtu − 3`; the negotiated value is `min(request, firmware)` anyway.
+  static const _preferredMtu = 247;
 
   static const _connectTimeout = Duration(seconds: 15);
   static const _maxBackoffSeconds = 30;
@@ -64,6 +85,7 @@ class BleConnectionService {
   BluetoothDevice? _device;
   StreamSubscription<BluetoothConnectionState>? _stateSub;
   BluetoothService? _service;
+  BluetoothService? _dfuService;
   BleSessionHandlers? _handlers;
   bool _settingUp = false;
   bool _setupPending = false;
@@ -108,6 +130,7 @@ class BleConnectionService {
             unawaited(_setUpSession());
           case BluetoothConnectionState.disconnected:
             _service = null;
+            _dfuService = null;
             final reason = target.disconnectReason;
             handlers.onDisconnected?.call(
               '${reason?.code ?? '-'} ${reason?.description ?? 'unknown'}',
@@ -135,6 +158,7 @@ class BleConnectionService {
     await _stateSub?.cancel();
     _stateSub = null;
     _service = null;
+    _dfuService = null;
     _handlers = null;
 
     final device = _device;
@@ -232,6 +256,20 @@ class BleConnectionService {
     }
   }
 
+  /// The connected sole's DFU service as a [DfuLink], or null when nothing is
+  /// connected or the firmware has no DFU service.
+  DfuLink? dfuLink() {
+    final device = _device;
+    final dfu = _dfuService;
+    if (device == null || dfu == null || !device.isConnected) return null;
+    BluetoothCharacteristic? find(String uuid) =>
+        dfu.characteristics.firstWhereOrNull((c) => c.uuid == Guid(uuid));
+    final control = find(dfuControlCharUuid);
+    final data = find(dfuDataCharUuid);
+    if (control == null || data == null) return null;
+    return _BleDfuLink(device, control, data);
+  }
+
   /// Serializes the per-connection handshake.
   ///
   /// A flapping link can deliver a second `connected` event while the first
@@ -283,7 +321,23 @@ class BleConnectionService {
       // Reads and writes first: the live IMU characteristic streams at 50 Hz,
       // and enabling it before the handshake leaves every remaining round-trip
       // competing with that flood.
-      final deviceId = await _readChipId(services);
+      // The chip ID comes from the Device Information Service's Serial
+      // Number — deliberately not the main service's old device-id
+      // characteristic, which the firmware declares but never fills in.
+      final deviceId = await _readText(
+        services,
+        deviceInfoServiceUuid,
+        serialNumberCharUuid,
+      );
+      // Firmware without the DFU service can only be updated by wire, which
+      // is worth knowing before offering an update.
+      final dfu = services.firstWhereOrNull(
+        (s) => s.uuid == Guid(dfuServiceUuid),
+      );
+      _dfuService = dfu;
+      final firmwareVersion = dfu == null
+          ? null
+          : await _readText(services, dfuServiceUuid, dfuVersionCharUuid);
 
       final syncResult = await writeString(
         baseTimestampCharUuid,
@@ -296,7 +350,13 @@ class BleConnectionService {
           debugPrint('base timestamp synced');
       }
 
-      handlers.onReady?.call(deviceId);
+      handlers.onReady?.call(
+        SoleSessionInfo(
+          deviceId: deviceId,
+          firmwareVersion: firmwareVersion,
+          dfuSupported: dfu != null,
+        ),
+      );
 
       // Notifications last.
       await _subscribe(device, notifyCharUuid, handlers.onImu);
@@ -308,26 +368,26 @@ class BleConnectionService {
     }
   }
 
-  /// The sole's chip ID: the Device Information Service's Serial Number,
-  /// looked up in the same discovery as everything else. Null on firmware from
-  /// before the ID existed, which has no such service.
-  ///
-  /// Deliberately not the main service's old device-id characteristic: the
-  /// firmware declares it but never fills it in.
-  Future<String?> _readChipId(List<BluetoothService> services) async {
+  /// Reads a UTF-8 characteristic out of this connection's one discovery, or
+  /// null when the sole does not have it (older firmware) or the read fails.
+  Future<String?> _readText(
+    List<BluetoothService> services,
+    String serviceUuid,
+    String characteristicUuid,
+  ) async {
     final char = services
-        .firstWhereOrNull((s) => s.uuid == Guid(deviceInfoServiceUuid))
+        .firstWhereOrNull((s) => s.uuid == Guid(serviceUuid))
         ?.characteristics
-        .firstWhereOrNull((c) => c.uuid == Guid(serialNumberCharUuid));
+        .firstWhereOrNull((c) => c.uuid == Guid(characteristicUuid));
     if (char == null) {
-      debugPrint('no device ID — the firmware predates it');
+      debugPrint('no $characteristicUuid — the firmware predates it');
       return null;
     }
     try {
-      final id = utf8.decode(await char.read()).trim();
-      return id.isEmpty ? null : id;
+      final text = utf8.decode(await char.read()).trim();
+      return text.isEmpty ? null : text;
     } catch (e) {
-      debugPrint('read device ID failed: $e');
+      debugPrint('read $characteristicUuid failed: $e');
       return null;
     }
   }
@@ -394,5 +454,53 @@ class BleConnectionService {
   Map<String, dynamic> parseJsonNotify(List<int> value) {
     final text = utf8.decode(value);
     return jsonDecode(text) as Map<String, dynamic>;
+  }
+}
+
+class _BleDfuLink implements DfuLink {
+  _BleDfuLink(this._device, this._control, this._data);
+
+  final BluetoothDevice _device;
+  final BluetoothCharacteristic _control;
+  final BluetoothCharacteristic _data;
+
+  @override
+  int get mtu => _device.mtuNow;
+
+  @override
+  bool get isConnected => _device.isConnected;
+
+  @override
+  Future<Stream<List<int>>> subscribeStatus() async {
+    await _control.setNotifyValue(true);
+    // onValueReceived, not lastValueStream: a stale STATUS must not be
+    // replayed into a new transfer.
+    return _control.onValueReceived;
+  }
+
+  @override
+  Future<void> writeControl(List<int> bytes) =>
+      _write(_control, bytes, withoutResponse: false);
+
+  @override
+  Future<void> writeData(List<int> bytes) =>
+      _write(_data, bytes, withoutResponse: true);
+
+  /// One ATT packet per write, always: the sole cannot take long writes (it
+  /// stalls for ~30 s, then drops the link).
+  Future<void> _write(
+    BluetoothCharacteristic char,
+    List<int> bytes, {
+    required bool withoutResponse,
+  }) async {
+    final max = _device.mtuNow - 3;
+    if (bytes.length > max) {
+      throw ArgumentError('${bytes.length} bytes exceed one ATT write ($max)');
+    }
+    await char.write(
+      bytes,
+      withoutResponse: withoutResponse,
+      allowLongWrite: false,
+    );
   }
 }

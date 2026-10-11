@@ -10,3 +10,10 @@ const fallDetectCharUuid = 'AC89603B-7273-486A-8B17-33E543D50E1B';
 // the sole's chip ID — the same 16 hex characters the advertisement does.
 const deviceInfoServiceUuid = '180A';
 const serialNumberCharUuid = '2A25';
+
+// SilverSole DFU service: OTA protocol v2, the firmware repo's
+// docs/ota-ble-protocol.md. All four share one 128-bit base.
+const dfuServiceUuid = '01E00001-71D9-44B3-840E-7F6C6478CC8C';
+const dfuControlCharUuid = '01E00002-71D9-44B3-840E-7F6C6478CC8C';
+const dfuDataCharUuid = '01E00003-71D9-44B3-840E-7F6C6478CC8C';
+const dfuVersionCharUuid = '01E00004-71D9-44B3-840E-7F6C6478CC8C';

@@ -326,7 +326,8 @@ final bleForegroundControlProvider = Provider<void>((ref) {
           onRecordImu: onRecordImu,
           onFallDetect: onFallDetect,
           onDeviceStatus: (value) => unawaited(onDeviceStatus(value)),
-          onReady: (deviceId) {
+          onReady: (info) {
+            final deviceId = info.deviceId;
             // Connected and handshaked: the watchdog has nothing to rescue and
             // the next search starts from the short delay again.
             watchdogTimer?.cancel();
