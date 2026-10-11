@@ -74,3 +74,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Google Play in-app updates (InAppUpdateController).
+    implementation("com.google.android.play:app-update:2.1.0")
+}

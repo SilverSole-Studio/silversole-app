@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
+import 'package:silversole/core/utils/play_in_app_update.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
@@ -31,9 +32,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      showUpdateVersionDialog(context);
+      // A Play install updates through Play only — Play policy forbids
+      // pointing it at another download. Sideloaded APKs (GitHub Releases)
+      // cannot use Play updates, so they keep the GitHub prompt.
+      if (await PlayInAppUpdate.isInstalledFromPlay()) {
+        await PlayInAppUpdate.checkForUpdate();
+      } else if (mounted) {
+        showUpdateVersionDialog(context);
+      }
     });
   }
 
