@@ -218,8 +218,8 @@ return $default(_that.deviceId,_that.remoteId,_that.name,_that.displayModel,_tha
 /// @nodoc
 @JsonSerializable()
 
-class _BlePairedDevice implements BlePairedDevice {
-  const _BlePairedDevice({this.deviceId, required this.remoteId, required this.name, this.displayModel, this.modelCode, this.lastRssi, this.lastConnectedAt, this.lastBatteryPercent, this.isPreferred = false});
+class _BlePairedDevice extends BlePairedDevice {
+  const _BlePairedDevice({this.deviceId, required this.remoteId, required this.name, this.displayModel, this.modelCode, this.lastRssi, this.lastConnectedAt, this.lastBatteryPercent, this.isPreferred = false}): super._();
   factory _BlePairedDevice.fromJson(Map<String, dynamic> json) => _$BlePairedDeviceFromJson(json);
 
 @override final  String? deviceId;

@@ -421,3 +421,5 @@ gait_week_n,Week {},第 {} 週
 gait_ref_value,Reference {},臨床參考值 {}
 gait_ref_band,Gray band = measurement uncertainty · never stages on its own,灰帶＝量測不確定性 · 不自動判定
 gait_in_progress,This week is still running,本週尚未結束
+sole_legacy_firmware,Old firmware,舊版韌體
+sole_already_paired,Paired,已配對

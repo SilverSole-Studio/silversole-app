@@ -44,7 +44,7 @@ List<DeviceRow> buildDeviceRows({
 }) {
   return [
     for (final device in devices)
-      if (device.remoteId == preferred?.remoteId)
+      if (device.identityKey == preferred?.identityKey)
         DeviceRow(
           device: device,
           online: online,

@@ -64,7 +64,7 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         const DeviceCarousel(),
         HomeDeviceStatusSection(device: device),
         const FootHealthCheckCard(),
-        WarningCard(key: ValueKey(device.remoteId)),
+        WarningCard(key: ValueKey(device.identityKey)),
         RecentDataChartCard(),
       ],
     );

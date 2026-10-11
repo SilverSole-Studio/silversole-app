@@ -146,11 +146,27 @@ class _DeviceRowTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  row.device.name,
-                  style: context.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // Every sole is called "SilverSole"; the ID suffix tells them
+                // apart.
+                Row(
+                  spacing: 6,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        row.device.name,
+                        style: context.textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (row.device.shortId case final shortId?)
+                      Text(
+                        '••••$shortId',
+                        style: context.textTheme.bodyMedium?.copyWith(
+                          color: AppPaletteT2.inkMuted,
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -266,8 +282,9 @@ class _PairButton extends StatelessWidget {
 
 // ── 5. Forget every pairing ───────────────────────────────────────────────
 
-/// The sole advertises a new MAC on every boot, so this list grows one entry
-/// per reboot. Clearing it also stops auto-connect until the next manual
+/// Soles are recognised by their chip ID, but older entries recorded by
+/// address only can still pile up (one per reboot, from before the firmware
+/// sent an ID). Clearing them also stops auto-connect until the next manual
 /// pairing.
 class _ClearAllButton extends ConsumerWidget {
   const _ClearAllButton();

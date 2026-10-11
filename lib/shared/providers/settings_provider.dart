@@ -88,11 +88,12 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state = state.copyWith(pairedDevicesList: updated);
   }
 
-  /// Remembers [percent] as the last battery level [remoteId] reported. Only
-  /// touches an existing entry, so a sole removed mid-session is not re-added.
-  Future<void> setLastBatteryPercent(String remoteId, int percent) async {
+  /// Remembers [percent] as the last battery level of the sole whose
+  /// [BlePairedDevice.identityKey] is [identityKey]. Only touches an existing
+  /// entry, so a sole removed mid-session is not re-added.
+  Future<void> setLastBatteryPercent(String identityKey, int percent) async {
     final devices = await loadLocalPairedDevices() ?? [];
-    final index = devices.indexWhere((d) => d.remoteId == remoteId);
+    final index = devices.indexWhere((d) => d.identityKey == identityKey);
     if (index < 0) return;
     devices[index] = devices[index].copyWith(lastBatteryPercent: percent);
     await setPairedDevices(devices);

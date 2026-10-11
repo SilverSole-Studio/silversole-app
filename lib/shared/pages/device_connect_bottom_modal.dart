@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -66,10 +68,7 @@ class _DeviceConnectBottomModalState
     _scanSub ??= FlutterBluePlus.scanResults.listen((results) {
       var changed = false;
       for (final r in results) {
-        final name = r.advertisementData.advName.isNotEmpty
-            ? r.advertisementData.advName
-            : r.device.platformName;
-        if (!name.toLowerCase().contains('silversole')) continue;
+        if (!isSoleName(scanResultName(r))) continue;
         _scanMap[r.device.remoteId] = r;
         changed = true;
       }
@@ -123,34 +122,55 @@ class _DeviceConnectBottomModalState
     }
   }
 
-  List<ListTileData> getNearbyDevices() {
-    final item = _scanMap.values.toList()
+  /// Every sole advertises the same name, so each row is told apart by the
+  /// last 4 characters of its chip ID. A sole on firmware too old to send one
+  /// shows its address instead, marked as old firmware.
+  List<ListTileData> getNearbyDevices(List<BlePairedDevice> paired) {
+    final soles = _scanMap.values.map(SoleCandidate.fromScanResult).toList()
       ..sort((a, b) => b.rssi.compareTo(a.rssi));
-    return item.map((r) {
-      final name = r.advertisementData.advName.isNotEmpty
-          ? r.advertisementData.advName
-          : r.device.platformName;
+    return soles.map((sole) {
+      final id = sole.deviceId;
+      final subtitle = [
+        if (id != null)
+          'ID ••••${id.substring(id.length - 4)}'
+        else ...[
+          sole.remoteId,
+          'sole_legacy_firmware'.tr(),
+        ],
+        if (paired.any((d) => isSameSole(sole, d))) 'sole_already_paired'.tr(),
+      ].join(' · ');
       return ListTileData.normal(
-        title: name.isEmpty ? 'unknown_device'.tr() : name,
-        subtitle: r.device.remoteId.str,
+        title: sole.name.isEmpty ? 'unknown_device'.tr() : sole.name,
+        subtitle: subtitle,
         icon: LucideIcons.bluetooth,
-        onClick: () => connectAndBindDevice(r),
+        onClick: () => connectAndBindDevice(sole),
       );
     }).toList();
   }
 
-  Future<void> connectAndBindDevice(ScanResult result) async {
-    final hasPreferredDevice =
-        ref.read(settingsProvider).preferredDevice != null;
-    final name = result.advertisementData.advName.isNotEmpty
-        ? result.advertisementData.advName
-        : result.device.platformName;
-    final device = BlePairedDevice(
-      remoteId: result.device.remoteId.str,
-      name: name.isEmpty ? 'unknown_device'.tr() : name,
-      lastRssi: result.rssi,
-      lastConnectedAt: DateTime.now(),
+  Future<void> connectAndBindDevice(SoleCandidate sole) async {
+    final settings = ref.read(settingsProvider);
+    final hasPreferredDevice = settings.preferredDevice != null;
+    // Re-pairing a known sole keeps what the user gave it (its name, the
+    // remembered battery level) and only moves it to the address it is on now.
+    final known = settings.pairedDevicesList.firstWhereOrNull(
+      (d) => isSameSole(sole, d),
     );
+    final device =
+        known?.copyWith(
+          remoteId: sole.remoteId,
+          deviceId: sole.deviceId ?? known.deviceId,
+          lastRssi: sole.rssi,
+          lastConnectedAt: DateTime.now(),
+        ) ??
+        BlePairedDevice(
+          remoteId: sole.remoteId,
+          name: sole.name.isEmpty ? 'unknown_device'.tr() : sole.name,
+          deviceId: sole.deviceId,
+          lastRssi: sole.rssi,
+          lastConnectedAt: DateTime.now(),
+        );
+    final name = device.name;
 
     // Add paired device
     await ref.read(settingsProvider.notifier).addOrUpdatePairedDevice(device);
@@ -227,7 +247,9 @@ class _DeviceConnectBottomModalState
                       child: SingleChildScrollView(
                         child: buildMaterialList(
                           context,
-                          raw: getNearbyDevices(),
+                          raw: getNearbyDevices(
+                            ref.watch(settingsProvider).pairedDevicesList,
+                          ),
                           themeColor: context.colorScheme.surface,
                         ),
                       ),

@@ -35,7 +35,8 @@ class BleSessionHandlers {
 
   /// Called once per connection, after the read/write handshake and *before*
   /// any notify is enabled — so the handlers above can rely on the device id.
-  /// [deviceId] is null when the sole did not answer the read.
+  /// [deviceId] is the sole's chip ID, or null when it reported none (firmware
+  /// from before the ID existed, or a failed read).
   final void Function(String? deviceId)? onReady;
 
   /// Called on every link loss with the platform's disconnect reason
@@ -282,21 +283,7 @@ class BleConnectionService {
       // Reads and writes first: the live IMU characteristic streams at 50 Hz,
       // and enabling it before the handshake leaves every remaining round-trip
       // competing with that flood.
-      String? deviceId;
-      switch (await readString(deviceIdCharUuid)) {
-        case Ok(:final value):
-          // The firmware declares the device-id characteristic but never
-          // populates it, so the read succeeds with 0 bytes. Treat blank as
-          // unknown — otherwise '' is persisted as the paired device's id and
-          // uploaded as a real one by the heartbeat ingest.
-          if (value.isEmpty) {
-            debugPrint('device id is blank — firmware never set it');
-          } else {
-            deviceId = value;
-          }
-        case Error(:final error):
-          debugPrint('read device id failed: $error');
-      }
+      final deviceId = await _readChipId(services);
 
       final syncResult = await writeString(
         baseTimestampCharUuid,
@@ -318,6 +305,30 @@ class BleConnectionService {
       await _subscribe(device, deviceStatusCharUuid, handlers.onDeviceStatus);
     } catch (e) {
       debugPrint('session setup failed: $e');
+    }
+  }
+
+  /// The sole's chip ID: the Device Information Service's Serial Number,
+  /// looked up in the same discovery as everything else. Null on firmware from
+  /// before the ID existed, which has no such service.
+  ///
+  /// Deliberately not the main service's old device-id characteristic: the
+  /// firmware declares it but never fills it in.
+  Future<String?> _readChipId(List<BluetoothService> services) async {
+    final char = services
+        .firstWhereOrNull((s) => s.uuid == Guid(deviceInfoServiceUuid))
+        ?.characteristics
+        .firstWhereOrNull((c) => c.uuid == Guid(serialNumberCharUuid));
+    if (char == null) {
+      debugPrint('no device ID — the firmware predates it');
+      return null;
+    }
+    try {
+      final id = utf8.decode(await char.read()).trim();
+      return id.isEmpty ? null : id;
+    } catch (e) {
+      debugPrint('read device ID failed: $e');
+      return null;
     }
   }
 

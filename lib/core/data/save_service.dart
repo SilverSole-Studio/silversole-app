@@ -36,31 +36,57 @@ Future<void> setLocalPreferredDevice(BlePairedDevice target) async {
   final devicesList = await loadLocalPairedDevices() ?? [];
   final list = devicesList
       .map(
-        (item) => item.copyWith(isPreferred: item.remoteId == target.remoteId),
+        (item) =>
+            item.copyWith(isPreferred: item.identityKey == target.identityKey),
       )
       .toList();
   await setLocalPairedDevices(list);
 }
 
 Future<void> addOrUpdateLocalPairedDevice(BlePairedDevice device) async {
-  var devicesList = await loadLocalPairedDevices() ?? [];
-  final index = devicesList.indexWhere(
-    (item) => item.remoteId == device.remoteId,
-  );
-  if (index >= 0) {
-    final current = devicesList[index];
-    devicesList[index] = device.copyWith(isPreferred: current.isPreferred);
-  } else {
-    devicesList.add(device);
+  final devicesList = await loadLocalPairedDevices() ?? [];
+  await setLocalPairedDevices(upsertPairedDevice(devicesList, device));
+}
+
+/// Records [device] in [list], replacing every entry that is the same sole.
+///
+/// An entry is the same sole when it has the same chip ID, or the same address
+/// with no conflicting ID — the latter is a sole paired on old firmware, which
+/// picks up its ID here once it reports one. When several entries match (an
+/// old address-only entry and a newer one with the ID), they collapse into one
+/// at the first entry's position. [device] supplies every field except that
+/// the entries keep a known ID and the primary-device flag.
+List<BlePairedDevice> upsertPairedDevice(
+  List<BlePairedDevice> list,
+  BlePairedDevice device,
+) {
+  bool isSame(BlePairedDevice entry) {
+    final id = device.deviceId;
+    if (id != null && entry.deviceId == id) return true;
+    if (entry.remoteId != device.remoteId) return false;
+    return id == null || entry.deviceId == null;
   }
-  await setLocalPairedDevices(devicesList);
+
+  final matches = list.where(isSame).toList();
+  if (matches.isEmpty) return [...list, device];
+
+  final merged = device.copyWith(
+    deviceId:
+        device.deviceId ?? matches.map((d) => d.deviceId).nonNulls.firstOrNull,
+    isPreferred: matches.any((d) => d.isPreferred),
+  );
+  final first = list.indexWhere(isSame);
+  return [
+    for (var i = 0; i < list.length; i++)
+      if (i == first) merged else if (!isSame(list[i])) list[i],
+  ];
 }
 
 Future<void> removeLocalPairedDevice(BlePairedDevice targetDevice) async {
   var devicesList = await loadLocalPairedDevices();
   if (devicesList == null || devicesList.isEmpty) return;
   devicesList = devicesList
-      .where((item) => item.remoteId != targetDevice.remoteId)
+      .where((item) => item.identityKey != targetDevice.identityKey)
       .toList();
   await setLocalPairedDevices(devicesList);
 }

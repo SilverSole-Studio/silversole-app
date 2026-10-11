@@ -31,7 +31,7 @@ class HomeDeviceStatusSection extends ConsumerWidget {
       name: device.name,
       type: StatusCardType.statusDisplay,
       model: device.displayModel ?? 'unknown_model'.tr(),
-      id: device.remoteId,
+      id: device.deviceId ?? device.remoteId,
       activeDisplay: true,
       frosted: true,
       detail: detail,

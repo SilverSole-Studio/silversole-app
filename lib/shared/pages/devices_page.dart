@@ -122,8 +122,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
     showMessage('rename_device_success'.tr());
   }
 
-  /// Forgets every paired device. The sole advertises a new MAC on every boot,
-  /// so this list grows a fresh entry per reboot; clearing it also stops
+  /// Forgets every paired device. Soles are recognised by their chip ID, but
+  /// older entries recorded by address only can still pile up (one per reboot,
+  /// from before the firmware sent an ID); clearing them also stops
   /// auto-connect until the next manual pairing.
   void clearAllDevices() {
     final settings = ref.read(settingsProvider.notifier);
@@ -330,11 +331,27 @@ class _DeviceRowTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                device.name,
-                style: context.textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              // Every sole is called "SilverSole"; the ID suffix tells them
+              // apart.
+              Row(
+                spacing: AppSpacing.sm,
+                children: [
+                  Flexible(
+                    child: Text(
+                      device.name,
+                      style: context.textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (device.shortId case final shortId?)
+                    Text(
+                      '••••$shortId',
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 2),
               Row(

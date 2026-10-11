@@ -3,16 +3,34 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
 
 /// The substring every sole carries in its advertised name.
 ///
-/// This is the only stable way to recognise a sole: the firmware never
-/// populates the device-id characteristic, and the sole advertises a new MAC
-/// (`remoteId`) after every boot — so a remembered remoteId is not enough to
-/// find the same physical sole again.
+/// Every sole advertises the same name, so this only says "a sole"; which sole
+/// it is comes from its device ID ([soleDeviceIdFrom]).
 const soleNameKeyword = 'silversole';
 
 bool isSoleName(String name) => name.toLowerCase().contains(soleNameKeyword);
+
+/// The company code in front of the device ID in the sole's Manufacturer
+/// Specific Data. `0xFFFF` is the Bluetooth SIG's test value and the firmware
+/// replaces it before production — this is the one place to change it.
+const soleManufacturerId = 0xFFFF;
+
+/// The sole's chip ID from its advertisement: the 8 bytes after
+/// [soleManufacturerId], big-endian, as 16 uppercase hex characters — the same
+/// string the Device Information Service's Serial Number returns.
+///
+/// Null for firmware from before the ID existed.
+String? soleDeviceIdFrom(Map<int, List<int>> manufacturerData) {
+  final bytes = manufacturerData[soleManufacturerId];
+  if (bytes == null || bytes.length != 8) return null;
+  return bytes
+      .map((b) => b.toRadixString(16).padLeft(2, '0'))
+      .join()
+      .toUpperCase();
+}
 
 /// One sole seen in a scan.
 @immutable
@@ -21,31 +39,75 @@ class SoleCandidate {
     required this.remoteId,
     required this.name,
     required this.rssi,
+    this.deviceId,
   });
+
+  factory SoleCandidate.fromScanResult(ScanResult r) => SoleCandidate(
+    remoteId: r.device.remoteId.str,
+    name: scanResultName(r),
+    rssi: r.rssi,
+    deviceId: soleDeviceIdFrom(r.advertisementData.manufacturerData),
+  );
 
   final String remoteId;
   final String name;
   final int rssi;
 
+  /// The chip ID it advertised; null on firmware too old to report one.
+  final String? deviceId;
+
   @override
-  String toString() => 'SoleCandidate($name $remoteId ${rssi}dBm)';
+  String toString() =>
+      'SoleCandidate($name ${deviceId ?? '-'} $remoteId ${rssi}dBm)';
 }
 
-/// Picks which sole to connect to.
+/// The advertised name, falling back to the platform's cached one.
+String scanResultName(ScanResult r) => r.advertisementData.advName.isNotEmpty
+    ? r.advertisementData.advName
+    : r.device.platformName;
+
+/// Whether [candidate] is the sole recorded as [paired]: by chip ID when both
+/// have one, otherwise by address — the only handle on old firmware.
+bool isSameSole(SoleCandidate candidate, BlePairedDevice paired) {
+  final id = candidate.deviceId;
+  final pairedId = paired.deviceId;
+  if (id != null && pairedId != null) return id == pairedId;
+  return candidate.remoteId == paired.remoteId;
+}
+
+/// Picks which sole to connect to, in this order:
 ///
-/// [preferredRemoteId] — the user's primary device — only breaks ties: a sole
-/// that is actually advertising always beats a remembered remoteId that is not,
-/// otherwise a stale primary device would block connecting to the sole in the
-/// user's hand.
+/// 1. the primary device, when it is on the air;
+/// 2. any other paired sole, strongest signal first;
+/// 3. as a last resort, a sole that cannot be identified — one advertising no
+///    ID, or any sole while some entry in [paired] still has no ID on record
+///    (a sole paired on old firmware looks like a stranger once it reports an
+///    ID, and this is how auto-connect finds it again).
+///
+/// Otherwise nothing: a sole that reports an ID nobody paired is someone
+/// else's, and auto-connect leaves it alone.
 SoleCandidate? pickSole(
   List<SoleCandidate> candidates, {
-  String? preferredRemoteId,
+  required List<BlePairedDevice> paired,
 }) {
-  final preferred = candidates.firstWhereOrNull(
-    (c) => c.remoteId == preferredRemoteId,
+  SoleCandidate? strongest(Iterable<SoleCandidate> pool) =>
+      pool.sorted((a, b) => b.rssi.compareTo(a.rssi)).firstOrNull;
+
+  final primary = paired.firstWhereOrNull((d) => d.isPreferred);
+  if (primary != null) {
+    final found = candidates.firstWhereOrNull((c) => isSameSole(c, primary));
+    if (found != null) return found;
+  }
+
+  final known = strongest(
+    candidates.where((c) => paired.any((d) => isSameSole(c, d))),
   );
-  if (preferred != null) return preferred;
-  return candidates.sorted((a, b) => b.rssi.compareTo(a.rssi)).firstOrNull;
+  if (known != null) return known;
+
+  final hasLegacyEntry = paired.any((d) => d.deviceId == null);
+  return strongest(
+    candidates.where((c) => c.deviceId == null || hasLegacyEntry),
+  );
 }
 
 /// Finds the soles that are advertising right now.
@@ -64,15 +126,8 @@ class SoleScanner {
     try {
       sub = FlutterBluePlus.scanResults.listen((results) {
         for (final r in results) {
-          final name = r.advertisementData.advName.isNotEmpty
-              ? r.advertisementData.advName
-              : r.device.platformName;
-          if (!isSoleName(name)) continue;
-          found[r.device.remoteId.str] = SoleCandidate(
-            remoteId: r.device.remoteId.str,
-            name: name,
-            rssi: r.rssi,
-          );
+          if (!isSoleName(scanResultName(r))) continue;
+          found[r.device.remoteId.str] = SoleCandidate.fromScanResult(r);
         }
       });
 

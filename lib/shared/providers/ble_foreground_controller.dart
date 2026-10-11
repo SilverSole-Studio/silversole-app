@@ -61,7 +61,7 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     if (device == null || !percent.isValidBatteryPercent) return;
     if (device.lastBatteryPercent == percent) return;
     boundDevice = device.copyWith(lastBatteryPercent: percent);
-    unawaited(settings.setLastBatteryPercent(device.remoteId, percent));
+    unawaited(settings.setLastBatteryPercent(device.identityKey, percent));
   }
 
   void onImu(List<int> value) {
@@ -201,12 +201,13 @@ final bleForegroundControlProvider = Provider<void>((ref) {
     });
   }
 
-  /// Finds whichever sole is actually advertising and connects to it.
+  /// Finds a paired sole that is actually advertising and connects to it.
   ///
-  /// The sole's MAC changes on every boot, so the remembered primary device is
-  /// a hint, not a target: scanning is what tells us which sole exists right
-  /// now. [force] is the manual primary-device pick asking us to look even
-  /// though a session is already up.
+  /// Soles are recognised by the chip ID in their advertisement, so a sole is
+  /// found again whatever address it comes back on; firmware too old to send
+  /// the ID falls back to the address, which is what [pickSole] spells out.
+  /// [force] is the manual primary-device pick asking us to look even though a
+  /// session is already up.
   searchAndAttach = ({bool force = false}) async {
     if (searching) return;
     if (!force && bleConnectionService.isConnected) return;
@@ -235,25 +236,30 @@ final bleForegroundControlProvider = Provider<void>((ref) {
 
       final pick = pickSole(
         await scanner.scan(),
-        preferredRemoteId: current.preferredDevice?.remoteId,
+        paired: current.pairedDevicesList,
       );
       if (pick == null) {
-        debugPrint('no sole advertising');
+        debugPrint('no paired sole advertising');
         scheduleSearch();
         return;
       }
       debugPrint('sole found: $pick');
 
-      // Reuse the stored entry when this MAC is already known, so its name and
-      // device id survive; a rebooted sole simply arrives as a new MAC.
+      // Reuse the stored entry for this sole, so its name and primary flag
+      // survive; it only moves to the address the sole is on now, and picks up
+      // the advertised ID if it was paired before the firmware sent one.
       final known = current.pairedDevicesList.firstWhereOrNull(
-        (d) => d.remoteId == pick.remoteId,
+        (d) => isSameSole(pick, d),
       );
       final device =
-          known ??
+          known?.copyWith(
+            remoteId: pick.remoteId,
+            deviceId: pick.deviceId ?? known.deviceId,
+          ) ??
           BlePairedDevice(
             remoteId: pick.remoteId,
             name: pick.name,
+            deviceId: pick.deviceId,
             lastRssi: pick.rssi,
           );
       boundDevice = device;
@@ -270,6 +276,16 @@ final bleForegroundControlProvider = Provider<void>((ref) {
             // the next search starts from the short delay again.
             watchdogTimer?.cancel();
             searchAttempt = 0;
+            // The Serial Number read and the advertisement carry the same ID;
+            // a mismatch means one of them is being parsed wrong.
+            if (deviceId != null &&
+                pick.deviceId != null &&
+                deviceId != pick.deviceId) {
+              debugPrint(
+                'device ID mismatch: advertised ${pick.deviceId}, '
+                'read $deviceId',
+              );
+            }
             // Persist the moment we (re)connected so the status card can show a
             // real "last connected" time. The listener below ignores timestamp
             // changes, so this does not restart the search.
@@ -305,10 +321,13 @@ final bleForegroundControlProvider = Provider<void>((ref) {
   // settings that change what we should be connected to. Every reconnect
   // rewrites the paired entry's timestamp, which this selector ignores on
   // purpose — otherwise each reconnect would kick off another search.
-  ref.listen<({String? preferredId, int pairedCount})>(
+  ref.listen<
+    ({String? preferredKey, String? preferredAddress, int pairedCount})
+  >(
     settingsProvider.select(
       (s) => (
-        preferredId: s.preferredDevice?.remoteId,
+        preferredKey: s.preferredDevice?.identityKey,
+        preferredAddress: s.preferredDevice?.remoteId,
         pairedCount: s.pairedDevicesList.length,
       ),
     ),
@@ -323,8 +342,15 @@ final bleForegroundControlProvider = Provider<void>((ref) {
         return;
       }
       // A manual pick goes looking even while another sole is connected;
-      // anything else only searches when nothing is connected.
-      unawaited(searchAndAttach(force: prev?.preferredId != next.preferredId));
+      // anything else only searches when nothing is connected. A pick changes
+      // both the identity and the address. The connected sole changes only
+      // one of them, and that must not force a reconnect: on a new address its
+      // identity stays the same, and when an old entry picks up its ID its
+      // address stays the same.
+      final picked =
+          prev?.preferredKey != next.preferredKey &&
+          prev?.preferredAddress != next.preferredAddress;
+      unawaited(searchAndAttach(force: picked));
     },
     fireImmediately: true,
   );
