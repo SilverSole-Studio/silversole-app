@@ -1,16 +1,95 @@
 name: Flutter Release
 
+# Two tag shapes, one rule: production only ever gets a bundle testers ran.
+#
+#   v1.9.0-rc.N  build the AAB + APKs, upload to Google Play closed testing
+#                (alpha), and publish a GitHub pre-release with the APKs.
+#   v1.9.0       no build: promote the newest v1.9.0-rc.N on alpha to
+#                production at 100 % (Google review follows), and publish the
+#                GitHub release with that rc's APKs.
+#
+# Manual runs build a bundle for an explicit track; `none` only builds it,
+# which is how the very first upload to Play Console is made (the Play API
+# cannot upload to an app that has never had a release).
+
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: Version name, e.g. 1.9.0
+        required: true
+      track:
+        description: Google Play track ("none" builds the AAB as an artifact only)
+        type: choice
+        default: none
+        options: [none, internal, alpha]
 
 permissions:
   contents: write
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
+env:
+  PACKAGE_NAME: com.dongyutech.silversole
 
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      kind: ${{ steps.plan.outputs.kind }}
+      version_name: ${{ steps.plan.outputs.version_name }}
+      track: ${{ steps.plan.outputs.track }}
+      release_name: ${{ steps.plan.outputs.release_name }}
+    steps:
+      - id: plan
+        env:
+          INPUT_VERSION_NAME: ${{ inputs.version_name }}
+          INPUT_TRACK: ${{ inputs.track }}
+        run: |
+          semver='^[0-9]+\.[0-9]+\.[0-9]+$'
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if ! [[ "$INPUT_VERSION_NAME" =~ $semver ]]; then
+              echo "::error::version_name must look like 1.9.0, got '$INPUT_VERSION_NAME'"
+              exit 1
+            fi
+            kind=manual
+            version_name="$INPUT_VERSION_NAME"
+            track="$INPUT_TRACK"
+            release_name="v${version_name}-manual.${GITHUB_RUN_NUMBER}"
+          elif [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc\.[0-9]+$ ]]; then
+            kind=rc
+            version_name="${BASH_REMATCH[1]}"
+            track=alpha
+            release_name="$GITHUB_REF_NAME"
+          elif [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            kind=final
+            version_name="${BASH_REMATCH[1]}"
+            track=production
+            release_name="$GITHUB_REF_NAME"
+          else
+            echo "::error::Tag must be vX.Y.Z-rc.N (testing) or vX.Y.Z (production), got '$GITHUB_REF_NAME'"
+            exit 1
+          fi
+          {
+            echo "kind=$kind"
+            echo "version_name=$version_name"
+            echo "track=$track"
+            echo "release_name=$release_name"
+          } >> "$GITHUB_OUTPUT"
+          echo "$kind release $release_name -> $track"
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.kind != 'final'
+    runs-on: ubuntu-latest
+    env:
+      KIND: ${{ needs.plan.outputs.kind }}
+      VERSION_NAME: ${{ needs.plan.outputs.version_name }}
+      # Every run of this workflow gets a higher number, which is all Play
+      # asks of a version code.
+      VERSION_CODE: ${{ github.run_number }}
+      TRACK: ${{ needs.plan.outputs.track }}
+      RELEASE_NAME: ${{ needs.plan.outputs.release_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,11 +117,6 @@ jobs:
           # Kotlin minimums broke every build. Bump on purpose, with android/.
           flutter-version: 3.47.6
           cache: true
-
-      - name: Extract version from tag
-        run: |
-          echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
-          echo "VERSION_CODE=${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Decode keystore
         run: |
@@ -81,30 +155,154 @@ jobs:
           MAPS_API_KEY=${{ secrets.MAPS_API_KEY }}
           EOF
 
-      - name: Build Release APK (signed)
+      - name: Build app bundle (signed)
         run: |
-          flutter build apk --release --build-name=${{ env.VERSION_NAME }} --build-number=${{ env.VERSION_CODE }} --split-per-abi
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/silversole_${{ env.VERSION_NAME }}_arm64-v8a-release.apk
+          flutter build appbundle --release --build-name="$VERSION_NAME" --build-number="$VERSION_CODE"
+          mkdir -p dist
+          mv build/app/outputs/bundle/release/app-release.aab "dist/silversole_${RELEASE_NAME#v}.aab"
 
-      - name: Create GitHub Release + upload APK
+      - name: Build APKs (signed, same version code)
+        if: env.KIND == 'rc'
+        run: |
+          out=build/app/outputs/flutter-apk
+          flutter build apk --release --build-name="$VERSION_NAME" --build-number="$VERSION_CODE" --split-per-abi
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            mv "$out/app-$abi-release.apk" "dist/silversole_${RELEASE_NAME#v}_$abi-release.apk"
+          done
+          flutter build apk --release --build-name="$VERSION_NAME" --build-number="$VERSION_CODE"
+          mv "$out/app-release.apk" "dist/silversole_${RELEASE_NAME#v}_universal-release.apk"
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: silversole-${{ env.RELEASE_NAME }}-aab
+          path: dist/*.aab
+
+      - name: Write Google Play release notes
+        if: env.TRACK != 'none'
+        run: |
+          # Strict for tags (the GitHub release needs the section too); manual
+          # runs fall back to a generic note.
+          extra=""
+          [ "$KIND" = manual ] && extra="--allow-missing"
+          python3 .github/scripts/play_whatsnew.py CHANGELOG.md "v$VERSION_NAME" distribution/whatsnew $extra
+
+      - name: Upload to Google Play
+        if: env.TRACK != 'none'
+        uses: r0adkll/upload-google-play@v1.1.1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          releaseFiles: dist/*.aab
+          track: ${{ env.TRACK }}
+          status: completed
+          # 3 = flexible background update (see InAppUpdatePolicy.kt).
+          inAppUpdatePriority: 3
+          releaseName: ${{ env.RELEASE_NAME }}
+          whatsNewDirectory: distribution/whatsnew
+
+      - name: Create GitHub pre-release
+        if: env.KIND == 'rc'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NOTES=$(awk -v ver="${GITHUB_REF_NAME}" '
-          BEGIN { found=0 }
-          $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
-          $0 ~ "^##[[:space:]]+v" { if (found) exit }
-          found { print }
-          ' CHANGELOG.md)
+          {
+            echo "Google Play 封閉測試版（內測），測試通過後推 \`v$VERSION_NAME\` 即上架正式版。"
+            echo
+            awk -v ver="v$VERSION_NAME" '
+            BEGIN { found=0 }
+            $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
+            $0 ~ "^##[[:space:]]+v" { if (found) exit }
+            found { print }
+            ' CHANGELOG.md
+            cat .github/release-apk-guide.md
+          } > notes.md
+          # arm64 first: the in-app GitHub updater offers the first asset.
+          gh release create "$GITHUB_REF_NAME" --prerelease \
+            --title "$GITHUB_REF_NAME" --notes-file notes.md \
+            dist/*_arm64-v8a-release.apk dist/*_armeabi-v7a-release.apk \
+            dist/*_x86_64-release.apk dist/*_universal-release.apk
+
+      - name: Notify Discord
+        if: env.KIND == 'rc'
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: |
+            SilverSole 內測版 ${{ env.RELEASE_NAME }} 已上傳 Google Play 封閉測試。
+            測試人員可在 Play 商店更新。
+          wait: true
+
+  promote:
+    needs: plan
+    if: needs.plan.outputs.kind == 'final'
+    runs-on: ubuntu-latest
+    env:
+      VERSION_NAME: ${{ needs.plan.outputs.version_name }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Play API client
+        run: pip install --quiet google-auth requests
+
+      - name: Find the tested release candidate
+        id: find
+        run: python3 .github/scripts/play_promote.py find "$VERSION_NAME"
+
+      - name: Fetch the candidate's APKs
+        env:
+          RC_TAG: ${{ steps.find.outputs.rc_tag }}
+        run: |
+          # Before promoting, so a missing GitHub pre-release stops the run
+          # while production is still untouched.
+          gh release download "$RC_TAG" -p '*.apk' -D dist
+          for f in dist/*.apk; do
+            mv "$f" "${f/_${RC_TAG#v}_/_${VERSION_NAME}_}"
+          done
+          ls dist
+          if [ "$(git rev-list -n1 "$RC_TAG")" != "$(git rev-list -n1 "$GITHUB_REF_NAME")" ]; then
+            echo "::warning::$GITHUB_REF_NAME is not on the same commit as $RC_TAG. Production ships $RC_TAG's build; later commits are not in it."
+          fi
+
+      - name: Promote to production (100 %)
+        run: python3 .github/scripts/play_promote.py promote "$VERSION_NAME"
+
+      - name: Create GitHub release
+        run: |
+          {
+            awk -v ver="$GITHUB_REF_NAME" '
+            BEGIN { found=0 }
+            $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
+            $0 ~ "^##[[:space:]]+v" { if (found) exit }
+            found { print }
+            ' CHANGELOG.md
+            cat .github/release-apk-guide.md
+          } > notes.md
           {
             echo "NOTES<<EOF"
-            echo "$NOTES"
+            awk -v ver="$GITHUB_REF_NAME" '
+            BEGIN { found=0 }
+            $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
+            $0 ~ "^##[[:space:]]+v" { if (found) exit }
+            found { print }
+            ' CHANGELOG.md
             echo "EOF"
           } >> "$GITHUB_ENV"
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes "$NOTES" \
-            build/app/outputs/flutter-apk/*arm64-v8a-release.apk
+          # arm64 first: the in-app GitHub updater offers the first asset.
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" --notes-file notes.md \
+            dist/*_arm64-v8a-release.apk dist/*_armeabi-v7a-release.apk \
+            dist/*_x86_64-release.apk dist/*_universal-release.apk
 
       - name: Notify Discord
         uses: tsickert/discord-webhook@v7.0.0
@@ -112,8 +310,8 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           content: |
             SilverSole APP 新版本：${{ env.VERSION_NAME }}
-            
+
             ${{ env.NOTES }}
-            
-            開啟 APP 後即可快速更新
+
+            已送交 Google Play 審核，審核通過後即可在 Play 商店更新。
           wait: true
