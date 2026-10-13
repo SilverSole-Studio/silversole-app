@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- String? get identity; String? get deviceId; bool get darkMode; AppThemeVariant get themeVariant; TransmissionMethod get transmissionMethod; List<BlePairedDevice> get pairedDevicesList;/// Hidden developer mode (seven taps on the firmware version): reads the
+ String? get identity; String? get deviceId; bool get darkMode; AppThemeVariant get themeVariant; TransmissionMethod get transmissionMethod; List<BlePairedDevice> get pairedDevicesList;/// Hidden developer mode (seven taps on the firmware title): reads the
 /// beta firmware channel and allows a warned downgrade.
  bool get firmwareDevMode;
 /// Create a copy of AppSettings
@@ -229,7 +229,7 @@ class _AppSettings extends AppSettings {
   return EqualUnmodifiableListView(_pairedDevicesList);
 }
 
-/// Hidden developer mode (seven taps on the firmware version): reads the
+/// Hidden developer mode (seven taps on the firmware title): reads the
 /// beta firmware channel and allows a warned downgrade.
 @override@JsonKey() final  bool firmwareDevMode;
 

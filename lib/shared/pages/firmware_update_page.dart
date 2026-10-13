@@ -255,8 +255,10 @@ class _Outcome extends StatelessWidget {
         'ota_succeeded'.tr(args: [_v(state.readVersion)]),
       ),
       OtaPhase.localFinished => (
-        Icons.check_circle_outline,
-        context.tokens.success,
+        // Neutral, not a success colour: a local file has no expected
+        // version to judge against (the spec's §4).
+        Icons.info_outline,
+        context.colorScheme.onSurfaceVariant,
         'ota_local_finished'.tr(
           args: [_v(state.fromVersion), _v(state.readVersion)],
         ),

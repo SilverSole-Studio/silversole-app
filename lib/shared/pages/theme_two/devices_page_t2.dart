@@ -267,7 +267,7 @@ class _FirmwareCard extends ConsumerWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else if (value != null)
-                _FirmwareStatus(check: value),
+                Flexible(child: _FirmwareStatus(check: value)),
             ],
           ),
           if (kDebugMode && (value?.sole?.dfuSupported ?? false))
@@ -311,11 +311,19 @@ class _FirmwareStatus extends ConsumerWidget {
       ),
       FirmwareCardAction.update => FilledButton(
         onPressed: () => openFirmwareUpdate(context, check),
-        child: Text('firmware_update_to'.tr(args: [version])),
+        child: Text(
+          'firmware_update_to'.tr(args: [version]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       FirmwareCardAction.downgrade => OutlinedButton(
         onPressed: () => confirmDowngrade(context, check),
-        child: Text('firmware_downgrade_to'.tr(args: [version])),
+        child: Text(
+          'firmware_downgrade_to'.tr(args: [version]),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       FirmwareCardAction.needsWiredUpdate => alert(
         'firmware_needs_wired_update'.tr(),
@@ -328,7 +336,11 @@ class _FirmwareStatus extends ConsumerWidget {
       ),
       FirmwareCardAction.retry => TextButton(
         onPressed: () => ref.invalidate(firmwareCheckProvider),
-        child: Text('firmware_check_failed'.tr()),
+        child: Text(
+          'firmware_check_failed'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
     };
   }

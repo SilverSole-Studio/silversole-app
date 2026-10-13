@@ -453,7 +453,7 @@ ota_nothing_to_install,Nothing to install.,沒有可安裝的韌體。
 ota_downloading,Downloading firmware…,正在下載韌體…
 ota_transferring,Sending to the insole · {} / {} KB,正在傳送到鞋墊 · {} / {} KB
 ota_verifying,The insole is checking the firmware…,鞋墊正在驗證韌體…
-ota_rebooting,The insole is restarting on the new firmware. This can take up to 90 s.,鞋墊正在重新開機換版，最多約 90 秒。
+ota_rebooting,The insole is restarting on the new firmware. This can take up to about 2 minutes.,鞋墊正在重新開機換版，最多約 2 分鐘。
 ota_keep_close,Keep the app open and the phone close to the insole.,請讓 App 保持開啟，手機靠近鞋墊。
 ota_succeeded,Updated to {},已更新到 {}
 ota_local_finished,{} → {} after the update,更新前 {} → 更新後 {}

@@ -19,7 +19,7 @@ abstract class AppSettings with _$AppSettings {
     TransmissionMethod transmissionMethod,
     @Default(<BlePairedDevice>[]) List<BlePairedDevice> pairedDevicesList,
 
-    /// Hidden developer mode (seven taps on the firmware version): reads the
+    /// Hidden developer mode (seven taps on the firmware title): reads the
     /// beta firmware channel and allows a warned downgrade.
     @Default(false) bool firmwareDevMode,
   }) = _AppSettings;
