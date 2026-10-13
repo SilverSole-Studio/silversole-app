@@ -310,7 +310,6 @@ my_devices,My devices,我的裝置
 device_hero_caption,SilverSole Smart Insole · L / R,SilverSole 智慧鞋墊 · 左 / 右
 signal_good,Connected · Strong signal,已連線 · 訊號良好
 firmware_version,Firmware,韌體版本
-firmware_detail,{} · Live sync {} Hz,{} · 即時同步 {} Hz
 firmware_up_to_date,Up to date,已是最新
 device_pair_new,Pair new device,配對新裝置
 no_paired_devices,No devices paired yet,尚未配對任何裝置
@@ -423,3 +422,19 @@ gait_ref_band,Gray band = measurement uncertainty · never stages on its own,灰
 gait_in_progress,This week is still running,本週尚未結束
 sole_legacy_firmware,Old firmware,舊版韌體
 sole_already_paired,Paired,已配對
+firmware_not_connected,Connect an insole to see its firmware,連上鞋墊後顯示韌體版本
+firmware_beta,beta,beta
+firmware_update_to,Update to v{},更新到 v{}
+firmware_downgrade_to,Install v{},安裝 v{}
+firmware_needs_wired_update,Needs a wired update,需要接線更新
+firmware_version_unreadable,Unknown version,版本無法辨識
+firmware_check_failed,Check again,重新檢查
+firmware_manifest_unsupported,Update the app first,請先更新 App
+firmware_update_from_file,Update from file,從檔案更新
+firmware_pick_bin,Choose fw.bin,選擇 fw.bin
+firmware_pick_sig,Choose fw.bin.sig,選擇 fw.bin.sig
+firmware_local_invalid,These files cannot be installed: {},這些檔案無法安裝：{}
+firmware_dev_mode_on,Developer mode on: beta firmware,開發者模式已開啟：beta 韌體
+firmware_dev_mode_off,Developer mode off,開發者模式已關閉
+firmware_downgrade_title,Install older firmware?,要安裝較舊的韌體嗎？
+firmware_downgrade_content,v{} is older than v{} on the insole. Only do this for testing.,v{} 比鞋墊目前的 v{} 舊。只在測試時這樣做。

@@ -1,16 +1,6 @@
 import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 
-/// Firmware facts the devices panel shows but the app cannot read yet: the
-/// GATT contract (`ble_uuids.dart`) has no firmware characteristic, so these
-/// are mockup copy. Kept here so both themes print the same thing and there is
-/// a single place to delete once the sole reports its own version.
-abstract final class MockFirmware {
-  static const String version = 'v2.4.1';
-  static const int sampleRateHz = 100;
-  static const bool upToDate = true;
-}
-
 /// A paired device plus the live facts that only apply to the one currently
 /// streaming.
 class DeviceRow {

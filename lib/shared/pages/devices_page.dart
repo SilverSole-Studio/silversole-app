@@ -13,10 +13,12 @@ import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_view_data.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
+import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
+import 'package:silversole/shared/widgets/firmware_card_parts.dart';
 import 'package:silversole/shared/widgets/rader_dot.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -44,8 +46,9 @@ class DevicesRoute extends ConsumerWidget {
 /// carousel's trailing "+" page and its add-device FAB, so a third entry point
 /// here would be redundant.
 ///
-/// The paired rows and their battery levels are real; the firmware block is
-/// [MockFirmware] — the sole does not report a version yet.
+/// The paired rows and their battery levels are real, and the firmware block
+/// shows the connected sole's version and offers updates
+/// ([firmwareCheckProvider]).
 class DevicesPage extends ConsumerStatefulWidget {
   const DevicesPage({super.key});
 
@@ -435,49 +438,128 @@ class _DeviceRowTile extends StatelessWidget {
 
 // ── 3. Firmware ───────────────────────────────────────────────────────────
 
-class _FirmwareCard extends StatelessWidget {
+class _FirmwareCard extends ConsumerWidget {
   const _FirmwareCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final check = ref.watch(firmwareCheckProvider);
+    final devMode = ref.watch(
+      settingsProvider.select((s) => s.firmwareDevMode),
+    );
+    final value = check.value;
     return SectionCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppSpacing.sm,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'firmware_version'.tr(),
-                  style: context.textTheme.titleMedium,
+          Row(
+            spacing: AppSpacing.md,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: AppSpacing.xs,
+                  children: [
+                    DevModeTapTarget(
+                      child: Row(
+                        spacing: AppSpacing.sm,
+                        children: [
+                          Text(
+                            'firmware_version'.tr(),
+                            style: context.textTheme.titleMedium,
+                          ),
+                          if (devMode)
+                            Text(
+                              'firmware_beta'.tr(),
+                              style: context.textTheme.labelMedium?.copyWith(
+                                color: context.colorScheme.tertiary,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      firmwareCardDetail(value) ??
+                          'firmware_not_connected'.tr(),
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'firmware_detail'.tr(
-                    args: [
-                      MockFirmware.version,
-                      '${MockFirmware.sampleRateHz}',
-                    ],
-                  ),
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              if (check.isLoading)
+                const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else if (value != null)
+                _FirmwareStatus(check: value),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Chip(
-            avatar: Icon(
-              LucideIcons.check,
-              size: 16,
-              color: context.tokens.success,
+          if (kDebugMode && (value?.sole?.dfuSupported ?? false))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => pickLocalFirmware(context, ref),
+                icon: const Icon(Icons.upload_file),
+                label: Text('firmware_update_from_file'.tr()),
+              ),
             ),
-            label: Text('firmware_up_to_date'.tr()),
-          ),
         ],
       ),
     );
+  }
+}
+
+class _FirmwareStatus extends ConsumerWidget {
+  const _FirmwareStatus({required this.check});
+
+  final FirmwareCheck check;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    Widget flag(IconData icon, Color color, String label) => Chip(
+      avatar: Icon(icon, size: 16, color: color),
+      label: Text(label),
+    );
+    final version = check.manifest?.version ?? '';
+    return switch (firmwareCardAction(check)) {
+      FirmwareCardAction.none => const SizedBox.shrink(),
+      FirmwareCardAction.upToDate => flag(
+        LucideIcons.check,
+        context.tokens.success,
+        'firmware_up_to_date'.tr(),
+      ),
+      FirmwareCardAction.update => FilledButton(
+        onPressed: () => openFirmwareUpdate(context, check),
+        child: Text('firmware_update_to'.tr(args: [version])),
+      ),
+      FirmwareCardAction.downgrade => OutlinedButton(
+        onPressed: () => confirmDowngrade(context, check),
+        child: Text('firmware_downgrade_to'.tr(args: [version])),
+      ),
+      FirmwareCardAction.needsWiredUpdate => flag(
+        Icons.warning_amber_rounded,
+        context.tokens.alert,
+        'firmware_needs_wired_update'.tr(),
+      ),
+      FirmwareCardAction.versionUnreadable => flag(
+        Icons.warning_amber_rounded,
+        context.tokens.alert,
+        'firmware_version_unreadable'.tr(),
+      ),
+      FirmwareCardAction.appTooOld => flag(
+        Icons.warning_amber_rounded,
+        context.tokens.alert,
+        'firmware_manifest_unsupported'.tr(),
+      ),
+      FirmwareCardAction.retry => TextButton(
+        onPressed: () => ref.invalidate(firmwareCheckProvider),
+        child: Text('firmware_check_failed'.tr()),
+      ),
+    };
   }
 }

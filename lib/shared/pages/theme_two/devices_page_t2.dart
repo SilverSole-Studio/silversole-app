@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
@@ -8,9 +9,11 @@ import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_view_data.dart';
 import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
+import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/widgets/firmware_card_parts.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// "My devices", mascot theme — the panel behind the home screen's device
@@ -18,8 +21,8 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 ///
 /// The product shot, the paired-device rows and the pairing button are real:
 /// rows come from the paired list, and the connected one shows its live
-/// battery. The firmware block is [MockFirmware] — the sole does not report a
-/// version yet.
+/// battery. The firmware block shows the connected sole's version and offers
+/// updates ([firmwareCheckProvider]).
 class DevicesPageT2 extends ConsumerWidget {
   const DevicesPageT2({super.key});
 
@@ -208,49 +211,126 @@ class _DeviceRowTile extends StatelessWidget {
 
 // ── 3. Firmware ───────────────────────────────────────────────────────────
 
-class _FirmwareCard extends StatelessWidget {
+class _FirmwareCard extends ConsumerWidget {
   const _FirmwareCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final check = ref.watch(firmwareCheckProvider);
+    final devMode = ref.watch(
+      settingsProvider.select((s) => s.firmwareDevMode),
+    );
+    final value = check.value;
     return MascotCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'firmware_version'.tr(),
-                  style: context.textTheme.titleMedium,
+          Row(
+            spacing: 10,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 4,
+                  children: [
+                    DevModeTapTarget(
+                      child: Row(
+                        spacing: 6,
+                        children: [
+                          Text(
+                            'firmware_version'.tr(),
+                            style: context.textTheme.titleMedium,
+                          ),
+                          if (devMode)
+                            Text(
+                              'firmware_beta'.tr(),
+                              style: context.textTheme.labelLarge?.copyWith(
+                                color: AppPaletteT2.flame,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      firmwareCardDetail(value) ??
+                          'firmware_not_connected'.tr(),
+                      style: context.textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'firmware_detail'.tr(
-                    args: [
-                      MockFirmware.version,
-                      '${MockFirmware.sampleRateHz}',
-                    ],
-                  ),
-                  style: context.textTheme.bodyMedium,
-                ),
-              ],
-            ),
+              ),
+              if (check.isLoading)
+                const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else if (value != null)
+                _FirmwareStatus(check: value),
+            ],
           ),
-          const SizedBox(width: 10),
-          MascotPill(
-            color: AppPaletteT2.safeSoft,
-            child: Text(
-              'firmware_up_to_date'.tr(),
-              style: context.textTheme.labelLarge?.copyWith(
-                color: AppPaletteT2.safe,
+          if (kDebugMode && (value?.sole?.dfuSupported ?? false))
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => pickLocalFirmware(context, ref),
+                icon: const Icon(Icons.upload_file),
+                label: Text('firmware_update_from_file'.tr()),
               ),
             ),
-          ),
         ],
       ),
     );
+  }
+}
+
+class _FirmwareStatus extends ConsumerWidget {
+  const _FirmwareStatus({required this.check});
+
+  final FirmwareCheck check;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    Widget pill(Color fill, Color ink, String label) => MascotPill(
+      color: fill,
+      child: Text(
+        label,
+        style: context.textTheme.labelLarge?.copyWith(color: ink),
+      ),
+    );
+    Widget alert(String label) =>
+        pill(AppPaletteT2.cardWarm, AppPaletteT2.danger, label);
+    final version = check.manifest?.version ?? '';
+    return switch (firmwareCardAction(check)) {
+      FirmwareCardAction.none => const SizedBox.shrink(),
+      FirmwareCardAction.upToDate => pill(
+        AppPaletteT2.safeSoft,
+        AppPaletteT2.safe,
+        'firmware_up_to_date'.tr(),
+      ),
+      FirmwareCardAction.update => FilledButton(
+        onPressed: () => openFirmwareUpdate(context, check),
+        child: Text('firmware_update_to'.tr(args: [version])),
+      ),
+      FirmwareCardAction.downgrade => OutlinedButton(
+        onPressed: () => confirmDowngrade(context, check),
+        child: Text('firmware_downgrade_to'.tr(args: [version])),
+      ),
+      FirmwareCardAction.needsWiredUpdate => alert(
+        'firmware_needs_wired_update'.tr(),
+      ),
+      FirmwareCardAction.versionUnreadable => alert(
+        'firmware_version_unreadable'.tr(),
+      ),
+      FirmwareCardAction.appTooOld => alert(
+        'firmware_manifest_unsupported'.tr(),
+      ),
+      FirmwareCardAction.retry => TextButton(
+        onPressed: () => ref.invalidate(firmwareCheckProvider),
+        child: Text('firmware_check_failed'.tr()),
+      ),
+    };
   }
 }
 
