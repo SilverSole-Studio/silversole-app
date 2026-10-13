@@ -302,6 +302,13 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     boundDevice = device;
     syncNotification();
 
+    // The old session's listener is cancelled by attach()'s own detach()
+    // before the new link comes up, so onDisconnected never fires for it —
+    // without this, a forced swap (a manual primary-device pick while
+    // another sole is connected) would leave the old sole in
+    // connectedSoleProvider until the new one's onReady overwrites it.
+    connectedSole.clear();
+
     final result = await bleConnectionService.attach(
       device,
       handlers: BleSessionHandlers(

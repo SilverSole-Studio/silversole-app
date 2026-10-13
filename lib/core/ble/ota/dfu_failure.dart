@@ -19,7 +19,11 @@ enum DfuFailure {
   badCommand,
   manifestUnavailable,
   downloadFailed,
-  imageInvalid;
+  imageInvalid,
+
+  /// The manifest is not newer than the sole's firmware, and developer mode
+  /// is off (the handoff's §6.2): retrying cannot change that.
+  notNewer;
 
   /// False where trying again cannot help: the image, its signature or the
   /// sole's firmware itself is the problem (the handoff's §3.5).
@@ -29,7 +33,8 @@ enum DfuFailure {
     badCommand ||
     unsupportedVersion ||
     dfuUnsupported ||
-    imageInvalid => false,
+    imageInvalid ||
+    notNewer => false,
     _ => true,
   };
 

@@ -11,6 +11,7 @@ import 'package:silversole/core/ble/ota/dfu_protocol.dart';
 import 'package:silversole/core/ble/ota/reacquire_match.dart';
 import 'package:silversole/core/data/firmware_release_service.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/connected_sole.dart';
 import 'package:silversole/shared/models/firmware_manifest.dart';
@@ -20,6 +21,7 @@ import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/firmware_update_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/sole_connection_controller.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 
@@ -64,6 +66,10 @@ class _FakeConnection implements SoleConnectionController {
   var holds = 0;
   var releases = 0;
 
+  /// Runs when the update asks for the DFU link — lets a test swap the
+  /// connected sole out from under `_install`'s own re-check.
+  void Function()? onDfuLink;
+
   @override
   void hold() => holds++;
 
@@ -71,7 +77,10 @@ class _FakeConnection implements SoleConnectionController {
   void release() => releases++;
 
   @override
-  DfuLink? dfuLink() => sole;
+  DfuLink? dfuLink() {
+    onDfuLink?.call();
+    return sole;
+  }
 
   @override
   Future<ReacquiredSole?> reacquire(
@@ -103,6 +112,21 @@ class _BrokenSole extends FakeDfuSole {
       throw StateError('link lost');
 }
 
+/// Developer mode off, with no shared_preferences load — `build()` never
+/// calls `_load()`, so no plugin needs to be mocked. `_run` uses this by
+/// default so `installRelease`'s dev-mode read does not touch
+/// shared_preferences in every other test in this file.
+class _TestSettings extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings();
+}
+
+/// As [_TestSettings], but with developer mode on.
+class _DevModeSettings extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings(firmwareDevMode: true);
+}
+
 /// Builds a container with [connection] and the sole connected, runs [body]
 /// and lets fake time run out, then returns the final state. When [midway]
 /// is given, fake time is advanced by [midwayAt] first and [midway] runs
@@ -113,6 +137,9 @@ OtaState _run(
   ConnectedSole? sole = _sole,
   void Function(ProviderContainer c)? midway,
   Duration midwayAt = const Duration(milliseconds: 50),
+  // Avoids a real shared_preferences load — settingsProvider's build()
+  // would otherwise throw with no TestWidgetsFlutterBinding in this file.
+  bool devMode = false,
 }) {
   late OtaState state;
   fakeAsync((async) {
@@ -122,6 +149,9 @@ OtaState _run(
         keepScreenOnProvider.overrideWithValue((_) async {}),
         firmwareReleaseServiceProvider.overrideWithValue(
           _FakeRelease(_image()),
+        ),
+        settingsProvider.overrideWith(
+          devMode ? _DevModeSettings.new : _TestSettings.new,
         ),
       ],
     );
@@ -270,4 +300,81 @@ void main() {
       expect(sole.controlWrites, contains(equals(const [0x03])));
     },
   );
+
+  test('a sole swapped in while reading the DFU link is never written to', () {
+    final sole = FakeDfuSole();
+    final connection = _FakeConnection(sole);
+    const soleB = ConnectedSole(
+      device: BlePairedDevice(remoteId: 'N', name: 'Other', deviceId: 'OTH'),
+      firmwareVersion: '0.4.0',
+      dfuSupported: true,
+    );
+    final state = _run(connection, (c) {
+      connection.onDfuLink = () =>
+          c.read(connectedSoleProvider.notifier).set(soleB);
+      c.read(firmwareUpdateProvider.notifier).installLocal(_image());
+    });
+    expect(state.phase, OtaPhase.failed);
+    expect(state.failure, DfuFailure.notConnected);
+    expect(sole.controlWrites, isEmpty);
+    expect(connection.holds, 0);
+  });
+
+  test('outside developer mode an equal or older manifest is refused as '
+      'not newer', () {
+    for (final version in ['0.4.0', '0.3.0']) {
+      final sole = FakeDfuSole();
+      final connection = _FakeConnection(sole);
+      final manifest = FirmwareManifest(
+        schema: 1,
+        channel: 'stable',
+        version: version,
+        size: 6000,
+        sha256: '-',
+        binPath: 'b',
+        sigPath: 's',
+      );
+      final state = _run(
+        connection,
+        (c) => c.read(firmwareUpdateProvider.notifier).installRelease(manifest),
+      );
+      expect(state.phase, OtaPhase.failed, reason: version);
+      expect(state.failure, DfuFailure.notNewer, reason: version);
+      expect(sole.controlWrites, isEmpty, reason: version);
+      expect(connection.holds, 0, reason: version);
+    }
+  });
+
+  test('developer mode lets an older manifest proceed', () {
+    final sole = FakeDfuSole();
+    final connection = _FakeConnection(sole);
+    const manifest = FirmwareManifest(
+      schema: 1,
+      channel: 'stable',
+      version: '0.3.0',
+      size: 6000,
+      sha256: '-',
+      binPath: 'b',
+      sigPath: 's',
+    );
+    final state = _run(
+      connection,
+      (c) => c.read(firmwareUpdateProvider.notifier).installRelease(manifest),
+      devMode: true,
+    );
+    expect(state.failure, isNot(DfuFailure.notNewer));
+    expect(sole.controlWrites, isNotEmpty);
+  });
+
+  test('APPLY sent then silence times out but still succeeds once the sole '
+      'reboots', () {
+    final sole = FakeDfuSole()..swallowApply = true;
+    final connection = _FakeConnection(sole);
+    final state = _run(
+      connection,
+      (c) => c.read(firmwareUpdateProvider.notifier).installRelease(_manifest),
+    );
+    expect(state.phase, OtaPhase.succeeded);
+    expect(state.readVersion, '0.5.0');
+  });
 }

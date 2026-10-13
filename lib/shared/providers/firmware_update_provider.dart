@@ -14,6 +14,7 @@ import 'package:silversole/shared/models/ota_state.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/sole_connection_controller.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -49,10 +50,24 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
     if (state.busy) return;
     final sole = ref.read(connectedSoleProvider);
     if (_refused(sole)) return;
+    final fromVersion = sole!.firmwareVersion;
+    // The sole does not refuse older firmware itself, so the app must never
+    // offer it outside developer mode (the handoff's §6.2).
+    final devMode = ref.read(settingsProvider).firmwareDevMode;
+    if (!devMode &&
+        compareFirmware(fromVersion, manifest.version) !=
+            FirmwareComparison.upgrade) {
+      state = OtaState(
+        phase: OtaPhase.failed,
+        failure: DfuFailure.notNewer,
+        fromVersion: fromVersion,
+      );
+      return;
+    }
     _cancelRequested = false;
     state = OtaState(
       phase: OtaPhase.downloading,
-      fromVersion: sole!.firmwareVersion,
+      fromVersion: fromVersion,
       toVersion: manifest.version,
     );
     final downloaded = await ref
@@ -126,6 +141,18 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
     final connection = ref.read(bleForegroundControlProvider);
     final link = connection.dfuLink();
     if (link == null) {
+      _fail(DfuFailure.notConnected);
+      return;
+    }
+    // attach()'s own detach() cancels the old session's listener before the
+    // new link comes up, so a forced swap (a manual primary-device pick
+    // while another sole is connected) can leave connectedSoleProvider on
+    // the old sole while dfuLink() above already answers for the new one.
+    // Never write into a sole we did not confirm is still the one we started
+    // with.
+    final current = ref.read(connectedSoleProvider);
+    if (current == null ||
+        current.device.identityKey != sole.device.identityKey) {
       _fail(DfuFailure.notConnected);
       return;
     }

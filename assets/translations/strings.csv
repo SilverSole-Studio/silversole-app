@@ -482,3 +482,4 @@ ota_fail_bad_command,The app sent a command the insole did not understand. Pleas
 ota_fail_manifest_unavailable,Could not check for firmware. Check the internet connection.,無法取得韌體資訊，請確認網路連線。
 ota_fail_download_failed,The download failed. Check the internet connection.,下載失敗，請確認網路連線。
 ota_fail_image_invalid,The downloaded firmware failed its check and was not sent.,下載的韌體沒有通過檢查，沒有送進鞋墊。
+ota_fail_not_newer,This firmware is not newer than the one on the insole.,這個韌體沒有比鞋墊目前的版本新。

@@ -182,6 +182,13 @@ void main() {
     expect(_failure(result), DfuFailure.disconnected);
   });
 
+  test('APPLY sent then silence is a timeout, with applySent true', () {
+    final sole = FakeDfuSole()..swallowApply = true;
+    final (result, transfer) = _run(sole);
+    expect(_failure(result), DfuFailure.timeout);
+    expect(transfer.applySent, isTrue);
+  });
+
   test('cancel sends ABORT and ends as cancelled', () {
     final sole = FakeDfuSole();
     final (result, _) = _run(

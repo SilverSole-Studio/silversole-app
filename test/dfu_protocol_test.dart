@@ -78,6 +78,7 @@ void main() {
       DfuFailure.unsupportedVersion,
       DfuFailure.dfuUnsupported,
       DfuFailure.imageInvalid,
+      DfuFailure.notNewer,
     ]) {
       expect(f.retryable, isFalse, reason: f.name);
     }

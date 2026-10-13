@@ -27,6 +27,10 @@ class FakeDfuSole implements DfuLink {
   /// How long the sole stays in VERIFYING.
   Duration verifyTime = Duration.zero;
 
+  /// True makes APPLY go silent: no VERIFYING, no result, ever — as if the
+  /// sole's answer never made it back over the air.
+  bool swallowApply = false;
+
   /// True loses that data packet in the air.
   bool Function(int offset)? drop;
 
@@ -128,6 +132,11 @@ class FakeDfuSole implements DfuLink {
   void _onApply() {
     if (_state != DfuState.receiving || _committed != _size) {
       _emit(DfuResult.badState);
+      return;
+    }
+    if (swallowApply) {
+      // The sole may still install the image — only its answer is lost.
+      _state = DfuState.verifying;
       return;
     }
     _state = DfuState.verifying;
