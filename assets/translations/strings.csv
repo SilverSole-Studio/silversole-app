@@ -438,3 +438,47 @@ firmware_dev_mode_on,Developer mode on: beta firmware,開發者模式已開啟�
 firmware_dev_mode_off,Developer mode off,開發者模式已關閉
 firmware_downgrade_title,Install older firmware?,要安裝較舊的韌體嗎？
 firmware_downgrade_content,v{} is older than v{} on the insole. Only do this for testing.,v{} 比鞋墊目前的 v{} 舊。只在測試時這樣做。
+ota_title,Firmware update,韌體更新
+ota_version_change,{} → {},{} → {}
+ota_estimate,About {} s · {} KB,約 {} 秒 · {} KB
+ota_notes,What's new,更新內容
+ota_before_you_start,Before you start,開始前請注意
+ota_tip_foreground,Keep the app open on screen until it finishes.,更新完成前請讓 App 保持在畫面上。
+ota_tip_nearby,Keep the phone close to the insole.,手機請靠近鞋墊。
+ota_tip_paused,Live data pauses during the update.,更新期間即時資料會暫停。
+ota_tip_safe,If it is interrupted the insole keeps its current firmware and keeps working.,如果中途中斷，鞋墊會保留目前的韌體並正常運作。
+ota_start,Start update,開始更新
+ota_local_file,local file,本機檔案
+ota_nothing_to_install,Nothing to install.,沒有可安裝的韌體。
+ota_downloading,Downloading firmware…,正在下載韌體…
+ota_transferring,Sending to the insole · {} / {} KB,正在傳送到鞋墊 · {} / {} KB
+ota_verifying,The insole is checking the firmware…,鞋墊正在驗證韌體…
+ota_rebooting,The insole is restarting on the new firmware. This can take up to 90 s.,鞋墊正在重新開機換版，最多約 90 秒。
+ota_keep_close,Keep the app open and the phone close to the insole.,請讓 App 保持開啟，手機靠近鞋墊。
+ota_succeeded,Updated to {},已更新到 {}
+ota_local_finished,{} → {} after the update,更新前 {} → 更新後 {}
+ota_not_updated,The update did not finish.,更新未完成。
+ota_unconfirmed,Could not confirm the update. Check the version on the devices page later.,無法確認更新結果，請稍後到裝置頁查看版本。
+ota_probable_note,This insole was identified by elimination. Check its ID on the devices page.,這隻鞋墊是推測出來的，請到裝置頁核對它的 ID。
+ota_sole_still_works,Your insole still works as before.,鞋墊仍可正常使用。
+ota_retry,Try again,重試
+ota_done,Done,完成
+ota_fail_not_connected,No insole is connected.,目前沒有連線的鞋墊。
+ota_fail_disconnected,The connection was lost. Move closer and keep the app open.,連線中斷了。請靠近鞋墊並保持 App 開啟後再試。
+ota_fail_timeout,The insole stopped answering.,鞋墊沒有回應。
+ota_fail_too_many_retries,The connection is too weak. Move closer and try again.,連線品質太差，請靠近鞋墊再試。
+ota_fail_cancelled,The update was cancelled.,已取消更新。
+ota_fail_dfu_unsupported,This insole's firmware is too old to update over Bluetooth. Please contact support.,這隻鞋墊的韌體太舊，無法無線更新，請聯絡客服。
+ota_fail_unsupported_version,This insole needs a wired update. Please contact support.,這隻鞋墊需要接線更新，請聯絡客服。
+ota_fail_mtu_too_small,This phone could not set up a fast enough Bluetooth link.,這支手機無法建立足夠的藍牙傳輸速度。
+ota_fail_low_battery,The insole battery is below 30%. Charge it and try again.,鞋墊電量低於 30%，請充電後再試。
+ota_fail_battery_unknown,The insole just started. Try again in a moment.,鞋墊剛開機，請稍後再試。
+ota_fail_bad_state,The insole was just updated. Try again in 30 seconds.,鞋墊剛更新過，請 30 秒後再試。
+ota_fail_hash_mismatch,The firmware was damaged on the way twice.,韌體在傳送過程中連續兩次損壞。
+ota_fail_flash_error,The insole could not store the firmware.,鞋墊無法寫入韌體。
+ota_fail_bad_signature,The insole rejected this firmware's signature. Please report this.,鞋墊拒絕了這個韌體的簽章，請回報這個問題。
+ota_fail_too_large,This firmware is too large for the insole. Please report this.,這個韌體超過鞋墊的容量，請回報這個問題。
+ota_fail_bad_command,The app sent a command the insole did not understand. Please report this.,App 送出了鞋墊看不懂的指令，請回報這個問題。
+ota_fail_manifest_unavailable,Could not check for firmware. Check the internet connection.,無法取得韌體資訊，請確認網路連線。
+ota_fail_download_failed,The download failed. Check the internet connection.,下載失敗，請確認網路連線。
+ota_fail_image_invalid,The downloaded firmware failed its check and was not sent.,下載的韌體沒有通過檢查，沒有送進鞋墊。
