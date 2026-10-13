@@ -1,10 +1,36 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/core/ble/ota/dfu_failure.dart';
+import 'package:silversole/core/data/firmware_release_service.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/connected_sole.dart';
 import 'package:silversole/shared/models/firmware_manifest.dart';
+import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
+
+/// Developer mode off, with no shared_preferences load — `build()` never
+/// calls `_load()`, so no plugin needs to be mocked in this unit test file.
+class _TestSettings extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings();
+}
+
+/// Counts `fetchManifest` calls, to prove a reconnect that does not change
+/// identity, version or DFU support does not refetch.
+class _CountingRelease extends FirmwareReleaseService {
+  var fetchCount = 0;
+
+  @override
+  Future<Result<FirmwareManifest>> fetchManifest(
+    FirmwareChannel channel,
+  ) async {
+    fetchCount++;
+    return _server('0.4.0');
+  }
+}
 
 ConnectedSole _sole({String? version = '0.4.0', bool dfu = true}) =>
     ConnectedSole(
@@ -115,5 +141,33 @@ void main() {
       );
       expect(check.status, FirmwareCheckStatus.checkFailed);
     });
+  });
+
+  group('firmwareCheckProvider', () {
+    test(
+      'a reconnect that only updates lastConnectedAt does not refetch',
+      () async {
+        final release = _CountingRelease();
+        final container = ProviderContainer(
+          overrides: [
+            firmwareReleaseServiceProvider.overrideWithValue(release),
+            settingsProvider.overrideWith(_TestSettings.new),
+          ],
+        );
+        addTearDown(container.dispose);
+
+        final sole = _sole();
+        container.read(connectedSoleProvider.notifier).set(sole);
+        await container.read(firmwareCheckProvider.future);
+        expect(release.fetchCount, 1);
+
+        final reconnected = sole.copyWith(
+          device: sole.device.copyWith(lastConnectedAt: DateTime.now()),
+        );
+        container.read(connectedSoleProvider.notifier).set(reconnected);
+        await container.read(firmwareCheckProvider.future);
+        expect(release.fetchCount, 1);
+      },
+    );
   });
 }

@@ -96,6 +96,13 @@ class BleConnectionService {
   Timer? _reconnectTimer;
   int _reconnectAttempt = 0;
 
+  /// Bumped on every link loss and on [detach]. A [_BleDfuLink] captures the
+  /// epoch at creation, so once its session has dropped it stays reported as
+  /// disconnected even if the service's own backoff brings the same MAC back
+  /// within the page-wait: that reconnect is a new session, and resending
+  /// into it would hit a sole that has reset to IDLE.
+  int _sessionEpoch = 0;
+
   /// Whether the sole is connected to this app right now.
   bool get isConnected => _device?.isConnected ?? false;
 
@@ -129,6 +136,7 @@ class BleConnectionService {
             _reconnectAttempt = 0;
             unawaited(_setUpSession());
           case BluetoothConnectionState.disconnected:
+            _sessionEpoch++;
             _service = null;
             _dfuService = null;
             final reason = target.disconnectReason;
@@ -151,6 +159,7 @@ class BleConnectionService {
   /// Tears the session down and stops the reconnect loop.
   Future<void> detach() async {
     _wanted = false;
+    _sessionEpoch++;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
     _reconnectAttempt = 0;
@@ -267,7 +276,13 @@ class BleConnectionService {
     final control = find(dfuControlCharUuid);
     final data = find(dfuDataCharUuid);
     if (control == null || data == null) return null;
-    return _BleDfuLink(device, control, data);
+    return _BleDfuLink(
+      device,
+      control,
+      data,
+      _sessionEpoch,
+      () => _sessionEpoch,
+    );
   }
 
   /// Serializes the per-connection handshake.
@@ -458,17 +473,30 @@ class BleConnectionService {
 }
 
 class _BleDfuLink implements DfuLink {
-  _BleDfuLink(this._device, this._control, this._data);
+  _BleDfuLink(
+    this._device,
+    this._control,
+    this._data,
+    this._epoch,
+    this._epochNow,
+  );
 
   final BluetoothDevice _device;
   final BluetoothCharacteristic _control;
   final BluetoothCharacteristic _data;
 
+  /// The service's [BleConnectionService._sessionEpoch] when this link was
+  /// created.
+  final int _epoch;
+
+  /// The service's current epoch, read live.
+  final int Function() _epochNow;
+
   @override
   int get mtu => _device.mtuNow;
 
   @override
-  bool get isConnected => _device.isConnected;
+  bool get isConnected => _device.isConnected && _epochNow() == _epoch;
 
   @override
   Future<Stream<List<int>>> subscribeStatus() async {

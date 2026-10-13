@@ -91,8 +91,23 @@ final firmwareReleaseServiceProvider = Provider<FirmwareReleaseService>(
 
 /// Re-checked on every handshake (the connected sole changes) and whenever
 /// developer mode switches channel; the devices page's firmware card shows it.
+///
+/// Watches only identityKey/firmwareVersion/dfuSupported (the spec's §2.4),
+/// not the whole [ConnectedSole] — a plain reconnect also rewrites
+/// [BlePairedDevice.lastConnectedAt] and must not refetch the manifest.
 final firmwareCheckProvider = FutureProvider<FirmwareCheck>((ref) async {
-  final sole = ref.watch(connectedSoleProvider);
+  ref.watch(
+    connectedSoleProvider.select(
+      (s) => s == null
+          ? null
+          : (
+              key: s.device.identityKey,
+              version: s.firmwareVersion,
+              dfu: s.dfuSupported,
+            ),
+    ),
+  );
+  final sole = ref.read(connectedSoleProvider);
   final devMode = ref.watch(settingsProvider.select((s) => s.firmwareDevMode));
   final early = firmwarePrecheck(sole);
   if (early != null) return early;
