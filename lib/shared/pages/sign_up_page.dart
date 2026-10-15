@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/auth/auth_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 
 import '../../core/utils/field_validator.dart';
@@ -42,7 +44,31 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   void setConfirmPassword(String value) =>
       setState(() => confirmPassword = value);
 
-  void signInGoogle() => comingSoon();
+  bool _googleBusy = false;
+
+  /// A first Google sign-in creates the account, so this page offers it too —
+  /// and, unlike email sign-up, it ends signed in.
+  Future<void> signInGoogle() async {
+    if (_googleBusy) return;
+    _googleBusy = true;
+    try {
+      final res = await ref
+          .read(authServiceProvider)
+          .supabaseSignInWithGoogle();
+      switch (res) {
+        case Ok<UserData>():
+          ref.read(authUserProvider.notifier).setUser(res.value);
+          showMessage('sign_in_success'.tr());
+          if (mounted) context.go('/');
+        case Error(error: SignInCanceled()):
+          break;
+        case Error():
+          showErrorSnakeBar(res.error.toString());
+      }
+    } finally {
+      _googleBusy = false;
+    }
+  }
 
   Future<void> signUp() async {
     if (!_formKey.currentState!.validate()) {

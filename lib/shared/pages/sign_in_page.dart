@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/auth/auth_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -31,7 +32,38 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 
   void setPassword(String value) => setState(() => password = value);
 
-  void signInGoogle() => comingSoon();
+  bool _googleBusy = false;
+
+  Future<void> signInGoogle() async {
+    if (_googleBusy) return;
+    _googleBusy = true;
+    try {
+      final res = await ref
+          .read(authServiceProvider)
+          .supabaseSignInWithGoogle();
+      switch (res) {
+        case Ok<UserData>():
+          onSignedIn(res.value);
+        case Error(error: SignInCanceled()):
+          break;
+        case Error():
+          showErrorSnakeBar(res.error.toString());
+      }
+    } finally {
+      _googleBusy = false;
+    }
+  }
+
+  void onSignedIn(UserData data) {
+    ref.read(authUserProvider.notifier).setUser(data);
+    showMessage('sign_in_success'.tr());
+    // Sign-in succeeded: the user is now authenticated, so navigate straight
+    // to home. Using context.go('/') (instead of context.pop()) works whether
+    // sign-in was pushed onto a stack or was the initial route a guest was
+    // redirected to — the latter has nothing to pop and previously threw
+    // "GoError: There is nothing to pop".
+    if (mounted) context.go('/');
+  }
 
   Future<void> signIn() async {
     if (!_formKey.currentState!.validate()) {
@@ -44,15 +76,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       final res = await authService.supabaseSignIn(email, password);
       switch (res) {
         case Ok<UserData>():
-          final data = res.value;
-          ref.read(authUserProvider.notifier).setUser(data);
-          showMessage('sign_in_success'.tr());
-          // Sign-in succeeded: the user is now authenticated, so navigate
-          // straight to home. Using context.go('/') (instead of context.pop())
-          // works whether sign-in was pushed onto a stack or was the initial
-          // route a guest was redirected to — the latter has nothing to pop and
-          // previously threw "GoError: There is nothing to pop".
-          if (mounted) context.go('/');
+          onSignedIn(res.value);
         case Error():
           showErrorSnakeBar(res.error.toString());
       }

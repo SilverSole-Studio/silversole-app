@@ -12,6 +12,19 @@ abstract class Constants {
   /// reachable by hand while this is on.
   static const bool skipAuthGate = true;
 
+  /// OAuth *web* client in the `silversole` GCP project — the one the Supabase
+  /// Google provider is configured with. Native sign-in asks Google for an ID
+  /// token addressed to it, which is what lets Supabase accept the token. Not a
+  /// secret.
+  ///
+  /// Android also needs an *Android* OAuth client in the same project for every
+  /// key the app is signed with (package + SHA-1: upload key, debug keystore,
+  /// Play app signing key); without the matching one Google refuses with a
+  /// configuration error. iOS would need its own client ID and URL scheme,
+  /// which do not exist yet, so Google sign-in is Android-only for now.
+  static const String googleWebClientId =
+      '350967143148-ve4gvg396r5ai2lfeveb15a60074p536.apps.googleusercontent.com';
+
   static const String supabaseUrlKey = 'PUBLIC_SUPABASE_URL';
   static const String supabasePublicDefaultKey =
       'PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY';

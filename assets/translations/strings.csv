@@ -12,6 +12,8 @@ sign_up,Sign Up,註冊
 email,Email,電子郵件
 password,Password,密碼
 sign_in_with_google,Sign in with Google,使用 Google 帳戶登入
+google_sign_in_failed,Google sign-in failed,Google 登入失敗
+google_sign_in_unsupported,Google sign-in is only available on Android for now,Google 登入目前僅支援 Android
 no_account_prompt,Don't have an account?,還沒有帳號嗎？
 not_signed_in,Not signed in,未登入
 silversole,SilverSole,SilverSole
