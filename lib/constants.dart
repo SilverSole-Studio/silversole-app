@@ -23,7 +23,7 @@ abstract class Constants {
   /// configuration error. iOS would need its own client ID and URL scheme,
   /// which do not exist yet, so Google sign-in is Android-only for now.
   static const String googleWebClientId =
-      '350967143148-ve4gvg396r5ai2lfeveb15a60074p536.apps.googleusercontent.com';
+      '350967143148-kodus7fgbnjpvfheqpvhdilad6bq3olg.apps.googleusercontent.com';
 
   static const String supabaseUrlKey = 'PUBLIC_SUPABASE_URL';
   static const String supabasePublicDefaultKey =
