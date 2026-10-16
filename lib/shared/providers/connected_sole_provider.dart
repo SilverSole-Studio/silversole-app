@@ -9,7 +9,13 @@ class ConnectedSoleNotifier extends Notifier<ConnectedSole?> {
 
   void set(ConnectedSole sole) => state = sole;
 
-  void clear() => state = null;
+  /// A no-op when nothing is connected. The foreground controller clears from
+  /// a `fireImmediately` listener while it is still building, and Riverpod
+  /// forbids a provider writing another during its build — so only write when
+  /// there is a sole to drop.
+  void clear() {
+    if (state != null) state = null;
+  }
 }
 
 final connectedSoleProvider =
