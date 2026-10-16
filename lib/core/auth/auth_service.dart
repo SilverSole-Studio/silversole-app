@@ -68,7 +68,14 @@ class AuthService {
         Exception('${'google_sign_in_failed'.tr()} (${e.code.name})'),
       );
     } on AuthApiException catch (e) {
-      return Result.error(Exception(e.code.toString().tr()));
+      debugPrint(
+        'Supabase Google sign-in failed: ${e.statusCode} ${e.code} ${e.message}',
+      );
+      // Supabase leaves `code` null for some rejections (e.g. a token whose
+      // audience the Google provider does not list); its message is then the
+      // only clue, so show that rather than translating "null".
+      final code = e.code;
+      return Result.error(Exception(code == null ? e.message : code.tr()));
     } on AuthException catch (e) {
       return Result.error(e);
     }
