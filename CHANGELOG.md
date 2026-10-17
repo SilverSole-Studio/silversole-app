@@ -4,6 +4,26 @@
 
 更新內容:
 
+- 新增鞋墊韌體更新：「我的裝置」會顯示鞋墊的韌體版本，有新版時可直接在 App 內更新。
+- 新增 Google 帳號登入。
+- 從 Google Play 安裝的版本改由 Play 更新，下載完成後會自動安裝並重新開啟。
+- 背景連線通知會顯示鞋墊名稱、連線狀態與電量。
+- 鞋墊改用晶片 ID 辨識，重新開機後不再多出重複的配對項目。
+- 遊戲大廳新增「踩進老街」。
+
+Updates:
+
+- Sole firmware updates: My devices shows the sole's firmware and installs new versions in the app.
+- Sign in with Google.
+- Google Play installs now update through Play and restart once the update is ready.
+- The background notification shows the sole's name, status and battery.
+- Soles are identified by chip ID, so a reboot no longer adds duplicate pairings.
+- New game: Step into Old Street.
+
+## v1.9.0
+
+更新內容:
+
 - 新增鞋墊韌體無線更新：在「我的裝置」查看鞋墊的韌體版本，有新版時可直接透過藍牙更新；中途中斷也不影響鞋墊使用。
 - 新增 Google 帳號登入（Android）。
 - 鞋墊改用晶片 ID 辨識：多隻鞋墊同時開著也分得清楚，重開機不再讓配對清單變長，也不會自動連上別人的鞋墊。
