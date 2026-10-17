@@ -21,9 +21,10 @@ import io.flutter.plugin.common.MethodChannel
  * it to any other download — so Dart asks [isInstalledFromPlay] first and keeps
  * the GitHub prompt for sideloaded APKs.
  *
- * A flexible update downloads in the background and is installed only once the
- * app has left the foreground: installing restarts the process, and doing that
- * mid-session would cut a live BLE stream or a recording.
+ * A flexible update downloads in the background and installs the moment the
+ * download finishes, as in snapledger: Play shows its install screen and the
+ * app restarts on the new version. A download that finished while the app was
+ * closed is installed on the next resume.
  */
 internal class InAppUpdateController(
     private val activity: FlutterActivity,
@@ -36,10 +37,9 @@ internal class InAppUpdateController(
 
     private lateinit var appUpdateManager: AppUpdateManager
     private var currentUpdateType: Int? = null
-    private var inForeground = false
 
     private val installStateListener = InstallStateUpdatedListener { state ->
-        if (state.installStatus() == InstallStatus.DOWNLOADED && !inForeground) {
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
             completeFlexibleUpdate()
         }
     }
@@ -60,32 +60,22 @@ internal class InAppUpdateController(
     }
 
     fun onResume() {
-        inForeground = true
         if (!::appUpdateManager.isInitialized) return
 
-        // An immediate update the user left half way must be resumed, or the
-        // app keeps running the version Play considers too old.
         appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
+            // Downloaded while the app was away: install it now.
+            if (info.installStatus() == InstallStatus.DOWNLOADED) {
+                completeFlexibleUpdate()
+                return@addOnSuccessListener
+            }
+            // An immediate update the user left half way must be resumed, or
+            // the app keeps running the version Play considers too old.
             if (info.shouldResumeImmediateUpdate()) {
                 currentUpdateType = AppUpdateType.IMMEDIATE
                 try {
                     startUpdateFlow(info, AppUpdateType.IMMEDIATE)
                 } catch (_: IntentSender.SendIntentException) {
                 }
-            }
-        }
-    }
-
-    fun onPause() {
-        inForeground = false
-    }
-
-    fun onStop() {
-        if (!::appUpdateManager.isInitialized) return
-
-        appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
-            if (info.installStatus() == InstallStatus.DOWNLOADED) {
-                completeFlexibleUpdate()
             }
         }
     }

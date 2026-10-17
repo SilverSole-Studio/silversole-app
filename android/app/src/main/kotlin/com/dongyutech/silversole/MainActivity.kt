@@ -50,16 +50,6 @@ class MainActivity : FlutterActivity() {
         inAppUpdateController.onResume()
     }
 
-    override fun onPause() {
-        inAppUpdateController.onPause()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        inAppUpdateController.onStop()
-        super.onStop()
-    }
-
     override fun onDestroy() {
         inAppUpdateController.onDestroy()
         super.onDestroy()
