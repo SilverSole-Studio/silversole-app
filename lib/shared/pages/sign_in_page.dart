@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -76,6 +77,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       final res = await authService.supabaseSignIn(email, password);
       switch (res) {
         case Ok<UserData>():
+          // Lets the password manager offer to save what was just used.
+          TextInput.finishAutofillContext();
           onSignedIn(res.value);
         case Error():
           showErrorSnakeBar(res.error.toString());
@@ -100,82 +103,86 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             48,
             MediaQuery.of(context).viewInsets.bottom + 24,
           ),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: _autoValidate
-                ? AutovalidateMode.onUserInteraction
-                : AutovalidateMode.disabled,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              spacing: 16,
-              children: [
-                SizedBox(
-                  height: 250,
-                  child: Center(
-                    child: Text(
-                      'silversole'.tr(),
-                      style: context.textTheme.displayLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
+          child: AutofillGroup(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: _autoValidate
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                spacing: 16,
+                children: [
+                  SizedBox(
+                    height: 250,
+                    child: Center(
+                      child: Text(
+                        'silversole'.tr(),
+                        style: context.textTheme.displayLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                TextFormField(
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'email'.tr(),
-                    prefixIcon: Icon(LucideIcons.mail),
+                  TextFormField(
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: InputDecoration(
+                      labelText: 'email'.tr(),
+                      prefixIcon: Icon(LucideIcons.mail),
+                    ),
+                    validator: (val) =>
+                        fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
+                    onChanged: (value) => setEmail(value),
                   ),
-                  validator: (val) =>
-                      fieldEmptyValidator(val) ?? emailValidator(val ?? ''),
-                  onChanged: (value) => setEmail(value),
-                ),
-                TextFormField(
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'password'.tr(),
-                    prefixIcon: Icon(LucideIcons.lock),
+                  TextFormField(
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: InputDecoration(
+                      labelText: 'password'.tr(),
+                      prefixIcon: Icon(LucideIcons.lock),
+                    ),
+                    validator: (val) => fieldEmptyValidator(val),
+                    onChanged: (value) => setPassword(value),
                   ),
-                  validator: (val) => fieldEmptyValidator(val),
-                  onChanged: (value) => setPassword(value),
-                ),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: enableSignInButton ? signIn : null,
-                    child: enableSignInButton
-                        ? Text('sign_in'.tr())
-                        : SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: context.colorScheme.outline,
-                            ),
-                          ), // ignore: deprecated_member_use
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: enableSignInButton ? signIn : null,
+                      child: enableSignInButton
+                          ? Text('sign_in'.tr())
+                          : SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.colorScheme.outline,
+                              ),
+                            ), // ignore: deprecated_member_use
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: textOnDivider(context, 'or'.tr()),
-                ),
-                googleSignInButton(context, onPressed: signInGoogle),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'no_account_prompt'.tr(),
-                      style: TextStyle(
-                        color: context.colorScheme.onSurfaceVariant,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: textOnDivider(context, 'or'.tr()),
+                  ),
+                  googleSignInButton(context, onPressed: signInGoogle),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'no_account_prompt'.tr(),
+                        style: TextStyle(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: goToSignUp,
-                      child: Text('sign_up'.tr()),
-                    ),
-                  ],
-                ),
-              ],
+                      TextButton(
+                        onPressed: goToSignUp,
+                        child: Text('sign_up'.tr()),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
