@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
@@ -8,19 +9,20 @@ import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Games hub, mascot theme: today's mission, the village shortcuts, and the
 /// game grid. Tapping a game opens the existing HTML5 web view.
 ///
-/// Every figure here (steps, streak, coins, nutrients, cheers) is mockup
-/// copy — none of it is measured or stored yet.
+/// Every figure here (steps, streak, coins, nutrients) is mockup copy —
+/// none of it is measured or stored yet. The friends card reads the friends
+/// repository (demo data until its backend exists).
 class GamePageT2 extends StatelessWidget {
   const GamePageT2({super.key});
 
   // Coins come from MockShop so the hub and the shop agree.
   static const _mockNutrient = 4;
-  static const _mockCheers = 2;
   static const _mockGameReward = 30;
 
   @override
@@ -184,11 +186,11 @@ class _MissionRow extends StatelessWidget {
 
 // ── Village shortcuts ─────────────────────────────────────────────────────
 
-class _VillageRow extends StatelessWidget {
+class _VillageRow extends ConsumerWidget {
   const _VillageRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
@@ -214,10 +216,10 @@ class _VillageRow extends StatelessWidget {
         Expanded(
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_mailbox.webp',
-            title: 'family'.tr(),
-            subtitle: 'family_cheers'.tr(args: ['${GamePageT2._mockCheers}']),
-            subtitleIcon: '❤️',
-            onTap: comingSoon,
+            title: 'friends_title'.tr(),
+            subtitle: friendsCardSubtitle(ref),
+            badge: ref.watch(incomingRequestCountProvider),
+            onTap: () => context.push('/friends'),
           ),
         ),
       ],
@@ -231,14 +233,16 @@ class _VillageCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.subtitleIcon,
+    this.badge = 0,
   });
 
   final String art;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final String? subtitleIcon;
+
+  /// Red dot count on the art (pending friend requests).
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +251,12 @@ class _VillageCard extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          Image.asset(art, height: 58, fit: BoxFit.contain),
+          Badge(
+            isLabelVisible: badge > 0,
+            label: Text('$badge'),
+            largeSize: 22,
+            child: Image.asset(art, height: 58, fit: BoxFit.contain),
+          ),
           const SizedBox(height: 8),
           Text(
             title,
@@ -259,10 +268,6 @@ class _VillageCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (subtitleIcon != null) ...[
-                Text(subtitleIcon!, style: const TextStyle(fontSize: 12)),
-                const SizedBox(width: 3),
-              ],
               Flexible(
                 child: Text(
                   subtitle,

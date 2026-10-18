@@ -8,6 +8,7 @@ import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
+import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/pages/firmware_update_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
@@ -52,6 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => FirmwareUpdatePage(source: state.extra),
       ),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
+      friendsRoute,
       GoRoute(
         path: '/game-webview',
         builder: (_, state) {

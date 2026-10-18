@@ -67,6 +67,9 @@ dependencies:
   crypto: ^3.0.7
   pub_semver: ^2.2.0
   wakelock_plus: ^1.4.0
+  mobile_scanner: ^7.4.2
+  qr_flutter: ^4.1.0
+  image_picker: ^1.2.4
 
 dev_dependencies:
   flutter_test:
@@ -142,6 +145,8 @@ flutter:
     - assets/mascot-assets/checking.webp
     - assets/mascot-assets/determined.webp
     - assets/mascot-assets/insole.webp
+    # Friends: the 12 preset avatars (粗哥 poses, 256px squares).
+    - assets/mascot-assets/avatars/
 
   fonts:
     - family: Google Sans
