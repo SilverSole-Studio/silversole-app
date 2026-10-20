@@ -486,3 +486,17 @@ ota_fail_manifest_unavailable,Could not check for firmware. Check the internet c
 ota_fail_download_failed,The download failed. Check the internet connection.,下載失敗，請確認網路連線。
 ota_fail_image_invalid,The downloaded firmware failed its check and was not sent.,下載的韌體沒有通過檢查，沒有送進鞋墊。
 ota_fail_not_newer,This firmware is not newer than the one on the insole.,這個韌體沒有比鞋墊目前的版本新。
+foot_side_calibration_title,Which sole is which?,分辨左右腳
+foot_side_calibration_hint,Stand still for a moment. Then press down with your left foot.,先站著別動一下。然後用左腳用力踩一下。
+foot_side_calibration_prompt,Step on your left foot,請用左腳踩一下
+foot_side_calibration_ambiguous,Both soles answered. Try again and press only your left foot.,兩隻鞋墊都有反應。請只用左腳再踩一次。
+foot_side_calibration_timeout,No pressure detected. Choose the left sole by hand.,沒有偵測到壓力。請手動指定左腳。
+foot_side_this_is_left,This is my left,這隻是左腳
+foot_side_retry,Try again,重試
+foot_side_later,Later,稍後再說
+foot_side_unassigned,Not assigned,未指定
+set_left_foot,Set as left foot,設為左腳
+set_right_foot,Set as right foot,設為右腳
+debug_add_fake_sole,Add a fake second sole,加入假的第二隻鞋墊
+debug_remove_fake_sole,Remove the fake sole,移除假鞋墊
+debug_fake_sole_stomp,Stomp,踩一下

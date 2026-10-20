@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/routing/router.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/fall_demo_overlay.dart';
@@ -39,10 +40,12 @@ class App extends ConsumerWidget {
           ? ThemeMode.light
           : (darkMode ? ThemeMode.dark : ThemeMode.light),
       routerConfig: router,
-      // Temporary demo overlay: the red fall warning has to sit above every
-      // page in both themes. Remove together with FallDemoOverlay.
-      builder: (context, child) =>
-          FallDemoOverlay(child: child ?? const SizedBox.shrink()),
+      // Both wrap every page in either theme: the calibration question is
+      // about the hardware, and the temporary fall warning has to cover
+      // everything. Remove the latter together with FallDemoOverlay.
+      builder: (context, child) => FootSideCalibrationOverlay(
+        child: FallDemoOverlay(child: child ?? const SizedBox.shrink()),
+      ),
     );
   }
 }
