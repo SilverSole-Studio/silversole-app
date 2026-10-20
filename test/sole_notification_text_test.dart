@@ -118,6 +118,25 @@ void main() {
       'Left foot 85% · Right foot Offline',
     );
 
+    // The controller passes a non-null lastSeen in practice, so this is the
+    // offline case that matters: the foot must still read plainly Offline,
+    // not a relative-time phrase.
+    expect(
+      withClock(
+        Clock.fixed(now),
+        () => soleNotificationText([
+          notice(label: 'Left foot', online: true, live: 85),
+          notice(
+            label: 'Right foot',
+            online: false,
+            lastSeen: now.subtract(const Duration(minutes: 5)),
+            lastKnown: 40,
+          ),
+        ]),
+      ).text,
+      'Left foot 85% · Right foot Offline',
+    );
+
     // A sole that never reported a level says its status instead of a dash.
     expect(
       withClock(

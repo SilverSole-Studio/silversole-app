@@ -57,14 +57,17 @@ class SoleNotice {
     return (title: sole.name, text: text);
   }
 
+  // Relative time is for the single-sole line only: with two feet there is no
+  // room for it, and an offline foot must say so plainly, whatever lastSeen
+  // holds (the controller passes one in practice).
+  String footFact(SoleNotice sole) => !sole.online
+      ? 'offline'.tr()
+      : sole.battery.percent != null
+      ? sole.battery.label
+      : 'online'.tr();
+
   final names = soles.map((s) => s.name).toSet();
   final title = names.length == 1 ? names.single : names.join(' / ');
-  final text = soles
-      .map(
-        (s) => s.online && s.battery.percent != null
-            ? '${s.label} ${s.battery.label}'
-            : '${s.label} ${status(s)}',
-      )
-      .join(' · ');
+  final text = soles.map((s) => '${s.label} ${footFact(s)}').join(' · ');
   return (title: title, text: text);
 }
