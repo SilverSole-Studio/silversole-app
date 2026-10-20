@@ -4731,6 +4731,20 @@ MSG
 
 `lib/shared/pages/theme_two/devices_page_t2.dart` 的對應位置做相同的加法（該檔的裝置列若樣式不同，就沿用它自己的徽章寫法，顏色仍走 `context.colorScheme`）。
 
+- [ ] **Step 1b: 兩個文字修正**（來自 Task 10 的 review）
+
+兩頁都要，兩個都是一行。
+
+1. **讓那行「被丟掉回傳值的 watch」讀起來不像死碼。** `devices_page.dart` 與 `theme_two/devices_page_t2.dart` 裡都有一行 `ref.watch(deviceOnlineProvider);`，回傳值刻意不用。現有註解已經說明了機制，但沒說「回傳值是故意丟掉的」，所以愛整理的人還是可能把它當死碼刪掉 —— 刪掉之後「連線中」的列會永遠卡著不翻離線。換成：
+
+```dart
+    // Value unused on purpose: checkDeviceOnline compares against the clock,
+    // and nothing rebuilds when a sole goes silent. Watching this provider is
+    // what re-runs build when its timer fires.
+```
+
+2. **`DevicesPageT2` 的類別 doc 還是單數口吻。** 它寫著「the connected one shows its live battery」之類的句子，但現在兩隻腳可以同時在線、同時顯示自己的即時電量。改成複數的說法。
+
 - [ ] **Step 2: 加入手動指派的選單項**
 
 同一檔 `buildMaterialPopupMenu` 的 `raw:` 清單裡，在 `set_primary_device_title` 之後插入兩項：
