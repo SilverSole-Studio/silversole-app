@@ -12,8 +12,9 @@ enum AppThemeVariant {
   /// outlines, DM Sans, character art.
   mascot;
 
+  /// Nothing saved yet (first launch) → mascot, the illustrated design.
   static AppThemeVariant fromName(String? value) => switch (value) {
-    'mascot' => AppThemeVariant.mascot,
-    _ => AppThemeVariant.classic,
+    'classic' => AppThemeVariant.classic,
+    _ => AppThemeVariant.mascot,
   };
 }
