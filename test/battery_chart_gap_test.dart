@@ -2,12 +2,25 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silversole/shared/models/app_settings.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:silversole/shared/widgets/chart/chart_section.dart';
 import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
 import 'package:silversole/shared/widgets/chart/record_imu_chart_section.dart';
+
+/// One paired sole, so `telemetryViewProvider` has a primary to follow.
+class _OneSolePaired extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings(
+    pairedDevicesList: [
+      BlePairedDevice(remoteId: 'addr', name: 'SilverSole', deviceId: 'A'),
+    ],
+  );
+}
 
 const _batteries = [80, 255, 60];
 
@@ -43,9 +56,11 @@ Future<List<FlSpot>> _renderedSpots(
   Widget chart,
   void Function(LiveTelemetryNotifier live) seed,
 ) async {
-  final container = ProviderContainer();
+  final container = ProviderContainer(
+    overrides: [settingsProvider.overrideWith(_OneSolePaired.new)],
+  );
   addTearDown(container.dispose);
-  seed(container.read(liveTelemetryProvider.notifier));
+  seed(container.read(liveTelemetryProvider('A').notifier));
 
   await tester.pumpWidget(
     UncontrolledProviderScope(

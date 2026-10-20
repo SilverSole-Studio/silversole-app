@@ -7,8 +7,10 @@ import 'package:silversole/shared/providers/firmware_update_provider.dart';
 import 'live_telemetry_notifier.dart';
 import 'telemetry_facade_provider.dart';
 
-/// Whether the device is currently "online" — i.e. live telemetry arrived
-/// within [TelemetryFacade.onlineWindow].
+/// Whether **any** sole is currently "online" — i.e. live telemetry arrived
+/// from one of them within [TelemetryFacade.onlineWindow]. With two feet the
+/// wearable is online while either one is reporting; a per-foot answer comes
+/// from `footTelemetryProvider`.
 ///
 /// Online/offline depends on `now`, which is not a reactive value, so a pure
 /// `ref.watch` would never flip to offline once telemetry stops (the missing
@@ -26,11 +28,8 @@ class DeviceOnlineNotifier extends Notifier<bool> {
   bool build() {
     ref.onDispose(() => _timer?.cancel());
     _updating = ref.watch(firmwareUpdateProvider.select((s) => s.busy));
-    ref.listen(
-      liveTelemetryProvider.select((s) => s.updatedAt),
-      (_, next) => _reschedule(next),
-    );
-    final updatedAt = ref.read(liveTelemetryProvider).updatedAt;
+    ref.listen(latestTelemetryAtProvider, (_, next) => _reschedule(next));
+    final updatedAt = ref.read(latestTelemetryAtProvider);
     _arm(updatedAt); // build() must not write `state`; only schedule the timer.
     return _updating ||
         ref.read(telemetryFacadeProvider).checkDeviceOnline(updatedAt);

@@ -209,7 +209,7 @@ void main() {
     final connection = _FakeConnection(sole);
     final state = _run(connection, (c) {
       c
-          .read(liveTelemetryProvider.notifier)
+          .read(liveTelemetryProvider('ID').notifier)
           .updateImuNotifyData(
             const ImuNotifyDataModel(
               ax: 0,

@@ -31,7 +31,7 @@ void main() {
         // build() runs and registers the telemetry listener.
         expect(container.read(deviceOnlineProvider), isFalse);
 
-        final live = container.read(liveTelemetryProvider.notifier);
+        final live = container.read(liveTelemetryProvider('A').notifier);
 
         live.updateImuNotifyData(_sample());
         async.flushMicrotasks();

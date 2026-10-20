@@ -12,6 +12,7 @@ import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/ble_connection_provider.dart';
+import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:silversole/shared/widgets/create_file_and_share.dart';
@@ -35,8 +36,14 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     }
 
     final ble = ref.read(bleConnectProvider);
-    final telemetryNotifier = ref.read(liveTelemetryProvider.notifier);
-    telemetryNotifier.clearRecordImuNotifyData();
+    // Recording follows the primary sole; the other foot keeps its own
+    // window untouched.
+    final soleKey = ref.read(primarySoleKeyProvider);
+    if (soleKey != null) {
+      ref
+          .read(liveTelemetryProvider(soleKey).notifier)
+          .clearRecordImuNotifyData();
+    }
     final result = await ble.writeBool(recordRequestCharUuid, true);
 
     switch (result) {

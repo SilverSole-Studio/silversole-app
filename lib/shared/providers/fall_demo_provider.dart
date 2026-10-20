@@ -3,7 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/utils/fall_tilt_detector.dart';
 
-import 'telemetry_process_providers/live_telemetry_notifier.dart';
+import 'telemetry_process_providers/telemetry_view_provider.dart';
 
 /// How far along the demo fall judgement is.
 ///
@@ -19,8 +19,8 @@ class FallDemoNotifier extends Notifier<FallTilt> {
 
   @override
   FallTilt build() {
-    ref.listen(liveTelemetryProvider.select((s) => s.updatedAt), (_, _) {
-      final sample = ref.read(liveTelemetryProvider).recentImu.lastOrNull;
+    ref.listen(telemetryViewProvider.select((s) => s.updatedAt), (_, _) {
+      final sample = ref.read(telemetryViewProvider).recentImu.lastOrNull;
       if (sample == null) return;
       state = _detector.update(
         pitch: sample.pitch,

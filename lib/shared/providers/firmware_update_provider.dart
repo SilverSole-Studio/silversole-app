@@ -125,8 +125,9 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
     if (sole == null) return DfuFailure.notConnected;
     if (!sole.dfuSupported) return DfuFailure.dfuUnsupported;
     // 255 (unknown) is let through: the sole checks its own battery on START.
+    // This sole's own battery, not whichever foot happens to be primary.
     final battery = ref
-        .read(liveTelemetryProvider)
+        .read(liveTelemetryProvider(sole.device.identityKey))
         .recentImu
         .lastOrNull
         ?.batteryPercent

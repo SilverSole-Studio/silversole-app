@@ -46,7 +46,6 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   final bleConnectionService = ref.read(bleConnectProvider);
   final deviceStatusIngestService = ref.read(deviceStatusIngestProvider);
   final settings = ref.read(settingsProvider.notifier);
-  final live = ref.read(liveTelemetryProvider.notifier);
   final connectedSole = ref.read(connectedSoleProvider.notifier);
 
   // The sole as we currently know it. Refreshed on every (re)connection by
@@ -107,7 +106,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     final sole = stored ?? bound;
     if (sole == null) return;
 
-    final telemetry = ref.read(liveTelemetryProvider);
+    final telemetry = ref.read(liveTelemetryProvider(sole.identityKey));
     final online = ref.read(deviceOnlineProvider);
     final content = soleNotificationText(
       soleName: sole.name,
@@ -132,7 +131,11 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   void onImu(List<int> value) {
     try {
       final data = bleConnectionService.parseImuNotify(value);
-      live.updateImuNotifyData(data);
+      final soleKey = boundDevice?.identityKey;
+      if (soleKey == null) return;
+      ref
+          .read(liveTelemetryProvider(soleKey).notifier)
+          .updateImuNotifyData(data);
       rememberBattery(data.batteryPercent);
     } catch (e) {
       // Always report the first failure, then throttle: a format mismatch
@@ -151,9 +154,13 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     try {
       final json = bleConnectionService.parseJsonNotify(value);
       final data = RecordImuNotifyDataModel.fromJson(json);
-      live.updateRecordImuNotifyData(
-        data.copyWith(pressure: fixPressureChannels(data.pressure)),
-      );
+      final soleKey = boundDevice?.identityKey;
+      if (soleKey == null) return;
+      ref
+          .read(liveTelemetryProvider(soleKey).notifier)
+          .updateRecordImuNotifyData(
+            data.copyWith(pressure: fixPressureChannels(data.pressure)),
+          );
       debugPrint('record notify: $data');
     } catch (e) {
       debugPrint('parse record notify failed: $e');
@@ -495,10 +502,6 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   // What the notification shows moves on its own: the online flag, the battery,
   // a rename. The ticker keeps "last connected: N min ago" current offline.
   ref.listen(deviceOnlineProvider, (_, _) => syncNotification());
-  ref.listen(
-    liveTelemetryProvider.select((s) => s.recentImu.lastOrNull?.batteryPercent),
-    (_, _) => syncNotification(),
-  );
   ref.listen(
     settingsProvider.select((s) => s.pairedDevicesList),
     (_, _) => syncNotification(),
