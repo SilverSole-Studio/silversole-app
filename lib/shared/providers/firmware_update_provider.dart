@@ -140,7 +140,7 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
 
   Future<void> _install(ConnectedSole sole, FirmwareImage image) async {
     final connection = ref.read(bleForegroundControlProvider);
-    final link = connection.dfuLink();
+    final link = connection.dfuLink(sole.device.identityKey);
     if (link == null) {
       _fail(DfuFailure.notConnected);
       return;
@@ -158,7 +158,7 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
       return;
     }
     final keepScreenOn = ref.read(keepScreenOnProvider);
-    connection.hold();
+    connection.hold(sole.device.identityKey);
     await _quietly(() => keepScreenOn(true));
     try {
       if (_cancelRequested) {

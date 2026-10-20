@@ -64,6 +64,12 @@ class _FakeConnection implements SoleConnectionController {
     dfuSupported: true,
   );
   var holds = 0;
+
+  /// The sole the update said it was taking the link for.
+  String? heldKey;
+
+  /// The sole the update asked for a DFU link to.
+  String? linkedKey;
   var releases = 0;
 
   /// Runs when the update asks for the DFU link — lets a test swap the
@@ -71,13 +77,17 @@ class _FakeConnection implements SoleConnectionController {
   void Function()? onDfuLink;
 
   @override
-  void hold() => holds++;
+  void hold(String identityKey) {
+    holds++;
+    heldKey = identityKey;
+  }
 
   @override
   void release() => releases++;
 
   @override
-  DfuLink? dfuLink() {
+  DfuLink? dfuLink(String identityKey) {
+    linkedKey = identityKey;
     onDfuLink?.call();
     return sole;
   }
@@ -385,5 +395,16 @@ void main() {
     );
     expect(state.phase, OtaPhase.succeeded);
     expect(state.readVersion, '0.5.0');
+  });
+
+  test('an update names the sole it is taking the link for', () {
+    final sole = FakeDfuSole();
+    final connection = _FakeConnection(sole);
+    _run(
+      connection,
+      (c) => c.read(firmwareUpdateProvider.notifier).installRelease(_manifest),
+    );
+    expect(connection.heldKey, 'ID');
+    expect(connection.linkedKey, 'ID');
   });
 }

@@ -485,13 +485,14 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       await startBleService();
       syncNotification();
 
+      final seen = await scanner.scan();
+      // Re-read after the scan: a legacy sole's handshake can land mid-scan
+      // and move its paired entry's identityKey, and planning against the
+      // pre-scan list would read that fresh link as unpaired and detach it.
+      final paired = ref.read(settingsProvider).pairedDevicesList;
       final plan = reconcileSoleLinks(
-        picks: pickSoles(
-          await scanner.scan(),
-          paired: current.pairedDevicesList,
-          max: desired,
-        ),
-        paired: current.pairedDevicesList,
+        picks: pickSoles(seen, paired: paired, max: desired),
+        paired: paired,
         // Read again rather than reusing the guard's snapshot: the scan above
         // takes seconds, and a link that connected or died meanwhile must not
         // be planned for as it was before.
@@ -509,13 +510,16 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       // One at a time: fbp 2.1.1 runs every GATT operation behind a single
       // global mutex, so two handshakes at once only queue up anyway — and
       // interleaving them would make a failure much harder to read.
+      var anyFailed = false;
       for (final pick in plan.attach) {
         if (held) return;
-        if (await attachTo(pick, current.pairedDevicesList)) {
-          final link = registry.lookup(
-            identityKeyFor(pick, current.pairedDevicesList),
-          );
+        if (await attachTo(pick, paired)) {
+          final link = registry.lookup(identityKeyFor(pick, paired));
           if (!held && link != null) armWatchdog(link);
+        } else {
+          // A session that could not even be armed leaves a dead link behind
+          // and no watchdog to rescue it, so the search has to come back.
+          anyFailed = true;
         }
       }
 
@@ -524,7 +528,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       // the backoff. A sole that was just attached counts as found even though
       // its link is still coming up. The watchdog does not cover this — it
       // only fires once per link and then needs a search to exist to call.
-      if (plan.reschedule) scheduleSearch();
+      if (plan.reschedule || anyFailed) scheduleSearch();
     } finally {
       searching = false;
     }
@@ -637,11 +641,20 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   );
 
   return _ForegroundSoleConnection(
-    onHold: () {
+    onHold: (soleKey) {
       held = true;
       retryTimer?.cancel();
       for (final link in registry.links) {
         link.cancelWatchdog();
+      }
+      // The other foot's handshake would contend with this transfer's page
+      // writes for fbp's one global GATT mutex. release() goes and gets it
+      // back.
+      for (final otherKey in registry.keys.toList()) {
+        if (otherKey == soleKey) continue;
+        debugPrint('ota holds the link — dropping $otherKey meanwhile');
+        unawaited(registry.detach(otherKey));
+        connectedSoles.clear(otherKey);
       }
     },
     onRelease: () {
@@ -649,13 +662,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       held = false;
       unawaited(searchAndAttach());
     },
-    onDfuLink: () {
-      // Same source of truth as connectedSoleProvider, which is what the
-      // update re-checks against — resolving the link from settings instead
-      // lets the re-check pass while the link belongs to the other foot.
-      final key = ref.read(connectedSoleProvider)?.device.identityKey;
-      return key == null ? null : registry.lookup(key)?.service.dfuLink();
-    },
+    onDfuLink: (soleKey) => registry.lookup(soleKey)?.service.dfuLink(),
     onReacquire: reacquire,
   );
 });
@@ -668,19 +675,19 @@ class _ForegroundSoleConnection implements SoleConnectionController {
     required this.onReacquire,
   });
 
-  final void Function() onHold;
+  final void Function(String identityKey) onHold;
   final void Function() onRelease;
-  final DfuLink? Function() onDfuLink;
+  final DfuLink? Function(String identityKey) onDfuLink;
   final Future<ReacquiredSole?> Function(BlePairedDevice, Duration) onReacquire;
 
   @override
-  void hold() => onHold();
+  void hold(String identityKey) => onHold(identityKey);
 
   @override
   void release() => onRelease();
 
   @override
-  DfuLink? dfuLink() => onDfuLink();
+  DfuLink? dfuLink(String identityKey) => onDfuLink(identityKey);
 
   @override
   Future<ReacquiredSole?> reacquire(
