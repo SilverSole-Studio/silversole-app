@@ -46,6 +46,11 @@ class SoleSessionRegistry {
 
   Set<String> get keys => _links.keys.toSet();
 
+  /// The links with the keys they are filed under — what the search decision
+  /// needs, since a link's device can carry a different identityKey than the
+  /// key it was filed under until the next re-key.
+  Map<String, SoleLink> get entries => Map.unmodifiable(_links);
+
   int get connectedCount => _links.values.where((l) => l.isConnected).length;
 
   bool get anyConnected => _links.values.any((l) => l.isConnected);

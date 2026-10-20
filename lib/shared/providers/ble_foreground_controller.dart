@@ -27,7 +27,6 @@ import 'package:silversole/shared/providers/ble_connection_provider.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/device_status_ingest_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
-import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
 import 'package:silversole/shared/providers/sole_connection_controller.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
@@ -73,6 +72,21 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
 
   String toHex(List<int> v) =>
       v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
+
+  // What the search decision sees. Keyed off the registry's own map rather
+  // than each link's device, because a link filed under an address still
+  // carries that key until the next re-key. A fired Timer reports
+  // `isActive == false`, which is exactly "this link's watchdog has had its
+  // chance" — and a link whose watchdog has fired without reconnecting no
+  // longer holds its foot's slot.
+  List<LinkState> linkStates() => [
+    for (final entry in registry.entries.entries)
+      LinkState(
+        key: entry.key,
+        isConnected: entry.value.isConnected,
+        awaitingWatchdog: entry.value.watchdog?.isActive ?? false,
+      ),
+  ];
 
   // Persists a sole's battery level so it can be shown greyed out while that
   // sole is offline. The IMU stream repeats the same level at 50 Hz, so only a
@@ -441,7 +455,13 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     final desired = current.pairedDevicesList.length < maxSoles
         ? current.pairedDevicesList.length
         : maxSoles;
-    if (!force && desired > 0 && registry.connectedCount >= desired) return;
+    if (!needsSearch(
+      paired: current.pairedDevicesList,
+      links: linkStates(),
+      force: force,
+    )) {
+      return;
+    }
 
     searching = true;
     retryTimer?.cancel();
@@ -472,8 +492,10 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
           max: desired,
         ),
         paired: current.pairedDevicesList,
-        linkedKeys: registry.keys,
-        max: desired,
+        // Read again rather than reusing the guard's snapshot: the scan above
+        // takes seconds, and a link that connected or died meanwhile must not
+        // be planned for as it was before.
+        links: linkStates(),
       );
 
       for (final soleKey in plan.detach) {
@@ -483,12 +505,6 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
 
       // An update may have taken the link while this search was scanning.
       if (held) return;
-
-      if (plan.attach.isEmpty && registry.keys.isEmpty) {
-        debugPrint('no paired sole advertising');
-        scheduleSearch();
-        return;
-      }
 
       // One at a time: fbp 2.1.1 runs every GATT operation behind a single
       // global mutex, so two handshakes at once only queue up anyway — and
@@ -504,10 +520,11 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       }
 
       // Still short of a foot (the other sole is switched off, out of range,
-      // or not paired yet): keep looking on the backoff. A sole that was just
-      // attached counts as found even though its link is still coming up —
-      // its own watchdog covers a handshake that never completes.
-      if (registry.keys.length < desired) scheduleSearch();
+      // or rebooted onto an address this scan did not see): keep looking on
+      // the backoff. A sole that was just attached counts as found even though
+      // its link is still coming up. The watchdog does not cover this — it
+      // only fires once per link and then needs a search to exist to call.
+      if (plan.reschedule) scheduleSearch();
     } finally {
       searching = false;
     }
@@ -633,10 +650,11 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       unawaited(searchAndAttach());
     },
     onDfuLink: () {
-      // The single-sole OTA talks to the sole connectedSoleProvider names.
-      final soleKey = ref.read(primarySoleKeyProvider);
-      final link = soleKey == null ? null : registry.lookup(soleKey);
-      return (link ?? registry.links.firstOrNull)?.service.dfuLink();
+      // Same source of truth as connectedSoleProvider, which is what the
+      // update re-checks against — resolving the link from settings instead
+      // lets the re-check pass while the link belongs to the other foot.
+      final key = ref.read(connectedSoleProvider)?.device.identityKey;
+      return key == null ? null : registry.lookup(key)?.service.dfuLink();
     },
     onReacquire: reacquire,
   );
