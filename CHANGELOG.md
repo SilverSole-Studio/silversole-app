@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.10.0
+
+更新內容:
+
+- 支援左右兩隻鞋墊同時連線：第二隻連上後自動加入，足壓分佈同時顯示雙腳的即時資料。
+- 第一次同時連上兩隻鞋墊時，會請你用左腳踩一下來分辨左右腳；之後可在「我的裝置」重新指定。
+- 「我的裝置」分別顯示每隻鞋墊的連線狀態、電量與左右腳。
+- 背景通知同時顯示兩隻鞋墊的電量與連線狀態。
+- 韌體更新會標示是哪一隻鞋墊；兩腳都要更新時，切換主要裝置後再更新一次。
+
+Updates:
+
+- Two soles can connect at once, one per foot; the pressure map shows both feet live.
+- When both soles first connect, step on your left foot to tell them apart; change it later in "My devices".
+- "My devices" shows each sole's status, battery and foot.
+- The background notification shows both soles' battery and status.
+- Firmware updates name their sole; to update both, switch the primary device and update again.
+
 ## v1.9.0
 
 更新內容:
