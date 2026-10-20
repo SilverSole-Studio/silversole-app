@@ -91,9 +91,26 @@ void main() {
     );
   });
 
-  test('the primary sole is the right foot when one is assigned', () {
+  // The wearer's explicit pick outranks the right-foot assignment. Ordered the
+  // other way the pick is unreachable once both feet are calibrated — the
+  // right foot always wins — so the left sole's firmware could never be
+  // checked or updated and "set as primary device" silently did nothing.
+  test(
+    'the preferred device is primary even beside a calibrated right foot',
+    () {
+      final container = _boot([
+        _sole('L', side: FootSide.left, preferred: true),
+        _sole('R', side: FootSide.right),
+      ]);
+      expect(container.read(primarySoleKeyProvider), 'L');
+    },
+  );
+
+  // Nothing picked: the right foot is the fallback, which keeps the
+  // single-sole behaviour for a wearer who calibrated but never chose.
+  test('with nothing preferred the right foot is primary', () {
     final container = _boot([
-      _sole('L', side: FootSide.left, preferred: true),
+      _sole('L', side: FootSide.left),
       _sole('R', side: FootSide.right),
     ]);
     expect(container.read(primarySoleKeyProvider), 'R');

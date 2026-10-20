@@ -6,12 +6,14 @@ import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/live_telemetry_state.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
 import 'package:silversole/core/theme/app_palette.dart';
 import 'package:silversole/shared/widgets/chart/chart_section.dart';
 import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
@@ -222,8 +224,20 @@ class _DeviceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final online = ref.watch(deviceOnlineProvider);
-    final recent = ref.watch(telemetryViewProvider).recentImu;
+    // Value unused on purpose: checkDeviceOnline compares against the clock,
+    // and nothing rebuilds when a sole goes silent. Watching this provider is
+    // what re-runs build when its timer fires.
+    ref.watch(deviceOnlineProvider);
+    // This card is titled with [device]'s name, so it must report [device]'s
+    // own link — not `deviceOnlineProvider`, which is true while *any* foot is
+    // streaming, nor the primary sole's window.
+    final telemetry = device == null
+        ? const LiveTelemetryState()
+        : ref.watch(liveTelemetryProvider(device!.identityKey));
+    final online = ref
+        .watch(telemetryFacadeProvider)
+        .checkDeviceOnline(telemetry.updatedAt);
+    final recent = telemetry.recentImu;
     // Live while online; otherwise the level remembered for this sole, grayed
     // out. A sole never connected shows an empty gray bar.
     final battery = BatteryDisplay.resolve(

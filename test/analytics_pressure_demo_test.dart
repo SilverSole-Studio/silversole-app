@@ -258,9 +258,12 @@ void main() {
     expect(find.text('has=true'), findsOneWidget);
   });
 
-  // hasData is "either foot", so a lone left sole must light it up even though
-  // the right foot has nothing.
-  testWidgets('only a left sole streaming still counts as data', (
+  // hasData speaks for the right foot alone. With a sole only on the left, the
+  // right foot has no source, so it must read as absent — the readouts print
+  // `--` and the heat map paints the "no sensor" fill. Reporting it as data
+  // would draw a foot bearing zero load, and "this foot takes no weight" is a
+  // clinical statement the wearer cannot tell apart from "no sole on".
+  testWidgets('a lone left sole leaves the right foot reading as absent', (
     tester,
   ) async {
     await EasyLocalization.ensureInitialized();
@@ -271,9 +274,12 @@ void main() {
 
     await _pumpScope(tester, container);
 
+    expect(find.text('has=false'), findsOneWidget);
+    // `right` is non-nullable, so it still carries the zero placeholder:
+    // `hasData` is the only thing standing between that and the screen.
     expect(find.text('p=[0, 0, 0]'), findsOneWidget);
+    // The left foot still carries its own reading.
     expect(find.text('left=[11, 22, 33]'), findsOneWidget);
-    expect(find.text('has=true'), findsOneWidget);
   });
 
   // A playing clip owns both feet. A right-only payload (schema 1, or schema 2

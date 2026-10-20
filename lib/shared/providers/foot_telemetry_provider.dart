@@ -25,15 +25,26 @@ final footTelemetryProvider = Provider.family<LiveTelemetryState, FootSide>((
   return key == null ? _noTelemetry : ref.watch(liveTelemetryProvider(key));
 });
 
-/// The sole the single-sole UI means: the right foot when one is assigned,
-/// else the primary device, else the first paired sole. Null when nothing is
-/// paired.
+/// The sole the single-sole UI means: the primary device the wearer picked,
+/// else the sole assigned to the right foot, else the first paired sole. Null
+/// when nothing is paired.
+///
+/// `isPreferred` comes first on purpose. Every screen that still says "the
+/// sole" rather than a named foot — the firmware card, the status card, the
+/// OTA target, the IMU charts, recording — follows this key, and the wearer's
+/// explicit "set as primary device" is the only way they can steer it. Behind
+/// the right-foot assignment it was unreachable: with both feet calibrated the
+/// right foot always wins, so the left sole's firmware could never be checked
+/// or updated and the home card named one sole while showing the other's.
+///
+/// The right foot stays as the fallback so a wearer who calibrated but never
+/// picked a primary keeps the single-sole behaviour the app shipped with.
 final primarySoleKeyProvider = Provider<String?>(
   (ref) => ref.watch(
     settingsProvider.select(
       (s) =>
-          s.soleFor(FootSide.right)?.identityKey ??
           s.preferredDevice?.identityKey ??
+          s.soleFor(FootSide.right)?.identityKey ??
           s.pairedDevicesList.firstOrNull?.identityKey,
     ),
   ),
@@ -57,6 +68,11 @@ final primaryTelemetryProvider = Provider<LiveTelemetryState>((ref) {
 /// The left foot reads [footTelemetryProvider] directly because an unassigned
 /// sole must never be drawn there; the right foot needs this provider to keep
 /// the single-uncalibrated-sole behaviour the app shipped with.
+///
+/// Untouched by how [primarySoleKeyProvider] orders its terms: the fallback is
+/// only reached with no sole on the right foot, and then that provider's
+/// right-foot term is null whatever position it sits in. The heat map is
+/// therefore independent of which sole the single-sole UI means.
 final rightFootTelemetryProvider = Provider<LiveTelemetryState>((ref) {
   final assigned = ref.watch(footSoleKeyProvider(FootSide.right));
   if (assigned != null) return ref.watch(liveTelemetryProvider(assigned));

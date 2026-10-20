@@ -41,7 +41,9 @@ class PressureReading {
   /// and no sole assigned to that foot.
   final List<int>? left;
 
-  /// False only when there is nothing to show at all.
+  /// Whether anything is feeding **[right]**, which has no null to say it with.
+  /// False makes the right foot read as absent instead of as a foot measuring
+  /// nothing — a distinction the wearer cannot make from the drawing alone.
   final bool hasData;
 }
 
@@ -147,7 +149,10 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
         // Same frame index — the parser already put both feet on one timeline.
         // The parentheses keep `?[` from parsing as a nested conditional.
         left: clip != null ? (clipLeft?[_frame]) : liveLeft,
-        hasData: clip != null || rightImu.isNotEmpty || leftImu.isNotEmpty,
+        // Deliberately not `|| leftImu.isNotEmpty`: this flag speaks for the
+        // right foot only. A lone left sole would otherwise draw the right
+        // foot bearing zero load, which reads as a clinical finding.
+        hasData: clip != null || rightImu.isNotEmpty,
       ),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,

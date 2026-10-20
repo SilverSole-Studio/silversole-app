@@ -39,7 +39,7 @@ UI 層其實已經準備好了：`FootPressureHeatmap` 有 `leftPressure` 參數
 
 - 新 `lib/shared/models/foot_side.dart`：`enum FootSide { left, right }`，附 `labelKey`（`left_foot` / `right_foot`，CSV 已有這兩個 key）。
 - `BlePairedDevice` 新增 `FootSide? footSide`（null = 未指派）。需跑 `dart run build_runner build --delete-conflicting-outputs`。
-- `isPreferred` **保留**，語義收窄：不再決定「連哪一隻」，只決定單隻 UI（韌體卡、狀態卡、OTA 目標）指的是哪一隻。
+- `isPreferred` **保留**，語義收窄：不再決定「連哪一隻」，只決定單隻 UI（韌體卡、狀態卡、OTA 目標）指的是哪一隻。本節就是這件事的權威 —— `primarySoleKeyProvider` 的順序必須 `isPreferred` 優先（見 §6 的修訂）。
 - 既有已配對紀錄 `footSide` 為 null → 單腳行為原樣保留，**不需要遷移腳本**。
 
 ### 3. 腳別指派的持久化（`save_service.dart`、`settings_provider.dart`）
@@ -112,7 +112,8 @@ class SoleSessionRegistry {
 - `liveTelemetryProvider` → `NotifierProvider.family<LiveTelemetryNotifier, LiveTelemetryState, String>`，key = `identityKey`。
 - 新 `lib/shared/providers/foot_telemetry_provider.dart`：
   - `footTelemetryProvider(FootSide)` —— 查 settings 把 side → identityKey 再 watch family；該腳沒鞋墊時回 `const LiveTelemetryState()`。
-  - `primaryTelemetryProvider` —— 右腳 → 否則 `preferredDevice` → 否則唯一連上那隻。
+  - `primaryTelemetryProvider` —— `preferredDevice` → 否則右腳 → 否則第一隻已配對的。
+    > 修訂（2026-10-20，最終審查）：原文寫「右腳優先」，與 §2 矛盾 —— §2 說 `isPreferred` 保留下來的語義就是「決定單隻 UI 指哪一隻」，但右腳優先會讓 `isPreferred` 在雙腳都已校正時永遠踩不到：左腳的韌體因此無法檢查或更新，首頁裝置卡也會掛著一隻的名字顯示另一隻的電量。**這一點以 §2 為權威** —— 單隻 UI 指哪一隻，由使用者明確挑的主要裝置決定，右腳只是沒挑時的回退。熱力圖不受影響：`rightFootTelemetryProvider` 只在「右腳沒有鞋墊」時才走回退，而那時這個順序裡的右腳那一項本來就是 null。
   - `latestTelemetryAtProvider` —— 各 sole `updatedAt` 的最大值。
 - `telemetryViewProvider` 改成轉發 `primaryTelemetryProvider`。**現有 9 個消費端（`imu_chart_section`、`game_webview_page`、`foot_check_session_page`、`home_device_status_section`、`devices_page`、`devices_page_t2`、`home_body_t2`、`record_imu_chart_section`、`analytics_detail_page`）一行都不用改，行為等於今天。**
 - `deviceOnlineProvider` 改成「任一已連鞋墊有新鮮資料」：吃 `latestTelemetryAtProvider`，其餘計時器邏輯與 `firmwareUpdateProvider.busy` 的 gate 不動。

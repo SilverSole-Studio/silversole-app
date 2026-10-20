@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/shared/models/device_status_detail_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 
 import '../models/app_settings.dart';
 import '../providers/settings_provider.dart';
@@ -15,6 +14,12 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
   final String model;
   final String id;
   final bool activeDisplay;
+
+  /// Whether the sole this card names is online. Passed in rather than read
+  /// from `deviceOnlineProvider`, which answers for *any* sole: with one sole
+  /// per foot this card would otherwise report the other foot's link.
+  final bool active;
+
   final bool frosted;
   final DeviceStatusDetailModel? detail;
   final DateTime? lastConnectedAt;
@@ -29,6 +34,7 @@ class DeviceStatusCard extends ConsumerStatefulWidget {
     required this.model,
     required this.id,
     required this.activeDisplay,
+    required this.active,
     this.frosted = false,
     this.detail,
     this.lastConnectedAt,
@@ -79,7 +85,7 @@ class _DeviceStatusCard extends ConsumerState<DeviceStatusCard> {
       id: widget.id,
       icon: LucideIcons.footprints,
       menuItems: widget.menuItems,
-      active: ref.watch(deviceOnlineProvider),
+      active: widget.active,
       addition: true,
       frosted: widget.frosted,
       detail: widget.detail,
