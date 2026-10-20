@@ -3202,6 +3202,10 @@ class _ForegroundSoleConnection implements SoleConnectionController {
 
 4. `syncNotification` 讀 telemetry 用的是 stored entry 的 key，不受影響 —— 確認一下就好，不用改。
 
+5. **釘住 `rekey` 的同步性質**（來自 Task 5 的 review finding）。上面第 2 點用 `unawaited(registry.rekey(...))` 呼叫，然後**立刻**用新 key 讀 registry —— 這只有在 `rekey` 的 map 變更發生在它第一個 `await` 之前才成立。目前的實作確實如此（唯一的 `await` 在 occupied-key 分支，而 `remove` / 插入都在它之前），但沒有任何測試釘住它，所以有人日後在方法前面加一個 `await` 就會無聲破壞 Task 8。
+
+   在 `test/sole_session_registry_test.dart` 補一個案例：**不要 await** 就呼叫 `registry.rekey('addr', 'ID')`，然後同一個同步區塊裡立刻 `expect(registry.lookup('ID'), same(link))` 與 `expect(registry.lookup('addr'), isNull)`。並在 `sole_session_registry.dart` 的 `rekey` doc comment 補一句，說明 map 變更刻意同步完成，因為編排層是 fire-and-forget 呼叫它之後馬上讀新 key。
+
 - [ ] **Step 5: 讓 record 改走 registry，並移除 `bleConnectProvider`**
 
 在 `lib/shared/pages/record_session_mixin.dart`：
