@@ -130,6 +130,38 @@ void main() {
     expect(decision, isNull);
   });
 
+  // Both soles are registered, but the right one has only 1 of 50 baseline
+  // samples. Its baseline is unfinished, so the left sole's step must not be
+  // decided on — removing the per-sole baseline check would let it through.
+  test('a registered sole still building its baseline blocks the verdict', () {
+    final calibrator = FootSideCalibrator();
+    calibrator.add(_right, 40, _t0);
+    FootSideDecision? decision;
+    for (var i = 0; i < 80; i++) {
+      final at = _t0.add(Duration(milliseconds: 20 * i));
+      decision ??= calibrator.add(_left, i < 50 ? 40 : 2000, at);
+    }
+    expect(decision, isNull);
+  });
+
+  // Feed order is load-bearing: the left sole is added before the right one
+  // in every frame, and the left sole crosses the trigger first. A "first sole
+  // to step wins" rule would answer left here and fail. The right sole's
+  // larger peak must decide it.
+  test('the harder step wins even when the weaker sole is fed first', () {
+    final calibrator = FootSideCalibrator();
+    _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
+    final decision = _frames(
+      calibrator,
+      from: 50,
+      count: 30,
+      left: 440, // delta 400 — over the trigger, but weaker
+      right: 2000, // delta 1960
+    );
+    expect(decision?.ambiguous, isFalse);
+    expect(decision?.leftKey, _right);
+  });
+
   test('reset starts over', () {
     final calibrator = FootSideCalibrator();
     _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
