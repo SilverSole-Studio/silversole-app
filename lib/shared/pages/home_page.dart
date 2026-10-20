@@ -5,12 +5,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/core/utils/play_in_app_update.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
-import 'package:silversole/shared/pages/game_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
+import 'package:silversole/shared/pages/plaza_tab_page.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
-import 'package:silversole/shared/pages/theme_two/game_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
@@ -57,7 +56,8 @@ class _HomePageState extends ConsumerState<HomePage> {
       isMascot ? const HomeBodyT2() : const HomeBody(),
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),
-      isMascot ? const GamePageT2() : const GamePage(),
+      // 遊戲分頁直接開 H5 粗哥廣場（取代卡片清單）
+      const PlazaTabPage(),
       isMascot ? const AnalyticsPageT2() : const AnalyticsPage(),
       const PersonPage(),
     ];
