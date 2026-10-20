@@ -3448,6 +3448,48 @@ Expected: FAIL —— `_FakeConnection` 的 `hold`/`dfuLink` 與介面簽章不�
 
 4. 既然 `onDfuLink` 不再需要 primary，確認 `primarySoleKeyProvider` 的 import 仍被 `syncNotification` 以外的程式用到；若 analyze 報未使用就移除該 import。
 
+- [ ] **Step 4c: 順手關掉兩個搜尋迴圈的小洞**（來自 Task 8 的 review）
+
+兩處都在 `searchAndAttach` 裡，各一行，而且都跟 Task 8 修掉的那個 Critical 同一個形狀（搜尋迴圈無聲停止）。
+
+1. **attach 失敗仍被算成「找到了」。** `reconcileSoleLinks` 在 attach 迴圈**之前**就算好 `reschedule`，而 attach 迴圈忽略 `attachTo` 的 `false` 回傳值。一次失敗的 attach 會在 registry 裡留下一條 `isConnected == false` 且 `watchdog == null` 的 link —— 也就是死的 —— 而 `retryTimer` 在這一輪開頭已被取消、watchdog 也沒武裝，於是在設定變動、另一條 link 的 watchdog 觸發、或 App 重啟之前都不會再掃描。
+
+   觸發條件很窄（`BleConnectionService.attach` 只在「武裝 session 本身」拋出時才回 `Error`；`_connect()` 的失敗走它自己的 backoff），但這個檔案開頭那段註解明寫著搜尋會在「arming a session failing」時重新武裝 —— 在修掉之前那句是假的。
+
+   在 attach 迴圈裡記下有沒有失敗，失敗就排下一輪：
+
+```dart
+      var anyFailed = false;
+      for (final pick in plan.attach) {
+        if (held) return;
+        if (await attachTo(pick, current.pairedDevicesList)) {
+          final link = registry.lookup(
+            identityKeyFor(pick, current.pairedDevicesList),
+          );
+          if (!held && link != null) armWatchdog(link);
+        } else {
+          // A session that could not even be armed leaves a dead link behind
+          // and no watchdog to rescue it, so the search has to come back.
+          anyFailed = true;
+        }
+      }
+
+      if (plan.reschedule || anyFailed) scheduleSearch();
+```
+
+2. **`paired` 是掃描前讀的，link 狀態是掃描後讀的。** 一隻 legacy 鞋墊的 `onReady` 若落在掃描中間（`rekey` 是同步的，但 `addOrUpdatePairedDevice` 要等一個 await），剛握手完的那條 link 會看起來「已解除配對」而被 detach。這個暴露在 Task 8 之前就存在（舊版 `linkedKeys: registry.keys` 也是在同一個位置讀、對著同一份掃描前的 `paired`），所以不是回歸，但掃描後重讀一次 settings 就能消掉：
+
+   把掃描後 `reconcileSoleLinks` 那一段用到的 `current.pairedDevicesList` 換成掃描後重讀的值：
+
+```dart
+      // Re-read after the scan: a legacy sole's handshake can land mid-scan
+      // and move its paired entry's identityKey, and planning against the
+      // pre-scan list would read that fresh link as unpaired and detach it.
+      final paired = ref.read(settingsProvider).pairedDevicesList;
+```
+
+   然後 `reconcileSoleLinks(picks: …, paired: paired, …)`、`pickSoles(…, paired: paired, …)` 與 attach 迴圈裡的 `identityKeyFor(pick, paired)` / `attachTo(pick, paired)` 都用它。`desired` 與 `needsSearch` 仍用掃描**前**的 `current`，因為那是決定「這一輪值不值得跑」的依據。
+
 - [ ] **Step 5: 讓更新流程傳 key**
 
 在 `lib/shared/providers/firmware_update_provider.dart` 的 `_install` 裡：
