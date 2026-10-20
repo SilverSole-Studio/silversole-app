@@ -1809,6 +1809,50 @@ final telemetryViewProvider = Provider<LiveTelemetryState>(
         .recentImu
 ```
 
+4. `lib/shared/providers/ble_foreground_controller.dart` —— 這一關**必須**順手改這裡，
+   否則整個專案編不過（family 化讓它的 5 處用法全部失效）。Task 8 會整份改寫這個檔案，
+   所以這裡只做能編譯的最小改動，仍沿用它現有的單一 `boundDevice`：
+
+   - 刪掉第 49 行的 `final live = ref.read(liveTelemetryProvider.notifier);`
+   - `onImu` 裡的 `live.updateImuNotifyData(data);` 換成
+
+```dart
+      final soleKey = boundDevice?.identityKey;
+      if (soleKey == null) return;
+      ref
+          .read(liveTelemetryProvider(soleKey).notifier)
+          .updateImuNotifyData(data);
+```
+
+   - `onRecordImu` 裡的 `live.updateRecordImuNotifyData(` 換成
+
+```dart
+      final soleKey = boundDevice?.identityKey;
+      if (soleKey == null) return;
+      ref
+          .read(liveTelemetryProvider(soleKey).notifier)
+          .updateRecordImuNotifyData(
+```
+
+   - `syncNotification` 裡的 `final telemetry = ref.read(liveTelemetryProvider);` 換成
+
+```dart
+    final telemetry = ref.read(liveTelemetryProvider(sole.identityKey));
+```
+
+   - **刪掉**這個 listener 整段：
+
+```dart
+  ref.listen(
+    liveTelemetryProvider.select((s) => s.recentImu.lastOrNull?.batteryPercent),
+    (_, _) => syncNotification(),
+  );
+```
+
+     電量變化會經由 `rememberBattery` 寫進 settings，而底下那個
+     `settingsProvider.select((s) => s.pairedDevicesList)` 的 listener 已經會接到 ——
+     而且原本這個 listener 每秒會被叫 50 次。Task 8 的設計也不再有它。
+
 - [ ] **Step 8: 修好 3 個既有測試**
 
 1. `test/device_online_provider_test.dart:34` —— 把
