@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/shared/models/app_settings.dart';
@@ -59,7 +60,10 @@ _Settings _settingsOf(ProviderContainer container) =>
 void main() {
   test('a foot with no sole assigned reads empty telemetry', () {
     final container = _boot([_sole('A')]);
-    expect(container.read(footTelemetryProvider(FootSide.left)).recentImu, isEmpty);
+    expect(
+      container.read(footTelemetryProvider(FootSide.left)).recentImu,
+      isEmpty,
+    );
     expect(container.read(footSoleKeyProvider(FootSide.left)), isNull);
   });
 
@@ -69,13 +73,22 @@ void main() {
       _sole('R', side: FootSide.right),
     ]);
 
-    container.read(liveTelemetryProvider('L').notifier).updateImuNotifyData(_imu(700));
+    container
+        .read(liveTelemetryProvider('L').notifier)
+        .updateImuNotifyData(_imu(700));
 
     expect(
-      container.read(footTelemetryProvider(FootSide.left)).recentImu.last.pressure,
+      container
+          .read(footTelemetryProvider(FootSide.left))
+          .recentImu
+          .last
+          .pressure,
       [700, 700, 700],
     );
-    expect(container.read(footTelemetryProvider(FootSide.right)).recentImu, isEmpty);
+    expect(
+      container.read(footTelemetryProvider(FootSide.right)).recentImu,
+      isEmpty,
+    );
   });
 
   test('the primary sole is the right foot when one is assigned', () {
@@ -87,10 +100,7 @@ void main() {
   });
 
   test('with no side assigned the primary sole is the preferred device', () {
-    final container = _boot([
-      _sole('A'),
-      _sole('B', preferred: true),
-    ]);
+    final container = _boot([_sole('A'), _sole('B', preferred: true)]);
     expect(container.read(primarySoleKeyProvider), 'B');
   });
 
@@ -113,16 +123,27 @@ void main() {
       _sole('L', side: FootSide.left),
       _sole('R', side: FootSide.right),
     ]);
-    container.read(liveTelemetryProvider('L').notifier).updateImuNotifyData(_imu(700));
-    expect(container.read(footTelemetryProvider(FootSide.left)).recentImu, isNotEmpty);
-
-    _settingsOf(container).swap(
-      AppSettings(pairedDevicesList: [_sole('R', side: FootSide.right)]),
+    container
+        .read(liveTelemetryProvider('L').notifier)
+        .updateImuNotifyData(_imu(700));
+    expect(
+      container.read(footTelemetryProvider(FootSide.left)).recentImu,
+      isNotEmpty,
     );
 
-    expect(container.read(footTelemetryProvider(FootSide.left)).recentImu, isEmpty);
+    _settingsOf(
+      container,
+    ).swap(AppSettings(pairedDevicesList: [_sole('R', side: FootSide.right)]));
+
+    expect(
+      container.read(footTelemetryProvider(FootSide.left)).recentImu,
+      isEmpty,
+    );
   });
 
+  // The real clock only moves forward, so a last-writer-wins implementation
+  // would pass on it too. Stamping the second sole *earlier* is what tells
+  // "newest across soles" apart from "whoever wrote last".
   test('the newest stamp across soles is what latestTelemetryAt reports', () {
     final container = _boot([
       _sole('L', side: FootSide.left),
@@ -130,14 +151,62 @@ void main() {
     ]);
     expect(container.read(latestTelemetryAtProvider), isNull);
 
-    container.read(liveTelemetryProvider('R').notifier).updateImuNotifyData(_imu(1));
-    final first = container.read(latestTelemetryAtProvider);
-    expect(first, isNotNull);
+    final later = DateTime(2026, 10, 20, 12, 0, 10);
+    withClock(Clock.fixed(later), () {
+      container
+          .read(liveTelemetryProvider('R').notifier)
+          .updateImuNotifyData(_imu(1));
+    });
+    expect(container.read(latestTelemetryAtProvider), later);
 
-    container.read(liveTelemetryProvider('L').notifier).updateImuNotifyData(_imu(2));
-    expect(
-      container.read(latestTelemetryAtProvider)!.isBefore(first!),
-      isFalse,
-    );
+    withClock(Clock.fixed(later.subtract(const Duration(seconds: 5))), () {
+      container
+          .read(liveTelemetryProvider('L').notifier)
+          .updateImuNotifyData(_imu(2));
+    });
+    expect(container.read(latestTelemetryAtProvider), later);
+  });
+
+  group('rightFootTelemetryProvider', () {
+    test('uses the sole assigned to the right foot', () {
+      final container = _boot([
+        _sole('L', side: FootSide.left),
+        _sole('R', side: FootSide.right),
+      ]);
+      container
+          .read(liveTelemetryProvider('R').notifier)
+          .updateImuNotifyData(_imu(500));
+      expect(
+        container.read(rightFootTelemetryProvider).recentImu.last.pressure,
+        [500, 500, 500],
+      );
+    });
+
+    // One uncalibrated sole has always drawn the right foot, and still must:
+    // this is the single-sole case the whole app shipped with.
+    test('an uncalibrated single sole still draws the right foot', () {
+      final container = _boot([_sole('A')]);
+      container
+          .read(liveTelemetryProvider('A').notifier)
+          .updateImuNotifyData(_imu(300));
+      expect(
+        container.read(rightFootTelemetryProvider).recentImu.last.pressure,
+        [300, 300, 300],
+      );
+    });
+
+    // The left sole's data must never be drawn on the right foot just because
+    // it happens to be the only one paired.
+    test('a lone left sole leaves the right foot empty', () {
+      final container = _boot([_sole('L', side: FootSide.left)]);
+      container
+          .read(liveTelemetryProvider('L').notifier)
+          .updateImuNotifyData(_imu(300));
+      expect(container.read(rightFootTelemetryProvider).recentImu, isEmpty);
+      expect(
+        container.read(footTelemetryProvider(FootSide.left)).recentImu,
+        isNotEmpty,
+      );
+    });
   });
 }

@@ -9,10 +9,10 @@ import 'package:silversole/core/theme/app_palette.dart';
 /// Renders a pair of feet as interpolated plantar-pressure heat maps, in the
 /// visual language of a clinical pressure plate.
 ///
-/// The sole only ever reports a right foot, so [leftPressure] is null in
-/// practice; a left foot without data is drawn as a bare mirrored outline. The
-/// left foot is the right one flipped horizontally — same silhouette, same
-/// sensor anchors, mirrored by the canvas.
+/// [leftPressure] is null until a sole is assigned to the left foot; a foot
+/// without data is drawn as a bare mirrored outline. The left foot is the
+/// right one flipped horizontally — same silhouette, same sensor anchors,
+/// mirrored by the canvas.
 ///
 /// We only have 3 sensors, so the smooth field is *inferred* by splatting a
 /// Gaussian blob per sensor (additive) and mapping the resulting scalar field
@@ -51,8 +51,8 @@ class FootPressureHeatmap extends StatefulWidget {
   /// Latest right-foot readings. Missing entries are treated as 0.
   final List<int> pressure;
 
-  /// Latest left-foot readings, or null when there is no left-foot source at
-  /// all — which is every real and sample recording today.
+  /// Latest left-foot readings, or null when nothing is feeding that foot —
+  /// no sole assigned to it and no sample clip playing.
   final List<int>? leftPressure;
 
   /// Whether to draw one foot on its own or the pair.

@@ -45,3 +45,20 @@ final primaryTelemetryProvider = Provider<LiveTelemetryState>((ref) {
   final key = ref.watch(primarySoleKeyProvider);
   return key == null ? _noTelemetry : ref.watch(liveTelemetryProvider(key));
 });
+
+/// What to draw on the right foot.
+///
+/// The sole assigned to it; or — before anyone has calibrated — whichever sole
+/// is primary, as long as it is not the one already assigned to the left foot.
+/// A single uncalibrated sole has drawn the right foot since the app shipped
+/// and still does, while the left sole's readings never leak onto the right
+/// foot just because it is the only sole paired.
+final rightFootTelemetryProvider = Provider<LiveTelemetryState>((ref) {
+  final assigned = ref.watch(footSoleKeyProvider(FootSide.right));
+  if (assigned != null) return ref.watch(liveTelemetryProvider(assigned));
+
+  final leftKey = ref.watch(footSoleKeyProvider(FootSide.left));
+  final fallback = ref.watch(primarySoleKeyProvider);
+  if (fallback == null || fallback == leftKey) return _noTelemetry;
+  return ref.watch(liveTelemetryProvider(fallback));
+});

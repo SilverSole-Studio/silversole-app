@@ -7,8 +7,8 @@ import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 /// The raw sensor values under the heat map: one row per foot on show, three
 /// columns per row — 大拇趾球 / 小拇趾 / 腳跟, in [kSensorLabels] order.
 ///
-/// A foot with no source reads `--` rather than 0, so an unwired left foot is
-/// never mistaken for one measuring nothing.
+/// A foot with no source reads `--` rather than 0, so a foot with no sole on
+/// it is never mistaken for one measuring nothing.
 class PressureReadouts extends StatelessWidget {
   const PressureReadouts({
     super.key,

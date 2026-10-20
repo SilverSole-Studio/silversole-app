@@ -9,7 +9,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/demo_motion_clip.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/models/foot_side.dart';
+import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
 
 /// Canned motions the sample menu can replay, each backed by a bundled
 /// recording. A schema-2 clip carries both feet, already time-aligned.
@@ -36,8 +37,8 @@ class PressureReading {
 
   final List<int> right;
 
-  /// Null whenever nothing is feeding the left foot — which is every live BLE
-  /// session, since the sole only reports a right foot.
+  /// Null whenever nothing is feeding the left foot — no sample clip playing
+  /// and no sole assigned to that foot.
   final List<int>? left;
 
   /// False only when there is nothing to show at all.
@@ -126,19 +127,26 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
 
   @override
   Widget build(BuildContext context) {
-    final imu = ref.watch(telemetryViewProvider).recentImu;
+    final rightImu = ref.watch(rightFootTelemetryProvider).recentImu;
+    final leftImu = ref.watch(footTelemetryProvider(FootSide.left)).recentImu;
     final clip = _clip;
-    final left = clip?.left;
+    final clipLeft = clip?.left;
 
     return widget.builder(
       context,
       PressureReading(
         right:
             clip?.right[_frame] ??
-            (imu.isNotEmpty ? imu.last.pressure : const <int>[0, 0, 0]),
-        // Same frame index — the parser already put both feet on one timeline.
-        left: left?[_frame],
-        hasData: clip != null || imu.isNotEmpty,
+            (rightImu.isNotEmpty
+                ? rightImu.last.pressure
+                : const <int>[0, 0, 0]),
+        // A sample clip overrides both feet; otherwise the left foot is live
+        // only once a sole is assigned to it. Same frame index — the parser
+        // already put both feet on one timeline.
+        left:
+            clipLeft?[_frame] ??
+            (leftImu.isNotEmpty ? leftImu.last.pressure : null),
+        hasData: clip != null || rightImu.isNotEmpty || leftImu.isNotEmpty,
       ),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,

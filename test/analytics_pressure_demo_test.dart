@@ -5,10 +5,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/shared/models/app_settings.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
+import 'package:silversole/shared/models/imu_notify_data_model.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
+
+/// Settings a test can hand straight in, skipping the shared_preferences load.
+class _Settings extends SettingsNotifier {
+  _Settings(this._initial);
+
+  final AppSettings _initial;
+
+  @override
+  AppSettings build() => _initial;
+}
+
+ImuNotifyDataModel _imu(List<int> pressure) => ImuNotifyDataModel(
+  ax: 0,
+  ay: 0,
+  az: 0,
+  gx: 0,
+  gy: 0,
+  gz: 0,
+  pressure: pressure,
+  batteryPercent: 90,
+  isCharging: false,
+);
 
 Future<void> _pumpAnalytics(WidgetTester tester, Widget page) async {
   // Pumped through runAsync because easy_localization reads strings.csv off
@@ -120,7 +148,81 @@ void main() {
 
     expect(find.text('p=[0, 0, 0]'), findsOneWidget);
     expect(find.text('has=false'), findsOneWidget);
-    // No left-foot source exists yet, real or sample.
+    // Nothing is paired, so no sole feeds the left foot and no clip is playing.
     expect(find.text('left=null'), findsOneWidget);
+  });
+
+  testWidgets('a left sole feeds the left foot instead of a dash', (
+    tester,
+  ) async {
+    await EasyLocalization.ensureInitialized();
+
+    final settings = _Settings(
+      const AppSettings(
+        pairedDevicesList: [
+          BlePairedDevice(
+            remoteId: 'l',
+            name: 'SilverSole',
+            deviceId: 'L',
+            footSide: FootSide.left,
+          ),
+          BlePairedDevice(
+            remoteId: 'r',
+            name: 'SilverSole',
+            deviceId: 'R',
+            footSide: FootSide.right,
+          ),
+        ],
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [settingsProvider.overrideWith(() => settings)],
+    );
+    addTearDown(container.dispose);
+    container
+        .read(liveTelemetryProvider('L').notifier)
+        .updateImuNotifyData(_imu(const [11, 22, 33]));
+    container
+        .read(liveTelemetryProvider('R').notifier)
+        .updateImuNotifyData(_imu(const [44, 55, 66]));
+
+    await tester.runAsync(
+      () => tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: EasyLocalization(
+            supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
+            path: 'assets/translations/strings.csv',
+            assetLoader: CsvAssetLoader(),
+            fallbackLocale: const Locale('en'),
+            child: Builder(
+              builder: (context) => MaterialApp(
+                locale: context.locale,
+                supportedLocales: context.supportedLocales,
+                localizationsDelegates: context.localizationDelegates,
+                theme: appTheme(Brightness.light),
+                home: Scaffold(
+                  body: PressureDemoScope(
+                    builder: (context, reading, header) => Column(
+                      children: [
+                        header,
+                        Text('p=${reading.right}'),
+                        Text('left=${reading.left}'),
+                        Text('has=${reading.hasData}'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('p=[44, 55, 66]'), findsOneWidget);
+    expect(find.text('left=[11, 22, 33]'), findsOneWidget);
+    expect(find.text('has=true'), findsOneWidget);
   });
 }

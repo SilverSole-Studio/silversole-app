@@ -51,6 +51,36 @@ void main() {
     },
   );
 
+  // With two feet "online" means either one is reporting: a sole that goes
+  // quiet must not drag the wearable offline while the other keeps feeding.
+  test('two soles: online while either one keeps reporting', () {
+    fakeAsync((async) {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      expect(container.read(deviceOnlineProvider), isFalse);
+
+      final left = container.read(liveTelemetryProvider('L').notifier);
+      final right = container.read(liveTelemetryProvider('R').notifier);
+
+      left.updateImuNotifyData(_sample());
+      right.updateImuNotifyData(_sample());
+      async.flushMicrotasks();
+      expect(container.read(deviceOnlineProvider), isTrue);
+
+      // Only the right sole keeps feeding; the left one is silent for longer
+      // than the window by the time we check.
+      async.elapse(TelemetryFacade.onlineWindow - const Duration(seconds: 1));
+      right.updateImuNotifyData(_sample());
+      async.flushMicrotasks();
+      async.elapse(const Duration(seconds: 5));
+      expect(container.read(deviceOnlineProvider), isTrue);
+
+      // Now both are silent past the window.
+      async.elapse(TelemetryFacade.onlineWindow);
+      expect(container.read(deviceOnlineProvider), isFalse);
+    });
+  });
+
   test('a sole being updated stays online while its stream is paused', () {
     fakeAsync((async) {
       final container = ProviderContainer(
