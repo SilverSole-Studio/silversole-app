@@ -25,17 +25,48 @@ void main() {
       );
     });
 
+    test('the stored entry wins over the candidate\'s own ID', () {
+      // A candidate-first lookup would return 'A' here; expecting 'addr'
+      // pins that the stored entry's key wins.
+      expect(
+        identityKeyFor(_sole('addr', deviceId: 'A'), [_paired('addr')]),
+        'addr',
+      );
+    });
+
     test('an unknown sole is keyed by its own ID, else its address', () {
       expect(identityKeyFor(_sole('addr', deviceId: 'Z'), const []), 'Z');
       expect(identityKeyFor(_sole('addr'), const []), 'addr');
     });
+
+    // Documents a consequence, not desired behaviour: once the paired entry
+    // gains a chip ID its identityKey is 'A', so the session still held under
+    // 'addr' reads as unpaired. The session registry must re-key it (see
+    // identityKeyFor); this test pins what happens if it does not.
+    test(
+      'without a re-key, a link whose paired entry gained an ID is detached',
+      () {
+        final plan = reconcileSoleLinks(
+          picks: const [],
+          paired: [_paired('addr', deviceId: 'A')],
+          linkedKeys: const {'addr'},
+        );
+        expect(plan.detach, {'addr'});
+      },
+    );
   });
 
   group('reconcileSoleLinks', () {
     test('attaches the picks nothing is linked to yet', () {
       final plan = reconcileSoleLinks(
-        picks: [_sole('a', deviceId: 'A'), _sole('b', deviceId: 'B')],
-        paired: [_paired('a', deviceId: 'A'), _paired('b', deviceId: 'B')],
+        picks: [
+          _sole('a', deviceId: 'A'),
+          _sole('b', deviceId: 'B'),
+        ],
+        paired: [
+          _paired('a', deviceId: 'A'),
+          _paired('b', deviceId: 'B'),
+        ],
         linkedKeys: const {},
       );
       expect(plan.attach.map((c) => c.deviceId), ['A', 'B']);
@@ -44,8 +75,14 @@ void main() {
 
     test('a sole that already has a link is left alone', () {
       final plan = reconcileSoleLinks(
-        picks: [_sole('a', deviceId: 'A'), _sole('b', deviceId: 'B')],
-        paired: [_paired('a', deviceId: 'A'), _paired('b', deviceId: 'B')],
+        picks: [
+          _sole('a', deviceId: 'A'),
+          _sole('b', deviceId: 'B'),
+        ],
+        paired: [
+          _paired('a', deviceId: 'A'),
+          _paired('b', deviceId: 'B'),
+        ],
         linkedKeys: const {'A'},
       );
       expect(plan.attach.map((c) => c.deviceId), ['B']);
@@ -76,7 +113,10 @@ void main() {
 
     test('the links already held count towards max', () {
       final plan = reconcileSoleLinks(
-        picks: [_sole('b', deviceId: 'B'), _sole('c', deviceId: 'C')],
+        picks: [
+          _sole('b', deviceId: 'B'),
+          _sole('c', deviceId: 'C'),
+        ],
         paired: [
           _paired('a', deviceId: 'A'),
           _paired('b', deviceId: 'B'),
@@ -91,7 +131,10 @@ void main() {
       // 'GONE' is unpaired, so its slot opens up for C right away.
       final plan = reconcileSoleLinks(
         picks: [_sole('c', deviceId: 'C')],
-        paired: [_paired('a', deviceId: 'A'), _paired('c', deviceId: 'C')],
+        paired: [
+          _paired('a', deviceId: 'A'),
+          _paired('c', deviceId: 'C'),
+        ],
         linkedKeys: const {'A', 'GONE'},
       );
       expect(plan.detach, {'GONE'});
@@ -100,7 +143,10 @@ void main() {
 
     test('the same sole is never attached twice in one plan', () {
       final plan = reconcileSoleLinks(
-        picks: [_sole('a', deviceId: 'A'), _sole('a2', deviceId: 'A')],
+        picks: [
+          _sole('a', deviceId: 'A'),
+          _sole('a2', deviceId: 'A'),
+        ],
         paired: [_paired('a', deviceId: 'A')],
         linkedKeys: const {},
       );

@@ -10,9 +10,16 @@ const int maxSoles = 2;
 /// [BlePairedDevice.identityKey] when the sole is known, otherwise its own ID,
 /// otherwise its address.
 ///
-/// Deliberately the *stored* entry's key: when a sole paired on old firmware
-/// first reports an ID its identityKey changes, and keying off the stored
-/// entry keeps the session stable for this pass. The next search re-keys it.
+/// Deliberately the *stored* entry's key, not the candidate's own ID: a sole
+/// paired on old firmware reports an ID only after it is linked, so the scan
+/// can show a different key than the session was opened under. Within one call
+/// the stored entry gives one stable key.
+///
+/// The key does change between calls once the handshake persists the chip ID,
+/// and this function cannot follow that on its own. It is the session
+/// registry's obligation to re-key a live session when its paired entry's
+/// identityKey changes. Until it does, the old key reads as "no longer paired"
+/// and [reconcileSoleLinks] detaches a working connection.
 String identityKeyFor(
   SoleCandidate candidate,
   List<BlePairedDevice> paired,
