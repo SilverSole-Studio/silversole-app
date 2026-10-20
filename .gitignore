@@ -55,3 +55,6 @@ dev_previews/
 # Claude Code's scratch worktrees. Keeps the rest of .claude/ (launch.json,
 # agents, skills) versionable while leaving this out.
 .claude/worktrees/
+
+# Subagent-driven-development scratch: ledgers, briefs, review packages.
+.superpowers/
