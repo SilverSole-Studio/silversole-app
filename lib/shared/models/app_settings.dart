@@ -15,7 +15,7 @@ abstract class AppSettings with _$AppSettings {
     String? identity,
     String? deviceId,
     @Default(true) bool darkMode,
-    @Default(AppThemeVariant.classic) AppThemeVariant themeVariant,
+    @Default(AppThemeVariant.mascot) AppThemeVariant themeVariant,
     @Default(TransmissionMethod.bluetooth)
     TransmissionMethod transmissionMethod,
     @Default(<BlePairedDevice>[]) List<BlePairedDevice> pairedDevicesList,
