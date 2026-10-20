@@ -261,6 +261,40 @@ void main() {
         isEmpty,
       );
     });
+
+    test('one legacy entry lets only one unidentifiable sole in', () {
+      // The legacy sole may now report an ID, so it matches nothing; the
+      // second slot must not go to a stranger the user never paired.
+      final picks = pickSoles(
+        [_sole('S1', -40, deviceId: 'X'), _sole('S2', -50, deviceId: 'Y')],
+        paired: [
+          _paired('OLD'),
+          _paired('MINE', deviceId: 'MINE_ID'),
+        ],
+      );
+      expect(picks.map((c) => c.deviceId), ['X']);
+    });
+
+    test('two legacy entries let two unidentifiable soles in', () {
+      final picks = pickSoles(
+        [_sole('S1', -40, deviceId: 'X'), _sole('S2', -50, deviceId: 'Y')],
+        paired: [_paired('OLD1'), _paired('OLD2')],
+      );
+      expect(picks.map((c) => c.deviceId), ['X', 'Y']);
+    });
+
+    test('a foot side outranks the primary device at max 1', () {
+      // Spec §5.1: the wearer's calibration beats a stale primary flag.
+      final picks = pickSoles(
+        [_sole('P', -40, deviceId: 'PRI'), _sole('S', -80, deviceId: 'SIDED')],
+        paired: [
+          _paired('P', deviceId: 'PRI', preferred: true),
+          _paired('S', deviceId: 'SIDED', side: FootSide.left),
+        ],
+        max: 1,
+      );
+      expect(picks.map((c) => c.deviceId), ['SIDED']);
+    });
   });
 
   test('a sole is recognised by its advertised name, any casing', () {

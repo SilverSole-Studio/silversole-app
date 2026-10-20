@@ -126,10 +126,18 @@ List<SoleCandidate> pickSoles(
     take(candidate);
   }
 
+  // Each legacy entry that no earlier step matched may take one unidentifiable
+  // sole — no more, so a stranger cannot fill a slot a legacy sole never asked
+  // for. Without any legacy entry, a sole with no ID is connectable as before.
   final hasLegacyEntry = paired.any((d) => d.deviceId == null);
-  for (final candidate in byStrength(
+  final unmatchedLegacy = paired
+      .where((d) => d.deviceId == null && !picked.any((c) => isSameSole(c, d)))
+      .length;
+  final lastResort = byStrength(
     candidates.where((c) => c.deviceId == null || hasLegacyEntry),
-  )) {
+  );
+  for (final candidate
+      in hasLegacyEntry ? lastResort.take(unmatchedLegacy) : lastResort) {
     take(candidate);
   }
 
