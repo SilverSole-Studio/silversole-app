@@ -88,16 +88,19 @@ class FootSideCalibrator {
 
     if (track.stepped && _arbitrationEnds == null) {
       _arbitrationEnds = at.add(arbitration);
+      for (final t in _soles.values) {
+        t.beginMeasuring();
+      }
     }
     final ends = _arbitrationEnds;
     if (ends == null || at.isBefore(ends)) return null;
     return _decision = _decide();
   }
 
-  /// Compares the peaks each sole reached. Peaks are tracked from the moment
-  /// its baseline settled rather than only inside the arbitration window —
-  /// during a resting baseline there is nothing to peak at, so the two agree,
-  /// and tracking throughout means a slow press is not missed.
+  /// Compares the peaks each sole reached inside the arbitration window. Only
+  /// the window counts: a transient from before the step must not be able to
+  /// decide which foot moved, so a sole's peak starts from its reading at the
+  /// moment the window opens.
   FootSideDecision _decide() {
     final ranked = _soles.entries.toList()
       ..sort((a, b) => b.value.peak.compareTo(a.value.peak));
@@ -123,12 +126,24 @@ class _SoleTrack {
   final _resting = <int>[];
   double? _baseline;
   int _over = 0;
+  bool _measuring = false;
 
-  /// The highest reading above baseline seen so far.
+  /// The most recent reading above baseline.
+  int lastDelta = 0;
+
+  /// The highest reading above baseline inside the arbitration window.
   int peak = 0;
   bool stepped = false;
 
   bool get hasBaseline => _baseline != null;
+
+  /// Starts measuring [peak] from the current reading, so the sample that
+  /// opened the window and whatever this sole was reading at that instant
+  /// both count.
+  void beginMeasuring() {
+    _measuring = true;
+    peak = lastDelta > 0 ? lastDelta : 0;
+  }
 
   void add(
     int sum, {
@@ -144,7 +159,8 @@ class _SoleTrack {
       return;
     }
     final delta = (sum - baseline).round();
-    if (delta > peak) peak = delta;
+    lastDelta = delta;
+    if (_measuring && delta > peak) peak = delta;
     if (delta >= triggerDelta) {
       _over++;
       if (_over >= holdSamples) stepped = true;

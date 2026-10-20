@@ -145,21 +145,84 @@ void main() {
   });
 
   // Feed order is load-bearing: the left sole is added before the right one
-  // in every frame, and the left sole crosses the trigger first. A "first sole
-  // to step wins" rule would answer left here and fail. The right sole's
-  // larger peak must decide it.
-  test('the harder step wins even when the weaker sole is fed first', () {
+  // in every frame, and the left sole trips the trigger first (frame 52). The
+  // right sole is still at rest then and only steps from frame 53, inside the
+  // arbitration window. A decision taken at the first trigger would compare
+  // 400 against nothing and answer left; the window lets the right sole's
+  // peak arrive and decide it.
+  test('the harder step wins when it arrives inside the window', () {
     final calibrator = FootSideCalibrator();
     _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
-    final decision = _frames(
-      calibrator,
-      from: 50,
-      count: 30,
-      left: 440, // delta 400 — over the trigger, but weaker
-      right: 2000, // delta 1960
-    );
+    FootSideDecision? decision;
+    for (var i = 50; i < 80; i++) {
+      final at = _t0.add(Duration(milliseconds: 20 * i));
+      decision ??= calibrator.add(_left, 440, at); // delta 400, but weaker
+      decision ??= calibrator.add(_right, i < 53 ? 40 : 2000, at);
+    }
     expect(decision?.ambiguous, isFalse);
     expect(decision?.leftKey, _right);
+  });
+
+  // The left sole glitches to 2000 for a single frame and is back at rest, so
+  // that is not a step. Its peak must not survive into the window: otherwise
+  // the glitch's 1960 ties the right sole's real 1960 and the verdict is
+  // ambiguous.
+  test('a one-frame glitch on the other sole does not decide the step', () {
+    final calibrator = FootSideCalibrator();
+    _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
+    FootSideDecision? decision;
+    for (var i = 50; i < 80; i++) {
+      final at = _t0.add(Duration(milliseconds: 20 * i));
+      decision ??= calibrator.add(_left, i == 50 ? 2000 : 40, at);
+      decision ??= calibrator.add(_right, i < 51 ? 40 : 2000, at);
+    }
+    expect(decision?.ambiguous, isFalse);
+    expect(decision?.leftKey, _right);
+  });
+
+  // Spike, rest, spike, rest, ... never three samples in a row over the
+  // trigger, so no spike is a step. Without the streak reset the spikes would
+  // add up across the rests and trip it.
+  test('spikes separated by rests never add up to a step', () {
+    final calibrator = FootSideCalibrator();
+    _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
+    FootSideDecision? decision;
+    for (var i = 50; i < 110; i++) {
+      final at = _t0.add(Duration(milliseconds: 20 * i));
+      decision ??= calibrator.add(_left, i.isEven ? 2000 : 40, at);
+      decision ??= calibrator.add(_right, 40, at);
+    }
+    expect(decision, isNull);
+  });
+
+  // reset() must clear the arbitration window as well as the verdict. If it
+  // kept the old window end, the new run's baselines would finish after that
+  // time had already passed, and the verdict would come out ambiguous at once
+  // (both peaks zero).
+  test('a reset after an ambiguous verdict starts a clean run', () {
+    final calibrator = FootSideCalibrator();
+    _frames(calibrator, from: 0, count: 50, left: 40, right: 40);
+    expect(
+      _frames(
+        calibrator,
+        from: 50,
+        count: 30,
+        left: 2000,
+        right: 2000,
+      )?.ambiguous,
+      isTrue,
+    );
+    calibrator.reset();
+    _frames(calibrator, from: 80, count: 50, left: 40, right: 40);
+    final decision = _frames(
+      calibrator,
+      from: 130,
+      count: 30,
+      left: 2000,
+      right: 40,
+    );
+    expect(decision?.ambiguous, isFalse);
+    expect(decision?.leftKey, _left);
   });
 
   test('reset starts over', () {
