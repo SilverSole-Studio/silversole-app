@@ -4731,6 +4731,21 @@ MSG
 
 `lib/shared/pages/theme_two/devices_page_t2.dart` 的對應位置做相同的加法（該檔的裝置列若樣式不同，就沿用它自己的徽章寫法，顏色仍走 `context.colorScheme`）。
 
+- [ ] **Step 0: 補一個「寫入失敗」的測試**（來自 Task 12 的 review，設計由它提供）
+
+Task 12 修掉了一個「面板看起來活著但其實死了」的缺陷：`_assign` 把 `_saving` 設成 true 之後若 `setFootSide` 丟出例外就永遠不會清掉，於是 `_feed` 忽略所有樣本、手動指派按鈕沒反應、Retry 也救不回來，只剩「稍後再說」能用。修法是 `try`/`catch`/`finally`，但**那個 `finally` 目前沒有測試**，而這正是「happy path 看起來正常、所以沒人會發現」的那一類 bug。
+
+在 `test/foot_side_calibration_overlay_test.dart` 現有的那個 `testWidgets` 裡（**不要加第二個 `EasyLocalization` mount**）補上這段，順序很重要：
+
+1. 讓測試用的 `_Settings` 可以丟一次例外 —— 例如一個 `bool failNext` 欄位，`setFootSide` 在它為 true 時丟出並把自己設回 false。
+2. 先踩一次（在成功那次之前），斷言「請用左腳踩一下」的面板**仍然在**、而且 `pairedDevicesList` 沒有被改動。
+3. 用假時鐘推進 15 秒讓手動指派按鈕出現。
+4. **點手動指派的按鈕**，斷言它成功寫入。
+
+第 4 步只有在 `finally` 真的把 `_saving` 清掉的情況下才會通過 —— 這是整段的關鍵。
+
+**不要**改用 Retry 來做這個測試：`_restart` 自己也會清 `_saving`，所以用 Retry 的版本就算 `finally` 不存在也會通過，等於什麼都沒釘到。這是 review 特別指出來的陷阱。
+
 - [ ] **Step 1a: 刪掉一個沒有人用的 i18n key**（來自 Task 12 的 concern）
 
 Task 12 依 spec 把 14 個 key 一次加進 `strings.csv`，其中六個當時還沒有使用者。這一關會用掉五個（`set_left_foot`、`set_right_foot`、`debug_add_fake_sole`、`debug_remove_fake_sole`、`debug_fake_sole_stomp`），但 **`foot_side_unassigned` 沒有任何人會用** —— 那是我在 spec 的 i18n 清單裡憑空列出來的，計畫裡沒有任何程式碼參照它。
