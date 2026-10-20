@@ -3242,6 +3242,25 @@ class _ForegroundSoleConnection implements SoleConnectionController {
 
 4. 把 `lib/shared/providers/ble_connection_provider.dart` 裡的 `bleConnectProvider` 連同 doc comment 與 `ble_connection_service.dart` 的 import 一起刪除，只留 `soleSessionsProvider`。
 
+5. **讓錄製的 key 對齊**（來自 Task 6 的 review finding）。`startRecord` 現在清掉的是 **primary** 那隻的 record 視窗，而編排層把 record notify 寫進**該條 link 自己**的 key。兩者今天同一隻，但一旦不同（例如 primary 被改成另一腳），錄製圖會永遠空白而且不會有錯誤。
+
+   既然這一步已經把 `primaryLink` 取出來了，就用**同一條 link 的 key** 做清除與讀取，不要分別去問 `primarySoleKeyProvider`：
+
+```dart
+    final ble = primaryLink;
+    if (ble == null) {
+      showErrorSnakeBar('not_binding'.tr());
+      return;
+    }
+    // Same link the record notifies land on, so the chart cannot end up
+    // reading a window nothing is writing to.
+    ref
+        .read(liveTelemetryProvider(ble.device.identityKey).notifier)
+        .clearRecordImuNotifyData();
+```
+
+   `primaryLink` 的回傳型別因此要是 `SoleLink?`（不是 `BleConnectionService?`），呼叫 BLE 的地方改成 `ble.service.writeBool(...)` / `ble.service.readString(...)`。
+
 - [ ] **Step 6: 跑整套測試與靜態分析**
 
 Run:
@@ -4024,6 +4043,16 @@ import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
 /// A foot with no source reads `--` rather than 0, so a foot with no sole on
 /// it is never mistaken for one measuring nothing.
 ```
+
+- [ ] **Step 5b: 補掉 Task 6 留下的三個測試缺口**
+
+這三項來自 Task 6 的 review，都落在這一關會碰到的檔案上。
+
+1. **`latestTelemetryAt` 的「只前進」性質目前沒被釘住。** `test/foot_telemetry_provider_test.dart` 裡那個 `the newest stamp across soles…` 案例用的是真實時鐘，而真實時鐘本來就單調遞增，所以「後寫者覆蓋」的實作也會過 —— 它無法分辨「取各 sole 的最大值」和「最後一個寫入者勝」。用 `clock` 套件的 `withClock` 重寫：讓第二隻鞋墊在**較早**的時間戳寫入，然後斷言 `latestTelemetryAtProvider` 的值**沒有退回去**。
+
+2. **沒有任何雙腳的 `deviceOnlineProvider` 測試。** Step 6 的核心行為改變（「任一隻在線即在線」）目前只用單一個 key `'A'` 跑過。在 `test/device_online_provider_test.dart` 補一個 `fakeAsync` 案例：兩隻鞋墊都餵資料 → 在線；只讓其中一隻繼續餵，另一隻靜默超過 `TelemetryFacade.onlineWindow` → **仍然在線**；兩隻都靜默超過視窗 → 離線。沿用該檔現有的 `fakeAsync` + `_sample()` 寫法。
+
+3. **格式。** `dart format --output=none --set-exit-if-changed test/foot_telemetry_provider_test.dart` 目前會回報需要變更。在這一關結束前對你碰過的測試檔跑一次 `dart format`。
 
 - [ ] **Step 6: 跑整套測試**
 
