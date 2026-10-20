@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +92,67 @@ Future<List<int>> _playWalkOnPressureTab(WidgetTester tester) async {
       .widget<FootPressureHeatmap>(find.byType(FootPressureHeatmap))
       .pressure;
 }
+
+/// Mounts a bare [PressureDemoScope] on [container], printing what it hands
+/// its builder.
+Future<void> _pumpScope(
+  WidgetTester tester,
+  ProviderContainer container,
+) async {
+  await tester.runAsync(
+    () => tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: EasyLocalization(
+          supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
+          path: 'assets/translations/strings.csv',
+          assetLoader: CsvAssetLoader(),
+          fallbackLocale: const Locale('en'),
+          child: Builder(
+            builder: (context) => MaterialApp(
+              locale: context.locale,
+              supportedLocales: context.supportedLocales,
+              localizationsDelegates: context.localizationDelegates,
+              theme: appTheme(Brightness.light),
+              home: Scaffold(
+                body: PressureDemoScope(
+                  builder: (context, reading, header) => Column(
+                    children: [
+                      header,
+                      Text('p=${reading.right}'),
+                      Text('left=${reading.left}'),
+                      Text('has=${reading.hasData}'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+ProviderContainer _containerWith(List<BlePairedDevice> paired) {
+  final container = ProviderContainer(
+    overrides: [
+      settingsProvider.overrideWith(
+        () => _Settings(AppSettings(pairedDevicesList: paired)),
+      ),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
+BlePairedDevice _sole(String id, FootSide side) => BlePairedDevice(
+  remoteId: id.toLowerCase(),
+  name: 'SilverSole',
+  deviceId: id,
+  footSide: side,
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -186,43 +251,74 @@ void main() {
         .read(liveTelemetryProvider('R').notifier)
         .updateImuNotifyData(_imu(const [44, 55, 66]));
 
-    await tester.runAsync(
-      () => tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: EasyLocalization(
-            supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
-            path: 'assets/translations/strings.csv',
-            assetLoader: CsvAssetLoader(),
-            fallbackLocale: const Locale('en'),
-            child: Builder(
-              builder: (context) => MaterialApp(
-                locale: context.locale,
-                supportedLocales: context.supportedLocales,
-                localizationsDelegates: context.localizationDelegates,
-                theme: appTheme(Brightness.light),
-                home: Scaffold(
-                  body: PressureDemoScope(
-                    builder: (context, reading, header) => Column(
-                      children: [
-                        header,
-                        Text('p=${reading.right}'),
-                        Text('left=${reading.left}'),
-                        Text('has=${reading.hasData}'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    await _pumpScope(tester, container);
 
     expect(find.text('p=[44, 55, 66]'), findsOneWidget);
     expect(find.text('left=[11, 22, 33]'), findsOneWidget);
     expect(find.text('has=true'), findsOneWidget);
+  });
+
+  // hasData is "either foot", so a lone left sole must light it up even though
+  // the right foot has nothing.
+  testWidgets('only a left sole streaming still counts as data', (
+    tester,
+  ) async {
+    await EasyLocalization.ensureInitialized();
+    final container = _containerWith([_sole('L', FootSide.left)]);
+    container
+        .read(liveTelemetryProvider('L').notifier)
+        .updateImuNotifyData(_imu(const [11, 22, 33]));
+
+    await _pumpScope(tester, container);
+
+    expect(find.text('p=[0, 0, 0]'), findsOneWidget);
+    expect(find.text('left=[11, 22, 33]'), findsOneWidget);
+    expect(find.text('has=true'), findsOneWidget);
+  });
+
+  // A playing clip owns both feet. A right-only payload (schema 1, or schema 2
+  // with no left track) must blank the left foot, not mix live readings in.
+  testWidgets('a right-only clip blanks the left foot instead of going live', (
+    tester,
+  ) async {
+    await EasyLocalization.ensureInitialized();
+    final container = _containerWith([_sole('L', FootSide.left)]);
+    container
+        .read(liveTelemetryProvider('L').notifier)
+        .updateImuNotifyData(_imu(const [11, 22, 33]));
+
+    // Stands in for the bundled walk clip; nothing test-only ships in the app.
+    const rightOnly =
+        '{"schema_version":1,"sample_rate_hz":25,"samples":['
+        '[0,0,0,0,0,0,0,7,8,9,0,0],[40,0,0,0,0,0,0,7,8,9,0,0]]}';
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMessageHandler('flutter/assets', (message) async {
+      final key = utf8.decode(message!.buffer.asUint8List());
+      final bytes = key == DemoMotion.walk.asset
+          ? utf8.encode(rightOnly)
+          : await File(key).readAsBytes();
+      return ByteData.sublistView(Uint8List.fromList(bytes));
+    });
+    addTearDown(() => messenger.setMockMessageHandler('flutter/assets', null));
+
+    await _pumpScope(tester, container);
+    await tester.tap(find.text('Sample'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<void>, 'Walk'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pump();
+
+    expect(find.text('p=[7, 8, 9]'), findsOneWidget);
+    expect(find.text('left=null'), findsOneWidget);
+
+    // Stop playback so no timer outlives the test.
+    await tester.tap(find.text('Sample'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.widgetWithText(PopupMenuItem<void>, 'Stop sample'));
+    await tester.pumpAndSettle();
   });
 }

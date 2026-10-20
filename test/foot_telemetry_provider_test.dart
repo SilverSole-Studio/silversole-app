@@ -208,5 +208,38 @@ void main() {
         isNotEmpty,
       );
     });
+
+    // With the left foot assigned, the right foot's fallback is decided by
+    // which unassigned sole is primary — preferredDevice before first-paired.
+    test(
+      'an unassigned preferred sole draws the right foot beside a left one',
+      () {
+        final container = _boot([
+          _sole('L', side: FootSide.left),
+          _sole('U', preferred: true),
+        ]);
+        container
+            .read(liveTelemetryProvider('U').notifier)
+            .updateImuNotifyData(_imu(400));
+        expect(
+          container.read(rightFootTelemetryProvider).recentImu.last.pressure,
+          [400, 400, 400],
+        );
+      },
+    );
+
+    test(
+      'a preferred left sole keeps the right foot empty beside an unassigned one',
+      () {
+        final container = _boot([
+          _sole('L', side: FootSide.left, preferred: true),
+          _sole('U'),
+        ]);
+        container
+            .read(liveTelemetryProvider('U').notifier)
+            .updateImuNotifyData(_imu(400));
+        expect(container.read(rightFootTelemetryProvider).recentImu, isEmpty);
+      },
+    );
   });
 }

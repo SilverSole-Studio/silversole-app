@@ -131,6 +131,7 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
     final leftImu = ref.watch(footTelemetryProvider(FootSide.left)).recentImu;
     final clip = _clip;
     final clipLeft = clip?.left;
+    final liveLeft = leftImu.isNotEmpty ? leftImu.last.pressure : null;
 
     return widget.builder(
       context,
@@ -140,12 +141,12 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
             (rightImu.isNotEmpty
                 ? rightImu.last.pressure
                 : const <int>[0, 0, 0]),
-        // A sample clip overrides both feet; otherwise the left foot is live
-        // only once a sole is assigned to it. Same frame index — the parser
-        // already put both feet on one timeline.
-        left:
-            clipLeft?[_frame] ??
-            (leftImu.isNotEmpty ? leftImu.last.pressure : null),
+        // A playing clip owns both feet, so one with no left track blanks the
+        // left foot rather than mixing live readings into a canned right.
+        // Otherwise the left foot is live only once a sole is assigned to it.
+        // Same frame index — the parser already put both feet on one timeline.
+        // The parentheses keep `?[` from parsing as a nested conditional.
+        left: clip != null ? (clipLeft?[_frame]) : liveLeft,
         hasData: clip != null || rightImu.isNotEmpty || leftImu.isNotEmpty,
       ),
       Row(
