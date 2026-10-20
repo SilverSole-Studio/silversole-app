@@ -22,17 +22,18 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// card.
 ///
 /// The product shot, the paired-device rows and the pairing button are real:
-/// rows come from the paired list, and the connected one shows its live
-/// battery. The firmware block shows the connected sole's version and offers
-/// updates ([firmwareCheckProvider]).
+/// rows come from the paired list, and every connected sole shows its own
+/// live battery. The firmware block shows the connected sole's version and
+/// offers updates ([firmwareCheckProvider]).
 class DevicesPageT2 extends ConsumerWidget {
   const DevicesPageT2({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    // Watched so the rows re-evaluate when the last sole goes quiet: that
-    // flip is driven by a timer, and no telemetry event announces silence.
+    // Value unused on purpose: checkDeviceOnline compares against the clock,
+    // and nothing rebuilds when a sole goes silent. Watching this provider is
+    // what re-runs build when its timer fires.
     ref.watch(deviceOnlineProvider);
     final facade = ref.watch(telemetryFacadeProvider);
     final rows = buildDeviceRows(
@@ -176,6 +177,23 @@ class _DeviceRowTile extends StatelessWidget {
                         '••••$shortId',
                         style: context.textTheme.bodyMedium?.copyWith(
                           color: AppPaletteT2.inkMuted,
+                        ),
+                      ),
+                    if (row.device.footSide case final side?)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          side.labelKey.tr(),
+                          style: context.textTheme.labelLarge?.copyWith(
+                            color: context.colorScheme.onSecondaryContainer,
+                          ),
                         ),
                       ),
                   ],

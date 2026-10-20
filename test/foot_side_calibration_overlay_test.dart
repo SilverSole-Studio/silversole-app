@@ -33,11 +33,18 @@ const _right = BlePairedDevice(
 /// shared_preferences. [assignFootSide] is the same pure function the real
 /// notifier persists through.
 class _Settings extends SettingsNotifier {
+  /// Throws once from [setFootSide], like a failed write to disk.
+  bool failNext = false;
+
   @override
   AppSettings build() => const AppSettings(pairedDevicesList: [_left, _right]);
 
   @override
   Future<void> setFootSide(String identityKey, FootSide? side) async {
+    if (failNext) {
+      failNext = false;
+      throw StateError('disk full');
+    }
     state = state.copyWith(
       pairedDevicesList: assignFootSide(
         state.pairedDevicesList,
@@ -129,6 +136,48 @@ void main() {
             .updateImuNotifyData(_imu(right));
       });
     }
+
+    // A write that fails must not leave a panel that looks alive but ignores
+    // everything. The step comes first, before any save has succeeded.
+    final settings = container.read(settingsProvider.notifier) as _Settings
+      ..failNext = true;
+    for (var i = 0; i < 60; i++) {
+      frame(left: 0, right: 0);
+    }
+    for (var i = 0; i < 40; i++) {
+      frame(left: 0, right: 2000);
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Step on your left foot'), findsOneWidget);
+    expect(settings.failNext, isFalse, reason: 'the failing write ran');
+    expect(
+      container
+          .read(settingsProvider)
+          .pairedDevicesList
+          .every((d) => d.footSide == null),
+      isTrue,
+    );
+
+    // The by-hand button, not Retry: Retry resets the saving flag itself, so
+    // it would pass even without the `finally` this pins.
+    await tester.pump(const Duration(seconds: 15));
+    await tester.tap(find.text('This is my left').last);
+    await tester.pumpAndSettle();
+    expect(
+      container
+          .read(settingsProvider)
+          .pairedDevicesList
+          .firstWhere((d) => d.identityKey == _right.identityKey)
+          .footSide,
+      FootSide.left,
+    );
+    expect(find.text('Step on your left foot'), findsNothing);
+
+    // Undo it, so the question comes back and the step itself is covered too.
+    await settings.setFootSide(_left.identityKey, null);
+    await settings.setFootSide(_right.identityKey, null);
+    await tester.pumpAndSettle();
+    expect(find.text('Step on your left foot'), findsOneWidget);
 
     // A second of standing still fills both baselines.
     for (var i = 0; i < 60; i++) {

@@ -494,7 +494,6 @@ foot_side_calibration_timeout,No pressure detected. Choose the left sole by hand
 foot_side_this_is_left,This is my left,這隻是左腳
 foot_side_retry,Try again,重試
 foot_side_later,Later,稍後再說
-foot_side_unassigned,Not assigned,未指定
 set_left_foot,Set as left foot,設為左腳
 set_right_foot,Set as right foot,設為右腳
 debug_add_fake_sole,Add a fake second sole,加入假的第二隻鞋墊

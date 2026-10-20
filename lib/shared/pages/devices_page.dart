@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
+import 'package:silversole/core/ble/debug_fake_sole.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/relative_time.dart';
@@ -12,6 +13,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/device_view_data.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
@@ -146,6 +148,15 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
     );
   }
 
+  /// Assigning a foot takes it off whichever sole had it — see
+  /// [assignFootSide].
+  Future<void> setFootSide(BlePairedDevice device, FootSide side) async {
+    await ref
+        .read(settingsProvider.notifier)
+        .setFootSide(device.identityKey, side);
+    showMessage(side.labelKey.tr());
+  }
+
   Future<void> deleteDevice(BlePairedDevice device) async {
     final settings = ref.read(settingsProvider.notifier);
     await settings.removePairedDevice(device);
@@ -155,8 +166,9 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    // Watched so the rows re-evaluate when the last sole goes quiet: that
-    // flip is driven by a timer, and no telemetry event announces silence.
+    // Value unused on purpose: checkDeviceOnline compares against the clock,
+    // and nothing rebuilds when a sole goes silent. Watching this provider is
+    // what re-runs build when its timer fires.
     ref.watch(deviceOnlineProvider);
     final facade = ref.watch(telemetryFacadeProvider);
     final rows = buildDeviceRows(
@@ -205,8 +217,10 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                 onRename: renameDevice,
                 onDelete: deleteDevice,
                 onSetPreferred: setPreferredDevice,
+                onSetFootSide: setFootSide,
               ),
               const _FirmwareCard(),
+              if (kDebugMode) const _DebugFakeSoleCard(),
               if (rows.isNotEmpty)
                 TextButton.icon(
                   onPressed: clearAllDevices,
@@ -261,12 +275,14 @@ class _DeviceListCard extends StatelessWidget {
     required this.onRename,
     required this.onDelete,
     required this.onSetPreferred,
+    required this.onSetFootSide,
   });
 
   final List<DeviceRow> rows;
   final ValueChanged<BlePairedDevice> onRename;
   final ValueChanged<BlePairedDevice> onDelete;
   final ValueChanged<BlePairedDevice> onSetPreferred;
+  final void Function(BlePairedDevice device, FootSide side) onSetFootSide;
 
   @override
   Widget build(BuildContext context) {
@@ -292,6 +308,7 @@ class _DeviceListCard extends StatelessWidget {
                     onRename: onRename,
                     onDelete: onDelete,
                     onSetPreferred: onSetPreferred,
+                    onSetFootSide: onSetFootSide,
                   ),
                 ],
               ],
@@ -306,12 +323,14 @@ class _DeviceRowTile extends StatelessWidget {
     required this.onRename,
     required this.onDelete,
     required this.onSetPreferred,
+    required this.onSetFootSide,
   });
 
   final DeviceRow row;
   final ValueChanged<BlePairedDevice> onRename;
   final ValueChanged<BlePairedDevice> onDelete;
   final ValueChanged<BlePairedDevice> onSetPreferred;
+  final void Function(BlePairedDevice device, FootSide side) onSetFootSide;
 
   @override
   Widget build(BuildContext context) {
@@ -361,6 +380,23 @@ class _DeviceRowTile extends StatelessWidget {
                       '••••$shortId',
                       style: context.textTheme.bodySmall?.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (device.footSide case final side?)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 2,
+                      ),
+                      decoration: ShapeDecoration(
+                        color: context.colorScheme.secondaryContainer,
+                        shape: AppRadius.pillShape,
+                      ),
+                      child: Text(
+                        side.labelKey.tr(),
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.colorScheme.onSecondaryContainer,
+                        ),
                       ),
                     ),
                 ],
@@ -424,6 +460,18 @@ class _DeviceRowTile extends StatelessWidget {
               icon: LucideIcons.star,
               enable: !device.isPreferred,
               onClick: () => onSetPreferred(device),
+            ),
+            ListTileData.normal(
+              title: 'set_left_foot'.tr(),
+              icon: LucideIcons.footprints,
+              enable: device.footSide != FootSide.left,
+              onClick: () => onSetFootSide(device, FootSide.left),
+            ),
+            ListTileData.normal(
+              title: 'set_right_foot'.tr(),
+              icon: LucideIcons.footprints,
+              enable: device.footSide != FootSide.right,
+              onClick: () => onSetFootSide(device, FootSide.right),
             ),
             ListTileData.normal(
               title: 'rename'.tr(),
@@ -582,5 +630,48 @@ class _FirmwareStatus extends ConsumerWidget {
         ),
       ),
     };
+  }
+}
+
+/// Debug-only handle on the fake second sole — the only way to exercise two
+/// feet with one sole in hand.
+class _DebugFakeSoleCard extends ConsumerStatefulWidget {
+  const _DebugFakeSoleCard();
+
+  @override
+  ConsumerState<_DebugFakeSoleCard> createState() => _DebugFakeSoleCardState();
+}
+
+class _DebugFakeSoleCardState extends ConsumerState<_DebugFakeSoleCard> {
+  @override
+  Widget build(BuildContext context) {
+    final fake = ref.watch(debugFakeSoleProvider);
+    return SectionCard(
+      title: 'debug_add_fake_sole'.tr(),
+      child: Row(
+        spacing: AppSpacing.sm,
+        children: [
+          Expanded(
+            child: FilledButton(
+              onPressed: () async {
+                fake.isRunning ? await fake.stop() : await fake.start();
+                if (context.mounted) setState(() {});
+              },
+              child: Text(
+                fake.isRunning
+                    ? 'debug_remove_fake_sole'.tr()
+                    : 'debug_add_fake_sole'.tr(),
+              ),
+            ),
+          ),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: fake.isRunning ? fake.stomp : null,
+              child: Text('debug_fake_sole_stomp'.tr()),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
