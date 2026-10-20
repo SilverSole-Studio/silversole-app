@@ -4934,6 +4934,18 @@ MSG
 - Consumes: 全部
 - Produces: 無程式碼
 
+- [ ] **Step 0: 修掉 Layering 段落裡已不存在的 provider**（來自 Task 8 的 concern）
+
+`CLAUDE.md` 第 36 行的 Layering 說明還拿 `bleConnectProvider` 當例子：
+
+```
+E.g. `soleProvider → SilverSoleService(supabase)`, `bleConnectProvider → BleConnectionService()`.
+```
+
+Task 8 已經刪掉 `bleConnectProvider`（`lib` 與 `test` 裡都沒有殘留了），所以這個例子現在指向一個不存在的東西。改成現在的形狀：`soleSessionsProvider → SoleSessionRegistry()`，並說明它持有每隻鞋墊一個 `BleConnectionService` 實例。
+
+這一行在 Layering 段落而不是 pipeline 段落，所以如果只改 pipeline 就會留下來。
+
 - [ ] **Step 1: 改寫第 2 點「Connection orchestration」**
 
 把 `BleConnectionService` 「owns the single live session」那段改寫，說明：
