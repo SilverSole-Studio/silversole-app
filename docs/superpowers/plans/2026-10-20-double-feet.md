@@ -1346,6 +1346,82 @@ final bleConnectProvider = Provider<BleConnectionService>(
 );
 ```
 
+- [ ] **Step 4b（修正，優先於 Step 3 的程式碼）：`SoleSessionRegistry` 必須能 re-key**
+
+這一條來自 Task 3 的 review finding，是 Task 5 的硬契約。
+
+一隻用 pre-ID 韌體配對的鞋墊，紀錄裡沒有 `deviceId`，所以 session 會以**位址**當 key 建立。等 handshake 讀到 chip ID 之後，那筆配對紀錄的 `identityKey` 變成那個 ID —— 但 registry 還把 session 掛在舊的位址 key 上。下一輪 `reconcileSoleLinks` 算 `linkedKeys.difference(pairedKeys)` 就會把舊 key 當成「已解除配對」，**砍掉一條正在用的連線**。這個情境單腳碰不到（搜尋迴圈滿額時提早 return），正好只在雙腳而且只連上一隻時踩到 —— 也就是「找第二腳的時候把第一腳砍掉」。
+
+`reconcileSoleLinks` 刻意不處理這件事（keying 的歸屬在 registry，不在純決策函式），所以修在這裡。在 `SoleSessionRegistry` 裡，`detach` 之前加入：
+
+```dart
+  /// Moves a live session from [oldKey] to [newKey], keeping its service — and
+  /// so its connection — intact.
+  ///
+  /// A sole paired on pre-ID firmware is filed under its address; the moment
+  /// its handshake reports a chip ID its paired entry is keyed by that ID
+  /// instead, and a session still filed under the address reads as "no longer
+  /// paired" to `reconcileSoleLinks`, which would tear down a working link.
+  Future<void> rekey(String oldKey, String newKey) async {
+    if (oldKey == newKey) return;
+    final link = _links.remove(oldKey);
+    if (link == null) return;
+    if (!_links.containsKey(newKey)) {
+      _links[newKey] = link;
+      return;
+    }
+    // Something is already filed under the new key — the same sole reached
+    // twice. Keep that one and retire the misfiled session rather than leave
+    // two links to one foot.
+    link.cancelWatchdog();
+    await link.service.detach();
+  }
+```
+
+並在 `test/sole_session_registry_test.dart` 補三個案例：
+
+```dart
+  test('re-keying moves the session and keeps the live service', () async {
+    final registry = SoleSessionRegistry(createService: _FakeService.new);
+    final link = registry.link('addr', _sole('addr'));
+    final service = link.service;
+
+    await registry.rekey('addr', 'ID');
+
+    expect(registry.lookup('addr'), isNull);
+    expect(registry.lookup('ID'), same(link));
+    // The connection must survive: a re-key is bookkeeping, not a reconnect.
+    expect(registry.lookup('ID')!.service, same(service));
+    expect((service as _FakeService).detaches, 0);
+    expect(registry.keys, {'ID'});
+  });
+
+  test('re-keying onto an occupied key retires the misfiled session', () async {
+    final registry = SoleSessionRegistry(createService: _FakeService.new);
+    final stale = registry.link('addr', _sole('addr'));
+    final live = registry.link('ID', _sole('ID'));
+
+    await registry.rekey('addr', 'ID');
+
+    expect(registry.keys, {'ID'});
+    expect(registry.lookup('ID'), same(live));
+    expect((stale.service as _FakeService).detaches, 1);
+    expect((live.service as _FakeService).detaches, 0);
+  });
+
+  test('re-keying an unknown or unchanged key is harmless', () async {
+    final registry = SoleSessionRegistry(createService: _FakeService.new);
+    final link = registry.link('A', _sole('A'));
+
+    await registry.rekey('NOPE', 'X');
+    await registry.rekey('A', 'A');
+
+    expect(registry.keys, {'A'});
+    expect(registry.lookup('A'), same(link));
+    expect((link.service as _FakeService).detaches, 0);
+  });
+```
+
 - [ ] **Step 5: 跑測試確認通過**
 
 Run:
@@ -1353,7 +1429,7 @@ Run:
 export PATH="$HOME/Documents/Myself_Folder/_Other/flutter/bin:$PATH"
 flutter test test/sole_session_registry_test.dart && flutter analyze lib test
 ```
-Expected: 6 個測試全 PASS，analyze 無 error（舊的 `bleConnectProvider` 還在，編排層照舊編譯）。
+Expected: **9** 個測試全 PASS（原本 6 個 + Step 4b 的 3 個），analyze 無 error（舊的 `bleConnectProvider` 還在，編排層照舊編譯）。
 
 - [ ] **Step 6: Commit**
 
@@ -3056,6 +3132,75 @@ class _ForegroundSoleConnection implements SoleConnectionController {
   }) => onReacquire(target, timeout);
 }
 ```
+
+- [ ] **Step 4b（修正，優先於 Step 4 的檔案內容）：handler 捕 `SoleLink` 而不是 key 字串，且 `onReady` 要 re-key**
+
+同樣來自 Task 3 的 review finding。Step 4 的檔案把 `soleKey` **字串**捕進每個 handler 的 closure，而每個 handler 開頭又做 `registry.lookup(soleKey)`。一旦 Task 5 的 `rekey` 發生（legacy 紀錄拿到 chip ID），`registry.lookup(soleKey)` 就會回 null，**那隻腳的 telemetry 會整個停掉，而且不會有任何錯誤訊息**。
+
+改成捕 `SoleLink` 物件本身 —— 它在 re-key 前後都是同一個實例。
+
+1. 四個 notify handler 的第一個參數從 `String soleKey` 改成 `SoleLink link`，刪掉開頭的 `registry.lookup(soleKey)` 與 null 檢查（link 已經在手上），telemetry 的 key 一律**動態取用** `link.device.identityKey`，不要先存成區域變數：
+
+```dart
+  void onImu(SoleLink link, List<int> value) {
+    try {
+      final data = link.service.parseImuNotify(value);
+      ref
+          .read(liveTelemetryProvider(link.device.identityKey).notifier)
+          .updateImuNotifyData(data);
+      rememberBattery(link, data.batteryPercent);
+    } catch (e) {
+      // Always report the first failure, then throttle: a format mismatch
+      // fails on every packet and would spam ~20 lines/s per foot.
+      link.imuFailCount++;
+      if (link.imuFailCount == 1 || link.imuFailCount % 20 == 0) {
+        debugPrint(
+          'parse notify FAILED ${link.device.identityKey} '
+          '#${link.imuFailCount} len=${value.length} '
+          'hex=[${toHex(value)}] err=$e',
+        );
+      }
+    }
+  }
+```
+
+   `onRecordImu` 同樣改（telemetry key 用 `link.device.identityKey`）；`onFallDetect` 直接用 `link.device.deviceId`；`onDeviceStatus` 直接用 `link.device`。
+
+2. `onReady` 的簽章改成 `onReady(SoleLink link, String soleKey, SoleCandidate pick, SoleSessionInfo info)` —— 它需要知道這條 session 是以哪個 key 建的。刪掉它開頭的 `registry.lookup` 與 null 檢查。在 `link.device = updated;` 之後、`connectedSoles.set(...)` 之前插入：
+
+```dart
+    // A sole paired on pre-ID firmware is filed under its address. Now that it
+    // has reported a chip ID its paired entry is keyed by that ID, so the
+    // session has to move with it — otherwise the next reconcile reads the old
+    // key as unpaired and tears this working link down. The handlers hold this
+    // link rather than its key, so they keep working across the move.
+    final liveKey = updated.identityKey;
+    if (liveKey != soleKey) {
+      connectedSoles.clear(soleKey);
+      unawaited(registry.rekey(soleKey, liveKey));
+    }
+```
+
+   然後把後面 `connectedSoles.set(soleKey, ConnectedSole(...))` 的 key 改成 `liveKey`，debugPrint 也用 `liveKey`。
+
+3. `attachTo` 裡的 handler 綁定改成：
+
+```dart
+        onImu: (value) => onImu(link, value),
+        onRecordImu: (value) => onRecordImu(link, value),
+        onFallDetect: (value) => onFallDetect(link, value),
+        onDeviceStatus: (value) => unawaited(onDeviceStatus(link, value)),
+        onReady: (info) => onReady(link, soleKey, pick, info),
+        onDisconnected: (reason) {
+          debugPrint('sole ${link.device.identityKey} disconnected: $reason');
+          connectedSoles.clear(link.device.identityKey);
+          // During an update the reboot is expected, and reacquire() — not the
+          // watchdog — brings the sole back.
+          if (!held) armWatchdog(link);
+        },
+```
+
+4. `syncNotification` 讀 telemetry 用的是 stored entry 的 key，不受影響 —— 確認一下就好，不用改。
 
 - [ ] **Step 5: 讓 record 改走 registry，並移除 `bleConnectProvider`**
 
