@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 enum LocalSavableKey {
   deviceId('device_id'),
@@ -81,6 +82,28 @@ List<BlePairedDevice> upsertPairedDevice(
     for (var i = 0; i < list.length; i++)
       if (i == first) merged else if (!isSame(list[i])) list[i],
   ];
+}
+
+/// Marks the sole keyed [identityKey] as worn on [side], clearing that side
+/// from every other entry — one foot cannot have two soles. A null [side]
+/// only clears the target's own side.
+List<BlePairedDevice> assignFootSide(
+  List<BlePairedDevice> list,
+  String identityKey,
+  FootSide? side,
+) => [
+  for (final entry in list)
+    if (entry.identityKey == identityKey)
+      entry.copyWith(footSide: side)
+    else if (side != null && entry.footSide == side)
+      entry.copyWith(footSide: null)
+    else
+      entry,
+];
+
+Future<void> setLocalFootSide(String identityKey, FootSide? side) async {
+  final list = await loadLocalPairedDevices() ?? [];
+  await setLocalPairedDevices(assignFootSide(list, identityKey, side));
 }
 
 Future<void> removeLocalPairedDevice(BlePairedDevice targetDevice) async {

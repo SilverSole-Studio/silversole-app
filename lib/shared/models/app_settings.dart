@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 part 'app_settings.freezed.dart';
 
@@ -28,6 +29,15 @@ abstract class AppSettings with _$AppSettings {
 
   BlePairedDevice? get preferredDevice =>
       pairedDevicesList.firstWhereOrNull((d) => d.isPreferred);
+
+  /// The sole worn on [side], or null when no sole is assigned to that foot.
+  BlePairedDevice? soleFor(FootSide side) =>
+      pairedDevicesList.firstWhereOrNull((d) => d.footSide == side);
+
+  /// Paired soles with no foot side yet — what the calibration flow asks
+  /// the wearer to sort out.
+  List<BlePairedDevice> get unassignedSoles =>
+      pairedDevicesList.where((d) => d.footSide == null).toList();
 }
 
 extension TransmissionMethodValue on TransmissionMethod {

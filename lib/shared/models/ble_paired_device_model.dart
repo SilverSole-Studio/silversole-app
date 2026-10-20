@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 part 'ble_paired_device_model.freezed.dart';
 
@@ -27,6 +28,10 @@ abstract class BlePairedDevice with _$BlePairedDevice {
     /// The last valid battery level this sole reported, shown greyed out while
     /// it is offline or has not sent a fresh reading yet.
     int? lastBatteryPercent,
+
+    /// Which foot this sole is worn on, or null until it has been assigned.
+    /// The firmware reports nothing about this — see [FootSide].
+    FootSide? footSide,
     @Default(false) bool isPreferred,
   }) = _BlePairedDevice;
 

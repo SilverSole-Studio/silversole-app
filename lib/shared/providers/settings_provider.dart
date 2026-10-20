@@ -3,6 +3,7 @@ import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 
 class SettingsNotifier extends Notifier<AppSettings> {
@@ -120,6 +121,15 @@ class SettingsNotifier extends Notifier<AppSettings> {
     await setLocalPreferredDevice(target);
     final updated = await loadLocalPairedDevices() ?? [];
     state = state.copyWith(pairedDevicesList: updated);
+  }
+
+  /// Assigns [side] to the sole keyed [identityKey], clearing that side from
+  /// any other sole — see [assignFootSide].
+  Future<void> setFootSide(String identityKey, FootSide? side) async {
+    await setLocalFootSide(identityKey, side);
+    state = state.copyWith(
+      pairedDevicesList: await loadLocalPairedDevices() ?? [],
+    );
   }
 }
 

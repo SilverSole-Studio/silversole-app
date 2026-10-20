@@ -18,6 +18,7 @@ _BlePairedDevice _$BlePairedDeviceFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['lastConnectedAt'] as String),
       lastBatteryPercent: (json['lastBatteryPercent'] as num?)?.toInt(),
+      footSide: $enumDecodeNullable(_$FootSideEnumMap, json['footSide']),
       isPreferred: json['isPreferred'] as bool? ?? false,
     );
 
@@ -31,5 +32,8 @@ Map<String, dynamic> _$BlePairedDeviceToJson(_BlePairedDevice instance) =>
       'lastRssi': instance.lastRssi,
       'lastConnectedAt': instance.lastConnectedAt?.toIso8601String(),
       'lastBatteryPercent': instance.lastBatteryPercent,
+      'footSide': _$FootSideEnumMap[instance.footSide],
       'isPreferred': instance.isPreferred,
     };
+
+const _$FootSideEnumMap = {FootSide.left: 'left', FootSide.right: 'right'};
