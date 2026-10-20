@@ -40,11 +40,14 @@ class App extends ConsumerWidget {
           ? ThemeMode.light
           : (darkMode ? ThemeMode.dark : ThemeMode.light),
       routerConfig: router,
-      // Both wrap every page in either theme: the calibration question is
-      // about the hardware, and the temporary fall warning has to cover
-      // everything. Remove the latter together with FallDemoOverlay.
-      builder: (context, child) => FootSideCalibrationOverlay(
-        child: FallDemoOverlay(child: child ?? const SizedBox.shrink()),
+      // Both wrap every page in either theme. The fall panel is outermost on
+      // purpose: it is a latching alarm and nothing, including the
+      // calibration question, may cover it or steal its dismiss button.
+      // Remove it together with FallDemoOverlay.
+      builder: (context, child) => FallDemoOverlay(
+        child: FootSideCalibrationOverlay(
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

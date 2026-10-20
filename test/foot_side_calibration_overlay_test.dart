@@ -134,19 +134,20 @@ void main() {
     for (var i = 0; i < 60; i++) {
       frame(left: 0, right: 0);
     }
-    // Then a step on the left sole, well past the arbitration window.
+    // Then a step on the second-listed sole, so "first sole" cannot pass by
+    // luck, well past the arbitration window.
     for (var i = 0; i < 40; i++) {
-      frame(left: 2000, right: 0);
+      frame(left: 0, right: 2000);
     }
     await tester.pumpAndSettle();
 
     final paired = container.read(settingsProvider).pairedDevicesList;
     expect(
-      paired.firstWhere((d) => d.identityKey == _left.identityKey).footSide,
+      paired.firstWhere((d) => d.identityKey == _right.identityKey).footSide,
       FootSide.left,
     );
     expect(
-      paired.firstWhere((d) => d.identityKey == _right.identityKey).footSide,
+      paired.firstWhere((d) => d.identityKey == _left.identityKey).footSide,
       FootSide.right,
     );
 

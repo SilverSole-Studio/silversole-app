@@ -136,19 +136,25 @@ class _CalibrationPanelState extends ConsumerState<_CalibrationPanel> {
     if (decision == null) return;
     if (decision.ambiguous) {
       setState(() => _ambiguous = true);
-      _restart();
+      _restart(keepAmbiguous: true);
       return;
     }
     unawaited(_assign(decision.leftKey!));
   }
 
   /// Measures again from scratch — the "try again" button, and what an
-  /// ambiguous step does on its own.
-  void _restart() {
+  /// ambiguous step does on its own. An ambiguous restart keeps its message up;
+  /// a manual one clears it, and either frees a stranded save so Retry is a
+  /// real way out.
+  void _restart({bool keepAmbiguous = false}) {
     _calibrator.reset();
     _sums.clear();
     _armTimeout();
-    setState(() => _timedOut = false);
+    setState(() {
+      _timedOut = false;
+      _saving = false;
+      if (!keepAmbiguous) _ambiguous = false;
+    });
   }
 
   /// Writes both sides at once: the sole that was stepped on is the left foot,
@@ -157,11 +163,19 @@ class _CalibrationPanelState extends ConsumerState<_CalibrationPanel> {
   Future<void> _assign(String leftKey) async {
     if (_saving) return;
     setState(() => _saving = true);
-    final settings = ref.read(settingsProvider.notifier);
-    await settings.setFootSide(leftKey, FootSide.left);
-    for (final sole in widget.soles) {
-      if (sole.identityKey == leftKey) continue;
-      await settings.setFootSide(sole.identityKey, FootSide.right);
+    try {
+      final settings = ref.read(settingsProvider.notifier);
+      await settings.setFootSide(leftKey, FootSide.left);
+      for (final sole in widget.soles) {
+        if (sole.identityKey == leftKey) continue;
+        await settings.setFootSide(sole.identityKey, FootSide.right);
+      }
+    } catch (e) {
+      // Left unassigned, so the panel stays and the wearer can step again or
+      // pick by hand instead of facing a panel that ignores everything.
+      debugPrint('foot side assignment failed: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
