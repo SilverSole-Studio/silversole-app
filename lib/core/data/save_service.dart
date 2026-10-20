@@ -57,7 +57,9 @@ Future<void> addOrUpdateLocalPairedDevice(BlePairedDevice device) async {
 /// picks up its ID here once it reports one. When several entries match (an
 /// old address-only entry and a newer one with the ID), they collapse into one
 /// at the first entry's position. [device] supplies every field except that
-/// the entries keep a known ID and the primary-device flag.
+/// the entries keep a known ID, the primary-device flag and the foot side — a
+/// side [device] names wins, so a manual re-assignment can change it, but an
+/// update that names none never wipes the one on record.
 List<BlePairedDevice> upsertPairedDevice(
   List<BlePairedDevice> list,
   BlePairedDevice device,
@@ -76,6 +78,8 @@ List<BlePairedDevice> upsertPairedDevice(
     deviceId:
         device.deviceId ?? matches.map((d) => d.deviceId).nonNulls.firstOrNull,
     isPreferred: matches.any((d) => d.isPreferred),
+    footSide:
+        device.footSide ?? matches.map((d) => d.footSide).nonNulls.firstOrNull,
   );
   final first = list.indexWhere(isSame);
   return [

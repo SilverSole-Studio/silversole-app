@@ -1,17 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 BlePairedDevice _device(
   String remoteId, {
   String? deviceId,
   String name = 'SilverSole',
   bool preferred = false,
+  FootSide? side,
 }) => BlePairedDevice(
   remoteId: remoteId,
   name: name,
   deviceId: deviceId,
   isPreferred: preferred,
+  footSide: side,
 );
 
 void main() {
@@ -84,6 +87,28 @@ void main() {
       expect(list.map((d) => d.identityKey), ['X', 'ID']);
       expect(list.last.remoteId, 'MAC');
       expect(list.last.isPreferred, isTrue);
+    });
+
+    test('an update without a side keeps the one on record', () {
+      final out = upsertPairedDevice([
+        _device('AA', deviceId: 'ID1', side: FootSide.left),
+      ], _device('AA', deviceId: 'ID1'));
+      expect(out.single.footSide, FootSide.left);
+    });
+
+    test('an update that names a side replaces the one on record', () {
+      final out = upsertPairedDevice([
+        _device('AA', deviceId: 'ID1', side: FootSide.left),
+      ], _device('AA', deviceId: 'ID1', side: FootSide.right));
+      expect(out.single.footSide, FootSide.right);
+    });
+
+    test('merged entries keep the first side on record', () {
+      final out = upsertPairedDevice([
+        _device('AA'),
+        _device('AA', deviceId: 'ID1', side: FootSide.right),
+      ], _device('AA', deviceId: 'ID1'));
+      expect(out.single.footSide, FootSide.right);
     });
 
     test('a shared MAC with a different ID is a different sole', () {
