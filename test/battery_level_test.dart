@@ -55,23 +55,27 @@ void main() {
   });
 
   group('buildDeviceRows battery', () {
-    const primary = BlePairedDevice(
+    // No deviceId, so each sole's identityKey is its address.
+    const left = BlePairedDevice(
       remoteId: 'A',
       name: 'a',
       lastBatteryPercent: 40,
     );
-    const other = BlePairedDevice(
+    const right = BlePairedDevice(
       remoteId: 'B',
       name: 'b',
       lastBatteryPercent: 90,
     );
 
+    SoleLiveFacts Function(String) facts(Map<String, SoleLiveFacts> by) =>
+        (key) => by[key] ?? const SoleLiveFacts.offline();
+
     test('a stale live sample is not shown as live while offline', () {
       final rows = buildDeviceRows(
-        devices: [primary, other],
-        preferred: primary,
-        online: false,
-        liveBatteryPercent: 75,
+        devices: [left, right],
+        liveFor: facts({
+          'A': const SoleLiveFacts(online: false, batteryPercent: 75),
+        }),
       );
       expect(rows[0].battery.label, '40%');
       expect(rows[0].battery.isLive, isFalse);
@@ -79,16 +83,42 @@ void main() {
       expect(rows[1].battery.isLive, isFalse);
     });
 
-    test('the streaming device shows its live level', () {
+    test('a streaming sole shows its live level', () {
       final rows = buildDeviceRows(
-        devices: [primary, other],
-        preferred: primary,
-        online: true,
-        liveBatteryPercent: 75,
+        devices: [left, right],
+        liveFor: facts({
+          'A': const SoleLiveFacts(online: true, batteryPercent: 75),
+        }),
       );
       expect(rows[0].battery.label, '75%');
       expect(rows[0].battery.isLive, isTrue);
       expect(rows[1].battery.isLive, isFalse);
+    });
+
+    // Both feet can stream at once now, so both rows can be live at once.
+    test('two streaming soles each show their own level', () {
+      final rows = buildDeviceRows(
+        devices: [left, right],
+        liveFor: facts({
+          'A': const SoleLiveFacts(online: true, batteryPercent: 75),
+          'B': const SoleLiveFacts(online: true, batteryPercent: 61),
+        }),
+      );
+      expect(rows[0].online, isTrue);
+      expect(rows[0].battery.label, '75%');
+      expect(rows[1].online, isTrue);
+      expect(rows[1].battery.label, '61%');
+      expect(rows[1].battery.isLive, isTrue);
+    });
+
+    test('an online sole with no valid reading keeps its remembered level', () {
+      final rows = buildDeviceRows(
+        devices: [left],
+        liveFor: facts({'A': const SoleLiveFacts(online: true)}),
+      );
+      expect(rows[0].online, isTrue);
+      expect(rows[0].battery.label, '40%');
+      expect(rows[0].battery.isLive, isFalse);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,8 @@ import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
 import 'package:silversole/shared/widgets/build_material_popup_menu.dart';
 import 'package:silversole/shared/widgets/firmware_card_parts.dart';
 import 'package:silversole/shared/widgets/rader_dot.dart';
@@ -153,12 +155,19 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final recent = ref.watch(telemetryViewProvider).recentImu;
+    // Watched so the rows re-evaluate when the last sole goes quiet: that
+    // flip is driven by a timer, and no telemetry event announces silence.
+    ref.watch(deviceOnlineProvider);
+    final facade = ref.watch(telemetryFacadeProvider);
     final rows = buildDeviceRows(
       devices: settings.pairedDevicesList,
-      preferred: settings.preferredDevice,
-      online: ref.watch(deviceOnlineProvider),
-      liveBatteryPercent: recent.isEmpty ? null : recent.last.batteryPercent,
+      liveFor: (key) {
+        final telemetry = ref.watch(liveTelemetryProvider(key));
+        return SoleLiveFacts(
+          online: facade.checkDeviceOnline(telemetry.updatedAt),
+          batteryPercent: telemetry.recentImu.lastOrNull?.batteryPercent,
+        );
+      },
     );
 
     return Scaffold(
