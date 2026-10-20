@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:clock/clock.dart';
 import 'package:collection/collection.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -108,15 +109,19 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
 
     final telemetry = ref.read(liveTelemetryProvider(sole.identityKey));
     final online = ref.read(deviceOnlineProvider);
-    final content = soleNotificationText(
-      soleName: sole.name,
-      online: online,
-      lastSeen: telemetry.updatedAt ?? sole.lastConnectedAt,
-      battery: BatteryDisplay.resolve(
-        live: online ? telemetry.recentImu.lastOrNull?.batteryPercent : null,
-        lastKnown: bound?.lastBatteryPercent ?? sole.lastBatteryPercent,
+    // One sole for now; Task 8 turns this into one notice per linked sole.
+    final content = soleNotificationText([
+      SoleNotice(
+        name: sole.name,
+        label: sole.footSide?.labelKey.tr() ?? sole.name,
+        online: online,
+        lastSeen: telemetry.updatedAt ?? sole.lastConnectedAt,
+        battery: BatteryDisplay.resolve(
+          live: online ? telemetry.recentImu.lastOrNull?.batteryPercent : null,
+          lastKnown: bound?.lastBatteryPercent ?? sole.lastBatteryPercent,
+        ),
       ),
-    );
+    ]);
     final key = '${content.title}\n${content.text}';
     if (key == notified) return;
     notified = key;

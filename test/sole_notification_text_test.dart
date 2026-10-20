@@ -44,12 +44,29 @@ void main() {
       int? lastKnown,
     }) => withClock(
       Clock.fixed(now),
-      () => soleNotificationText(
-        soleName: 'Left sole',
-        online: online,
-        lastSeen: lastSeen,
-        battery: BatteryDisplay.resolve(live: live, lastKnown: lastKnown),
-      ),
+      () => soleNotificationText([
+        SoleNotice(
+          name: 'Left sole',
+          label: 'Left foot',
+          online: online,
+          lastSeen: lastSeen,
+          battery: BatteryDisplay.resolve(live: live, lastKnown: lastKnown),
+        ),
+      ]),
+    );
+
+    SoleNotice notice({
+      required String label,
+      required bool online,
+      DateTime? lastSeen,
+      int? live,
+      int? lastKnown,
+    }) => SoleNotice(
+      name: 'SilverSole',
+      label: label,
+      online: online,
+      lastSeen: lastSeen,
+      battery: BatteryDisplay.resolve(live: live, lastKnown: lastKnown),
     );
 
     // Online with a live reading.
@@ -76,5 +93,68 @@ void main() {
 
     // Never reported a level: no battery at all rather than a dash.
     expect(at(online: false).text, 'Offline');
+
+    // Two soles: one line, one part per foot.
+    expect(
+      withClock(
+        Clock.fixed(now),
+        () => soleNotificationText([
+          notice(label: 'Left foot', online: true, live: 85),
+          notice(label: 'Right foot', online: true, live: 92),
+        ]),
+      ),
+      (title: 'SilverSole', text: 'Left foot 85% · Right foot 92%'),
+    );
+
+    // One foot offline must read as offline — not as "the wearable is online".
+    expect(
+      withClock(
+        Clock.fixed(now),
+        () => soleNotificationText([
+          notice(label: 'Left foot', online: true, live: 85),
+          notice(label: 'Right foot', online: false, lastKnown: 40),
+        ]),
+      ).text,
+      'Left foot 85% · Right foot Offline',
+    );
+
+    // A sole that never reported a level says its status instead of a dash.
+    expect(
+      withClock(
+        Clock.fixed(now),
+        () => soleNotificationText([
+          notice(label: 'Left foot', online: true),
+          notice(label: 'Right foot', online: true, live: 92),
+        ]),
+      ).text,
+      'Left foot Online · Right foot 92%',
+    );
+
+    // Different names keep both, since the title is all the wearer sees.
+    expect(
+      withClock(
+        Clock.fixed(now),
+        () => soleNotificationText([
+          SoleNotice(
+            name: 'Left sole',
+            label: 'Left foot',
+            online: true,
+            lastSeen: now,
+            battery: BatteryDisplay.resolve(live: 85),
+          ),
+          SoleNotice(
+            name: 'Right sole',
+            label: 'Right foot',
+            online: true,
+            lastSeen: now,
+            battery: BatteryDisplay.resolve(live: 92),
+          ),
+        ]),
+      ).title,
+      'Left sole / Right sole',
+    );
+
+    // No soles at all: nothing to say.
+    expect(soleNotificationText(const []), (title: 'Silver Sole', text: ''));
   });
 }
