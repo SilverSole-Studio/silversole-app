@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/ble/ble_uuids.dart';
+import 'package:silversole/core/ble/sole_session_registry.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
@@ -28,6 +29,15 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   /// Whether the sole reports an active recording.
   bool isRecordingNow = false;
 
+  /// The primary sole's live session, or null when nothing is connected.
+  /// Recording is a single-sole feature — the other foot keeps streaming.
+  SoleLink? get primaryLink {
+    final soleKey = ref.read(primarySoleKeyProvider);
+    return soleKey == null
+        ? null
+        : ref.read(soleSessionsProvider).lookup(soleKey);
+  }
+
   Future<void> startRecord() async {
     final preferredDevice = ref.read(settingsProvider).preferredDevice;
     if (preferredDevice == null) {
@@ -35,16 +45,17 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       return;
     }
 
-    final ble = ref.read(bleConnectProvider);
-    // Recording follows the primary sole; the other foot keeps its own
-    // window untouched.
-    final soleKey = ref.read(primarySoleKeyProvider);
-    if (soleKey != null) {
-      ref
-          .read(liveTelemetryProvider(soleKey).notifier)
-          .clearRecordImuNotifyData();
+    final ble = primaryLink;
+    if (ble == null) {
+      showErrorSnakeBar('not_binding'.tr());
+      return;
     }
-    final result = await ble.writeBool(recordRequestCharUuid, true);
+    // Same link the record notifies land on, so the chart cannot end up
+    // reading a window nothing is writing to.
+    ref
+        .read(liveTelemetryProvider(ble.device.identityKey).notifier)
+        .clearRecordImuNotifyData();
+    final result = await ble.service.writeBool(recordRequestCharUuid, true);
 
     switch (result) {
       case Error():
@@ -69,8 +80,12 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       return;
     }
 
-    final ble = ref.read(bleConnectProvider);
-    final result = await ble.writeBool(recordRequestCharUuid, false);
+    final ble = primaryLink;
+    if (ble == null) {
+      showErrorSnakeBar('not_binding'.tr());
+      return;
+    }
+    final result = await ble.service.writeBool(recordRequestCharUuid, false);
 
     switch (result) {
       case Error():
@@ -90,8 +105,12 @@ mixin RecordSessionMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       return false;
     }
 
-    final ble = ref.read(bleConnectProvider);
-    final result = await ble.readString(recordRequestCharUuid);
+    final ble = primaryLink;
+    if (ble == null) {
+      showErrorSnakeBar('not_binding'.tr());
+      return false;
+    }
+    final result = await ble.service.readString(recordRequestCharUuid);
 
     switch (result) {
       case Error():

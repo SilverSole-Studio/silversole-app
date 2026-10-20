@@ -74,6 +74,11 @@ class SoleSessionRegistry {
   /// its handshake reports a chip ID its paired entry is keyed by that ID
   /// instead, and a session still filed under the address reads as "no longer
   /// paired" to `reconcileSoleLinks`, which would tear down a working link.
+  ///
+  /// The map move completes **synchronously**, before this method's first
+  /// await, on purpose: the orchestrator calls this fire-and-forget from a
+  /// handshake and reads the new key straight afterwards. An await placed
+  /// ahead of the move would silently stop that sole's telemetry.
   Future<void> rekey(String oldKey, String newKey) async {
     if (oldKey == newKey) return;
     final link = _links.remove(oldKey);

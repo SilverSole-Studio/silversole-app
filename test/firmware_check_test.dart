@@ -157,14 +157,15 @@ void main() {
         addTearDown(container.dispose);
 
         final sole = _sole();
-        container.read(connectedSoleProvider.notifier).set(sole);
+        final soles = container.read(connectedSolesProvider.notifier);
+        soles.set(sole.device.identityKey, sole);
         await container.read(firmwareCheckProvider.future);
         expect(release.fetchCount, 1);
 
         final reconnected = sole.copyWith(
           device: sole.device.copyWith(lastConnectedAt: DateTime.now()),
         );
-        container.read(connectedSoleProvider.notifier).set(reconnected);
+        soles.set(reconnected.device.identityKey, reconnected);
         await container.read(firmwareCheckProvider.future);
         expect(release.fetchCount, 1);
       },

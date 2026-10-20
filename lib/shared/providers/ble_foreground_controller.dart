@@ -11,9 +11,11 @@ import 'package:silversole/core/ble/ble_connection_service.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/ble/ota/dfu_link.dart';
 import 'package:silversole/core/ble/ota/reacquire_match.dart';
-import 'package:silversole/core/ble/sole_notification_text.dart';
 import 'package:silversole/core/ble/pressure_channel_fix.dart';
+import 'package:silversole/core/ble/sole_notification_text.dart';
+import 'package:silversole/core/ble/sole_reconcile.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
+import 'package:silversole/core/ble/sole_session_registry.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/utils/battery_level.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
@@ -25,9 +27,11 @@ import 'package:silversole/shared/providers/ble_connection_provider.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/device_status_ingest_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
+import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
 import 'package:silversole/shared/providers/sole_connection_controller.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
+import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
 
 import 'settings_provider.dart';
 
@@ -44,25 +48,18 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   if (defaultTargetPlatform != TargetPlatform.android) {
     return const NoSoleConnection();
   }
-  final bleConnectionService = ref.read(bleConnectProvider);
+  final registry = ref.read(soleSessionsProvider);
   final deviceStatusIngestService = ref.read(deviceStatusIngestProvider);
   final settings = ref.read(settingsProvider.notifier);
-  final connectedSole = ref.read(connectedSoleProvider.notifier);
-
-  // The sole as we currently know it. Refreshed on every (re)connection by
-  // onReady, before any notify handler below can run.
-  BlePairedDevice? boundDevice;
+  final connectedSoles = ref.read(connectedSolesProvider.notifier);
 
   final scanner = SoleScanner();
 
-  // Re-arms the search: nothing advertising, a permission refused, or arming
-  // the session itself failing. Reconnecting to the sole we already found is
-  // the service's own backoff loop — do not add a second one here.
+  // Re-arms the search: nothing advertising, a permission refused, arming a
+  // session failing, or still being short of a foot. Reconnecting to a sole
+  // we already found is that session's own backoff loop — do not add a second
+  // one here.
   Timer? retryTimer;
-
-  // Fires when a session never connects, or does not come back after a link
-  // loss — which is what a rebooted sole's new MAC looks like from here.
-  Timer? watchdogTimer;
   var searching = false;
   var searchAttempt = 0;
 
@@ -74,54 +71,72 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   // search that slipped in before hold() landed) cannot complete it.
   ({String remoteId, Completer<SoleSessionInfo?> completer})? readyWaiter;
 
-  // A wire-format mismatch fails on every packet, so throttle the failure log
-  // and carry the raw bytes — the payload is what identifies the wrong format.
-  var imuFailCount = 0;
   String toHex(List<int> v) =>
       v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
 
-  // Persists the sole's battery level so it can be shown greyed out while the
+  // Persists a sole's battery level so it can be shown greyed out while that
   // sole is offline. The IMU stream repeats the same level at 50 Hz, so only a
-  // change is written; boundDevice carries it so onReady's write keeps it.
-  void rememberBattery(int percent) {
-    final device = boundDevice;
-    if (device == null || !percent.isValidBatteryPercent) return;
-    if (device.lastBatteryPercent == percent) return;
-    boundDevice = device.copyWith(lastBatteryPercent: percent);
-    unawaited(settings.setLastBatteryPercent(device.identityKey, percent));
+  // change is written; the link carries it so onReady's write keeps it.
+  void rememberBattery(SoleLink link, int percent) {
+    if (!percent.isValidBatteryPercent) return;
+    if (link.device.lastBatteryPercent == percent) return;
+    link.device = link.device.copyWith(lastBatteryPercent: percent);
+    unawaited(settings.setLastBatteryPercent(link.device.identityKey, percent));
   }
 
-  // The service's notification names the sole and says what the home card
-  // says: online or "last connected", plus the battery level. Pushed only when
-  // the text changes, since telemetry ticks at 50 Hz.
+  // The service's notification names the sole(s) and says what the home card
+  // says. Pushed only when the text changes, since telemetry ticks at 50 Hz
+  // per foot.
   String? notified;
   void syncNotification() {
     final current = ref.read(settingsProvider);
-    final bound = boundDevice;
-    final stored = bound == null
-        ? current.preferredDevice
-        : current.pairedDevicesList.firstWhereOrNull(
-            (d) => d.identityKey == bound.identityKey,
-          );
-    // The stored entry carries a rename; the bound copy the freshest battery.
-    final sole = stored ?? bound;
-    if (sole == null) return;
+    final facade = ref.read(telemetryFacadeProvider);
 
-    final telemetry = ref.read(liveTelemetryProvider(sole.identityKey));
-    final online = ref.read(deviceOnlineProvider);
-    // One sole for now; Task 8 turns this into one notice per linked sole.
-    final content = soleNotificationText([
-      SoleNotice(
+    SoleNotice noticeFor(BlePairedDevice sole, {int? liveBattery}) {
+      final telemetry = ref.read(liveTelemetryProvider(sole.identityKey));
+      final online = facade.checkDeviceOnline(telemetry.updatedAt);
+      return SoleNotice(
         name: sole.name,
-        label: sole.footSide?.labelKey.tr() ?? sole.name,
+        // Before a side is assigned the ID suffix is all that tells two
+        // identical "SilverSole"s apart.
+        label:
+            sole.footSide?.labelKey.tr() ??
+            (sole.shortId == null ? sole.name : '••••${sole.shortId}'),
         online: online,
         lastSeen: telemetry.updatedAt ?? sole.lastConnectedAt,
         battery: BatteryDisplay.resolve(
-          live: online ? telemetry.recentImu.lastOrNull?.batteryPercent : null,
-          lastKnown: bound?.lastBatteryPercent ?? sole.lastBatteryPercent,
+          live: online
+              ? liveBattery ?? telemetry.recentImu.lastOrNull?.batteryPercent
+              : null,
+          lastKnown: sole.lastBatteryPercent,
         ),
-      ),
-    ]);
+      );
+    }
+
+    final notices = <SoleNotice>[];
+    for (final link in registry.links) {
+      // The stored entry carries a rename; the link's copy the freshest
+      // battery.
+      final stored = current.pairedDevicesList.firstWhereOrNull(
+        (d) => d.identityKey == link.device.identityKey,
+      );
+      notices.add(
+        noticeFor(
+          stored ?? link.device,
+          liveBattery: link.device.lastBatteryPercent,
+        ),
+      );
+    }
+    if (notices.isEmpty) {
+      // Nothing linked yet: name the primary entry so the service's ongoing
+      // notification is not blank while the first search runs.
+      final sole =
+          current.preferredDevice ?? current.pairedDevicesList.firstOrNull;
+      if (sole == null) return;
+      notices.add(noticeFor(sole));
+    }
+
+    final content = soleNotificationText(notices);
     final key = '${content.title}\n${content.text}';
     if (key == notified) return;
     notified = key;
@@ -133,49 +148,51 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     );
   }
 
-  void onImu(List<int> value) {
+  // Every notify handler holds the link itself rather than the key it was
+  // filed under: onReady re-keys a legacy sole the moment it reports a chip
+  // ID, and a captured key would then look up nothing — that foot's telemetry
+  // would stop with no error at all. The telemetry key is therefore read off
+  // the link on every packet.
+  void onImu(SoleLink link, List<int> value) {
     try {
-      final data = bleConnectionService.parseImuNotify(value);
-      final soleKey = boundDevice?.identityKey;
-      if (soleKey == null) return;
+      final data = link.service.parseImuNotify(value);
       ref
-          .read(liveTelemetryProvider(soleKey).notifier)
+          .read(liveTelemetryProvider(link.device.identityKey).notifier)
           .updateImuNotifyData(data);
-      rememberBattery(data.batteryPercent);
+      rememberBattery(link, data.batteryPercent);
     } catch (e) {
       // Always report the first failure, then throttle: a format mismatch
-      // fails on every packet and would spam ~20 lines/s.
-      imuFailCount++;
-      if (imuFailCount == 1 || imuFailCount % 20 == 0) {
+      // fails on every packet and would spam ~20 lines/s per foot.
+      link.imuFailCount++;
+      if (link.imuFailCount == 1 || link.imuFailCount % 20 == 0) {
         debugPrint(
-          'parse notify FAILED #$imuFailCount len=${value.length} '
+          'parse notify FAILED ${link.device.identityKey} '
+          '#${link.imuFailCount} len=${value.length} '
           'hex=[${toHex(value)}] err=$e',
         );
       }
     }
   }
 
-  void onRecordImu(List<int> value) {
+  void onRecordImu(SoleLink link, List<int> value) {
     try {
-      final json = bleConnectionService.parseJsonNotify(value);
+      final json = link.service.parseJsonNotify(value);
       final data = RecordImuNotifyDataModel.fromJson(json);
-      final soleKey = boundDevice?.identityKey;
-      if (soleKey == null) return;
       ref
-          .read(liveTelemetryProvider(soleKey).notifier)
+          .read(liveTelemetryProvider(link.device.identityKey).notifier)
           .updateRecordImuNotifyData(
             data.copyWith(pressure: fixPressureChannels(data.pressure)),
           );
-      debugPrint('record notify: $data');
+      debugPrint('record notify ${link.device.identityKey}: $data');
     } catch (e) {
       debugPrint('parse record notify failed: $e');
     }
   }
 
-  void onFallDetect(List<int> value) {
+  void onFallDetect(SoleLink link, List<int> value) {
     try {
       if (utf8.decode(value) != '1') return;
-      final deviceId = boundDevice?.deviceId;
+      final deviceId = link.device.deviceId;
       if (deviceId == null) return;
       ref
           .read(fallEventBusProvider)
@@ -201,19 +218,17 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     return diffMs <= tolerance.inMilliseconds;
   }
 
-  Future<void> onDeviceStatus(List<int> value) async {
-    final device = boundDevice;
-    if (device == null) return;
+  Future<void> onDeviceStatus(SoleLink link, List<int> value) async {
     try {
-      final payload = bleConnectionService.parseJsonNotify(value);
+      final payload = link.service.parseJsonNotify(value);
       final status = DeviceStatusModel.fromJson(payload);
       if (!isDeviceStatusTimestampValid(status.timestamp)) {
         debugPrint('device status timestamp invalid: ${status.timestamp}');
         return;
       }
-      rememberBattery(status.body.batteryPercent);
+      rememberBattery(link, status.body.batteryPercent);
       final result = await deviceStatusIngestService.ingestDeviceStatus(
-        device: device,
+        device: link.device,
         payload: status,
       );
 
@@ -255,7 +270,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     await Permission.notification.request();
   }
 
-  // searchAndAttach and the two timers below call each other, and Dart has no
+  // searchAndAttach and the timers below call each other, and Dart has no
   // forward references for local functions — so one of them has to be a
   // variable.
   late final Future<void> Function({bool force}) searchAndAttach;
@@ -278,16 +293,79 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     );
   }
 
-  /// Gives [BleConnectionService]'s own fast reconnect a window to bring the
-  /// same MAC back. When it cannot, the sole has most likely rebooted — it
-  /// advertises a different MAC then, and only a fresh scan can find it.
-  void armWatchdog([Duration delay = const Duration(seconds: 30)]) {
-    watchdogTimer?.cancel();
-    watchdogTimer = Timer(delay, () {
-      if (bleConnectionService.isConnected) return;
-      debugPrint('sole did not connect — searching again');
+  /// Gives this sole's own fast reconnect a window to bring the same MAC back.
+  /// When it cannot, the sole has most likely rebooted — it advertises a
+  /// different MAC then, and only a fresh scan can find it.
+  void armWatchdog(
+    SoleLink link, [
+    Duration delay = const Duration(seconds: 30),
+  ]) {
+    link.cancelWatchdog();
+    link.watchdog = Timer(delay, () {
+      if (link.isConnected) return;
+      debugPrint('sole ${link.device.identityKey} did not connect — searching');
       unawaited(searchAndAttach());
     });
+  }
+
+  void onReady(
+    SoleLink link,
+    String soleKey,
+    SoleCandidate pick,
+    SoleSessionInfo info,
+  ) {
+    final deviceId = info.deviceId;
+    // Connected and handshaked: this sole's watchdog has nothing to rescue and
+    // the next search starts from the short delay again.
+    link.cancelWatchdog();
+    searchAttempt = 0;
+    // The Serial Number read and the advertisement carry the same ID; a
+    // mismatch means one of them is being parsed wrong.
+    if (deviceId != null &&
+        pick.deviceId != null &&
+        deviceId != pick.deviceId) {
+      debugPrint(
+        'device ID mismatch: advertised ${pick.deviceId}, read $deviceId',
+      );
+    }
+    // Persist the moment we (re)connected so the status card can show a real
+    // "last connected" time. The settings listener ignores timestamp changes,
+    // so this does not restart the search.
+    final updated = link.device.copyWith(
+      deviceId: deviceId ?? link.device.deviceId,
+      lastConnectedAt: DateTime.now(),
+    );
+    link.device = updated;
+    // A sole paired on pre-ID firmware is filed under its address. Now that it
+    // has reported a chip ID its paired entry is keyed by that ID, so the
+    // session has to move with it — otherwise the next reconcile reads the old
+    // key as unpaired and tears this working link down. The handlers hold this
+    // link rather than its key, so they keep working across the move.
+    final liveKey = updated.identityKey;
+    if (liveKey != soleKey) {
+      connectedSoles.clear(soleKey);
+      unawaited(registry.rekey(soleKey, liveKey));
+    }
+    syncNotification();
+    unawaited(settings.addOrUpdatePairedDevice(updated));
+    connectedSoles.set(
+      liveKey,
+      ConnectedSole(
+        device: updated,
+        firmwareVersion: info.firmwareVersion,
+        dfuSupported: info.dfuSupported,
+      ),
+    );
+    final waiter = readyWaiter;
+    if (waiter != null &&
+        waiter.remoteId == pick.remoteId &&
+        !waiter.completer.isCompleted) {
+      waiter.completer.complete(info);
+    }
+    debugPrint(
+      'sole session ready: $liveKey deviceId=${updated.deviceId} '
+      'firmware=${info.firmwareVersion}',
+    );
   }
 
   /// Connects to [pick] with the app's handlers, reusing its paired entry.
@@ -296,9 +374,9 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     SoleCandidate pick,
     List<BlePairedDevice> paired,
   ) async {
-    // Reuse the stored entry for this sole, so its name and primary flag
-    // survive; it only moves to the address the sole is on now, and picks up
-    // the advertised ID if it was paired before the firmware sent one.
+    // Reuse the stored entry for this sole, so its name, foot side and primary
+    // flag survive; it only moves to the address the sole is on now, and picks
+    // up the advertised ID if it was paired before the firmware sent one.
     final known = paired.firstWhereOrNull((d) => isSameSole(pick, d));
     final device =
         known?.copyWith(
@@ -311,73 +389,30 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
           deviceId: pick.deviceId,
           lastRssi: pick.rssi,
         );
-    boundDevice = device;
+    final soleKey = identityKeyFor(pick, paired);
+    final link = registry.link(soleKey, device);
     syncNotification();
 
-    // The old session's listener is cancelled by attach()'s own detach()
-    // before the new link comes up, so onDisconnected never fires for it —
-    // without this, a forced swap (a manual primary-device pick while
-    // another sole is connected) would leave the old sole in
-    // connectedSoleProvider until the new one's onReady overwrites it.
-    connectedSole.clear();
+    // attach()'s own detach() cancels this session's old listener before the
+    // new link comes up, so onDisconnected never fires for it — without this,
+    // a re-attach would leave a stale entry in connectedSolesProvider until
+    // the new handshake overwrote it.
+    connectedSoles.clear(soleKey);
 
-    final result = await bleConnectionService.attach(
+    final result = await link.service.attach(
       device,
       handlers: BleSessionHandlers(
-        onImu: onImu,
-        onRecordImu: onRecordImu,
-        onFallDetect: onFallDetect,
-        onDeviceStatus: (value) => unawaited(onDeviceStatus(value)),
-        onReady: (info) {
-          final deviceId = info.deviceId;
-          // Connected and handshaked: the watchdog has nothing to rescue and
-          // the next search starts from the short delay again.
-          watchdogTimer?.cancel();
-          searchAttempt = 0;
-          // The Serial Number read and the advertisement carry the same ID;
-          // a mismatch means one of them is being parsed wrong.
-          if (deviceId != null &&
-              pick.deviceId != null &&
-              deviceId != pick.deviceId) {
-            debugPrint(
-              'device ID mismatch: advertised ${pick.deviceId}, '
-              'read $deviceId',
-            );
-          }
-          // Persist the moment we (re)connected so the status card can show a
-          // real "last connected" time. The listener below ignores timestamp
-          // changes, so this does not restart the search.
-          final updated = (boundDevice ?? device).copyWith(
-            deviceId: deviceId ?? boundDevice?.deviceId,
-            lastConnectedAt: DateTime.now(),
-          );
-          boundDevice = updated;
-          syncNotification();
-          unawaited(settings.addOrUpdatePairedDevice(updated));
-          connectedSole.set(
-            ConnectedSole(
-              device: updated,
-              firmwareVersion: info.firmwareVersion,
-              dfuSupported: info.dfuSupported,
-            ),
-          );
-          final waiter = readyWaiter;
-          if (waiter != null &&
-              waiter.remoteId == pick.remoteId &&
-              !waiter.completer.isCompleted) {
-            waiter.completer.complete(info);
-          }
-          debugPrint(
-            'sole session ready: deviceId=${updated.deviceId} '
-            'firmware=${info.firmwareVersion}',
-          );
-        },
+        onImu: (value) => onImu(link, value),
+        onRecordImu: (value) => onRecordImu(link, value),
+        onFallDetect: (value) => onFallDetect(link, value),
+        onDeviceStatus: (value) => unawaited(onDeviceStatus(link, value)),
+        onReady: (info) => onReady(link, soleKey, pick, info),
         onDisconnected: (reason) {
-          debugPrint('sole disconnected: $reason');
-          connectedSole.clear();
+          debugPrint('sole ${link.device.identityKey} disconnected: $reason');
+          connectedSoles.clear(link.device.identityKey);
           // During an update the reboot is expected, and reacquire() — not the
           // watchdog — brings the sole back.
-          if (!held) armWatchdog();
+          if (!held) armWatchdog(link);
         },
       ),
     );
@@ -386,32 +421,36 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       debugPrint('sole attach failed: $error');
       return false;
     }
-    debugPrint('sole session attached');
+    debugPrint('sole session attached: $soleKey');
     return true;
   }
 
-  /// Finds a paired sole that is actually advertising and connects to it.
+  /// Finds the paired soles that are actually advertising and connects to
+  /// them — up to [maxSoles], one per foot.
   ///
   /// Soles are recognised by the chip ID in their advertisement, so a sole is
   /// found again whatever address it comes back on; firmware too old to send
-  /// the ID falls back to the address, which is what [pickSole] spells out.
-  /// [force] is the manual primary-device pick asking us to look even though a
-  /// session is already up.
+  /// the ID falls back to the address, which is what [pickSoles] spells out.
+  /// [force] is the manual primary-device pick asking us to look even though
+  /// every slot is already filled.
   searchAndAttach = ({bool force = false}) async {
     // An update owns the link until it releases it.
     if (searching || held) return;
-    if (!force && bleConnectionService.isConnected) return;
+
+    final current = ref.read(settingsProvider);
+    final desired = current.pairedDevicesList.length < maxSoles
+        ? current.pairedDevicesList.length
+        : maxSoles;
+    if (!force && desired > 0 && registry.connectedCount >= desired) return;
 
     searching = true;
     retryTimer?.cancel();
-    watchdogTimer?.cancel();
     try {
-      final current = ref.read(settingsProvider);
       // Never reach for a stranger's sole: auto-connect starts only once the
       // user has paired one by hand.
       if (current.pairedDevicesList.isEmpty) {
-        boundDevice = null;
-        await bleConnectionService.detach();
+        await registry.detachAll();
+        connectedSoles.clearAll();
         await stopBleService();
         return;
       }
@@ -426,26 +465,49 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       await startBleService();
       syncNotification();
 
-      final pick = pickSole(
-        await scanner.scan(),
+      final plan = reconcileSoleLinks(
+        picks: pickSoles(
+          await scanner.scan(),
+          paired: current.pairedDevicesList,
+          max: desired,
+        ),
         paired: current.pairedDevicesList,
+        linkedKeys: registry.keys,
+        max: desired,
       );
-      if (pick == null) {
-        debugPrint('no paired sole advertising');
-        scheduleSearch();
-        return;
+
+      for (final soleKey in plan.detach) {
+        await registry.detach(soleKey);
+        connectedSoles.clear(soleKey);
       }
-      debugPrint('sole found: $pick');
 
       // An update may have taken the link while this search was scanning.
       if (held) return;
 
-      if (await attachTo(pick, current.pairedDevicesList)) {
-        // ...or while attachTo itself was running the handshake.
-        if (!held) armWatchdog();
-      } else {
+      if (plan.attach.isEmpty && registry.keys.isEmpty) {
+        debugPrint('no paired sole advertising');
         scheduleSearch();
+        return;
       }
+
+      // One at a time: fbp 2.1.1 runs every GATT operation behind a single
+      // global mutex, so two handshakes at once only queue up anyway — and
+      // interleaving them would make a failure much harder to read.
+      for (final pick in plan.attach) {
+        if (held) return;
+        if (await attachTo(pick, current.pairedDevicesList)) {
+          final link = registry.lookup(
+            identityKeyFor(pick, current.pairedDevicesList),
+          );
+          if (!held && link != null) armWatchdog(link);
+        }
+      }
+
+      // Still short of a foot (the other sole is switched off, out of range,
+      // or not paired yet): keep looking on the backoff. A sole that was just
+      // attached counts as found even though its link is still coming up —
+      // its own watchdog covers a handshake that never completes.
+      if (registry.keys.length < desired) scheduleSearch();
     } finally {
       searching = false;
     }
@@ -462,10 +524,10 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   ) async {
     try {
       final deadline = clock.now().add(timeout);
-      // The old session's own reconnect would chase the address the sole had
-      // before it rebooted.
-      await bleConnectionService.detach();
-      connectedSole.clear();
+      // This sole's own reconnect would chase the address it had before it
+      // rebooted. The other foot's session is left alone.
+      await registry.detach(target.identityKey);
+      connectedSoles.clear(target.identityKey);
       await Future<void>.delayed(_reacquireSettle);
 
       final paired = ref.read(settingsProvider).pairedDevicesList;
@@ -504,13 +566,16 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     }
   }
 
-  // What the notification shows moves on its own: the online flag, the battery,
-  // a rename. The ticker keeps "last connected: N min ago" current offline.
+  // What the notification shows moves on its own: the online flag, a rename,
+  // and the battery — which lands in the paired list via rememberBattery, so
+  // that listener covers it. Deliberately *not* a listener on live telemetry:
+  // that fires 50 times a second per foot.
   ref.listen(deviceOnlineProvider, (_, _) => syncNotification());
   ref.listen(
     settingsProvider.select((s) => s.pairedDevicesList),
     (_, _) => syncNotification(),
   );
+  // Keeps "last connected: N min ago" current while everything is offline.
   final notificationTicker = Timer.periodic(
     const Duration(seconds: 30),
     (_) => syncNotification(),
@@ -520,7 +585,9 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   // The primary-device pick and "is anything paired at all" are the only
   // settings that change what we should be connected to. Every reconnect
   // rewrites the paired entry's timestamp, which this selector ignores on
-  // purpose — otherwise each reconnect would kick off another search.
+  // purpose — otherwise each reconnect would kick off another search. A
+  // calibration only labels soles that are already connected, so it is not
+  // here either.
   ref.listen<
     ({String? preferredKey, String? preferredAddress, int pairedCount})
   >(
@@ -534,20 +601,16 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     (prev, next) {
       if (next.pairedCount == 0) {
         retryTimer?.cancel();
-        watchdogTimer?.cancel();
-        boundDevice = null;
-        connectedSole.clear();
-        unawaited(
-          bleConnectionService.detach().whenComplete(() => stopBleService()),
-        );
+        connectedSoles.clearAll();
+        unawaited(registry.detachAll().whenComplete(() => stopBleService()));
         return;
       }
-      // A manual pick goes looking even while another sole is connected;
-      // anything else only searches when nothing is connected. A pick changes
-      // both the identity and the address. The connected sole changes only
-      // one of them, and that must not force a reconnect: on a new address its
-      // identity stays the same, and when an old entry picks up its ID its
-      // address stays the same.
+      // A manual pick goes looking even while every slot is filled; anything
+      // else only searches when a foot is missing. A pick changes both the
+      // identity and the address. A connected sole changes only one of them,
+      // and that must not force a reconnect: on a new address its identity
+      // stays the same, and when an old entry picks up its ID its address
+      // stays the same.
       final picked =
           prev?.preferredKey != next.preferredKey &&
           prev?.preferredAddress != next.preferredAddress;
@@ -560,14 +623,21 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     onHold: () {
       held = true;
       retryTimer?.cancel();
-      watchdogTimer?.cancel();
+      for (final link in registry.links) {
+        link.cancelWatchdog();
+      }
     },
     onRelease: () {
       if (!held) return;
       held = false;
       unawaited(searchAndAttach());
     },
-    onDfuLink: bleConnectionService.dfuLink,
+    onDfuLink: () {
+      // The single-sole OTA talks to the sole connectedSoleProvider names.
+      final soleKey = ref.read(primarySoleKeyProvider);
+      final link = soleKey == null ? null : registry.lookup(soleKey);
+      return (link ?? registry.links.firstOrNull)?.service.dfuLink();
+    },
     onReacquire: reacquire,
   );
 });

@@ -155,7 +155,11 @@ OtaState _run(
         ),
       ],
     );
-    if (sole != null) container.read(connectedSoleProvider.notifier).set(sole);
+    if (sole != null) {
+      container
+          .read(connectedSolesProvider.notifier)
+          .set(sole.device.identityKey, sole);
+    }
     body(container);
     if (midway != null) {
       async.elapse(midwayAt);
@@ -310,8 +314,13 @@ void main() {
       dfuSupported: true,
     );
     final state = _run(connection, (c) {
-      connection.onDfuLink = () =>
-          c.read(connectedSoleProvider.notifier).set(soleB);
+      // The sole we started with loses its link and another one is the only
+      // session left — what a forced primary-device pick looks like from here.
+      connection.onDfuLink = () {
+        final soles = c.read(connectedSolesProvider.notifier);
+        soles.clearAll();
+        soles.set(soleB.device.identityKey, soleB);
+      };
       c.read(firmwareUpdateProvider.notifier).installLocal(_image());
     });
     expect(state.phase, OtaPhase.failed);

@@ -98,6 +98,20 @@ void main() {
     expect(registry.keys, {'ID'});
   });
 
+  test('a re-key nobody awaits has already moved the session', () {
+    // The orchestrator's onReady calls rekey fire-and-forget and reads the new
+    // key in the same synchronous block, so the map move must land before the
+    // method's first await. An await added ahead of it would break that
+    // silently — the sole's telemetry would just stop.
+    final registry = SoleSessionRegistry(createService: _FakeService.new);
+    final link = registry.link('addr', _sole('addr'));
+
+    registry.rekey('addr', 'ID'); // deliberately not awaited
+
+    expect(registry.lookup('ID'), same(link));
+    expect(registry.lookup('addr'), isNull);
+  });
+
   test('re-keying onto an occupied key retires the misfiled session', () async {
     final registry = SoleSessionRegistry(createService: _FakeService.new);
     final stale = registry.link('addr', _sole('addr'));
