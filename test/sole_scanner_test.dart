@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 SoleCandidate _sole(String remoteId, int rssi, {String? deviceId}) =>
     SoleCandidate(
@@ -14,11 +15,13 @@ BlePairedDevice _paired(
   String remoteId, {
   String? deviceId,
   bool preferred = false,
+  FootSide? side,
 }) => BlePairedDevice(
   remoteId: remoteId,
   name: 'SilverSole',
   deviceId: deviceId,
   isPreferred: preferred,
+  footSide: side,
 );
 
 void main() {
@@ -182,6 +185,81 @@ void main() {
         paired: [_paired('OLD', preferred: true)],
       );
       expect(pick?.remoteId, 'NEW');
+    });
+  });
+
+  group('pickSoles', () {
+    test('returns the calibrated pair, left first', () {
+      final picks = pickSoles(
+        [_sole('r', -70, deviceId: 'R'), _sole('l', -80, deviceId: 'L')],
+        paired: [
+          _paired('r', deviceId: 'R', side: FootSide.right),
+          _paired('l', deviceId: 'L', side: FootSide.left),
+        ],
+      );
+      expect(picks.map((c) => c.deviceId), ['L', 'R']);
+    });
+
+    // The wearer owns three soles; only two can be connected at once, and it
+    // has to be the pair they calibrated — not whichever two shout loudest.
+    test('with three paired soles the calibrated pair wins', () {
+      final picks = pickSoles(
+        [
+          _sole('spare', -20, deviceId: 'SPARE'),
+          _sole('r', -70, deviceId: 'R'),
+          _sole('l', -80, deviceId: 'L'),
+        ],
+        paired: [
+          _paired('spare', deviceId: 'SPARE'),
+          _paired('r', deviceId: 'R', side: FootSide.right),
+          _paired('l', deviceId: 'L', side: FootSide.left),
+        ],
+      );
+      expect(picks.map((c) => c.deviceId), ['L', 'R']);
+    });
+
+    test('max caps how many come back', () {
+      final picks = pickSoles(
+        [_sole('a', -40, deviceId: 'A'), _sole('b', -50, deviceId: 'B')],
+        paired: [
+          _paired('a', deviceId: 'A'),
+          _paired('b', deviceId: 'B'),
+        ],
+        max: 1,
+      );
+      expect(picks.map((c) => c.deviceId), ['A']);
+    });
+
+    test('a sole never takes two places', () {
+      // The same sole is both the left foot and the primary device.
+      final picks = pickSoles(
+        [_sole('l', -60, deviceId: 'L')],
+        paired: [
+          _paired('l', deviceId: 'L', side: FootSide.left, preferred: true),
+        ],
+      );
+      expect(picks.map((c) => c.deviceId), ['L']);
+    });
+
+    test('an unassigned paired sole fills the second slot', () {
+      final picks = pickSoles(
+        [_sole('r', -70, deviceId: 'R'), _sole('x', -50, deviceId: 'X')],
+        paired: [
+          _paired('r', deviceId: 'R', side: FootSide.right),
+          _paired('x', deviceId: 'X'),
+        ],
+      );
+      expect(picks.map((c) => c.deviceId), ['R', 'X']);
+    });
+
+    test('nothing paired on the air means nothing to connect to', () {
+      expect(
+        pickSoles(
+          [_sole('s', -30, deviceId: 'STRANGER')],
+          paired: [_paired('m', deviceId: 'MINE')],
+        ),
+        isEmpty,
+      );
     });
   });
 

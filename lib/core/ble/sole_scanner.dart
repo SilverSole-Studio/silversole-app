@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 
 /// The substring every sole carries in its advertised name.
 ///
@@ -75,40 +76,71 @@ bool isSameSole(SoleCandidate candidate, BlePairedDevice paired) {
   return candidate.remoteId == paired.remoteId;
 }
 
-/// Picks which sole to connect to, in this order:
+/// Picks which soles to connect to, best first, at most [max].
 ///
-/// 1. the primary device, when it is on the air;
-/// 2. any other paired sole, strongest signal first;
-/// 3. as a last resort, a sole that cannot be identified — one advertising no
+/// In order:
+///
+/// 1. the calibrated pair — the soles with a foot side assigned, left first;
+/// 2. the primary device, when it is on the air;
+/// 3. any other paired sole, strongest signal first;
+/// 4. as a last resort, a sole that cannot be identified — one advertising no
 ///    ID, or any sole while some entry in [paired] still has no ID on record
 ///    (a sole paired on old firmware looks like a stranger once it reports an
 ///    ID, and this is how auto-connect finds it again).
 ///
-/// Otherwise nothing: a sole that reports an ID nobody paired is someone
-/// else's, and auto-connect leaves it alone.
-SoleCandidate? pickSole(
+/// A sole never takes two places. A sole that reports an ID nobody paired is
+/// someone else's: it is only ever returned by the last resort, and never once
+/// every paired entry has an ID.
+List<SoleCandidate> pickSoles(
   List<SoleCandidate> candidates, {
   required List<BlePairedDevice> paired,
+  int max = 2,
 }) {
-  SoleCandidate? strongest(Iterable<SoleCandidate> pool) =>
-      pool.sorted((a, b) => b.rssi.compareTo(a.rssi)).firstOrNull;
+  final picked = <SoleCandidate>[];
+  final taken = <String>{};
+
+  void take(SoleCandidate? candidate) {
+    if (candidate == null || picked.length >= max) return;
+    if (!taken.add(candidate.remoteId)) return;
+    picked.add(candidate);
+  }
+
+  Iterable<SoleCandidate> byStrength(Iterable<SoleCandidate> pool) => pool
+      .where((c) => !taken.contains(c.remoteId))
+      .sorted((a, b) => b.rssi.compareTo(a.rssi));
+
+  for (final side in FootSide.values) {
+    final sole = paired.firstWhereOrNull((d) => d.footSide == side);
+    if (sole == null) continue;
+    take(candidates.firstWhereOrNull((c) => isSameSole(c, sole)));
+  }
 
   final primary = paired.firstWhereOrNull((d) => d.isPreferred);
   if (primary != null) {
-    final found = candidates.firstWhereOrNull((c) => isSameSole(c, primary));
-    if (found != null) return found;
+    take(candidates.firstWhereOrNull((c) => isSameSole(c, primary)));
   }
 
-  final known = strongest(
+  for (final candidate in byStrength(
     candidates.where((c) => paired.any((d) => isSameSole(c, d))),
-  );
-  if (known != null) return known;
+  )) {
+    take(candidate);
+  }
 
   final hasLegacyEntry = paired.any((d) => d.deviceId == null);
-  return strongest(
+  for (final candidate in byStrength(
     candidates.where((c) => c.deviceId == null || hasLegacyEntry),
-  );
+  )) {
+    take(candidate);
+  }
+
+  return picked;
 }
+
+/// The one sole to connect to — [pickSoles] with a single slot.
+SoleCandidate? pickSole(
+  List<SoleCandidate> candidates, {
+  required List<BlePairedDevice> paired,
+}) => pickSoles(candidates, paired: paired, max: 1).firstOrNull;
 
 /// Finds the soles that are advertising right now.
 class SoleScanner {
