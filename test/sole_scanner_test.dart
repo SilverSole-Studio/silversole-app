@@ -262,6 +262,19 @@ void main() {
       );
     });
 
+    test('two identified soles let only one unidentifiable stranger in', () {
+      // Both of the wearer's soles report IDs, so nothing is awaiting
+      // recovery; the last resort is a single slot and must not fill both.
+      final picks = pickSoles(
+        [_sole('N1', -40), _sole('N2', -50)],
+        paired: [
+          _paired('A', deviceId: 'A_ID'),
+          _paired('B', deviceId: 'B_ID'),
+        ],
+      );
+      expect(picks.map((c) => c.remoteId), ['N1']);
+    });
+
     test('one legacy entry lets only one unidentifiable sole in', () {
       // The legacy sole may now report an ID, so it matches nothing; the
       // second slot must not go to a stranger the user never paired.
