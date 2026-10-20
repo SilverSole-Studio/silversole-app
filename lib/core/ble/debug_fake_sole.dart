@@ -19,6 +19,19 @@ import 'package:silversole/shared/providers/telemetry_process_providers/live_tel
 /// Resting by default, because a sole that is always under load would decide
 /// the calibration by itself. [stomp] is the step.
 ///
+/// Two consequences to expect while it is on, neither a bug:
+///
+/// - It counts towards `desiredCount`, so `needsSearch` stays true and the
+///   scan loop never settles — it keeps looking for a real second sole on its
+///   15/30/60 s backoff.
+/// - Its samples stamp `latestTelemetryAtProvider` at 50 Hz, so
+///   `deviceOnlineProvider` is held true and nothing ever reads offline.
+///
+/// [start] also persists the paired entry, and [stop] is the only thing that
+/// removes it: killing the app with the fake sole running leaves a
+/// "SilverSole (fake)" row behind with no stream feeding it. Remove it from
+/// the devices page, or clear all pairings.
+///
 /// Debug builds only: nothing in release code refers to this.
 class DebugFakeSole {
   DebugFakeSole(this._ref);
@@ -46,16 +59,24 @@ class DebugFakeSole {
   bool get isRunning => _ticker != null;
 
   /// Pairs the fake sole, reports it connected and starts its stream.
+  ///
+  /// The ticker is created **before** the awaits: assigning it afterwards let
+  /// two quick taps both pass the `isRunning` check and start two timers, and
+  /// [stop] could then only cancel the second — the first kept pushing
+  /// samples with nothing holding a handle to it.
   Future<void> start() async {
     if (_ticker != null) return;
+    final ticker = _ticker = Timer.periodic(_interval, (_) => _push());
     await _ref.read(settingsProvider.notifier).addOrUpdatePairedDevice(device);
+    // A stop() that landed during those awaits has already cancelled this
+    // ticker and dropped the pairing; do not report it connected again.
+    if (_ticker != ticker) return;
     _ref
         .read(connectedSolesProvider.notifier)
         .set(
           identityKey,
           const ConnectedSole(device: device, dfuSupported: false),
         );
-    _ticker = Timer.periodic(_interval, (_) => _push());
   }
 
   /// Stops the stream and forgets the pairing.

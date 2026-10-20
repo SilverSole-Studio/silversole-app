@@ -33,11 +33,6 @@ abstract class AppSettings with _$AppSettings {
   /// The sole worn on [side], or null when no sole is assigned to that foot.
   BlePairedDevice? soleFor(FootSide side) =>
       pairedDevicesList.firstWhereOrNull((d) => d.footSide == side);
-
-  /// Paired soles with no foot side yet — what the calibration flow asks
-  /// the wearer to sort out.
-  List<BlePairedDevice> get unassignedSoles =>
-      pairedDevicesList.where((d) => d.footSide == null).toList();
 }
 
 extension TransmissionMethodValue on TransmissionMethod {

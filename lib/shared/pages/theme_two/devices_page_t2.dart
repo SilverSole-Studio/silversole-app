@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -132,13 +134,27 @@ class _DeviceListCard extends StatelessWidget {
   }
 }
 
-class _DeviceRowTile extends StatelessWidget {
+/// One paired sole.
+///
+/// A [ConsumerWidget] for the sake of the foot-side badge alone: clearing a
+/// side is the mascot theme's only way to correct a mis-step, and there is no
+/// menu here to hang it off.
+class _DeviceRowTile extends ConsumerWidget {
   const _DeviceRowTile({required this.row});
 
   final DeviceRow row;
 
+  /// Unassigns this sole's foot, which brings the calibration overlay back
+  /// (it needs an unassigned side) so the wearer can step again or pick by
+  /// hand. Reusing that flow rather than building a second assignment path
+  /// here: once both soles have sides the overlay never returns on its own,
+  /// and a wearer who mis-stepped would otherwise be stuck with it.
+  Future<void> _clearFootSide(WidgetRef ref) => ref
+      .read(settingsProvider.notifier)
+      .setFootSide(row.device.identityKey, null);
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // A remembered (not live) level is grayed out so it reads as "previous".
     final battery = row.battery;
     final lastSeen = row.device.lastConnectedAt;
@@ -180,19 +196,26 @@ class _DeviceRowTile extends StatelessWidget {
                         ),
                       ),
                     if (row.device.footSide case final side?)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.secondaryContainer,
+                      Tooltip(
+                        message: 'foot_side_tap_to_redo'.tr(),
+                        child: InkWell(
+                          onTap: () => unawaited(_clearFootSide(ref)),
                           borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          side.labelKey.tr(),
-                          style: context.textTheme.labelLarge?.copyWith(
-                            color: context.colorScheme.onSecondaryContainer,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.colorScheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              side.labelKey.tr(),
+                              style: context.textTheme.labelLarge?.copyWith(
+                                color: context.colorScheme.onSecondaryContainer,
+                              ),
+                            ),
                           ),
                         ),
                       ),

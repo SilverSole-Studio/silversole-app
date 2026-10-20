@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/connected_sole.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/widgets/firmware_card_parts.dart';
 
@@ -23,7 +24,28 @@ void main() {
     expect(firmwareCardDetail(check), 'SilverSole ••••7081 · v0.4.0');
   });
 
-  test('a sole without an ID is named alone', () {
+  // With one sole per foot the version is useless without knowing whose it
+  // is, so an assigned sole is named by its foot rather than its ID suffix.
+  // easy_localization is not mounted in a plain unit test and hands back the
+  // key, which is what `left_foot` is here.
+  test('an assigned sole is named by its foot, not its ID', () {
+    const check = FirmwareCheck(
+      FirmwareCheckStatus.upToDate,
+      sole: ConnectedSole(
+        device: BlePairedDevice(
+          remoteId: 'M',
+          name: 'SilverSole',
+          deviceId: '1A2B3C4D5E6F7081',
+          footSide: FootSide.left,
+        ),
+        firmwareVersion: '0.4.0',
+        dfuSupported: true,
+      ),
+    );
+    expect(firmwareCardDetail(check), 'SilverSole left_foot · v0.4.0');
+  });
+
+  test('a sole without an ID or a side is named alone', () {
     expect(soleLabel(const BlePairedDevice(remoteId: 'M', name: '左腳')), '左腳');
   });
 

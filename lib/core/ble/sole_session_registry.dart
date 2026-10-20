@@ -51,10 +51,6 @@ class SoleSessionRegistry {
   /// key it was filed under until the next re-key.
   Map<String, SoleLink> get entries => Map.unmodifiable(_links);
 
-  int get connectedCount => _links.values.where((l) => l.isConnected).length;
-
-  bool get anyConnected => _links.values.any((l) => l.isConnected);
-
   SoleLink? lookup(String identityKey) => _links[identityKey];
 
   /// The link for [identityKey], created on first use. An existing link keeps

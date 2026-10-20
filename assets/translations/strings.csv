@@ -499,3 +499,4 @@ set_right_foot,Set as right foot,設為右腳
 debug_add_fake_sole,Add a fake second sole,加入假的第二隻鞋墊
 debug_remove_fake_sole,Remove the fake sole,移除假鞋墊
 debug_fake_sole_stomp,Stomp,踩一下
+foot_side_tap_to_redo,Tap to set this foot again,點一下重新指定這隻的腳別

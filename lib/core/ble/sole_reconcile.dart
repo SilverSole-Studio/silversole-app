@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
+import 'package:silversole/core/ble/sole_session_registry.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 
 /// How many soles may be connected at once — one per foot.
@@ -20,6 +21,16 @@ const int maxSoles = 2;
 /// registry's obligation to re-key a live session when its paired entry's
 /// identityKey changes. Until it does, the old key reads as "no longer paired"
 /// and [reconcileSoleLinks] detaches a working connection.
+///
+/// **Known hazard, deliberately not fixed.** A legacy pre-ID entry whose sole
+/// comes back on a *new* address, already reporting a chip ID, matches no
+/// paired entry at all: [isSameSole] cannot tie the new ID to an entry that
+/// only ever knew an address. A fresh entry is appended under the chip ID, the
+/// old entry keeps the foot side while live data streams under the new key —
+/// so the assigned foot silently goes blank and the devices page grows a
+/// duplicate row. Near-unreachable with nRF random-static addressing, where
+/// the address does not change between boots, which is why this is a note
+/// rather than a fix. The exit is "clear all devices" and pairing again.
 String identityKeyFor(SoleCandidate candidate, List<BlePairedDevice> paired) {
   final known = paired.firstWhereOrNull((d) => isSameSole(candidate, d));
   return known?.identityKey ?? candidate.deviceId ?? candidate.remoteId;
@@ -50,6 +61,25 @@ class LinkState {
   /// sole it belongs to can never be re-attached on a new address.
   bool get isLive => isConnected || awaitingWatchdog;
 }
+
+/// What the search decision sees in [registry].
+///
+/// Keyed off the registry's own map rather than each link's device, because a
+/// link filed under an address still carries that key until the next re-key.
+///
+/// `watchdog?.isActive ?? false` is the subtle part, and why this is a
+/// function with tests of its own rather than a closure: a *fired* Timer
+/// reports `isActive == false`, which is exactly "this link's watchdog has had
+/// its chance". A link whose watchdog has fired without reconnecting no longer
+/// holds its foot's slot, and a link with no watchdog at all never held one.
+List<LinkState> linkStatesOf(SoleSessionRegistry registry) => [
+  for (final entry in registry.entries.entries)
+    LinkState(
+      key: entry.key,
+      isConnected: entry.value.isConnected,
+      awaitingWatchdog: entry.value.watchdog?.isActive ?? false,
+    ),
+];
 
 /// What the search loop should do after one scan.
 @immutable
@@ -84,6 +114,16 @@ int _desiredFor(List<BlePairedDevice> paired, int max) =>
 /// drop a working connection. **Being absent from [picks] is never a reason to
 /// detach**: a connected sole usually stops advertising, so a scan says
 /// nothing about it. Only a sole that is no longer paired loses its session.
+///
+/// The cost of that rule, accepted rather than solved: a link to a sole that
+/// is still paired but out of range is never torn down, so its own backoff
+/// retries forever on a 30 s ceiling, and each attempt holds
+/// flutter_blue_plus 2.1.1's single global GATT mutex for up to the 15 s
+/// connect timeout. [LinkState.isLive] stops such a link starving a *foot's
+/// slot*, but it does not stop it starving the *mutex* — with two feet there
+/// can be two dead links queued ahead of a live foot's handshake. Dropping
+/// the retry would be worse: that session is the only thing that reconnects
+/// the sole when the wearer walks back into range.
 SoleReconciliation reconcileSoleLinks({
   required List<SoleCandidate> picks,
   required List<BlePairedDevice> paired,

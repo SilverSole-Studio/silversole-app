@@ -73,21 +73,6 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   String toHex(List<int> v) =>
       v.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
 
-  // What the search decision sees. Keyed off the registry's own map rather
-  // than each link's device, because a link filed under an address still
-  // carries that key until the next re-key. A fired Timer reports
-  // `isActive == false`, which is exactly "this link's watchdog has had its
-  // chance" — and a link whose watchdog has fired without reconnecting no
-  // longer holds its foot's slot.
-  List<LinkState> linkStates() => [
-    for (final entry in registry.entries.entries)
-      LinkState(
-        key: entry.key,
-        isConnected: entry.value.isConnected,
-        awaitingWatchdog: entry.value.watchdog?.isActive ?? false,
-      ),
-  ];
-
   // Persists a sole's battery level so it can be shown greyed out while that
   // sole is offline. The IMU stream repeats the same level at 50 Hz, so only a
   // change is written; the link carries it so onReady's write keeps it.
@@ -457,7 +442,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
         : maxSoles;
     if (!needsSearch(
       paired: current.pairedDevicesList,
-      links: linkStates(),
+      links: linkStatesOf(registry),
       force: force,
     )) {
       return;
@@ -496,7 +481,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
         // Read again rather than reusing the guard's snapshot: the scan above
         // takes seconds, and a link that connected or died meanwhile must not
         // be planned for as it was before.
-        links: linkStates(),
+        links: linkStatesOf(registry),
       );
 
       for (final soleKey in plan.detach) {
@@ -647,15 +632,13 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
       for (final link in registry.links) {
         link.cancelWatchdog();
       }
-      // The other foot's handshake would contend with this transfer's page
-      // writes for fbp's one global GATT mutex. release() goes and gets it
-      // back.
-      for (final otherKey in registry.keys.toList()) {
-        if (otherKey == soleKey) continue;
-        debugPrint('ota holds the link — dropping $otherKey meanwhile');
-        unawaited(registry.detach(otherKey));
-        connectedSoles.clear(otherKey);
-      }
+      dropOtherSoles(registry, connectedSoles, keep: soleKey);
+      // The dropped foot is still named by the notification until something
+      // re-pushes it. The deviceOnlineProvider listener usually will not: the
+      // sole we keep is still streaming, so "any sole is online" never
+      // changes and the listener does not fire. Without this the text keeps
+      // claiming a foot that is gone until the 30 s ticker comes round.
+      syncNotification();
     },
     onRelease: () {
       if (!held) return;
@@ -666,6 +649,31 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     onReacquire: reacquire,
   );
 });
+
+/// Tears down every session except [keep]'s.
+///
+/// An OTA's page writes and another foot's handshake contend for
+/// flutter_blue_plus's one global GATT mutex, so the other feet come off the
+/// air for the duration; the search loop fetches them back after `release()`.
+///
+/// A free function so the "never the sole we are keeping" rule can be tested
+/// without standing up the whole orchestrator.
+void dropOtherSoles(
+  SoleSessionRegistry registry,
+  ConnectedSolesNotifier connectedSoles, {
+  required String keep,
+}) {
+  // Snapshot the keys, because detach() mutates the registry's map — and it
+  // removes the entry *before* its first await, so a caller may read the
+  // registry straight after this returns and see only [keep]. The
+  // syncNotification() call at the hold site relies on exactly that.
+  for (final otherKey in registry.keys.toList()) {
+    if (otherKey == keep) continue;
+    debugPrint('ota holds the link — dropping $otherKey meanwhile');
+    unawaited(registry.detach(otherKey));
+    connectedSoles.clear(otherKey);
+  }
+}
 
 class _ForegroundSoleConnection implements SoleConnectionController {
   _ForegroundSoleConnection({

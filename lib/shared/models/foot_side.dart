@@ -13,6 +13,8 @@ enum FootSide {
   /// Key in `strings.csv`.
   final String labelKey;
 
-  /// The other foot — assigning one sole a side gives the other sole this.
+  /// The other foot. Used by the devices page's foot-side menu: with exactly
+  /// two soles paired, giving one a side hands the other this one, so a
+  /// half-finished swap cannot strand a connected sole with no foot.
   FootSide get other => this == FootSide.left ? FootSide.right : FootSide.left;
 }

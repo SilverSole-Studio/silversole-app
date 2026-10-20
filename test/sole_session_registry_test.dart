@@ -1,7 +1,14 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/core/ble/ble_connection_service.dart';
+import 'package:silversole/core/ble/sole_reconcile.dart';
 import 'package:silversole/core/ble/sole_session_registry.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/models/connected_sole.dart';
+import 'package:silversole/shared/providers/ble_foreground_controller.dart';
+import 'package:silversole/shared/providers/connected_sole_provider.dart';
 
 /// Stands in for a real session so the registry is tested without BLE.
 /// `BleConnectionService` keeps every bit of its state per instance, so
@@ -41,19 +48,6 @@ void main() {
     expect(a.service, isNot(same(b.service)));
     expect(registry.keys, {'A', 'B'});
     expect(registry.links.length, 2);
-  });
-
-  test('connectedCount and anyConnected follow the services', () {
-    final registry = SoleSessionRegistry(createService: _FakeService.new);
-    final a = registry.link('A', _sole('A'));
-    registry.link('B', _sole('B'));
-
-    expect(registry.anyConnected, isFalse);
-    expect(registry.connectedCount, 0);
-
-    (a.service as _FakeService).connected = true;
-    expect(registry.anyConnected, isTrue);
-    expect(registry.connectedCount, 1);
   });
 
   test('detach drops the session and tears the link down', () async {
@@ -135,5 +129,110 @@ void main() {
     expect(registry.keys, {'A'});
     expect(registry.lookup('A'), same(link));
     expect((link.service as _FakeService).detaches, 0);
+  });
+
+  group('linkStatesOf', () {
+    // `watchdog?.isActive ?? false` is the one line under this branch's only
+    // Critical, and it is subtle: a *fired* Timer reports `isActive == false`,
+    // which is the whole point — a link whose watchdog has had its chance no
+    // longer holds its foot's slot.
+    test('maps connection and watchdog into what the search decision sees', () {
+      final registry = SoleSessionRegistry(createService: _FakeService.new);
+      final connected = registry.link('C', _sole('C'));
+      (connected.service as _FakeService).connected = true;
+      final waiting = registry.link('W', _sole('W'));
+      waiting.watchdog = Timer(const Duration(hours: 1), () {});
+      addTearDown(waiting.cancelWatchdog);
+      registry.link('D', _sole('D'));
+
+      final states = {for (final s in linkStatesOf(registry)) s.key: s};
+      expect(states.keys, {'C', 'W', 'D'});
+
+      expect(states['C']!.isConnected, isTrue);
+      expect(states['C']!.awaitingWatchdog, isFalse);
+      expect(states['C']!.isLive, isTrue);
+
+      // Not connected, but still inside its grace period.
+      expect(states['W']!.isConnected, isFalse);
+      expect(states['W']!.awaitingWatchdog, isTrue);
+      expect(states['W']!.isLive, isTrue);
+
+      // Neither: this link is dead and must release its foot's slot.
+      expect(states['D']!.isConnected, isFalse);
+      expect(states['D']!.awaitingWatchdog, isFalse);
+      expect(states['D']!.isLive, isFalse);
+    });
+
+    // The distinction a `watchdog != null` test would miss entirely.
+    test('a watchdog that has already fired is not awaited', () async {
+      final registry = SoleSessionRegistry(createService: _FakeService.new);
+      final link = registry.link('A', _sole('A'));
+      link.watchdog = Timer(Duration.zero, () {});
+      expect(linkStatesOf(registry).single.awaitingWatchdog, isTrue);
+
+      await Future<void>.delayed(Duration.zero);
+
+      // Still a non-null Timer, so `watchdog != null` would read this link as
+      // alive and the sole could never be re-attached on a new address.
+      expect(link.watchdog, isNotNull);
+      expect(linkStatesOf(registry).single.awaitingWatchdog, isFalse);
+      expect(linkStatesOf(registry).single.isLive, isFalse);
+    });
+  });
+
+  group('dropOtherSoles', () {
+    test('drops every other sole and never the one being kept', () async {
+      final registry = SoleSessionRegistry(createService: _FakeService.new);
+      final keep = registry.link('KEEP', _sole('KEEP'));
+      final otherA = registry.link('A', _sole('A'));
+      final otherB = registry.link('B', _sole('B'));
+      // A dropped sole must lose its watchdog too, or it keeps re-arming a
+      // search for a foot the OTA deliberately put down.
+      otherA.watchdog = Timer(const Duration(hours: 1), () {});
+
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final connectedSoles = container.read(connectedSolesProvider.notifier);
+      for (final key in ['KEEP', 'A', 'B']) {
+        connectedSoles.set(
+          key,
+          ConnectedSole(device: _sole(key), dfuSupported: false),
+        );
+      }
+
+      dropOtherSoles(registry, connectedSoles, keep: 'KEEP');
+      // detach() is fire-and-forget inside the loop; let it land.
+      await Future<void>.delayed(Duration.zero);
+
+      // The one that matters: the sole the OTA is for is untouched.
+      expect(registry.lookup('KEEP'), same(keep));
+      expect((keep.service as _FakeService).detaches, 0);
+      expect(container.read(connectedSolesProvider).keys, {'KEEP'});
+
+      expect(registry.keys, {'KEEP'});
+      expect((otherA.service as _FakeService).detaches, 1);
+      expect((otherB.service as _FakeService).detaches, 1);
+      expect(otherA.watchdog, isNull);
+    });
+
+    test(
+      'keeping a sole that is not in the registry still drops the rest',
+      () async {
+        final registry = SoleSessionRegistry(createService: _FakeService.new);
+        final only = registry.link('A', _sole('A'));
+
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        dropOtherSoles(
+          registry,
+          container.read(connectedSolesProvider.notifier),
+          keep: 'GONE',
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(registry.keys, isEmpty);
+        expect((only.service as _FakeService).detaches, 1);
+      },
+    );
   });
 }

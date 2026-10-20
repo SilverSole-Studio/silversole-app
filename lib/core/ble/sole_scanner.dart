@@ -145,6 +145,12 @@ List<SoleCandidate> pickSoles(
 }
 
 /// The one sole to connect to — [pickSoles] with a single slot.
+///
+/// No caller in `lib/` since the orchestrator went to one session per foot.
+/// Kept deliberately: ten pre-existing cases in `test/sole_scanner_test.dart`
+/// pin the single-sole priority order through it, and that order is still what
+/// [pickSoles] walks. Deleting this would delete the proof that two feet did
+/// not disturb it.
 SoleCandidate? pickSole(
   List<SoleCandidate> candidates, {
   required List<BlePairedDevice> paired,

@@ -149,11 +149,26 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
   }
 
   /// Assigning a foot takes it off whichever sole had it — see
-  /// [assignFootSide].
+  /// [assignFootSide] — and, with exactly two soles paired, gives the other
+  /// one the opposite foot in the same breath.
+  ///
+  /// Without that second write a half-finished swap strands a live sole:
+  /// from A=right/B=left, "set A as left" persists A=left and B=null, and
+  /// `rightFootTelemetryProvider` then reads empty while B is connected and
+  /// streaming at 50 Hz. Completing it here rather than inside the pure
+  /// [assignFootSide] keeps that function's mutual-exclusion semantics —
+  /// pinned by its own tests — and a third sole has no obvious "the other
+  /// one" to hand the opposite side to.
   Future<void> setFootSide(BlePairedDevice device, FootSide side) async {
-    await ref
-        .read(settingsProvider.notifier)
-        .setFootSide(device.identityKey, side);
+    final settings = ref.read(settingsProvider.notifier);
+    final paired = ref.read(settingsProvider).pairedDevicesList;
+    await settings.setFootSide(device.identityKey, side);
+    final other = paired.length == 2
+        ? paired.firstWhereOrNull((d) => d.identityKey != device.identityKey)
+        : null;
+    if (other != null) {
+      await settings.setFootSide(other.identityKey, side.other);
+    }
     showMessage(side.labelKey.tr());
   }
 

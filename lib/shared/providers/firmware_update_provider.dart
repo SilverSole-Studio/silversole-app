@@ -145,12 +145,13 @@ class FirmwareUpdateNotifier extends Notifier<OtaState> {
       _fail(DfuFailure.notConnected);
       return;
     }
-    // attach()'s own detach() cancels the old session's listener before the
-    // new link comes up, so a forced swap (a manual primary-device pick
-    // while another sole is connected) can leave connectedSoleProvider on
-    // the old sole while dfuLink() above already answers for the new one.
-    // Never write into a sole we did not confirm is still the one we started
-    // with.
+    // dfuLink() is keyed, so it cannot hand back a link to some *other* sole —
+    // it answers for the one we named or returns null. The drift runs the
+    // other way: the registry can still hold a live link under this key while
+    // connectedSoleProvider has moved on, because that provider re-resolves
+    // whenever the primary pick or the paired list changes. A non-null link is
+    // therefore not proof that this sole is still the one the update is for.
+    // Never write firmware into a sole the wearer is no longer looking at.
     final current = ref.read(connectedSoleProvider);
     if (current == null ||
         current.device.identityKey != sole.device.identityKey) {

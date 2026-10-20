@@ -182,6 +182,17 @@ class _CalibrationPanelState extends ConsumerState<_CalibrationPanel> {
   String _label(BlePairedDevice sole) =>
       sole.shortId == null ? sole.name : '••••${sole.shortId}';
 
+  /// Whether this looks like a correction rather than a first calibration.
+  ///
+  /// A first-time pair arrives with **two** soles unassigned; clearing one
+  /// side to redo a wrong answer leaves exactly **one**. That is enough to
+  /// tell the two apart without keeping any extra state — and it matters,
+  /// because a wearer who got here by mis-stepping may well mis-step again,
+  /// so the by-hand buttons are the reliable way out and should not be behind
+  /// the 15 s wait.
+  bool get _redoing =>
+      widget.soles.where((s) => s.footSide == null).length == 1;
+
   @override
   Widget build(BuildContext context) {
     final message = _timedOut
@@ -190,59 +201,70 @@ class _CalibrationPanelState extends ConsumerState<_CalibrationPanel> {
         ? 'foot_side_calibration_ambiguous'.tr()
         : 'foot_side_calibration_hint'.tr();
 
-    return Material(
-      color: context.colorScheme.scrim.withValues(alpha: 0.72),
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.base),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: AppSpacing.base,
-                  children: [
-                    Text(
-                      'foot_side_calibration_title'.tr(),
-                      style: context.textTheme.titleLarge,
-                    ),
-                    Text(message, style: context.textTheme.bodyMedium),
-                    if (!_timedOut)
+    // The overlay is not a route, so Android's back key would otherwise pop
+    // whatever sits *behind* it and leave the panel on top of a screen the
+    // wearer did not ask for. Spec §8.2 names the back key as an exit
+    // alongside "later", so it takes the same way out.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) widget.onDismiss();
+      },
+      child: Material(
+        color: context.colorScheme.scrim.withValues(alpha: 0.72),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSpacing.base),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.base),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: AppSpacing.base,
+                    children: [
                       Text(
-                        'foot_side_calibration_prompt'.tr(),
-                        style: context.textTheme.headlineSmall,
+                        'foot_side_calibration_title'.tr(),
+                        style: context.textTheme.titleLarge,
                       ),
-                    for (final sole in widget.soles)
-                      _SolePressureRow(
-                        label: _label(sole),
-                        value: ((_sums[sole.identityKey] ?? 0) / _fullScale)
-                            .clamp(0.0, 1.0),
-                        // Offered only once the wait timed out, so the usual
-                        // path stays "step on it".
-                        onPickLeft: _timedOut
-                            ? () => unawaited(_assign(sole.identityKey))
-                            : null,
+                      Text(message, style: context.textTheme.bodyMedium),
+                      if (!_timedOut)
+                        Text(
+                          'foot_side_calibration_prompt'.tr(),
+                          style: context.textTheme.headlineSmall,
+                        ),
+                      for (final sole in widget.soles)
+                        _SolePressureRow(
+                          label: _label(sole),
+                          value: ((_sums[sole.identityKey] ?? 0) / _fullScale)
+                              .clamp(0.0, 1.0),
+                          // Behind the timeout on a first calibration, so the
+                          // usual path stays "step on it" — but offered at
+                          // once when this is a correction.
+                          onPickLeft: _timedOut || _redoing
+                              ? () => unawaited(_assign(sole.identityKey))
+                              : null,
+                        ),
+                      Row(
+                        spacing: AppSpacing.sm,
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: widget.onDismiss,
+                              child: Text('foot_side_later'.tr()),
+                            ),
+                          ),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: _restart,
+                              child: Text('foot_side_retry'.tr()),
+                            ),
+                          ),
+                        ],
                       ),
-                    Row(
-                      spacing: AppSpacing.sm,
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: widget.onDismiss,
-                            child: Text('foot_side_later'.tr()),
-                          ),
-                        ),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _restart,
-                            child: Text('foot_side_retry'.tr()),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -253,7 +275,8 @@ class _CalibrationPanelState extends ConsumerState<_CalibrationPanel> {
   }
 }
 
-/// One sole's live pressure, plus the by-hand escape once the wait timed out.
+/// One sole's live pressure, plus the by-hand escape — offered once the wait
+/// times out, or straight away when a side is being corrected.
 class _SolePressureRow extends StatelessWidget {
   const _SolePressureRow({
     required this.label,

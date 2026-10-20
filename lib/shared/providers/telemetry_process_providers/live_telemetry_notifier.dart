@@ -13,10 +13,11 @@ import 'package:silversole/shared/models/record_imu_notify_data_model.dart';
 /// overwrite the other's window. Screens that mean "the sole" rather than a
 /// named foot read `telemetryViewProvider`, which follows the primary sole.
 class LiveTelemetryNotifier extends Notifier<LiveTelemetryState> {
-  LiveTelemetryNotifier(this.soleKey);
-
-  /// The sole this window belongs to.
-  final String soleKey;
+  /// Takes the family's key — the sole's identityKey — because
+  /// `NotifierProvider.family` builds each notifier from this tear-off. Not
+  /// stored: nothing needs to ask a window which sole it belongs to, and the
+  /// provider argument is the authority on that anyway.
+  LiveTelemetryNotifier(String soleKey);
 
   /// Smooths incoming live samples before they are stored. Owns its own raw
   /// history, so it must not be recreated per sample — which is also why each

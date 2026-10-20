@@ -39,13 +39,20 @@ FirmwareCardAction firmwareCardAction(
   FirmwareCheckStatus.manifestUnsupported => FirmwareCardAction.appTooOld,
 };
 
-/// The sole's name plus its ID suffix — every sole is called "SilverSole".
+/// The sole's name plus the one thing that tells two identical "SilverSole"s
+/// apart: the foot it is worn on, or its ID suffix before a side is assigned.
+///
+/// The foot comes first because with one sole per foot a version number is
+/// useless without knowing whose it is — the firmware card only ever shows
+/// the primary sole's. Same fallback the foreground notification uses.
 String soleLabel(BlePairedDevice device) {
-  final shortId = device.shortId;
-  return shortId == null ? device.name : '${device.name} ••••$shortId';
+  final tag =
+      device.footSide?.labelKey.tr() ??
+      (device.shortId == null ? null : '••••${device.shortId}');
+  return tag == null ? device.name : '${device.name} $tag';
 }
 
-/// `SilverSole ••••7081 · v0.4.0`, or null with no sole connected.
+/// `SilverSole Left foot · v0.4.0`, or null with no sole connected.
 String? firmwareCardDetail(FirmwareCheck? check) {
   final sole = check?.sole;
   if (sole == null) return null;

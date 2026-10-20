@@ -67,14 +67,5 @@ void main() {
       expect(settings.soleFor(FootSide.right)?.deviceId, 'A');
       expect(settings.soleFor(FootSide.left), isNull);
     });
-
-    test('unassignedSoles lists only the soles with no side yet', () {
-      final settings = _settingsWith([
-        _sole('A', side: FootSide.right),
-        _sole('B'),
-        _sole('C'),
-      ]);
-      expect(settings.unassignedSoles.map((d) => d.deviceId), ['B', 'C']);
-    });
   });
 }
