@@ -4731,6 +4731,14 @@ MSG
 
 `lib/shared/pages/theme_two/devices_page_t2.dart` 的對應位置做相同的加法（該檔的裝置列若樣式不同，就沿用它自己的徽章寫法，顏色仍走 `context.colorScheme`）。
 
+- [ ] **Step 1a: 刪掉一個沒有人用的 i18n key**（來自 Task 12 的 concern）
+
+Task 12 依 spec 把 14 個 key 一次加進 `strings.csv`，其中六個當時還沒有使用者。這一關會用掉五個（`set_left_foot`、`set_right_foot`、`debug_add_fake_sole`、`debug_remove_fake_sole`、`debug_fake_sole_stomp`），但 **`foot_side_unassigned` 沒有任何人會用** —— 那是我在 spec 的 i18n 清單裡憑空列出來的，計畫裡沒有任何程式碼參照它。
+
+把 `foot_side_unassigned` 那一行從 `assets/translations/strings.csv` 刪掉。不要為了用掉它而加一個「未指定」徽章：兩隻鞋墊連上且有未指派時校正 overlay 就會自動跳出來，那個狀態本來就是短暫的，而且 overlay 已經把事情說清楚了 —— 在列表上再掛一個標籤只是雜訊。單隻鞋墊的使用者（也就是絕大多數）更是永遠不該看到它。
+
+這一關結束前自己確認一次：這次新增的每個 key 都真的有 `.tr()` 的呼叫點。
+
 - [ ] **Step 1b: 兩個文字修正**（來自 Task 10 的 review）
 
 兩頁都要，兩個都是一行。
