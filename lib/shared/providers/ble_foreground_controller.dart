@@ -14,6 +14,7 @@ import 'package:silversole/core/ble/ota/reacquire_match.dart';
 import 'package:silversole/core/ble/pressure_channel_fix.dart';
 import 'package:silversole/core/ble/sole_notification_text.dart';
 import 'package:silversole/core/ble/sole_reconcile.dart';
+import 'package:silversole/core/ble/sole_sample_bus.dart';
 import 'package:silversole/core/ble/sole_scanner.dart';
 import 'package:silversole/core/ble/sole_session_registry.dart';
 import 'package:silversole/core/error/result.dart';
@@ -155,9 +156,12 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   void onImu(SoleLink link, List<int> value) {
     try {
       final data = link.service.parseImuNotify(value);
+      final key = link.device.identityKey;
+      ref.read(liveTelemetryProvider(key).notifier).updateImuNotifyData(data);
+      // The raw sample too, unaveraged, for the games (game_sole_forwarding).
       ref
-          .read(liveTelemetryProvider(link.device.identityKey).notifier)
-          .updateImuNotifyData(data);
+          .read(soleSampleBusProvider)
+          .emit(SoleSample(identityKey: key, data: data));
       rememberBattery(link, data.batteryPercent);
     } catch (e) {
       // Always report the first failure, then throttle: a format mismatch

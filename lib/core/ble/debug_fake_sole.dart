@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/core/ble/sole_sample_bus.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/connected_sole.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
@@ -12,9 +13,10 @@ import 'package:silversole/shared/providers/telemetry_process_providers/live_tel
 /// A second sole for development, where only one real one is in hand.
 ///
 /// Fakes nothing about BLE. It registers a paired entry, reports itself
-/// connected and pushes synthetic samples into that sole's telemetry — the
-/// very providers a real session writes to — so the two-foot pipeline and the
-/// calibration overlay can be exercised on a phone with one real sole.
+/// connected and pushes synthetic samples into that sole's telemetry and the
+/// raw sample bus — the very places a real session writes to — so the
+/// two-foot pipeline, the calibration overlay and two-feet game input can be
+/// exercised on a phone with one real sole.
 ///
 /// Resting by default, because a sole that is always under load would decide
 /// the calibration by itself. [stomp] is the step.
@@ -95,23 +97,27 @@ class DebugFakeSole {
     if (_pressing > 0) _pressing--;
     final noise = _random.nextInt(30);
     final load = _pressing > 0 ? 1800 + _random.nextInt(400) : 0;
+    final sample = ImuNotifyDataModel(
+      ax: 0,
+      ay: 0,
+      az: 1000,
+      gx: 0,
+      gy: 0,
+      gz: 0,
+      pitch: 0,
+      roll: 0,
+      pressure: [load + noise, load + noise, noise],
+      batteryPercent: 77,
+      isCharging: false,
+    );
     _ref
         .read(liveTelemetryProvider(identityKey).notifier)
-        .updateImuNotifyData(
-          ImuNotifyDataModel(
-            ax: 0,
-            ay: 0,
-            az: 1000,
-            gx: 0,
-            gy: 0,
-            gz: 0,
-            pitch: 0,
-            roll: 0,
-            pressure: [load + noise, load + noise, noise],
-            batteryPercent: 77,
-            isCharging: false,
-          ),
-        );
+        .updateImuNotifyData(sample);
+    // Into the games as well, so two-feet game input can be tried with one
+    // real sole.
+    _ref
+        .read(soleSampleBusProvider)
+        .emit(SoleSample(identityKey: identityKey, data: sample));
   }
 }
 
