@@ -4,9 +4,8 @@ import 'package:silversole/core/friends/friend_models.dart';
 /// Everything the app asks of the friends backend. One method per RPC in the
 /// spec (§8.2); a failure is always a `FriendException`.
 ///
-/// Today only [FakeFriendsRepository] implements it. The Supabase version
-/// calls the same-named RPCs once they exist, and nothing above this layer
-/// should need to change.
+/// [SupabaseFriendsRepository] calls the same-named RPCs; the in-memory
+/// [FakeFriendsRepository] plays the same rules for tests and the demo.
 abstract interface class FriendsRepository {
   Future<Result<MyProfile>> getMyProfile();
 

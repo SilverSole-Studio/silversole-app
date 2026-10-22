@@ -43,6 +43,9 @@ enum FriendError {
   nicknameChangeLimit,
   uploadBanned,
   offline,
+
+  /// The server refused for a reason the app has no message for.
+  unknown,
 }
 
 class FriendException implements Exception {

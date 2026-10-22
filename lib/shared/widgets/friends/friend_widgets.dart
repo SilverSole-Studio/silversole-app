@@ -52,9 +52,13 @@ class FriendAvatar extends StatelessWidget {
       context.colorScheme.surfaceContainerHighest,
     ];
     final photo = photoPath;
-    final ImageProvider image = photo != null
-        ? FileImage(File(photo))
-        : AssetImage(presetAsset(preset.clamp(1, kAvatarPresetCount)));
+    // A friend's photo is a signed URL from Supabase; the demo data uses
+    // files on the device.
+    final ImageProvider image = switch (photo) {
+      null => AssetImage(presetAsset(preset.clamp(1, kAvatarPresetCount))),
+      _ when photo.startsWith('http') => NetworkImage(photo),
+      _ => FileImage(File(photo)),
+    };
     return Container(
       width: size,
       height: size,

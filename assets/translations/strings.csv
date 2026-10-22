@@ -619,3 +619,4 @@ friends_err_nicknameInvalid,Use 2 to 8 characters and not only symbols.,名字�
 friends_err_nicknameChangeLimit,Names can be changed 3 times a day. Please try tomorrow.,名字一天只能改 3 次，明天再改。
 friends_err_uploadBanned,Photo upload is paused for now. You can still pick a picture.,暫時不能上傳照片，可以先挑一個頭像。
 friends_err_offline,No connection. Please try again once you are online.,沒有網路，連上再來。
+friends_err_unknown,Something went wrong. Please try again later.,出了點問題，請等一下再試。

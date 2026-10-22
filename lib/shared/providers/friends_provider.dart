@@ -1,17 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/result.dart';
-import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friends_repository.dart';
+import 'package:silversole/core/friends/supabase_friends_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// The friends backend. Fake (in-memory demo data) until the Supabase RPCs
-/// in the friends spec exist; swap the implementation here and nothing else.
-final friendsRepositoryProvider = Provider<FriendsRepository>((ref) {
-  final repo = FakeFriendsRepository.seeded();
-  ref.onDispose(repo.dispose);
-  return repo;
-});
+/// The friends backend: the RPCs in
+/// `supabase/migrations/20261019120000_friends.sql`. For the in-memory demo
+/// data, return `FakeFriendsRepository.seeded()` here instead (tests override
+/// this provider with their own fake).
+final friendsRepositoryProvider = Provider<FriendsRepository>(
+  (ref) => SupabaseFriendsRepository(Supabase.instance.client),
+);
 
 /// Unwraps a [Result] for a [FutureProvider]: an error becomes the provider's
 /// error state (always a `FriendException`).

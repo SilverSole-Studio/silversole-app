@@ -107,7 +107,9 @@ class _FriendsHub extends ConsumerWidget {
             label: 'friends_blocked_title'.tr(),
             onTap: () => context.push('/friends/blocked'),
           ),
-          if (kDebugMode) const _DemoHint(),
+          if (kDebugMode &&
+              ref.watch(friendsRepositoryProvider) is FakeFriendsRepository)
+            const _DemoHint(),
         ],
       ),
     );
@@ -362,7 +364,7 @@ class _RemovedNotice extends ConsumerWidget {
   }
 }
 
-/// Debug builds only: the codes that work against the demo data.
+/// Debug builds on the demo data only: the codes that work against it.
 class _DemoHint extends StatelessWidget {
   const _DemoHint();
 
