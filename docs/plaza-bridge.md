@@ -4,7 +4,7 @@ App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `
 
 ## App → 網頁：現在能顯示什麼
 
-每次頁面載入完、以及數字有變的時候，App 會設定：
+**頁面一開始載入（document start，廣場自己的程式還沒跑）就已經設好**，之後每次載入完、以及數字有變的時候，App 會再設一次：
 
 ```js
 window.silversoleApp = {

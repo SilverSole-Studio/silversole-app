@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -51,11 +53,26 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     );
   }
 
-  /// Tells the page what it may show. Called after each load and whenever the
-  /// values change while a page is up.
+  static const _infoScriptGroup = 'silversoleApp';
+
+  /// Sets `window.silversoleApp` before any of the page's own scripts run, so
+  /// the plaza can read it on its first frame.
+  UserScript _infoUserScript() => UserScript(
+    groupName: _infoScriptGroup,
+    source: PlazaBridge.publishScript(_appInfo()),
+    injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+  );
+
+  /// Tells the page what it may show when the values change: swaps the
+  /// document-start script (for the next page) and publishes to the page that
+  /// is up now. After each load it is published once more, which also covers
+  /// pages that load before the controller exists.
   Future<void> _publishAppInfo() async {
     final controller = _controller;
-    if (!_loaded || controller == null) return;
+    if (controller == null) return;
+    await controller.removeUserScriptsByGroupName(groupName: _infoScriptGroup);
+    await controller.addUserScript(userScript: _infoUserScript());
+    if (!_loaded) return;
     await controller.evaluateJavascript(
       source: PlazaBridge.publishScript(_appInfo()),
     );
@@ -99,6 +116,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
             children: [
               InAppWebView(
                 initialUrlRequest: URLRequest(url: WebUri(PlazaTabPage.url)),
+                initialUserScripts: UnmodifiableListView([_infoUserScript()]),
                 initialSettings: InAppWebViewSettings(
                   isInspectable: kDebugMode,
                   mediaPlaybackRequiresUserGesture: false,
