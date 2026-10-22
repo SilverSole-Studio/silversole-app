@@ -1,18 +1,36 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:silversole/constants.dart';
 import 'package:silversole/core/error/result.dart';
+import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friends_repository.dart';
 import 'package:silversole/core/friends/supabase_friends_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// The friends backend: the RPCs in
-/// `supabase/migrations/20261019120000_friends.sql`. For the in-memory demo
-/// data, return `FakeFriendsRepository.seeded()` here instead (tests override
-/// this provider with their own fake).
-final friendsRepositoryProvider = Provider<FriendsRepository>(
-  (ref) => SupabaseFriendsRepository(Supabase.instance.client),
+/// Whether the friends feature is shown at all.
+///
+/// The Supabase side (`supabase/migrations/20261019120000_friends.sql`) is not
+/// applied to any project yet, so a release build hides friends entirely.
+/// Debug builds show it on in-memory demo data so the screens can be tried.
+/// Once the migration is live, build with `--dart-define=FRIENDS_BACKEND=supabase`
+/// (see [Constants.friendsBackend]) and it is on everywhere.
+final friendsEnabledProvider = Provider<bool>(
+  (ref) => Constants.friendsOnSupabase || kDebugMode,
 );
+
+/// The friends backend: the Supabase RPCs when [Constants.friendsOnSupabase],
+/// otherwise the in-memory demo (`FakeFriendsRepository.seeded()`). Tests
+/// override this provider with their own fake.
+final friendsRepositoryProvider = Provider<FriendsRepository>((ref) {
+  if (Constants.friendsOnSupabase) {
+    return SupabaseFriendsRepository(Supabase.instance.client);
+  }
+  final repo = FakeFriendsRepository.seeded();
+  ref.onDispose(repo.dispose);
+  return repo;
+});
 
 /// Unwraps a [Result] for a [FutureProvider]: an error becomes the provider's
 /// error state (always a `FriendException`).
@@ -35,7 +53,7 @@ final friendRequestsProvider = FutureProvider<List<FriendRequest>>(
   (ref) => _unwrap(ref.watch(friendsRepositoryProvider).getFriendRequests()),
 );
 
-/// Drives the red dot on the games-hub card and the requests row.
+/// Drives the red dot on the plaza's friends building and the requests row.
 final incomingRequestCountProvider = Provider<int>((ref) {
   final requests = ref.watch(friendRequestsProvider).value ?? const [];
   return requests.where((r) => r.incoming).length;
