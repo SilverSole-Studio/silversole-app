@@ -11,6 +11,10 @@ import 'dart:convert';
 ///
 /// Page → app: `window.flutter_inappwebview.callHandler('openFriends')` opens
 /// the friends screen and resolves to `true`, or `false` when friends are off.
+///
+/// Only the games' own site is served ([isGameOrigin]): the plaza links out
+/// to other pages in the same web view, and none of them may read the app's
+/// state, open app screens or get the camera.
 abstract final class PlazaBridge {
   static const String openFriends = 'openFriends';
   static const String appInfo = 'appInfo';
@@ -25,6 +29,18 @@ abstract final class PlazaBridge {
     'features': {'friends': friends},
     'friendRequests': friends ? friendRequests : 0,
   };
+
+  /// The origin (`scheme://host[:port]`) of [gameUrl] — also the form
+  /// `UserScript.allowedOriginRules` takes.
+  static String originOf(String gameUrl) => Uri.parse(gameUrl).origin;
+
+  /// Whether [pageUrl] is on the games' own site: same scheme, host and port
+  /// as [gameUrl]. Anything that is not an http(s) page never is.
+  static bool isGameOrigin(Uri? pageUrl, String gameUrl) {
+    if (pageUrl == null || pageUrl.host.isEmpty) return false;
+    if (!pageUrl.isScheme('http') && !pageUrl.isScheme('https')) return false;
+    return pageUrl.origin == originOf(gameUrl);
+  }
 
   /// JavaScript that publishes [info] as `window.silversoleApp` and fires the
   /// [infoEvent] event with it as `detail`.

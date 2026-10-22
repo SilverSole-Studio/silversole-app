@@ -2,6 +2,8 @@
 
 App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `<gameUrl>game/plaza/`。廣場網頁跟 App 之間只走這份文件寫的通道；App 端的格式定義在 `lib/shared/providers/plaza_bridge.dart`。
 
+**只服務遊戲自己的網站。**下面的通道（`window.silversoleApp`、`appInfo`、`openFriends`）和相機權限，只給跟 `gameUrl` 同一個 origin（協定、網域、port 都一樣）的頁面；正式版就是 `https://h5.silversole.dongyu.company`。廣場如果在同一個 WebView 裡連到別的網站，那個頁面讀不到 `window.silversoleApp`，呼叫 `appInfo` 拿到 `null`、`openFriends` 拿到 `false`，要相機也會被拒絕。相機以外的權限（麥克風、定位等）一律拒絕。
+
 ## App → 網頁：現在能顯示什麼
 
 **頁面一開始載入（document start，廣場自己的程式還沒跑）就已經設好**，之後每次載入完、以及數字有變的時候，App 會再設一次：
@@ -25,7 +27,7 @@ window.silversoleApp = {
 window.flutter_inappwebview.callHandler('openFriends')  // 回傳 true；好友沒開時回傳 false
 ```
 
-App 會蓋上好友頁；使用者按返回就回到廣場，App 會重新送一次 `silversoleapp` 事件更新紅點。
+App 會蓋上好友頁；使用者按返回就回到廣場，App 會重新送一次 `silversoleapp` 事件更新紅點。好友頁還開著的時候再呼叫一次，不會疊第二層，一樣回傳 `true`。
 
 ## 網頁端參考寫法
 

@@ -20,7 +20,9 @@ import 'package:silversole/shared/providers/plaza_bridge.dart';
 ///
 /// The plaza also talks to the app through [PlazaBridge]: it learns whether to
 /// show the friends building (and its red dot), and asks the app to open the
-/// friends screen.
+/// friends screen. All of that, and the camera, is only for pages on the
+/// games' own site ([PlazaBridge.isGameOrigin]); anything the plaza links out
+/// to gets none of it.
 class PlazaTabPage extends ConsumerStatefulWidget {
   const PlazaTabPage({super.key});
 
@@ -34,6 +36,10 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     with GameSoleForwarding {
   InAppWebViewController? _controller;
   bool _canGoBack = false;
+
+  /// The friends screen opened from the plaza is still on top: another tap
+  /// on the building (or a page calling twice) does not stack a second one.
+  bool _friendsOpen = false;
   double _progress = 0;
   bool _loaded = false;
 
@@ -61,7 +67,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     groupName: _infoScriptGroup,
     source: PlazaBridge.publishScript(_appInfo()),
     injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
+    allowedOriginRules: {PlazaBridge.originOf(Constants.gameUrl)},
   );
+
+  /// Whether the page showing now is on the games' own site.
+  Future<bool> _onGamePage(InAppWebViewController controller) async =>
+      PlazaBridge.isGameOrigin(await controller.getUrl(), Constants.gameUrl);
 
   /// Tells the page what it may show when the values change: swaps the
   /// document-start script (for the next page) and publishes to the page that
@@ -69,10 +80,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   /// pages that load before the controller exists.
   Future<void> _publishAppInfo() async {
     final controller = _controller;
-    if (controller == null) return;
+    if (controller == null || !mounted) return;
     await controller.removeUserScriptsByGroupName(groupName: _infoScriptGroup);
+    if (!mounted) return;
     await controller.addUserScript(userScript: _infoUserScript());
-    if (!_loaded) return;
+    if (!mounted || !_loaded) return;
+    if (!await _onGamePage(controller) || !mounted) return;
     await controller.evaluateJavascript(
       source: PlazaBridge.publishScript(_appInfo()),
     );
@@ -80,9 +93,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
 
   Future<bool> _openFriends() async {
     if (!mounted || !ref.read(friendsEnabledProvider)) return false;
+    if (_friendsOpen) return true;
+    _friendsOpen = true;
     // Don't wait for the screen to close: the page's call resolves now. Coming
     // back, re-read the lists so the red dot is current.
-    context.push('/friends').then((_) {
+    context.push('/friends').whenComplete(() {
+      _friendsOpen = false;
       if (mounted) refreshFriendsData(ref);
     });
     return true;
@@ -91,11 +107,17 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   void _registerBridge(InAppWebViewController controller) {
     controller.addJavaScriptHandler(
       handlerName: PlazaBridge.appInfo,
-      callback: (_) => _appInfo(),
+      callback: (_) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        return _appInfo();
+      },
     );
     controller.addJavaScriptHandler(
       handlerName: PlazaBridge.openFriends,
-      callback: (_) => _openFriends(),
+      callback: (_) async {
+        if (!await _onGamePage(controller)) return false;
+        return _openFriends();
+      },
     );
   }
 
@@ -126,11 +148,23 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                   _registerBridge(controller);
                 },
                 // Camera mode in the games asks for the camera from the page.
-                onPermissionRequest: (controller, request) async =>
-                    PermissionResponse(
-                      resources: request.resources,
-                      action: PermissionResponseAction.GRANT,
-                    ),
+                // That is all a page gets, and only on the games' own site.
+                onPermissionRequest: (controller, request) async {
+                  final camera =
+                      PlazaBridge.isGameOrigin(
+                        request.origin,
+                        Constants.gameUrl,
+                      ) &&
+                      request.resources.contains(PermissionResourceType.CAMERA);
+                  return PermissionResponse(
+                    resources: camera
+                        ? [PermissionResourceType.CAMERA]
+                        : request.resources,
+                    action: camera
+                        ? PermissionResponseAction.GRANT
+                        : PermissionResponseAction.DENY,
+                  );
+                },
                 onLoadStart: (controller, url) => _loaded = false,
                 onLoadStop: (controller, url) {
                   soleForwardReady = true;
