@@ -46,7 +46,7 @@ class SupabaseFriendsRepository implements FriendsRepository {
     if (invalid != null) throw FriendException(invalid);
     return _myProfile(
       await _rpc('update_profile', {
-        'p_nickname': nickname?.trim(),
+        'p_nickname': nickname == null ? null : trimNickname(nickname),
         'p_avatar_preset': avatarPreset,
         'p_show_in_org_list': showInOrgList,
       }),
@@ -54,33 +54,32 @@ class SupabaseFriendsRepository implements FriendsRepository {
   });
 
   @override
-  Future<Result<MyProfile>> setAvatarPhoto(String localPath) =>
-      _guard(() async {
-        final userId = _client.auth.currentUser?.id;
-        if (userId == null) throw const FriendException(FriendError.unknown);
-        final path = '$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-        try {
-          await _client.storage
-              .from(avatarsBucket)
-              .upload(
-                path,
-                File(localPath),
-                fileOptions: const FileOptions(contentType: 'image/jpeg'),
-              );
-        } on StorageException catch (e) {
-          // The upload policy refuses a banned user and a sixth photo in a day;
-          // the profile tells the two apart.
-          debugPrint('[friends] avatar upload: ${e.statusCode} ${e.message}');
-          final me = await _myProfile(await _rpc('get_my_profile'));
-          final bannedUntil = me.photoUploadBannedUntil;
-          final banned =
-              bannedUntil != null && DateTime.now().isBefore(bannedUntil);
-          throw FriendException(
-            banned ? FriendError.uploadBanned : FriendError.limitReached,
-          );
-        }
-        return _myProfile(await _rpc('set_avatar_photo', {'p_path': path}));
-      });
+  Future<Result<MyProfile>> setAvatarPhoto(String localPath) => _guard(
+    () async {
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw const FriendException(FriendError.unknown);
+      final file = File(localPath);
+      // The picker may hand back a PNG or WebP as it found it; send what
+      // the file really is.
+      final type = avatarImageType(await _head(file));
+      if (type == null) throw const FriendException(FriendError.uploadFailed);
+      final path =
+          '$userId/${DateTime.now().millisecondsSinceEpoch}.${type.extension}';
+      try {
+        await _client.storage
+            .from(avatarsBucket)
+            .upload(
+              path,
+              file,
+              fileOptions: FileOptions(contentType: type.mimeType),
+            );
+      } on StorageException catch (e) {
+        debugPrint('[friends] avatar upload: ${e.statusCode} ${e.message}');
+        throw FriendException(await _uploadError(e));
+      }
+      return _myProfile(await _rpc('set_avatar_photo', {'p_path': path}));
+    },
+  );
 
   @override
   Future<Result<MyProfile>> clearAvatarPhoto() =>
@@ -264,6 +263,7 @@ class SupabaseFriendsRepository implements FriendsRepository {
     'limit_reached': FriendError.limitReached,
     'cooldown': FriendError.cooldown,
     'friend_limit': FriendError.friendLimit,
+    'other_friend_limit': FriendError.otherFriendLimit,
     'org_limit': FriendError.orgLimit,
     'pending_limit': FriendError.pendingLimit,
     'locked': FriendError.locked,
@@ -271,6 +271,25 @@ class SupabaseFriendsRepository implements FriendsRepository {
     'nickname_change_limit': FriendError.nicknameChangeLimit,
     'upload_banned': FriendError.uploadBanned,
   };
+
+  /// The upload policy (403) refuses a banned user and a sixth photo in a
+  /// day; the profile tells those two apart. Anything else — too big, a
+  /// type the bucket does not take, a server hiccup — is a failed upload.
+  Future<FriendError> _uploadError(StorageException e) async {
+    if (e.statusCode != '403') return FriendError.uploadFailed;
+    final me = await _myProfile(await _rpc('get_my_profile'));
+    final bannedUntil = me.photoUploadBannedUntil;
+    final banned = bannedUntil != null && DateTime.now().isBefore(bannedUntil);
+    return banned ? FriendError.uploadBanned : FriendError.limitReached;
+  }
+
+  static Future<List<int>> _head(File file) async {
+    final bytes = <int>[];
+    await for (final chunk in file.openRead(0, 16)) {
+      bytes.addAll(chunk);
+    }
+    return bytes;
+  }
 
   /// Calls [fn] and returns its JSON, turning a returned `{"error": code}`
   /// into a [FriendException].
@@ -313,12 +332,22 @@ class SupabaseFriendsRepository implements FriendsRepository {
       final signed = await _client.storage
           .from(avatarsBucket)
           .createSignedUrls(paths, _signedUrlTtlSeconds);
-      return {for (final s in signed) s.path: s.signedUrl};
+      return signedPhotoUrls(signed);
     } on StorageException catch (e) {
       debugPrint('[friends] sign photos: ${e.statusCode} ${e.message}');
       return const {};
     }
   }
+
+  /// Path → URL for the photos storage agreed to sign. One it refused (just
+  /// removed, or no longer a friend's) comes back with an empty path or a
+  /// URL ending in `null`; it is left out, so the preset mascot shows.
+  @visibleForTesting
+  static Map<String, String> signedPhotoUrls(List<SignedUrl> signed) => {
+    for (final s in signed)
+      if (s.path.isNotEmpty && !s.signedUrl.endsWith('null'))
+        s.path: s.signedUrl,
+  };
 
   Future<MyProfile> _myProfile(dynamic data) async {
     final r = _map(data);

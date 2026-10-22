@@ -15,7 +15,8 @@ abstract interface class FriendsRepository {
     bool? showInOrgList,
   });
 
-  /// [localPath] is an already square-cropped, 512px JPEG on the device.
+  /// [localPath] is a picked photo on the device, at most 512px (JPEG, PNG
+  /// or WebP — the file's own bytes decide which).
   Future<Result<MyProfile>> setAvatarPhoto(String localPath);
 
   Future<Result<MyProfile>> clearAvatarPhoto();

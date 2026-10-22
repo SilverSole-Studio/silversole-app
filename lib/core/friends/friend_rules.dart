@@ -9,6 +9,11 @@ const kPendingOutLimit = 20;
 const kAvatarPresetCount = 12;
 
 const kQrTokenTtl = Duration(minutes: 5);
+
+/// How long after a QR token expires a request can still be sent through it,
+/// as long as the sender previewed it before it expired — so someone who
+/// scanned at 4:59 is not turned away while reading the name.
+const kQrPreviewGrace = Duration(seconds: 60);
 const kRequestTtl = Duration(days: 7);
 const kDeclineCooldown = Duration(days: 30);
 
@@ -19,6 +24,9 @@ const kLookupLock = Duration(minutes: 10);
 const kNicknameMinLength = 2;
 const kNicknameMaxLength = 8;
 const kNicknameChangesPerDay = 3;
+
+const kPhotoUploadsPerDay = 5;
+const kReportsPerDay = 10;
 
 const kPhotoRemovalsBeforeBan = 3;
 const kPhotoUploadBan = Duration(days: 30);
@@ -36,12 +44,19 @@ enum FriendError {
   limitReached,
   cooldown,
   friendLimit,
+
+  /// The other person already has [kFriendLimit] friends.
+  otherFriendLimit,
   orgLimit,
   pendingLimit,
   locked,
   nicknameInvalid,
   nicknameChangeLimit,
   uploadBanned,
+
+  /// The photo did not reach storage for a reason other than the upload
+  /// rules (network, size, file type).
+  uploadFailed,
   offline,
 
   /// The server refused for a reason the app has no message for.
@@ -53,24 +68,119 @@ class FriendException implements Exception {
 
   final FriendError code;
 
-  /// Translation key for the message shown to the user.
-  String get messageKey => 'friends_err_${code.name}';
+  /// Translation key for the message shown to the user; see
+  /// [friendErrorKey] for wording that depends on what they were doing.
+  String get messageKey => friendErrorKey(code);
 
   @override
   String toString() => 'FriendException(${code.name})';
 }
 
-final _hasLetterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
+/// The same whitelist as `friends_clean_nickname()` in the SQL migration:
+/// Latin, Greek, Cyrillic, Thai, kana, bopomofo, CJK, Hangul and full-width
+/// letters and digits. Keep the two in step.
+final _nicknameLetter = RegExp(
+  r'[0-9A-Za-zÀ-ɏͰ-ϿЀ-ӿ฀-๿'
+  r'぀-ヿ㄀-ㄯ㐀-䶿一-鿿'
+  r'가-힯豈-﫿０-９Ａ-Ｚａ-ｚ]',
+);
+final _controlChar = RegExp(r'[\u0001-\u001F\u007F]');
+final _edgeSpace = RegExp(r'^[\s　]+|[\s　]+$');
 
-/// Null when [raw] is a usable nickname: 2–8 characters after trimming and
-/// not made of symbols alone.
+/// [raw] trimmed the way the server trims it (spaces, including the
+/// full-width one).
+String trimNickname(String raw) => raw.replaceAll(_edgeSpace, '');
+
+/// Null when [raw] is a usable nickname — the same check as the server's
+/// `friends_clean_nickname()`: 2–8 characters after trimming, no control
+/// characters, and at least one letter or digit from the whitelist.
 FriendError? validateNickname(String raw) {
-  final name = raw.trim();
+  final name = trimNickname(raw);
   final length = name.runes.length;
   if (length < kNicknameMinLength || length > kNicknameMaxLength) {
     return FriendError.nicknameInvalid;
   }
-  if (!_hasLetterOrDigit.hasMatch(name)) return FriendError.nicknameInvalid;
+  if (_controlChar.hasMatch(name) || !_nicknameLetter.hasMatch(name)) {
+    return FriendError.nicknameInvalid;
+  }
+  return null;
+}
+
+/// Where a friends call failed, so the same server code can be worded for
+/// what the person was doing: a missing QR, centre, request or report target
+/// is not 「找不到這個號碼」.
+enum FriendErrorScope {
+  /// Typing a friend code (and anything without a better wording).
+  code,
+
+  /// Scanning someone's QR, or adding them from it.
+  qr,
+
+  /// A centre's code or poster, or joining it.
+  org,
+
+  /// Adding someone from a centre's member list.
+  orgMember,
+
+  /// Answering or withdrawing a friend request.
+  request,
+
+  /// Reporting a photo or nickname.
+  report,
+
+  /// Picking one of the preset avatars.
+  avatar,
+
+  /// Uploading a photo.
+  photo,
+}
+
+/// Translation key for [code] as seen while doing [scope].
+String friendErrorKey(
+  FriendError code, [
+  FriendErrorScope scope = FriendErrorScope.code,
+]) => switch ((code, scope)) {
+  (FriendError.notFound, FriendErrorScope.qr) => 'friends_err_notFound_qr',
+  (FriendError.notFound, FriendErrorScope.org) => 'friends_err_notFound_org',
+  (FriendError.notFound, FriendErrorScope.orgMember) =>
+    'friends_err_notFound_person',
+  (FriendError.notFound, FriendErrorScope.request) =>
+    'friends_err_notFound_request',
+  (FriendError.notFound, FriendErrorScope.report) =>
+    'friends_err_notFound_report',
+  (FriendError.notFound, FriendErrorScope.avatar) =>
+    'friends_err_notFound_avatar',
+  // set_avatar_photo answers not_found when the file never landed.
+  (FriendError.notFound, FriendErrorScope.photo) => 'friends_err_uploadFailed',
+  (FriendError.limitReached, FriendErrorScope.photo) =>
+    'friends_err_limitReached_photo',
+  (FriendError.limitReached, FriendErrorScope.report) =>
+    'friends_err_limitReached_report',
+  _ => 'friends_err_${code.name}',
+};
+
+/// What an avatar file really is, read from its first bytes (a picked file's
+/// name and the picker's mime type are not reliable). Null for anything the
+/// avatars bucket does not take.
+({String mimeType, String extension})? avatarImageType(List<int> head) {
+  bool startsWith(List<int> magic, [int at = 0]) {
+    if (head.length < at + magic.length) return false;
+    for (var i = 0; i < magic.length; i++) {
+      if (head[at + i] != magic[i]) return false;
+    }
+    return true;
+  }
+
+  if (startsWith(const [0xFF, 0xD8, 0xFF])) {
+    return (mimeType: 'image/jpeg', extension: 'jpg');
+  }
+  if (startsWith(const [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])) {
+    return (mimeType: 'image/png', extension: 'png');
+  }
+  if (startsWith(const [0x52, 0x49, 0x46, 0x46]) &&
+      startsWith(const [0x57, 0x45, 0x42, 0x50], 8)) {
+    return (mimeType: 'image/webp', extension: 'webp');
+  }
   return null;
 }
 

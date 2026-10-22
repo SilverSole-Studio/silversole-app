@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friend_rules.dart';
+import 'package:silversole/core/friends/qr_timing.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/friends/add_flows.dart';
@@ -19,10 +20,14 @@ import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 /// `/friends/my-qr` — show my QR and friend code to someone standing next to
 /// me (spec §3.1).
 ///
-/// The QR is a 5-minute token, renewed while the page stays open. Requests
-/// that arrive while it is showing pop up right here, so both people can
-/// finish on the spot: the page re-reads requests every 3 seconds (the app
-/// does not use Realtime).
+/// The QR is a 5-minute token, renewed at half its life while the page stays
+/// open (timed with a [Stopwatch], so a phone whose clock is off still shows
+/// a live QR). When the server cannot be reached the page says so and offers
+/// a retry, while retrying on its own with growing gaps.
+///
+/// Requests that arrive while it is showing pop up right here, so both
+/// people can finish on the spot: the page re-reads requests every 3 seconds
+/// (the app does not use Realtime).
 class MyQrPage extends ConsumerStatefulWidget {
   const MyQrPage({super.key});
 
@@ -31,37 +36,119 @@ class MyQrPage extends ConsumerStatefulWidget {
 }
 
 class _MyQrPageState extends ConsumerState<MyQrPage> {
-  static const _pollEvery = Duration(seconds: 3);
+  static const _tickEvery = Duration(seconds: 1);
+  static const _pollEveryTicks = 3;
 
+  /// A request that never answers counts as a failure, so the page cannot
+  /// spin forever.
+  static const _requestTimeout = Duration(seconds: 15);
+
+  final _elapsed = Stopwatch()..start();
+  final _renewal = QrTokenRenewal(ttl: kQrTokenTtl);
   QrToken? _token;
-  Timer? _poll;
+  Object? _tokenError;
+  bool _fetching = false;
+  Timer? _timer;
+  int _ticks = 0;
   late final DateTime _openedAt = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _renewToken();
-    _poll = Timer.periodic(_pollEvery, (_) => _tick());
+    _timer = Timer.periodic(_tickEvery, (_) => _tick());
   }
 
   @override
   void dispose() {
-    _poll?.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
   Future<void> _renewToken() async {
-    final result = await ref.read(friendsRepositoryProvider).createQrToken();
+    if (_fetching) return;
+    _fetching = true;
+    final result = await ref
+        .read(friendsRepositoryProvider)
+        .createQrToken()
+        .timeout(
+          _requestTimeout,
+          onTimeout: () =>
+              const Result.error(FriendException(FriendError.offline)),
+        );
     if (!mounted) return;
-    if (result case Ok(:final value)) setState(() => _token = value);
+    setState(() {
+      _fetching = false;
+      switch (result) {
+        case Ok(:final value):
+          _token = value;
+          _tokenError = null;
+          _renewal.issued(_elapsed.elapsed);
+        case Error(:final error):
+          _tokenError = error;
+          _renewal.failed(_elapsed.elapsed);
+      }
+    });
   }
 
   void _tick() {
-    final token = _token;
-    if (token != null && !DateTime.now().isBefore(token.expiresAt)) {
-      _renewToken();
+    final now = _elapsed.elapsed;
+    if (_renewal.shouldRenew(now)) _renewToken();
+    // Renewals kept failing and this one has run out: take it off the
+    // screen rather than show a QR that no longer works.
+    if (_token != null && _renewal.isExpired(now)) {
+      setState(() => _token = null);
     }
-    ref.invalidate(friendRequestsProvider);
+    if (++_ticks % _pollEveryTicks == 0) {
+      ref.invalidate(friendRequestsProvider);
+    }
+  }
+
+  /// The QR on its white card, a spinner while the first one is on its way,
+  /// or what went wrong and a retry button.
+  Widget _qrBox() {
+    final token = _token;
+    final error = _tokenError;
+    if (token == null && error != null) {
+      return Column(
+        spacing: AppSpacing.base,
+        children: [
+          Text(
+            friendErrorText(error),
+            style: context.textTheme.titleLarge?.copyWith(
+              color: context.colorScheme.error,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          FriendButton(
+            label: 'friends_qr_retry'.tr(),
+            icon: Icons.refresh,
+            onPressed: _renewToken,
+          ),
+        ],
+      );
+    }
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.base),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: context.colorScheme.outline),
+        ),
+        child: token == null
+            ? const SizedBox(
+                width: 260,
+                height: 260,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : QrImageView(
+                data: personQrPayload(token.token),
+                size: 260,
+                backgroundColor: Colors.white,
+              ),
+      ),
+    );
   }
 
   @override
@@ -85,27 +172,7 @@ class _MyQrPageState extends ConsumerState<MyQrPage> {
             for (final r in arrivedHere) _InlineRequest(request: r),
             FriendText('friends_my_qr_hint'.tr(), center: true),
             const SizedBox(height: AppSpacing.base),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: context.colorScheme.outline),
-                ),
-                child: _token == null
-                    ? const SizedBox(
-                        width: 260,
-                        height: 260,
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    : QrImageView(
-                        data: personQrPayload(_token!.token),
-                        size: 260,
-                        backgroundColor: Colors.white,
-                      ),
-              ),
-            ),
+            _qrBox(),
             const SizedBox(height: AppSpacing.lg),
             if (me != null) ...[
               FriendText('friends_or_read_code'.tr(), center: true),
@@ -219,6 +286,12 @@ class _ScanQrPageState extends ConsumerState<ScanQrPage> {
   final _controller = MobileScannerController(
     formats: const [BarcodeFormat.qrCode],
   );
+  final _elapsed = Stopwatch()..start();
+
+  /// A code that was just dealt with is not picked up again while it stays
+  /// in view — an org poster on the wall would otherwise spend a lookup on
+  /// every frame.
+  final _debounce = ScanDebouncer();
   bool _handling = false;
   String? _message;
 
@@ -231,11 +304,12 @@ class _ScanQrPageState extends ConsumerState<ScanQrPage> {
   Future<void> _onDetect(BarcodeCapture capture) async {
     if (_handling) return;
     final raw = capture.barcodes.firstOrNull?.rawValue;
-    if (raw == null) return;
+    if (raw == null || !_debounce.accept(raw, _elapsed.elapsed)) return;
     _handling = true;
     await _controller.stop();
     await _handle(ScannedQr.parse(raw));
     if (!mounted) return;
+    _debounce.settle(_elapsed.elapsed);
     _handling = false;
     await _controller.start();
   }
@@ -258,7 +332,9 @@ class _ScanQrPageState extends ConsumerState<ScanQrPage> {
             );
             if (sent && mounted) Navigator.of(context).maybePop();
           case Error(:final error):
-            setState(() => _message = friendErrorText(error));
+            setState(
+              () => _message = friendErrorText(error, FriendErrorScope.qr),
+            );
         }
       case OrgQr(:final joinCode):
         final result = await repo.previewOrg(joinCode);
@@ -273,7 +349,9 @@ class _ScanQrPageState extends ConsumerState<ScanQrPage> {
               joinCode: joinCode,
             );
           case Error(:final error):
-            setState(() => _message = friendErrorText(error));
+            setState(
+              () => _message = friendErrorText(error, FriendErrorScope.org),
+            );
         }
       case UnknownQr():
         setState(() => _message = 'friends_not_our_qr'.tr());

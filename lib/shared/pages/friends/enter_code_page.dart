@@ -59,7 +59,7 @@ class _EnterCodePageState extends ConsumerState<EnterCodePage> {
         case Ok(:final value):
           await showJoinOrgSheet(context, ref, org: value, joinCode: code);
         case Error(:final error):
-          setState(() => _error = friendErrorText(error));
+          setState(() => _error = friendErrorText(error, FriendErrorScope.org));
       }
       return;
     }

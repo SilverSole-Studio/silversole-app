@@ -19,11 +19,43 @@ import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 /// First visit (no nickname yet) shows the profile setup instead. After that:
 /// the three ways to add someone, pending requests, orgs, and the friend
 /// list. Nothing on this page shows health data (spec §6).
-class FriendsPage extends ConsumerWidget {
+///
+/// Every other friends screen is pushed on top of this one, so it is the
+/// one that watches for the app coming back to the foreground: photos are
+/// one-hour signed URLs, and someone who left the app on the friends list
+/// would otherwise come back to broken pictures.
+class FriendsPage extends ConsumerStatefulWidget {
   const FriendsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FriendsPage> createState() => _FriendsPageState();
+}
+
+class _FriendsPageState extends ConsumerState<FriendsPage> {
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        // The two lists that carry signed photo URLs. A refresh keeps the
+        // old data on screen until the new one arrives.
+        ref
+          ..invalidate(friendsListProvider)
+          ..invalidate(myFriendProfileProvider);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(myFriendProfileProvider);
 
     return Scaffold(
@@ -248,7 +280,6 @@ class _NavRow extends StatelessWidget {
                       Text(
                         detail!,
                         style: context.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
                           color: context.colorScheme.onSurfaceVariant,
                         ),
                         maxLines: 2,
@@ -259,7 +290,8 @@ class _NavRow extends StatelessWidget {
               ),
               if (badge > 0)
                 Badge(
-                  label: Text('$badge', style: const TextStyle(fontSize: 18)),
+                  label: Text('$badge'),
+                  textStyle: context.textTheme.titleLarge,
                   largeSize: 30,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                 ),

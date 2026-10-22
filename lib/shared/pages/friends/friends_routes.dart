@@ -8,9 +8,12 @@ import 'package:silversole/shared/pages/friends/profile_page.dart';
 import 'package:silversole/shared/pages/friends/qr_pages.dart';
 import 'package:silversole/shared/pages/friends/requests_page.dart';
 
-/// `/friends` and its sub-pages, registered by the app router.
-final friendsRoute = GoRoute(
+/// `/friends` and its sub-pages, registered by the app router. While
+/// [enabled] is false (see `friendsEnabledProvider`) every friends address
+/// sends you home, so no stray link or card can open the screens.
+GoRoute friendsRoute({required bool enabled}) => GoRoute(
   path: '/friends',
+  redirect: (_, _) => enabled ? null : '/',
   builder: (_, _) => const FriendsPage(),
   routes: [
     GoRoute(path: 'profile', builder: (_, _) => const ProfilePage()),

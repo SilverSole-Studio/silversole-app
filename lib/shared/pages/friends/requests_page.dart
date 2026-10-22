@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/friends/friend_models.dart';
+import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
@@ -105,6 +106,7 @@ class _IncomingCard extends ConsumerWidget {
                   FriendRequestAction.accept,
                 ),
                 successText: 'friends_now_friends'.tr(args: [name]),
+                scope: FriendErrorScope.request,
               ),
             ),
             Row(
@@ -120,6 +122,7 @@ class _IncomingCard extends ConsumerWidget {
                         request.id,
                         FriendRequestAction.decline,
                       ),
+                      scope: FriendErrorScope.request,
                     ),
                   ),
                 ),
@@ -142,6 +145,7 @@ class _IncomingCard extends ConsumerWidget {
                           request.id,
                           FriendRequestAction.declineAndBlock,
                         ),
+                        scope: FriendErrorScope.request,
                       );
                     },
                   ),
@@ -190,6 +194,7 @@ class _OutgoingRow extends ConsumerWidget {
                 () => ref
                     .read(friendsRepositoryProvider)
                     .cancelFriendRequest(request.id),
+                scope: FriendErrorScope.request,
               ),
               child: Text(
                 'friends_cancel_request'.tr(),

@@ -126,7 +126,13 @@ class FakeFriendsRepository implements FriendsRepository {
   final _members = <String, Set<String>>{};
   final _declinedAt = <(String, String), DateTime>{};
   final _qrTokens = <String, _QrToken>{};
+
+  /// Friend and org codes previewed today: sending to them or joining does
+  /// not spend another lookup (the server's friend_daily_limits.previewed_codes).
   final _previewedCodes = <String>{};
+
+  /// QR tokens I previewed while they were valid, for [kQrPreviewGrace].
+  final _previewedQr = <String>{};
 
   /// Reports sent by me, for tests.
   final reports = <(String, ReportKind, ReportReason)>[];
@@ -136,6 +142,7 @@ class FakeFriendsRepository implements FriendsRepository {
   int _lookupsToday = 0;
   int _nicknameChangesToday = 0;
   int _reportsToday = 0;
+  int _uploadsToday = 0;
   int _failedLookupStreak = 0;
   DateTime? _lookupsLockedUntil;
   int _requestSeq = 0;
@@ -145,9 +152,11 @@ class FakeFriendsRepository implements FriendsRepository {
 
   // ── Seeding and admin hooks (tests and demo only) ──────────────────────
 
+  /// A null [nickname] is someone who opened friends but has not picked a
+  /// name yet.
   void addUser(
     String id,
-    String nickname, {
+    String? nickname, {
     required int preset,
     required String code,
     String? photoPath,
@@ -210,6 +219,30 @@ class FakeFriendsRepository implements FriendsRepository {
   void addOrgMember(String orgId, String userId) =>
       _members[orgId]!.add(userId);
 
+  /// 動域 switched an org off: it disappears and stops counting toward
+  /// anyone's [kOrgLimit].
+  void deactivateOrg(String orgId) => _orgs[orgId]!.isActive = false;
+
+  /// How many requests [userId] could see and answer right now — what the
+  /// other side of an exchange sees, for tests.
+  int incomingCountFor(String userId) {
+    final now = clock.now();
+    return _requests
+        .where(
+          (r) =>
+              r.to == userId &&
+              r.status == _Status.pending &&
+              now.isBefore(r.expiresAt),
+        )
+        .length;
+  }
+
+  /// Open requests between two people, as the server's table would hold
+  /// them (pending or quietly declined, not yet expired), for tests.
+  int openRequestsBetween(String a, String b) => _requests
+      .where((r) => _isBetween(r, a, b) && r.isOpenFor(clock.now()))
+      .length;
+
   /// Someone else's QR token, as if they had opened "my QR".
   void addQrToken(String userId, String token, DateTime expiresAt) =>
       _qrTokens[token] = _QrToken(userId, expiresAt);
@@ -262,7 +295,7 @@ class FakeFriendsRepository implements FriendsRepository {
   }) => _respond(() {
     final me = _me;
     if (nickname != null) {
-      final trimmed = nickname.trim();
+      final trimmed = trimNickname(nickname);
       final invalid = validateNickname(trimmed);
       if (invalid != null) throw FriendException(invalid);
       if (trimmed != me.nickname) {
@@ -295,6 +328,11 @@ class FakeFriendsRepository implements FriendsRepository {
     if (bannedUntil != null && clock.now().isBefore(bannedUntil)) {
       throw const FriendException(FriendError.uploadBanned);
     }
+    _rollDay();
+    if (_uploadsToday >= kPhotoUploadsPerDay) {
+      throw const FriendException(FriendError.limitReached);
+    }
+    _uploadsToday++;
     _me.photoPath = localPath;
     return _myProfile();
   });
@@ -370,8 +408,11 @@ class FakeFriendsRepository implements FriendsRepository {
   });
 
   @override
-  Future<Result<FriendProfile>> previewByQr(String token) =>
-      _respond(() => _profileOf(_resolveQr(token), withPhoto: false));
+  Future<Result<FriendProfile>> previewByQr(String token) => _respond(() {
+    final userId = _resolveQr(token);
+    _previewedQr.add(token);
+    return _profileOf(userId, withPhoto: false);
+  });
 
   @override
   Future<Result<FriendProfile>> previewByCode(String code) => _respond(() {
@@ -386,8 +427,9 @@ class FakeFriendsRepository implements FriendsRepository {
     String ref,
   ) => _respond(() {
     String? orgId;
+    _rollDay();
     final target = switch (source) {
-      FriendSource.qr => _resolveQr(ref),
+      FriendSource.qr => _resolveQr(ref, allowGrace: true),
       // A code goes through the lookup budget unless it was just previewed,
       // so sending cannot be used to guess codes for free.
       FriendSource.code =>
@@ -413,6 +455,9 @@ class FakeFriendsRepository implements FriendsRepository {
     final theirs = _openRequest(from: target, to: meId);
     if (theirs != null) {
       // They already asked me: asking back is the same as saying yes.
+      if (friendCount(target) >= kFriendLimit) {
+        throw const FriendException(FriendError.otherFriendLimit);
+      }
       _accept(theirs);
       return SendRequestOutcome.becameFriends;
     }
@@ -423,10 +468,6 @@ class FakeFriendsRepository implements FriendsRepository {
     )) {
       return SendRequestOutcome.sent;
     }
-    final declined = _declinedAt[(meId, target)];
-    if (declined != null && now.difference(declined) < kDeclineCooldown) {
-      throw const FriendException(FriendError.cooldown);
-    }
     final pendingOut = _requests
         .where((r) => r.from == meId && r.isOpenFor(now))
         .length;
@@ -434,6 +475,13 @@ class FakeFriendsRepository implements FriendsRepository {
       throw const FriendException(FriendError.pendingLimit);
     }
     _addRequest(meId, target, source, orgId: orgId);
+    // They said no within the last 30 days: answering "cooldown" would tell
+    // me so. It goes out like any other request on my side, but is held
+    // (stored as declined) and never reaches them.
+    final declined = _declinedAt[(meId, target)];
+    if (declined != null && now.difference(declined) < kDeclineCooldown) {
+      _requests.last.status = _Status.declined;
+    }
     return SendRequestOutcome.sent;
   });
 
@@ -470,6 +518,9 @@ class FakeFriendsRepository implements FriendsRepository {
         if (friendCount(meId) >= kFriendLimit) {
           throw const FriendException(FriendError.friendLimit);
         }
+        if (friendCount(r.from) >= kFriendLimit) {
+          throw const FriendException(FriendError.otherFriendLimit);
+        }
         _accept(r);
       case FriendRequestAction.decline:
         _decline(r);
@@ -481,8 +532,13 @@ class FakeFriendsRepository implements FriendsRepository {
 
   @override
   Future<Result<void>> cancelFriendRequest(String requestId) => _respond(() {
+    // Only one that still looks like it is waiting to me: pending, or
+    // quietly declined / held.
     final r = _requests.firstWhere(
-      (r) => r.id == requestId && r.from == meId,
+      (r) =>
+          r.id == requestId &&
+          r.from == meId &&
+          (r.status == _Status.pending || r.status == _Status.declined),
       orElse: () => throw const FriendException(FriendError.notFound),
     );
     r.status = _Status.cancelled;
@@ -491,13 +547,24 @@ class FakeFriendsRepository implements FriendsRepository {
   // ── Orgs ───────────────────────────────────────────────────────────────
 
   @override
-  Future<Result<OrgSummary>> previewOrg(String joinCode) =>
-      _respond(() => _lookup(() => _orgByCode(joinCode)).summary);
+  Future<Result<OrgSummary>> previewOrg(String joinCode) => _respond(() {
+    final org = _lookup(() => _orgByCode(joinCode));
+    _previewedCodes.add(joinCode);
+    return org.summary;
+  });
 
   @override
   Future<Result<OrgSummary>> joinOrg(String joinCode) => _respond(() {
-    final org = _orgByCode(joinCode);
-    final mine = _members.entries.where((e) => e.value.contains(meId));
+    _rollDay();
+    // Joining a code that was not previewed today spends a lookup, so joining
+    // cannot be used to guess codes for free.
+    final org = _previewedCodes.contains(joinCode)
+        ? _orgByCode(joinCode)
+        : _lookup(() => _orgByCode(joinCode));
+    // Orgs 動域 switched off do not count.
+    final mine = _members.entries.where(
+      (e) => _orgs[e.key]!.isActive && e.value.contains(meId),
+    );
     if (!_members[org.id]!.contains(meId) && mine.length >= kOrgLimit) {
       throw const FriendException(FriendError.orgLimit);
     }
@@ -554,8 +621,15 @@ class FakeFriendsRepository implements FriendsRepository {
     ReportKind kind,
     ReportReason reason,
   ) => _respond(() {
+    // Myself, someone who does not exist, and anyone on either side of a
+    // block look the same: nothing to report.
+    if (userId == meId ||
+        !_users.containsKey(userId) ||
+        _blockedEitherWay(meId, userId)) {
+      throw const FriendException(FriendError.notFound);
+    }
     _rollDay();
-    if (_reportsToday >= 10) {
+    if (_reportsToday >= kReportsPerDay) {
       throw const FriendException(FriendError.limitReached);
     }
     _reportsToday++;
@@ -653,10 +727,17 @@ class FakeFriendsRepository implements FriendsRepository {
   }
 
   void _accept(_Request r) {
+    // Every request still open between the two — the other way round, or one
+    // quietly declined or held — is settled by the same friendship, so
+    // neither of them keeps "waiting" on a friend.
+    for (final other in _requests) {
+      if (_isBetween(other, r.from, r.to) &&
+          (other.status == _Status.pending ||
+              other.status == _Status.declined)) {
+        other.status = _Status.accepted;
+      }
+    }
     r.status = _Status.accepted;
-    // Any request the other way is settled by the same friendship.
-    final reverse = _openRequest(from: r.to, to: r.from);
-    reverse?.status = _Status.accepted;
     _friendships[_pairKey(r.from, r.to)] = _Friendship(
       r.from,
       r.to,
@@ -671,13 +752,20 @@ class FakeFriendsRepository implements FriendsRepository {
     _declinedAt[(r.from, r.to)] = clock.now();
   }
 
-  String _resolveQr(String token) {
+  /// With [allowGrace], a token I previewed before it expired still works
+  /// for [kQrPreviewGrace] after.
+  String _resolveQr(String token, {bool allowGrace = false}) {
     final t = _qrTokens[token];
     if (t == null || _blockedEitherWay(meId, t.userId) || t.userId == meId) {
       throw const FriendException(FriendError.notFound);
     }
-    if (!clock.now().isBefore(t.expiresAt)) {
-      throw const FriendException(FriendError.qrExpired);
+    final now = clock.now();
+    if (!now.isBefore(t.expiresAt)) {
+      final inGrace =
+          allowGrace &&
+          _previewedQr.contains(token) &&
+          now.isBefore(t.expiresAt.add(kQrPreviewGrace));
+      if (!inGrace) throw const FriendException(FriendError.qrExpired);
     }
     return t.userId;
   }
@@ -687,7 +775,8 @@ class FakeFriendsRepository implements FriendsRepository {
       throw const FriendException(FriendError.notFound);
     }
     for (final u in _users.values) {
-      if (u.friendCode == code && u.id != meId) {
+      // Someone who has not picked a name yet has not taken up friends.
+      if (u.friendCode == code && u.id != meId && u.nickname != null) {
         // A blocked pair looks exactly like a wrong number (spec §4.3).
         if (_blockedEitherWay(meId, u.id)) break;
         return u.id;
@@ -755,6 +844,8 @@ class FakeFriendsRepository implements FriendsRepository {
       _lookupsToday = 0;
       _nicknameChangesToday = 0;
       _reportsToday = 0;
+      _uploadsToday = 0;
+      _previewedCodes.clear();
     }
   }
 

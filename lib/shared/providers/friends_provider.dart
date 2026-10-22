@@ -83,6 +83,18 @@ void refreshFriendsData(WidgetRef ref) {
   ref.invalidate(blockedListProvider);
 }
 
+/// [refreshFriendsData] from outside a widget, or after the widget that
+/// started the call has gone.
+void refreshFriendsDataIn(ProviderContainer container) {
+  container
+    ..invalidate(myFriendProfileProvider)
+    ..invalidate(friendsListProvider)
+    ..invalidate(friendRequestsProvider)
+    ..invalidate(myOrgsProvider)
+    ..invalidate(orgMembersProvider)
+    ..invalidate(blockedListProvider);
+}
+
 /// Second line of the games-hub friends card: pending requests first, else
 /// how many friends there are.
 String friendsCardSubtitle(WidgetRef ref) {

@@ -74,6 +74,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
           .read(friendsRepositoryProvider)
           .updateProfile(nickname: _name.text, avatarPreset: _preset),
       successText: widget.firstRun ? null : 'friends_profile_saved'.tr(),
+      scope: FriendErrorScope.avatar,
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -87,13 +88,15 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
       maxHeight: 512,
       imageQuality: 85,
     );
-    if (file == null) return;
+    // The picker can outlive the page (the camera app takes over the screen).
+    if (file == null || !mounted) return;
     // TODO(friends): crop to a square before upload once a cropper is picked
     // (spec §2.2); until then the avatar is centre-cropped on display.
     await runFriendAction(
       ref,
       () => ref.read(friendsRepositoryProvider).setAvatarPhoto(file.path),
       successText: 'friends_photo_saved'.tr(),
+      scope: FriendErrorScope.photo,
     );
   }
 
@@ -127,7 +130,9 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
                 counterText: '',
                 hintStyle: context.textTheme.titleLarge,
                 errorText: _nameError,
-                errorStyle: const TextStyle(fontSize: 18),
+                errorStyle: context.textTheme.titleLarge?.copyWith(
+                  color: context.colorScheme.error,
+                ),
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.all(AppSpacing.base),
               ),

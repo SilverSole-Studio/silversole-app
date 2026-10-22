@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/friends/friend_models.dart';
+import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
@@ -98,6 +99,9 @@ class FriendDetailPage extends ConsumerWidget {
                 if (p.photoPath != null)
                   Expanded(
                     child: TextButton(
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size.fromHeight(kFriendButtonHeight),
+                      ),
                       onPressed: () =>
                           _report(context, ref, p, ReportKind.photo),
                       child: Text(
@@ -108,6 +112,9 @@ class FriendDetailPage extends ConsumerWidget {
                   ),
                 Expanded(
                   child: TextButton(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size.fromHeight(kFriendButtonHeight),
+                    ),
                     onPressed: () =>
                         _report(context, ref, p, ReportKind.nickname),
                     child: Text(
@@ -162,13 +169,14 @@ class FriendDetailPage extends ConsumerWidget {
         ),
       ),
     );
-    if (reason == null) return;
+    if (reason == null || !context.mounted) return;
     await runFriendAction(
       ref,
       () => ref
           .read(friendsRepositoryProvider)
           .reportProfile(p.userId, kind, reason),
       successText: 'friends_report_sent'.tr(),
+      scope: FriendErrorScope.report,
     );
   }
 }

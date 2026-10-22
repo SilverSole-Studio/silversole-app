@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/friends/friend_models.dart';
+import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
@@ -42,6 +43,11 @@ Future<bool> showAddFriendSheet(
                   () => ref
                       .read(friendsRepositoryProvider)
                       .sendFriendRequest(source, reference),
+                  scope: switch (source) {
+                    FriendSource.qr => FriendErrorScope.qr,
+                    FriendSource.code => FriendErrorScope.code,
+                    FriendSource.org => FriendErrorScope.orgMember,
+                  },
                 );
                 if (outcome == null) return;
                 showFriendMessage(switch (outcome) {
@@ -104,6 +110,7 @@ Future<void> showJoinOrgSheet(
                 final result = await runFriendAction(
                   ref,
                   () => ref.read(friendsRepositoryProvider).joinOrg(joinCode),
+                  scope: FriendErrorScope.org,
                 );
                 if (result != null && sheetContext.mounted) {
                   Navigator.of(sheetContext).pop(result);

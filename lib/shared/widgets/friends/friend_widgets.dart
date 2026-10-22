@@ -177,9 +177,7 @@ class FriendText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: context.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w500,
-      ),
+      style: context.textTheme.titleLarge,
       textAlign: center ? TextAlign.center : null,
     );
   }
@@ -187,10 +185,18 @@ class FriendText extends StatelessWidget {
 
 /// Spinner / error / content for a friends [AsyncValue].
 class FriendAsync<T> extends StatelessWidget {
-  const FriendAsync({super.key, required this.value, required this.builder});
+  const FriendAsync({
+    super.key,
+    required this.value,
+    required this.builder,
+    this.scope = FriendErrorScope.code,
+  });
 
   final AsyncValue<T> value;
   final Widget Function(T data) builder;
+
+  /// How a failure is worded (see [friendErrorText]).
+  final FriendErrorScope scope;
 
   @override
   Widget build(BuildContext context) {
@@ -198,7 +204,7 @@ class FriendAsync<T> extends StatelessWidget {
       AsyncData(:final value) => builder(value),
       AsyncError(:final error) => Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
-        child: FriendText(friendErrorText(error), center: true),
+        child: FriendText(friendErrorText(error, scope), center: true),
       ),
       _ => const Padding(
         padding: EdgeInsets.all(AppSpacing.xxl),
@@ -208,36 +214,61 @@ class FriendAsync<T> extends StatelessWidget {
   }
 }
 
-String friendErrorText(Object error) => error is FriendException
-    ? error.messageKey.tr()
+/// The error in words, worded for what the person was doing ([scope]).
+String friendErrorText(
+  Object error, [
+  FriendErrorScope scope = FriendErrorScope.code,
+]) => error is FriendException
+    ? friendErrorKey(error.code, scope).tr()
     : 'friends_err_offline'.tr();
 
 void showFriendMessage(String text) {
-  App.scaffoldMessengerKey.currentState
-    ?..hideCurrentSnackBar()
+  final messenger = App.scaffoldMessengerKey.currentState;
+  if (messenger == null) return;
+  final context = messenger.context;
+  messenger
+    ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(text, style: const TextStyle(fontSize: 18)),
+        content: Text(
+          text,
+          // The snack bar's own text is 14px; the friends screens never go
+          // below 18 (spec §5.3).
+          style: context.textTheme.titleLarge?.copyWith(
+            color: context.colorScheme.onInverseSurface,
+          ),
+        ),
         duration: const Duration(seconds: 3),
       ),
     );
 }
 
+/// The provider container behind [ref], while its widget is still mounted.
+/// Taken before an await so the lists can still be refreshed if the widget
+/// (a sheet, a page) is gone by the time the answer comes back.
+ProviderContainer? _containerOf(WidgetRef ref) => ref.context.mounted
+    ? ProviderScope.containerOf(ref.context, listen: false)
+    : null;
+
 /// Runs a friends call: on success refreshes every friends list and returns
-/// the value; on failure shows the error in words and returns null.
+/// the value; on failure shows the error in words (see [friendErrorText] for
+/// [scope]) and returns null. Safe to call from a widget that may be gone
+/// when the answer arrives.
 Future<T?> runFriendAction<T>(
   WidgetRef ref,
   Future<Result<T>> Function() call, {
   String? successText,
+  FriendErrorScope scope = FriendErrorScope.code,
 }) async {
+  final container = _containerOf(ref);
   final result = await call();
   switch (result) {
     case Ok(:final value):
-      refreshFriendsData(ref);
+      if (container != null) refreshFriendsDataIn(container);
       if (successText != null) showFriendMessage(successText);
       return value;
     case Error(:final error):
-      showFriendMessage(friendErrorText(error));
+      showFriendMessage(friendErrorText(error, scope));
       return null;
   }
 }
@@ -247,15 +278,17 @@ Future<bool> runFriendStep(
   WidgetRef ref,
   Future<Result<void>> Function() call, {
   String? successText,
+  FriendErrorScope scope = FriendErrorScope.code,
 }) async {
+  final container = _containerOf(ref);
   final result = await call();
   switch (result) {
     case Ok():
-      refreshFriendsData(ref);
+      if (container != null) refreshFriendsDataIn(container);
       if (successText != null) showFriendMessage(successText);
       return true;
     case Error(:final error):
-      showFriendMessage(friendErrorText(error));
+      showFriendMessage(friendErrorText(error, scope));
       return false;
   }
 }

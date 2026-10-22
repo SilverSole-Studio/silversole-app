@@ -16,9 +16,11 @@ import 'package:silversole/shared/pages/shop_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(authUserProvider);
+  final friendsOn = ref.watch(friendsEnabledProvider);
 
   return GoRouter(
     routes: [
@@ -53,7 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => FirmwareUpdatePage(source: state.extra),
       ),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
-      friendsRoute,
+      friendsRoute(enabled: friendsOn),
       GoRoute(
         path: '/game-webview',
         builder: (_, state) {

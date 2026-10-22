@@ -211,23 +211,65 @@ void main() {
       });
     });
 
+    test('after a declined request expires, asking again is quietly held for '
+        '30 days', () async {
+      final sender = world();
+      await withClock(Clock.fixed(_t0), () async {
+        ok(await sender.sendFriendRequest(FriendSource.org, 'wang'));
+        sender.declineAs('wang');
+      });
+      final resentAt = _t0.add(kRequestTtl);
+      await withClock(Clock.fixed(resentAt), () async {
+        expect(ok(await sender.getFriendRequests()), isEmpty);
+        // No "cooldown" answer — that would tell me she said no. It looks
+        // like any request on my side and never reaches her.
+        expect(
+          ok(await sender.sendFriendRequest(FriendSource.org, 'wang')),
+          SendRequestOutcome.sent,
+        );
+        final held = ok(await sender.getFriendRequests()).single;
+        expect(held.incoming, isFalse);
+        expect(held.other.userId, 'wang');
+        expect(held.expiresAt, resentAt.add(kRequestTtl));
+        expect(sender.incomingCountFor('wang'), 0);
+        final members = ok(await sender.getOrgMembers('org1'));
+        expect(
+          members.firstWhere((m) => m.profile.userId == 'wang').status,
+          OrgMemberStatus.pendingOut,
+        );
+      });
+      // Once the held one has run out and the 30 days are over, a real one
+      // goes out.
+      await withClock(Clock.fixed(_t0.add(kDeclineCooldown)), () async {
+        expect(ok(await sender.getFriendRequests()), isEmpty);
+        ok(await sender.sendFriendRequest(FriendSource.org, 'wang'));
+        expect(sender.incomingCountFor('wang'), 1);
+      });
+    });
+
     test(
-      'after a declined request expires, a 30-day cooldown applies',
+      'cancelling a declined request and asking again does not reach them',
       () async {
-        final sender = world();
         await withClock(Clock.fixed(_t0), () async {
+          final sender = world();
           ok(await sender.sendFriendRequest(FriendSource.org, 'wang'));
           sender.declineAs('wang');
-        });
-        await withClock(Clock.fixed(_t0.add(kRequestTtl)), () async {
+          final r = ok(await sender.getFriendRequests()).single;
+          ok(await sender.cancelFriendRequest(r.id));
           expect(ok(await sender.getFriendRequests()), isEmpty);
           expect(
-            err(await sender.sendFriendRequest(FriendSource.org, 'wang')),
-            FriendError.cooldown,
+            ok(await sender.sendFriendRequest(FriendSource.org, 'wang')),
+            SendRequestOutcome.sent,
           );
-        });
-        await withClock(Clock.fixed(_t0.add(kDeclineCooldown)), () async {
-          ok(await sender.sendFriendRequest(FriendSource.org, 'wang'));
+          final held = ok(await sender.getFriendRequests()).single;
+          expect(sender.incomingCountFor('wang'), 0);
+          // The held one can be withdrawn like any other; then it is gone.
+          ok(await sender.cancelFriendRequest(held.id));
+          expect(ok(await sender.getFriendRequests()), isEmpty);
+          expect(
+            err(await sender.cancelFriendRequest(held.id)),
+            FriendError.notFound,
+          );
         });
       },
     );
@@ -543,6 +585,208 @@ void main() {
         ..addFriendship('lin', since: _t0.subtract(const Duration(days: 1)));
       final order = ok(await repo.getFriends()).map((f) => f.profile.userId);
       expect(order, ['chen', 'lin', 'wang']);
+    });
+  });
+
+  // Rules the fake once played differently from the SQL migration.
+  group('matching the server', () {
+    test('a QR previewed before it expired can be sent for 60 s', () async {
+      final repo = world()..addQrToken('wang', 'tok', _t0.add(kQrTokenTtl));
+      await withClock(
+        Clock.fixed(_t0.add(kQrTokenTtl - const Duration(seconds: 1))),
+        () async => ok(await repo.previewByQr('tok')),
+      );
+      await withClock(
+        Clock.fixed(_t0.add(kQrTokenTtl + const Duration(seconds: 30))),
+        () async => expect(
+          ok(await repo.sendFriendRequest(FriendSource.qr, 'tok')),
+          SendRequestOutcome.sent,
+        ),
+      );
+    });
+
+    test('the QR grace needs a preview and ends after 60 s', () async {
+      final late = world()..addQrToken('wang', 'tok', _t0.add(kQrTokenTtl));
+      await withClock(
+        Clock.fixed(_t0.add(kQrTokenTtl + const Duration(seconds: 30))),
+        () async => expect(
+          err(await late.sendFriendRequest(FriendSource.qr, 'tok')),
+          FriendError.qrExpired,
+        ),
+      );
+      final slow = world()..addQrToken('wang', 'tok', _t0.add(kQrTokenTtl));
+      await withClock(
+        Clock.fixed(_t0),
+        () async => ok(await slow.previewByQr('tok')),
+      );
+      await withClock(
+        Clock.fixed(_t0.add(kQrTokenTtl + kQrPreviewGrace)),
+        () async => expect(
+          err(await slow.sendFriendRequest(FriendSource.qr, 'tok')),
+          FriendError.qrExpired,
+        ),
+      );
+    });
+
+    test('a full other side is told apart from being full myself', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addIncomingRequest('wang', FriendSource.org);
+        for (var i = 0; i < kFriendLimit; i++) {
+          repo
+            ..addUser('f$i', 'f$i', preset: 1, code: '${40000000 + i}')
+            ..addFriendship('f$i', of: 'wang');
+        }
+        final r = ok(await repo.getFriendRequests()).single;
+        expect(
+          err(
+            await repo.respondFriendRequest(r.id, FriendRequestAction.accept),
+          ),
+          FriendError.otherFriendLimit,
+        );
+        expect(
+          err(await repo.sendFriendRequest(FriendSource.org, 'wang')),
+          FriendError.otherFriendLimit,
+        );
+        expect(repo.areFriends('me', 'wang'), isFalse);
+      });
+    });
+
+    test('becoming friends closes a quietly declined request', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world();
+        ok(await repo.sendFriendRequest(FriendSource.org, 'wang'));
+        repo
+          ..declineAs('wang')
+          // …then she asks me herself, and I accept.
+          ..addIncomingRequest('wang', FriendSource.code);
+        final theirs = ok(
+          await repo.getFriendRequests(),
+        ).firstWhere((r) => r.incoming);
+        ok(
+          await repo.respondFriendRequest(
+            theirs.id,
+            FriendRequestAction.accept,
+          ),
+        );
+        expect(repo.areFriends('me', 'wang'), isTrue);
+        expect(ok(await repo.getFriendRequests()), isEmpty);
+        expect(repo.openRequestsBetween('me', 'wang'), 0);
+      });
+    });
+
+    test('only a request still waiting can be cancelled', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addIncomingRequest('wang', FriendSource.org);
+        final theirs = ok(await repo.getFriendRequests()).single;
+        // Not mine to cancel.
+        expect(
+          err(await repo.cancelFriendRequest(theirs.id)),
+          FriendError.notFound,
+        );
+        ok(await repo.sendFriendRequest(FriendSource.org, 'chen'));
+        final mine = ok(
+          await repo.getFriendRequests(),
+        ).firstWhere((r) => !r.incoming);
+        ok(await repo.cancelFriendRequest(mine.id));
+        expect(
+          err(await repo.cancelFriendRequest(mine.id)),
+          FriendError.notFound,
+        );
+      });
+    });
+
+    test('joining an org code spends a lookup unless previewed', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addOrg('org2', 'B', OrgKind.dayCare, '60000002');
+        for (var i = 0; i < kFailedLookupStreak; i++) {
+          expect(err(await repo.joinOrg('7000000$i')), FriendError.notFound);
+        }
+        expect(err(await repo.joinOrg('60000002')), FriendError.locked);
+      });
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addOrg('org2', 'B', OrgKind.dayCare, '60000002');
+        for (var i = 0; i < kDailyLookups - 1; i++) {
+          ok(await repo.previewByCode('31415926'));
+        }
+        ok(await repo.previewOrg('60000002')); // the 20th
+        // Previewed today: joining does not need another lookup.
+        expect(ok(await repo.joinOrg('60000002')).id, 'org2');
+      });
+    });
+
+    test('orgs that were switched off do not count toward the 3', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()
+          ..addOrg('org2', 'B', OrgKind.dayCare, '60000002')
+          ..addOrg('org3', 'C', OrgKind.other, '60000003')
+          ..addOrg('org4', 'D', OrgKind.other, '60000004');
+        ok(await repo.joinOrg('60000002'));
+        ok(await repo.joinOrg('60000003'));
+        expect(err(await repo.joinOrg('60000004')), FriendError.orgLimit);
+        repo.deactivateOrg('org2');
+        ok(await repo.joinOrg('60000004'));
+        expect(ok(await repo.getMyOrgs()).map((o) => o.id), [
+          'org1',
+          'org3',
+          'org4',
+        ]);
+      });
+    });
+
+    test('reports: not myself, not across a block, not nobody', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addBlock('wang', 'me');
+        for (final who in ['me', 'wang', 'ghost']) {
+          expect(
+            err(
+              await repo.reportProfile(
+                who,
+                ReportKind.nickname,
+                ReportReason.ads,
+              ),
+            ),
+            FriendError.notFound,
+            reason: who,
+          );
+        }
+        expect(repo.reports, isEmpty);
+      });
+    });
+
+    test('5 photos a day', () async {
+      final repo = world();
+      await withClock(Clock.fixed(_t0), () async {
+        for (var i = 0; i < kPhotoUploadsPerDay; i++) {
+          ok(await repo.setAvatarPhoto('/p$i.jpg'));
+        }
+        expect(
+          err(await repo.setAvatarPhoto('/p6.jpg')),
+          FriendError.limitReached,
+        );
+      });
+      await withClock(
+        Clock.fixed(_t0.add(const Duration(days: 1))),
+        () async => ok(await repo.setAvatarPhoto('/p6.jpg')),
+      );
+    });
+
+    test('nicknames use the server whitelist', () async {
+      final repo = world();
+      for (final bad in ['王\n阿姨', 'سلام', '★★']) {
+        expect(
+          err(await repo.updateProfile(nickname: bad)),
+          FriendError.nicknameInvalid,
+          reason: bad,
+        );
+      }
+      expect(ok(await repo.updateProfile(nickname: '　王阿姨 ')).nickname, '王阿姨');
+    });
+
+    test('someone without a name yet cannot be found by code', () async {
+      await withClock(Clock.fixed(_t0), () async {
+        final repo = world()..addUser('lin', null, preset: 5, code: '41421356');
+        expect(err(await repo.previewByCode('41421356')), FriendError.notFound);
+      });
     });
   });
 

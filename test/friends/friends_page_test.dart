@@ -67,7 +67,7 @@ void main() {
     );
     final router = GoRouter(
       initialLocation: '/friends',
-      routes: [friendsRoute],
+      routes: [friendsRoute(enabled: true)],
     );
 
     await tester.pumpWidget(

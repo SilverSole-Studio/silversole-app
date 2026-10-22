@@ -122,6 +122,7 @@ class OrgMembersPage extends ConsumerWidget {
       body: SafeArea(
         child: FriendAsync(
           value: members,
+          scope: FriendErrorScope.org,
           builder: (list) => ListView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.base,
@@ -194,6 +195,7 @@ class _MemberRow extends ConsumerWidget {
                 .read(friendsRepositoryProvider)
                 .sendFriendRequest(FriendSource.org, p.userId),
             successText: 'friends_request_sent'.tr(args: [p.nickname]),
+            scope: FriendErrorScope.orgMember,
           ),
           label: Text('friends_add'.tr(), style: context.textTheme.titleLarge),
         ),

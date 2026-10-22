@@ -531,7 +531,7 @@ friends_my_orgs,My centres,我的據點
 friends_no_org,Not in any centre yet,還沒加入據點
 friends_list_title,Friends ({} of {}),朋友（{}／{}）
 friends_list_empty,No friends yet. Show your QR to someone next to you or tell them your friend code.,還沒有朋友。可以讓旁邊的人掃你的 QR，或把好友碼念給對方聽。
-friends_visit_garden,Garden,去他的菜園
+friends_visit_garden,Visit garden,去菜園看看
 friends_blocked_title,Blocked,封鎖名單
 friends_nickname_removed,Your name was taken down after a report. Please pick a new one.,你的名字被檢舉後移除了，請取一個新的。
 friends_photo_removed,Your photo was taken down after a report. Friends now see your picture instead.,你的照片被檢舉後移除了，朋友現在看到的是你挑的頭像。
@@ -620,3 +620,14 @@ friends_err_nicknameChangeLimit,Names can be changed 3 times a day. Please try t
 friends_err_uploadBanned,Photo upload is paused for now. You can still pick a picture.,暫時不能上傳照片，可以先挑一個頭像。
 friends_err_offline,No connection. Please try again once you are online.,沒有網路，連上再來。
 friends_err_unknown,Something went wrong. Please try again later.,出了點問題，請等一下再試。
+friends_err_otherFriendLimit,They already have 100 friends and cannot add more.,對方的朋友已經滿了，加不進去。
+friends_err_uploadFailed,The photo did not upload. Please try again.,照片沒傳上去，請再試一次。
+friends_err_notFound_qr,This QR does not work. Ask them to open it again.,這個條碼用不了，請對方重新打開 QR。
+friends_err_notFound_org,No centre has this code. Please check it again.,沒有這個據點代碼，請再對一次。
+friends_err_notFound_person,This person is no longer on the list.,這個人已經不在名單上了。
+friends_err_notFound_request,This request is no longer open.,這個邀請已經不在了。
+friends_err_notFound_report,This person can no longer be reported.,這個人已經不能檢舉了。
+friends_err_notFound_avatar,That picture is not available. Please pick another.,沒有這個頭像，請換一個。
+friends_err_limitReached_photo,Photos can be changed 5 times a day. Please try tomorrow.,照片一天只能換 5 次，明天再換。
+friends_err_limitReached_report,You have sent 10 reports today. Please try tomorrow.,今天已經檢舉 10 次了，明天再試。
+friends_qr_retry,Try again,再試一次
