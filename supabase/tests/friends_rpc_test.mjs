@@ -236,6 +236,29 @@ test('a previewed code can be sent without spending another lookup', async () =>
   assert.equal(r.result, 'sent');
 });
 
+test('someone who never set up friends cannot be found by code', async () => {
+  const w = await world();
+  await w.sql('insert into auth.users (id) values ($1)', [ids.lin]);
+  // Reading the red dot (the plaza and the games hub do) creates nothing…
+  assert.deepEqual(await w.rpc(ids.lin, 'get_friend_requests'), []);
+  assert.deepEqual(await w.rpc(ids.lin, 'get_friends'), []);
+  const [none] = await w.sql('select count(*)::int as n from public.profiles where user_id = $1', [
+    ids.lin,
+  ]);
+  assert.equal(none.n, 0);
+  // …and a profile without a name (friends opened, setup not finished) is not
+  // reachable by its code.
+  await w.rpc(ids.lin, 'get_my_profile');
+  const [{ friend_code: code }] = await w.sql(
+    'select friend_code from public.profiles where user_id = $1',
+    [ids.lin],
+  );
+  assert.equal(await w.rpcErr(ids.me, 'preview_by_code', code), 'not_found');
+  assert.equal(await w.rpcErr(ids.me, 'send_friend_request', 'code', code), 'not_found');
+  await w.rpc(ids.lin, 'update_profile', '林阿嬤', null, null);
+  assert.equal((await w.rpc(ids.me, 'preview_by_code', code)).nickname, '林阿嬤');
+});
+
 test('a rotated code stops working immediately', async () => {
   const w = await world();
   const before = (await w.rpc(ids.wang, 'get_my_profile')).friend_code;
@@ -266,7 +289,8 @@ test("someone else's token works for 5 minutes, then reads as expired", async ()
   // Several people can scan the same token.
   assert.equal((await w.rpc(ids.chen, 'preview_by_qr', token)).nickname, '王阿姨');
   assert.equal((await w.rpc(ids.me, 'send_friend_request', 'qr', token)).result, 'sent');
-  await w.sql("update public.qr_tokens set expires_at = now() - interval '1 second'");
+  // Past the 60 s grace a preview no longer helps either (see the grace tests).
+  await w.sql("update public.qr_tokens set expires_at = now() - interval '2 minutes'");
   assert.equal(await w.rpcErr(ids.chen, 'preview_by_qr', token), 'qr_expired');
   assert.equal(await w.rpcErr(ids.chen, 'send_friend_request', 'qr', token), 'qr_expired');
 });
@@ -276,6 +300,26 @@ test('my own token and unknown tokens are not found', async () => {
   const { token } = await w.rpc(ids.me, 'create_qr_token');
   assert.equal(await w.rpcErr(ids.me, 'preview_by_qr', token), 'not_found');
   assert.equal(await w.rpcErr(ids.me, 'preview_by_qr', 'nope'), 'not_found');
+});
+
+test('a token previewed before it expired can still be sent for 60 s', async () => {
+  const w = await world();
+  const { token } = await w.rpc(ids.wang, 'create_qr_token');
+  assert.equal((await w.rpc(ids.me, 'preview_by_qr', token)).nickname, '王阿姨');
+  await w.sql("update public.qr_tokens set expires_at = now() - interval '30 seconds'");
+  // I was reading her name when it ran out: it still goes through.
+  assert.equal((await w.rpc(ids.me, 'send_friend_request', 'qr', token)).result, 'sent');
+  // 陳伯伯 never previewed it, and previewing now is too late.
+  assert.equal(await w.rpcErr(ids.chen, 'send_friend_request', 'qr', token), 'qr_expired');
+  assert.equal(await w.rpcErr(ids.chen, 'preview_by_qr', token), 'qr_expired');
+});
+
+test('the QR grace ends 60 s after the token expired', async () => {
+  const w = await world();
+  const { token } = await w.rpc(ids.wang, 'create_qr_token');
+  await w.rpc(ids.me, 'preview_by_qr', token);
+  await w.sql("update public.qr_tokens set expires_at = now() - interval '61 seconds'");
+  assert.equal(await w.rpcErr(ids.me, 'send_friend_request', 'qr', token), 'qr_expired');
 });
 
 test("a blocker's token looks unknown, not expired", async () => {
@@ -309,26 +353,113 @@ test('declining is silent: the sender still sees it as waiting', async () => {
   assert.equal(members.find((m) => m.user_id === ids.me).status, 'pending_out');
 });
 
-test('after a declined request expires, a 30-day cooldown applies', async () => {
-  const w = await world();
+/** 王阿姨 asks me through the org and I quietly decline. */
+async function declinedByMe(w) {
   await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me);
   const [r] = await w.rpc(ids.me, 'get_friend_requests');
   await w.rpc(ids.me, 'respond_friend_request', r.id, 'decline');
+  return r;
+}
+
+/** Asking again inside the cooldown looks exactly like a normal send to the
+ * sender — `sent`, a 7-day request waiting on her side — and nothing reaches
+ * me. Returns the request as she sees it. */
+async function assertSilentResend(w) {
+  assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  const theirs = await w.rpc(ids.wang, 'get_friend_requests');
+  assert.equal(theirs.length, 1);
+  assert.equal(theirs[0].incoming, false);
+  assert.equal(theirs[0].other.user_id, ids.me);
+  assert.equal(theirs[0].org_name, '三峽示範據點');
+  const [{ d }] = await w.sql(
+    'select extract(epoch from expires_at - created_at)::int as d from public.friend_requests where id = $1',
+    [theirs[0].id],
+  );
+  assert.equal(d, 7 * 24 * 3600);
+  assert.deepEqual(await w.rpc(ids.me, 'get_friend_requests'), []);
+  const mine = await w.rpc(ids.me, 'get_org_members', ORG);
+  assert.equal(mine.find((m) => m.user_id === ids.wang).status, 'none');
+  const hers = await w.rpc(ids.wang, 'get_org_members', ORG);
+  assert.equal(hers.find((m) => m.user_id === ids.me).status, 'pending_out');
+  return theirs[0];
+}
+
+test('after a declined request expires, asking again is quietly held for 30 days', async () => {
+  const w = await world();
+  await declinedByMe(w);
   await w.sql("update public.friend_requests set expires_at = now() - interval '1 second'");
   assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
-  assert.equal(await w.rpcErr(ids.wang, 'send_friend_request', 'org', ids.me), 'cooldown');
-  await w.sql("update public.friend_requests set responded_at = now() - interval '30 days 1 second'");
+  // No "cooldown" answer: that would tell her I said no.
+  const held = await assertSilentResend(w);
+  // Asking once more is the usual quiet no-op on the same request.
   assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  assert.equal((await w.rpc(ids.wang, 'get_friend_requests'))[0].id, held.id);
+  // It never reached me, so I cannot accept it.
+  assert.equal(await w.rpcErr(ids.me, 'respond_friend_request', held.id, 'accept'), 'not_found');
+  // Once the held one has run out and the 30 days are over, a real one goes out.
+  await w.sql(
+    `update public.friend_requests
+     set expires_at = now() - interval '1 second',
+         responded_at = now() - interval '30 days 1 second'`,
+  );
+  assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  assert.equal((await w.rpc(ids.me, 'get_friend_requests')).length, 1);
 });
 
-test('cancelling a declined request does not skip the cooldown', async () => {
+test('cancelling a declined request and asking again does not reach me either', async () => {
   const w = await world();
-  await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me);
-  const [r] = await w.rpc(ids.me, 'get_friend_requests');
-  await w.rpc(ids.me, 'respond_friend_request', r.id, 'decline');
+  const r = await declinedByMe(w);
   await w.rpc(ids.wang, 'cancel_friend_request', r.id);
   assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
-  assert.equal(await w.rpcErr(ids.wang, 'send_friend_request', 'org', ids.me), 'cooldown');
+  const held = await assertSilentResend(w);
+  // She can withdraw the held one like any other, and asking again is held too.
+  await w.rpc(ids.wang, 'cancel_friend_request', held.id);
+  assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
+  await assertSilentResend(w);
+});
+
+test('a held request counts toward the 20 waiting, like a real one', async () => {
+  const w = await world();
+  await declinedByMe(w);
+  await w.sql("update public.friend_requests set expires_at = now() - interval '1 second'");
+  for (let i = 0; i < 19; i++) {
+    await w.addUser(uid(i), `朋友${i}`);
+    await w.addMember(ORG, uid(i));
+    await w.rpc(ids.wang, 'send_friend_request', 'org', uid(i));
+  }
+  await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me); // held, the 20th
+  assert.equal(
+    await w.rpcErr(ids.wang, 'send_friend_request', 'org', ids.chen),
+    'pending_limit',
+  );
+});
+
+test('if I ask her while hers is held, we become friends and nothing is left waiting', async () => {
+  const w = await world();
+  await declinedByMe(w);
+  await w.sql("update public.friend_requests set expires_at = now() - interval '1 second'");
+  await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me); // held
+  assert.equal((await w.rpc(ids.me, 'send_friend_request', 'org', ids.wang)).result, 'sent');
+  const [mine] = (await w.rpc(ids.wang, 'get_friend_requests')).filter((r) => r.incoming);
+  await w.rpc(ids.wang, 'respond_friend_request', mine.id, 'accept');
+  assert.equal(await w.areFriends(ids.me, ids.wang), true);
+  assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
+  assert.deepEqual(await w.rpc(ids.me, 'get_friend_requests'), []);
+});
+
+test('becoming friends closes a quietly declined request the other way', async () => {
+  const w = await world();
+  await declinedByMe(w);
+  // 王阿姨 still sees hers as waiting; then I ask her myself and she says yes.
+  assert.equal((await w.rpc(ids.me, 'send_friend_request', 'code', '31415926')).result, 'sent');
+  const [mine] = (await w.rpc(ids.wang, 'get_friend_requests')).filter((r) => r.incoming);
+  await w.rpc(ids.wang, 'respond_friend_request', mine.id, 'accept');
+  assert.equal(await w.areFriends(ids.me, ids.wang), true);
+  assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
+  const open = await w.sql(
+    "select count(*)::int as n from public.friend_requests where status in ('pending', 'declined')",
+  );
+  assert.equal(open[0].n, 0);
 });
 
 test('a cancelled request can be sent again', async () => {
@@ -386,6 +517,28 @@ test('100 friends is the cap, on either side', async () => {
   assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
   const [r] = await w.rpc(ids.me, 'get_friend_requests');
   assert.equal(await w.rpcErr(ids.me, 'respond_friend_request', r.id, 'accept'), 'friend_limit');
+});
+
+test('when the other person is full, the answer says it is them', async () => {
+  const w = await world();
+  // 王阿姨 asks me, then fills up before I answer.
+  assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  for (let i = 0; i < 100; i++) {
+    await w.sql('insert into auth.users (id) values ($1)', [uid(i)]);
+    await w.rpc(uid(i), 'get_my_profile');
+    await w.addFriendship(ids.wang, uid(i));
+  }
+  const [r] = await w.rpc(ids.me, 'get_friend_requests');
+  assert.equal(
+    await w.rpcErr(ids.me, 'respond_friend_request', r.id, 'accept'),
+    'other_friend_limit',
+  );
+  // Asking her back (which would accept hers) says the same.
+  assert.equal(
+    await w.rpcErr(ids.me, 'send_friend_request', 'org', ids.wang),
+    'other_friend_limit',
+  );
+  assert.equal(await w.areFriends(ids.me, ids.wang), false);
 });
 
 test('respond only works for the recipient', async () => {
@@ -558,6 +711,19 @@ test('set_avatar_photo only takes an uploaded file in your own folder', async ()
   const p = await w.rpc(ids.me, 'set_avatar_photo', `${ids.me}/1760000000000.jpg`);
   assert.equal(p.avatar_path, `${ids.me}/1760000000000.jpg`);
   assert.equal((await w.rpc(ids.me, 'clear_avatar_photo')).avatar_path, null);
+  // PNG and WebP keep their own extension; anything else is refused.
+  for (const [i, ext] of [[1, 'png'], [2, 'webp']]) {
+    const name = `${ids.me}/176000000000${i}.${ext}`;
+    await w.uploadAvatar(ids.me, name);
+    assert.equal((await w.rpc(ids.me, 'set_avatar_photo', name)).avatar_path, name);
+  }
+  await w.uploadAvatar(ids.me, `${ids.me}/1760000000003.gif`);
+  assert.equal(
+    await w.rpcErr(ids.me, 'set_avatar_photo', `${ids.me}/1760000000003.gif`),
+    'not_found',
+  );
+  const [bucket] = await w.sql("select allowed_mime_types from storage.buckets where id = 'avatars'");
+  assert.deepEqual([...bucket.allowed_mime_types].sort(), ['image/jpeg', 'image/png', 'image/webp']);
 });
 
 test('at most 3 orgs; leaving keeps the friends', async () => {
@@ -770,6 +936,8 @@ test('the app cannot call the server-only functions', async () => {
     `public.touch_friendship('${ids.wang}', '${ids.chen}')`,
     `public.friends_accept(gen_random_uuid())`,
     `public.friends_new_code()`,
+    `public.friends_uid()`,
+    `public.friends_qr_grace('${ids.wang}', 'x')`,
   ]) {
     await assert.rejects(w.as(ids.me, `select ${call}`), /permission denied/, call);
   }

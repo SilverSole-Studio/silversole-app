@@ -3,7 +3,7 @@
 -- 好友系統：資料表、RLS、RPC、avatars bucket
 --
 -- 狀態：未套用到任何 Supabase 專案。只在本機 PGlite（PostgreSQL 17，auth／storage
---   換成最小替身）跑過 supabase/tests/friends_test.mjs。套用到正式庫之前要先問 user，
+--   換成最小替身）跑過 supabase/tests/friends_rpc_test.mjs。套用到正式庫之前要先問 user，
 --   並先跑 supabase/README.md 的「套用前比對」查詢。
 -- 規格：動域科技總倉庫 02_產品/鞋墊_SilverSole/_好友系統規格書_2026-10-18.md 第 7、8 節。
 -- App 端：lib/core/friends/supabase_friends_repository.dart（每支 RPC 一個方法）。
@@ -29,6 +29,9 @@
 --    friend_daily_limits.previewed_codes（預覽過的號碼送出時不再扣次數）、
 --    profile_reports.handled_by（中控台操作人）。
 -- 4. 多一支 acknowledge_removals()：App 顯示過「照片被移除了」之後清掉提示。
+-- 5. 冷卻期間再邀不回 cooldown：照常回 sent，但存成 declined、不送到對方那裡
+--    （send_friend_request 裡有說明）。其餘差異（QR 寬限、other_friend_limit…）
+--    見 README 的表。
 
 begin;
 
@@ -62,6 +65,9 @@ create table public.friendships (
   check (user_low < user_high)
 );
 create index friendships_user_high_idx on public.friendships (user_high);
+-- can_read_avatar() 每次簽網址都用照片路徑反查是誰的照片。
+create index profiles_avatar_path_idx on public.profiles (avatar_path)
+  where avatar_path is not null;
 
 create table public.orgs (
   id uuid primary key default gen_random_uuid(),
@@ -255,6 +261,25 @@ begin
 end
 $$;
 
+-- 只確認有登入、不建 profiles。只讀、而且「還沒用過好友」也該回空的 RPC 用這支
+-- （紅點、好友卡），免得沒打開過好友的人也被配了一組好友碼。
+create function public.friends_uid()
+returns uuid
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_me uuid := auth.uid();
+begin
+  if v_me is null then
+    raise exception 'not_signed_in';
+  end if;
+  return v_me;
+end
+$$;
+
 create function public.friends_blocked_either(a uuid, b uuid)
 returns boolean
 language sql
@@ -367,10 +392,14 @@ begin
   set status = 'accepted', responded_at = now()
   where id = p_request_id
   returning * into r;
-  -- 反方向如果也有一封在等，同一段友誼一起結掉。
+  -- 兩人之間其他還開著的邀請（反方向在等的、被悄悄拒絕或暫扣的）一起結掉，
+  -- 不然送的人那邊會一直顯示「等回覆」給已經是好友的人。
   update public.friend_requests
   set status = 'accepted', responded_at = now()
-  where from_user = r.to_user and to_user = r.from_user and status = 'pending';
+  where status in ('pending', 'declined')
+    and id <> r.id
+    and ((from_user = r.from_user and to_user = r.to_user)
+      or (from_user = r.to_user and to_user = r.from_user));
   insert into public.friendships (user_low, user_high, source)
   values (least(r.from_user, r.to_user), greatest(r.from_user, r.to_user), r.source)
   on conflict do nothing;
@@ -479,10 +508,12 @@ stable
 security definer
 set search_path = ''
 as $$
-  -- 封鎖（任一方向）跟號碼不存在一模一樣。
+  -- 封鎖（任一方向）跟號碼不存在一模一樣。還沒取名字的（打開過好友、沒設定完）
+  -- 也當作不存在：他還沒決定要用好友功能。
   select p.user_id from public.profiles p
   where p_code ~ '^[1-9][0-9]{7}$'
     and p.friend_code = p_code
+    and p.nickname is not null
     and p.user_id <> p_me
     and not public.friends_blocked_either(p_me, p.user_id)
 $$;
@@ -520,6 +551,30 @@ begin
   end if;
   return t.user_id::text;
 end
+$$;
+
+-- QR 剛過期的寬限：過期 60 秒內、而且這個人在過期前預覽過，照樣算數
+-- （掃到 4:59、還在看名字就過期，不要讓他重來）。回傳對方，不符合回 null。
+-- 預覽過的 QR 記在 friend_daily_limits.previewed_codes，前面加 'qr:'。
+create function public.friends_qr_grace(p_me uuid, p_token text)
+returns uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select t.user_id from public.qr_tokens t
+  where t.token = p_token
+    and t.expires_at <= now()
+    and t.expires_at > now() - interval '60 seconds'
+    and t.user_id <> p_me
+    and not public.friends_blocked_either(p_me, t.user_id)
+    and exists (
+      select 1 from public.friend_daily_limits l
+      where l.user_id = p_me
+        and l.day >= public.friends_today() - 1
+        and ('qr:' || p_token) = any (l.previewed_codes)
+    )
 $$;
 
 create function public.friends_org_json(o public.orgs)
@@ -706,7 +761,8 @@ begin
 end
 $$;
 
--- App 先把 512px JPEG 傳到 avatars/{user_id}/{毫秒時間戳}.jpg，再呼叫這支登記。
+-- App 先把 512px 以內的照片傳到 avatars/{user_id}/{毫秒時間戳}.{jpg|png|webp}
+-- （副檔名照檔案實際格式），再呼叫這支登記。
 create function public.set_avatar_photo(p_path text)
 returns jsonb
 language plpgsql
@@ -724,7 +780,7 @@ begin
     raise exception 'upload_banned';
   end if;
   if p_path is null
-     or p_path !~ ('^' || v_me::text || '/[0-9]{10,16}\.jpg$')
+     or p_path !~ ('^' || v_me::text || '/[0-9]{10,16}\.(jpg|png|webp)$')
      or not exists (
        select 1 from storage.objects where bucket_id = 'avatars' and name = p_path
      ) then
@@ -803,6 +859,7 @@ $$;
 
 -- 好友名單 ─────────────────────────────────────────────────────────
 
+-- 不建 profiles：遊戲大廳的好友卡也會讀，沒用過好友的人就是空名單。
 create function public.get_friends()
 returns jsonb
 language plpgsql
@@ -811,7 +868,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_me uuid := public.friends_me();
+  v_me uuid := public.friends_uid();
 begin
   return coalesce((
     select jsonb_agg(
@@ -945,6 +1002,12 @@ begin
   if v_ref in ('not_found', 'qr_expired') then
     return jsonb_build_object('error', v_ref);
   end if;
+  -- 記下來：送出時剛好過期，60 秒內照樣算（friends_qr_grace）。
+  perform public.friends_limits(v_me);
+  update public.friend_daily_limits
+  set previewed_codes = previewed_codes || ('qr:' || p_token)
+  where user_id = v_me and day = public.friends_today()
+    and not (('qr:' || p_token) = any (previewed_codes));
   return public.friends_profile_json(v_ref::uuid, false);
 end
 $$;
@@ -990,13 +1053,20 @@ declare
   v_ref text;
   v_err text;
   v_theirs uuid;
+  v_declined_at timestamptz;
 begin
   if p_source = 'qr' then
     v_ref := public.friends_resolve_qr(v_me, p_ref);
-    if v_ref in ('not_found', 'qr_expired') then
+    if v_ref = 'qr_expired' then
+      v_target := public.friends_qr_grace(v_me, p_ref);
+      if v_target is null then
+        return jsonb_build_object('error', v_ref);
+      end if;
+    elsif v_ref = 'not_found' then
       return jsonb_build_object('error', v_ref);
+    else
+      v_target := v_ref::uuid;
     end if;
-    v_target := v_ref::uuid;
   elsif p_source = 'code' then
     if public.friends_was_previewed(v_me, p_ref) then
       v_target := public.friends_user_by_code(v_me, p_ref);
@@ -1053,7 +1123,7 @@ begin
     and status = 'pending' and expires_at > now();
   if v_theirs is not null then
     if public.friend_count(v_target) >= 100 then
-      return jsonb_build_object('error', 'friend_limit');
+      return jsonb_build_object('error', 'other_friend_limit');
     end if;
     perform public.friends_accept(v_theirs);
     return jsonb_build_object('result', 'became_friends');
@@ -1063,19 +1133,27 @@ begin
   if public.friends_open_out(v_me, v_target) then
     return jsonb_build_object('result', 'sent');
   end if;
-  if exists (
-    select 1 from public.friend_requests
-    where from_user = v_me and to_user = v_target
-      and status in ('declined', 'cancelled')
-      and responded_at > now() - interval '30 days'
-  ) then
-    return jsonb_build_object('error', 'cooldown');
-  end if;
   if (
     select count(*) from public.friend_requests
     where from_user = v_me and status in ('pending', 'declined') and expires_at > now()
   ) >= 20 then
     return jsonb_build_object('error', 'pending_limit');
+  end if;
+
+  -- 對方 30 天內拒絕過：不回 cooldown（那等於告訴他被拒絕了），照常回 sent，
+  -- 但這封直接存成 declined、不送到對方那裡。送的人看到的跟一般邀請一樣
+  -- （等回覆 7 天、可以取消、算在 20 封裡），對方完全看不到。
+  -- responded_at 沿用原本那次拒絕，冷卻不會因為一直重送而往後延。
+  select max(responded_at) into v_declined_at from public.friend_requests
+  where from_user = v_me and to_user = v_target
+    and status in ('declined', 'cancelled')
+    and responded_at > now() - interval '30 days';
+  if v_declined_at is not null then
+    insert into public.friend_requests
+      (from_user, to_user, source, org_id, status, expires_at, responded_at)
+    values
+      (v_me, v_target, p_source, v_org, 'declined', now() + interval '7 days', v_declined_at);
+    return jsonb_build_object('result', 'sent');
   end if;
 
   insert into public.friend_requests (from_user, to_user, source, org_id, expires_at)
@@ -1086,6 +1164,7 @@ $$;
 
 -- 邀請 ─────────────────────────────────────────────────────────────
 
+-- 不建 profiles：廣場的好友建築紅點每次都會讀。
 create function public.get_friend_requests()
 returns jsonb
 language plpgsql
@@ -1094,7 +1173,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_me uuid := public.friends_me();
+  v_me uuid := public.friends_uid();
 begin
   perform public.friends_expire_requests(v_me);
   return coalesce((
@@ -1146,8 +1225,11 @@ begin
   end if;
 
   if p_action = 'accept' then
-    if public.friend_count(v_me) >= 100 or public.friend_count(r.from_user) >= 100 then
+    if public.friend_count(v_me) >= 100 then
       raise exception 'friend_limit';
+    end if;
+    if public.friend_count(r.from_user) >= 100 then
+      raise exception 'other_friend_limit';
     end if;
     perform public.friends_accept(p_id);
   else
@@ -1372,7 +1454,7 @@ $$;
 -- ── avatars bucket（私有）──────────────────────────────────────────
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('avatars', 'avatars', false, 1048576, array['image/jpeg'])
+values ('avatars', 'avatars', false, 1048576, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
 -- 上傳：只能放自己的資料夾；停權中或今天已經傳 5 張就擋。
@@ -1391,7 +1473,8 @@ as $$
     and (
       select count(*) from storage.objects
       where bucket_id = 'avatars'
-        and (storage.foldername(name))[1] = auth.uid()::text
+        -- 寫成前綴比對，(bucket_id, name) 的索引用得上；uuid 裡沒有 % 或 _。
+        and name like auth.uid()::text || '/%'
         and created_at >= (public.friends_today()::timestamp at time zone 'Asia/Taipei')
     ) < 5
 $$;
@@ -1406,7 +1489,7 @@ security definer
 set search_path = ''
 as $$
   select auth.uid() is not null and (
-    (storage.foldername(p_name))[1] = auth.uid()::text
+    p_name like auth.uid()::text || '/%'
     or exists (
       select 1 from public.profiles p
       where p.avatar_path = p_name and public.is_my_friend(p.user_id)
@@ -1418,7 +1501,7 @@ create policy "avatars: upload to own folder" on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'avatars'
-    and (storage.foldername(name))[1] = (select auth.uid())::text
+    and name like (select auth.uid())::text || '/%'
     and public.avatar_upload_allowed()
   );
 
@@ -1433,6 +1516,7 @@ revoke execute on function
   public.friends_today(),
   public.friends_new_code(),
   public.friends_me(),
+  public.friends_uid(),
   public.friends_blocked_either(uuid, uuid),
   public.friends_lock_pair(uuid, uuid),
   public.friends_profile_json(uuid, boolean),
@@ -1447,6 +1531,7 @@ revoke execute on function
   public.friends_user_by_code(uuid, text),
   public.friends_org_by_code(text),
   public.friends_resolve_qr(uuid, text),
+  public.friends_qr_grace(uuid, text),
   public.friends_org_json(public.orgs),
   public.friends_clean_nickname(text),
   public.are_friends(uuid, uuid, boolean),
