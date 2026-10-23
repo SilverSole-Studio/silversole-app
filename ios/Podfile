@@ -45,6 +45,7 @@ post_install do |installer|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
         'PERMISSION_CAMERA=1', # the H5 games' camera mode
+        'PERMISSION_LOCATION_WHENINUSE=1', # Permission.locationWhenInUse (maps, main.dart)
       ]
     end
   end
