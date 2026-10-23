@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 
 /// Games tab: the H5 「粗哥廣場」 fills the whole tab instead of a card list.
@@ -51,14 +52,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                 initialSettings: InAppWebViewSettings(
                   isInspectable: kDebugMode,
                   mediaPlaybackRequiresUserGesture: false,
+                  allowsInlineMediaPlayback: true,
                 ),
                 onWebViewCreated: (controller) => _controller = controller,
                 // Camera mode in the games asks for the camera from the page.
-                onPermissionRequest: (controller, request) async =>
-                    PermissionResponse(
-                      resources: request.resources,
-                      action: PermissionResponseAction.GRANT,
-                    ),
+                onPermissionRequest: (controller, request) =>
+                    answerGamePermission(request),
                 onLoadStop: (controller, url) {
                   soleForwardReady = true;
                   _syncBack();

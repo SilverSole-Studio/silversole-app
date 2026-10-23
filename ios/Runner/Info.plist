@@ -47,6 +47,8 @@
 	<true/>
 	<key>MAPS_API_KEY</key>
 	<string>$(MAPS_API_KEY)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>用鏡頭判斷遊戲動作，畫面只在手機上即時處理，不錄影、不上傳。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
     <string>需要定位來顯示裝置位置</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 
@@ -13,6 +14,9 @@ import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 ///    [GameSoleForwarding].
 ///  • JS → Flutter: the game reports its score via the `gameScore` handler
 ///    (`window.flutter_inappwebview.callHandler('gameScore', score)`).
+///
+/// A game's camera mode asks for the camera from the page; only that, and only
+/// for the game site, is granted — see [answerGamePermission].
 class GameWebViewPage extends ConsumerStatefulWidget {
   const GameWebViewPage({super.key, required this.url, this.title});
 
@@ -53,7 +57,12 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
       body: SafeArea(
         child: InAppWebView(
           initialUrlRequest: URLRequest(url: WebUri(widget.url)),
-          initialSettings: InAppWebViewSettings(isInspectable: kDebugMode),
+          initialSettings: InAppWebViewSettings(
+            isInspectable: kDebugMode,
+            // Camera mode: the preview autoplays, inline rather than full screen on iOS.
+            mediaPlaybackRequiresUserGesture: false,
+            allowsInlineMediaPlayback: true,
+          ),
           onWebViewCreated: (controller) {
             _controller = controller;
             // Game → Flutter: the game reports its score here.
@@ -65,6 +74,8 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
               },
             );
           },
+          onPermissionRequest: (controller, request) =>
+              answerGamePermission(request),
           onLoadStop: (controller, url) {
             // The page's sole handlers are installed → start forwarding.
             soleForwardReady = true;
