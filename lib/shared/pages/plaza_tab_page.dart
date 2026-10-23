@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
@@ -142,6 +143,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                 initialSettings: InAppWebViewSettings(
                   isInspectable: kDebugMode,
                   mediaPlaybackRequiresUserGesture: false,
+                  allowsInlineMediaPlayback: true,
                 ),
                 onWebViewCreated: (controller) {
                   _controller = controller;
@@ -149,22 +151,8 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                 },
                 // Camera mode in the games asks for the camera from the page.
                 // That is all a page gets, and only on the games' own site.
-                onPermissionRequest: (controller, request) async {
-                  final camera =
-                      PlazaBridge.isGameOrigin(
-                        request.origin,
-                        Constants.gameUrl,
-                      ) &&
-                      request.resources.contains(PermissionResourceType.CAMERA);
-                  return PermissionResponse(
-                    resources: camera
-                        ? [PermissionResourceType.CAMERA]
-                        : request.resources,
-                    action: camera
-                        ? PermissionResponseAction.GRANT
-                        : PermissionResponseAction.DENY,
-                  );
-                },
+                onPermissionRequest: (controller, request) =>
+                    answerGamePermission(request),
                 onLoadStart: (controller, url) => _loaded = false,
                 onLoadStop: (controller, url) {
                   soleForwardReady = true;
