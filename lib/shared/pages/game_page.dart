@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
@@ -9,6 +10,7 @@ import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
 /// Games hub, classic theme.
@@ -226,11 +228,11 @@ class _Pill extends StatelessWidget {
 
 // ── Village shortcuts ─────────────────────────────────────────────────────
 
-class _VillageRow extends StatelessWidget {
+class _VillageRow extends ConsumerWidget {
   const _VillageRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       spacing: AppSpacing.sm,
       children: [
@@ -253,9 +255,10 @@ class _VillageRow extends StatelessWidget {
         Expanded(
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_mailbox.webp',
-            title: 'family'.tr(),
-            subtitle: 'family_cheers'.tr(args: ['2']),
-            onTap: comingSoon,
+            title: 'friends_title'.tr(),
+            subtitle: friendsCardSubtitle(ref),
+            badge: ref.watch(incomingRequestCountProvider),
+            onTap: () => context.push('/friends'),
           ),
         ),
       ],
@@ -269,12 +272,16 @@ class _VillageCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badge = 0,
   });
 
   final String art;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+
+  /// Red dot count on the art (pending friend requests).
+  final int badge;
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +297,12 @@ class _VillageCard extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Image.asset(art, height: 52, fit: BoxFit.contain),
+              Badge(
+                isLabelVisible: badge > 0,
+                label: Text('$badge'),
+                largeSize: 22,
+                child: Image.asset(art, height: 52, fit: BoxFit.contain),
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 title,

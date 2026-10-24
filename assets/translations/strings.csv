@@ -500,3 +500,134 @@ debug_add_fake_sole,Add a fake second sole,加入假的第二隻鞋墊
 debug_remove_fake_sole,Remove the fake sole,移除假鞋墊
 debug_fake_sole_stomp,Stomp,踩一下
 foot_side_tap_to_redo,Tap to set this foot again,點一下重新指定這隻的腳別
+friends_title,Friends,朋友
+friends_card_count,{} friends,{} 位朋友
+friends_card_requests,{} want to add you,{} 人想加你
+friends_card_open,Add friends,加朋友
+friends_setup_title,First pick a name,先取一個稱呼
+friends_setup_intro,Friends will see this name and picture. Only people you know can add you.,朋友會看到這個名字和頭像。只有認識的人加得到你。
+friends_setup_done,Done - now add friends,好了，去加朋友
+friends_profile_title,My name and picture,我的名字與頭像
+friends_nickname_label,What should friends call you?,朋友怎麼叫你？
+friends_nickname_hint,e.g. Auntie Wang,例：王阿姨
+friends_nickname_note,No need for your real name. 2 to 8 characters.,不用寫本名，2 到 8 個字。
+friends_avatar_label,Pick a picture,挑一個頭像
+friends_photo_label,Or use your own photo,或用自己的照片
+friends_photo_note,Only friends see your photo. Everyone else sees the picture above.,照片只有朋友看得到，其他人看到的是上面挑的頭像。
+friends_photo_from_album,Choose from album,從相簿挑
+friends_photo_take,Take a photo,現在拍一張
+friends_photo_clear,Use the picture instead,改回上面的頭像
+friends_photo_saved,Photo saved,照片換好了
+friends_org_visibility_title,Centre lists,據點名單
+friends_org_visibility,Let people at my centres see me,讓同據點的人看到我
+friends_save,Save,存好
+friends_profile_saved,Saved,存好了
+friends_my_code,Friend code {},好友碼 {}
+friends_my_qr,My QR,我的 QR
+friends_scan_qr,Scan QR,掃 QR
+friends_enter_code,Enter code,輸入好友碼
+friends_requests,Requests,邀請
+friends_my_orgs,My centres,我的據點
+friends_no_org,Not in any centre yet,還沒加入據點
+friends_list_title,Friends ({} of {}),朋友（{}／{}）
+friends_list_empty,No friends yet. Show your QR to someone next to you or tell them your friend code.,還沒有朋友。可以讓旁邊的人掃你的 QR，或把好友碼念給對方聽。
+friends_visit_garden,Visit garden,去菜園看看
+friends_blocked_title,Blocked,封鎖名單
+friends_nickname_removed,Your name was taken down after a report. Please pick a new one.,你的名字被檢舉後移除了，請取一個新的。
+friends_photo_removed,Your photo was taken down after a report. Friends now see your picture instead.,你的照片被檢舉後移除了，朋友現在看到的是你挑的頭像。
+friends_pick_new_name,Pick a new name,重取名字
+friends_got_it,OK,知道了
+friends_my_qr_hint,Let the person next to you scan this,讓旁邊的人掃這個
+friends_or_read_code,Or read them your friend code,或把好友碼念給對方聽
+friends_rotate_code,Get a new code,換一組號碼
+friends_rotate_code_confirm,Your old code stops working right away. Requests already sent still count.,舊號碼馬上不能用，已經送出的邀請不受影響。
+friends_rotate_code_yes,Change it,確定要換
+friends_rotate_code_done,You have a new code,換好新號碼了
+friends_wants_to_add_you,{} wants to be your friend,{} 想加你當朋友
+friends_accept,Accept,同意
+friends_decline,No thanks,不要
+friends_decline_block,Block,封鎖他
+friends_scan_hint,Point the camera at your friend's QR or at a centre's poster,把鏡頭對準朋友的 QR，或據點海報上的 QR
+friends_type_code_instead,Type a code instead,改成輸入號碼
+friends_not_our_qr,This is not a SilverSole friend QR,這不是銀足的朋友條碼
+friends_camera_denied,The camera is off for this app. Turn it on in the phone settings or type the code instead.,相機權限沒有打開。可以到手機設定打開，或改成輸入號碼。
+friends_camera_failed,The camera could not start. Please type the code instead.,相機打不開，請改成輸入號碼。
+friends_enter_code_hint,Type the 8-digit friend code,輸入對方的 8 位數好友碼
+friends_enter_org_code,Enter centre code,輸入據點代碼
+friends_enter_org_code_hint,Type the 8-digit code on the centre's poster,輸入據點海報上的 8 位數代碼
+friends_backspace,Delete,刪除
+friends_add_this_person,Add as friend,加他當朋友
+friends_not_now,Not now,先不要
+friends_request_sent,Sent. Waiting for {} to accept.,送出了，等{}按同意。
+friends_now_friends,You and {} are friends now,你和{}是朋友了
+friends_already_friends,You and {} are already friends,你和{}已經是朋友了
+friends_join_org_question,Join {}?,要加入「{}」嗎？
+friends_join_org,Join,加入
+friends_join_org_title,Join a centre (up to {}),加入據點（最多 {} 個）
+friends_join_org_hint,Scan the poster at your centre or type its code.,掃據點貼的海報，或輸入海報上的代碼。
+friends_scan_poster,Scan the poster,掃海報
+friends_orgs_empty,You have not joined a centre yet.,還沒有加入任何據點。
+friends_org_members_hint,People at this centre. Tap Add and they will be asked.,同據點的人。按「加朋友」，對方同意就成立。
+friends_org_members_empty,No one else here yet,這裡還沒有其他人
+friends_leave_org,Leave this centre,退出這個據點
+friends_leave_org_confirm,Leave {}? Friends you made here stay friends.,要退出「{}」嗎？在這裡加的朋友不會不見。
+friends_tag_friend,Friend,朋友
+friends_tag_waiting,Waiting,等回覆
+friends_tag_wants_you,Reply,回覆他
+friends_add,Add,加朋友
+friends_requests_incoming,Want to add you,想加你的人
+friends_requests_outgoing,Waiting for a reply,等對方回覆
+friends_requests_none,None right now,目前沒有
+friends_via_qr,By QR,掃 QR 加的
+friends_via_code,By friend code,輸入好友碼加的
+friends_via_org,Also at {},同在「{}」
+friends_waiting_days,{} days left to reply,還有 {} 天可以回覆
+friends_cancel_request,Cancel,收回
+friends_since,Friends since {},{} 成為朋友
+friends_remove,Remove friend,解除朋友
+friends_remove_title,Remove {}?,要解除和{}的朋友關係嗎？
+friends_remove_confirm,They will not be told. They can no longer visit your garden.,不會通知對方。解除後他不能再來你的菜園。
+friends_removed,You and {} are no longer friends,已解除和{}的朋友關係
+friends_block,Block,封鎖
+friends_block_title,Block {}?,要封鎖{}嗎？
+friends_block_confirm,They will not be told. They will not be able to find you or visit your garden.,不會通知對方。封鎖後他找不到你，也不能來你的菜園。
+friends_blocked,{} is blocked,已封鎖{}
+friends_blocked_hint,People here cannot find you. Unblocking does not make them friends again.,這裡的人找不到你。解除封鎖不會變回朋友，要重新加。
+friends_blocked_empty,You have not blocked anyone,你沒有封鎖任何人
+friends_unblock,Unblock,解除封鎖
+friends_unblock_confirm,Unblock {}?,要解除封鎖{}嗎？
+friends_report_photo,Report photo,檢舉照片
+friends_report_name,Report name,檢舉名字
+friends_report_photo_why,What is wrong with this photo?,這張照片哪裡不妥？
+friends_report_name_why,What is wrong with this name?,這個名字哪裡不妥？
+friends_report_reason_indecent,Indecent,不雅
+friends_report_reason_violent,Violent,暴力
+friends_report_reason_impersonation,Pretending to be someone,冒用別人
+friends_report_reason_ads,Advertising,廣告
+friends_report_reason_other,Something else,其他
+friends_report_sent,Thanks. We will take a look.,收到了，我們會看一下。
+friends_cancel,Cancel,取消
+friends_err_notFound,Number not found. Please check it again.,找不到這個號碼，請再對一次。
+friends_err_qrExpired,This QR has expired. Ask them to open it again.,條碼過期了，請對方重新打開。
+friends_err_limitReached,That is enough for today. Please try again tomorrow.,今天查太多次了，明天再試。
+friends_err_cooldown,You asked recently. Please try again later.,最近邀過了，過一陣子再試。
+friends_err_friendLimit,You already have 100 friends. Remove one before adding more.,朋友已經 100 位了，要先解除一位才能再加。
+friends_err_orgLimit,You are already in 3 centres. Leave one to join another.,已經加入 3 個據點了，要先退出一個。
+friends_err_pendingLimit,Too many requests are waiting. Wait for some replies first.,等回覆的邀請太多了，先等對方回覆。
+friends_err_locked,Too many wrong numbers. Please wait 10 minutes.,號碼錯太多次了，請等 10 分鐘再試。
+friends_err_nicknameInvalid,Use 2 to 8 characters and not only symbols.,名字要 2 到 8 個字，不能只有符號。
+friends_err_nicknameChangeLimit,Names can be changed 3 times a day. Please try tomorrow.,名字一天只能改 3 次，明天再改。
+friends_err_uploadBanned,Photo upload is paused for now. You can still pick a picture.,暫時不能上傳照片，可以先挑一個頭像。
+friends_err_offline,No connection. Please try again once you are online.,沒有網路，連上再來。
+friends_err_unknown,Something went wrong. Please try again later.,出了點問題，請等一下再試。
+friends_err_otherFriendLimit,They already have 100 friends and cannot add more.,對方的朋友已經滿了，加不進去。
+friends_err_uploadFailed,The photo did not upload. Please try again.,照片沒傳上去，請再試一次。
+friends_err_notFound_qr,This QR does not work. Ask them to open it again.,這個條碼用不了，請對方重新打開 QR。
+friends_err_notFound_org,No centre has this code. Please check it again.,沒有這個據點代碼，請再對一次。
+friends_err_notFound_person,This person is no longer on the list.,這個人已經不在名單上了。
+friends_err_notFound_request,This request is no longer open.,這個邀請已經不在了。
+friends_err_notFound_report,This person can no longer be reported.,這個人已經不能檢舉了。
+friends_err_notFound_avatar,That picture is not available. Please pick another.,沒有這個頭像，請換一個。
+friends_err_limitReached_photo,Photos can be changed 5 times a day. Please try tomorrow.,照片一天只能換 5 次，明天再換。
+friends_err_limitReached_report,You have sent 10 reports today. Please try tomorrow.,今天已經檢舉 10 次了，明天再試。
+friends_qr_retry,Try again,再試一次

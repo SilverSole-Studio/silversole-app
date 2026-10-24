@@ -8,6 +8,7 @@ import 'package:silversole/shared/pages/devices_page.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
+import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/pages/firmware_update_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
@@ -15,9 +16,11 @@ import 'package:silversole/shared/pages/shop_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final user = ref.watch(authUserProvider);
+  final friendsOn = ref.watch(friendsEnabledProvider);
 
   return GoRouter(
     routes: [
@@ -52,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => FirmwareUpdatePage(source: state.extra),
       ),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
+      friendsRoute(enabled: friendsOn),
       GoRoute(
         path: '/game-webview',
         builder: (_, state) {

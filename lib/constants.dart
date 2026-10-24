@@ -58,4 +58,15 @@ abstract class Constants {
   static String get gameUrl => _gameUrlOverride.isNotEmpty
       ? _gameUrlOverride
       : 'https://h5.silversole.dongyu.company/';
+
+  /// Which backend the friends feature talks to: `supabase` once
+  /// `supabase/migrations/20261019120000_friends.sql` is applied, otherwise
+  /// in-memory demo data (and release builds hide friends altogether — see
+  /// `friendsEnabledProvider`).
+  ///
+  ///     flutter run --dart-define=FRIENDS_BACKEND=supabase
+  static const String friendsBackend = String.fromEnvironment(
+    'FRIENDS_BACKEND',
+  );
+  static const bool friendsOnSupabase = friendsBackend == 'supabase';
 }
