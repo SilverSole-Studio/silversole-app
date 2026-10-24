@@ -175,11 +175,13 @@ jobs:
         run: |
           out=build/app/outputs/flutter-apk
           flutter build apk --release --build-name="$VERSION_NAME" --build-number="$VERSION_CODE" --split-per-abi
-          for abi in arm64-v8a armeabi-v7a x86_64; do
-            mv "$out/app-$abi-release.apk" "dist/silversole_${RELEASE_NAME#v}_$abi-release.apk"
-          done
+          # 檔名直接寫給誰用（user 10/24：一次四個看不懂要下載哪個）；編號＝建議順序
+          v="${RELEASE_NAME#v}"
+          mv "$out/app-arm64-v8a-release.apk"   "dist/silversole_${v}_1-phone-arm64.apk"
+          mv "$out/app-armeabi-v7a-release.apk" "dist/silversole_${v}_2-old-phone-armv7.apk"
+          mv "$out/app-x86_64-release.apk"      "dist/silversole_${v}_4-emulator-x86_64.apk"
           flutter build apk --release --build-name="$VERSION_NAME" --build-number="$VERSION_CODE"
-          mv "$out/app-release.apk" "dist/silversole_${RELEASE_NAME#v}_universal-release.apk"
+          mv "$out/app-release.apk" "dist/silversole_${v}_3-any-phone-universal.apk"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
@@ -226,19 +228,20 @@ jobs:
           {
             echo "Google Play 封閉測試版（內測），測試通過後推 \`v$VERSION_NAME\` 即上架正式版。"
             echo
+            cat .github/release-apk-guide.md
+            echo
             awk -v ver="v$VERSION_NAME" '
             BEGIN { found=0 }
             $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
             $0 ~ "^##[[:space:]]+v" { if (found) exit }
             found { print }
             ' CHANGELOG.md
-            cat .github/release-apk-guide.md
           } > notes.md
           # arm64 first: the in-app GitHub updater offers the first asset.
           gh release create "$GITHUB_REF_NAME" --prerelease \
             --title "$GITHUB_REF_NAME" --notes-file notes.md \
-            dist/*_arm64-v8a-release.apk dist/*_armeabi-v7a-release.apk \
-            dist/*_x86_64-release.apk dist/*_universal-release.apk
+            dist/*_1-phone-arm64.apk dist/*_2-old-phone-armv7.apk \
+            dist/*_3-any-phone-universal.apk dist/*_4-emulator-x86_64.apk
 
       - name: Notify Discord
         if: env.KIND == 'rc'
@@ -292,6 +295,15 @@ jobs:
           for f in dist/*.apk; do
             mv "$f" "${f/_${RC_TAG#v}_/_${VERSION_NAME}_}"
           done
+          # 10/24 前的 rc 是舊檔名，換成新檔名，下面上傳才對得上
+          for f in dist/*.apk; do
+            case "$f" in
+              *_arm64-v8a-release.apk)   mv "$f" "${f%_arm64-v8a-release.apk}_1-phone-arm64.apk" ;;
+              *_armeabi-v7a-release.apk) mv "$f" "${f%_armeabi-v7a-release.apk}_2-old-phone-armv7.apk" ;;
+              *_universal-release.apk)   mv "$f" "${f%_universal-release.apk}_3-any-phone-universal.apk" ;;
+              *_x86_64-release.apk)      mv "$f" "${f%_x86_64-release.apk}_4-emulator-x86_64.apk" ;;
+            esac
+          done
           ls dist
           if [ "$(git rev-list -n1 "$RC_TAG")" != "$(git rev-list -n1 "$GITHUB_REF_NAME")" ]; then
             echo "::warning::$GITHUB_REF_NAME is not on the same commit as $RC_TAG. Production ships $RC_TAG's build; later commits are not in it."
@@ -303,13 +315,14 @@ jobs:
       - name: Create GitHub release
         run: |
           {
+            cat .github/release-apk-guide.md
+            echo
             awk -v ver="$GITHUB_REF_NAME" '
             BEGIN { found=0 }
             $0 ~ "^##[[:space:]]*" ver "$" { found=1; next }
             $0 ~ "^##[[:space:]]+v" { if (found) exit }
             found { print }
             ' CHANGELOG.md
-            cat .github/release-apk-guide.md
           } > notes.md
           {
             echo "NOTES<<EOF"
@@ -324,8 +337,8 @@ jobs:
           # arm64 first: the in-app GitHub updater offers the first asset.
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" --notes-file notes.md \
-            dist/*_arm64-v8a-release.apk dist/*_armeabi-v7a-release.apk \
-            dist/*_x86_64-release.apk dist/*_universal-release.apk
+            dist/*_1-phone-arm64.apk dist/*_2-old-phone-armv7.apk \
+            dist/*_3-any-phone-universal.apk dist/*_4-emulator-x86_64.apk
 
       - name: Notify Discord
         uses: tsickert/discord-webhook@v7.0.0
