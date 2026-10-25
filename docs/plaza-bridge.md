@@ -11,9 +11,15 @@ App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `
 ```js
 window.silversoleApp = {
   features: { friends: true },   // false＝不要顯示好友建築
-  friendRequests: 2              // 好友建築上的紅點數字；friends 為 false 時一律 0
+  friendRequests: 2,             // 好友建築上的紅點數字；friends 為 false 時一律 0
+  account: {                     // 目前登入的使用者；沒登入時整個 account 不存在
+    id: "uuid-of-supabase-user", // Supabase auth 的 user id
+    username: "ricky951102"      // 登入 email 的 @ 前面那段；沒有 email 時是 ""
+  }
 };
 ```
+
+`account.username`：App 沒有獨立的「帳號名稱」欄位（登入是 email／Google），所以取 email 的 `@` 前面（`ricky951102@gmail.com` → `ricky951102`）。好友的暱稱是使用者自己取的，不拿來當帳號。登入或登出時 App 會重新送一次 `silversoleapp` 事件。注意 username 只是拿來比對的名字，不同網域的 email 可以有相同的前綴，不能當作身分證明。
 
 並在 `window` 上觸發 `silversoleapp` 事件（`event.detail` 就是上面這個物件）。
 
