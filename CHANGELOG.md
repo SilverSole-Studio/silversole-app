@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.11.0
+
+更新內容:
+
+- 新增好友：用好友碼加好友、收發好友邀請，廣場的冒險者公會小屋有新邀請時會亮紅點。
+- 遊戲世界會認得你登入的帳號。
+- 手機系統字體調到很大時，畫面不再跑版；遊戲會自動切換成大字模式。
+
+Updates:
+
+- Friends: add friends by friend code and send or accept invites; the guild hut in the plaza shows a red dot for new invites.
+- The game world now knows which account you are signed in with.
+- With the phone's font size set very large, screens no longer overflow, and the games switch to large-text mode on their own.
+
 ## v1.10.0
 
 更新內容:
