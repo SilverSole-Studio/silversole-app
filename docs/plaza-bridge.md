@@ -12,9 +12,15 @@ App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `
 window.silversoleApp = {
   features: { friends: true },   // false＝不要顯示好友建築
   friendRequests: 2,             // 好友建築上的紅點數字；friends 為 false 時一律 0
+  account: {                     // 目前登入的使用者；沒登入時整個 account 不存在
+    id: "uuid-of-supabase-user", // Supabase auth 的 user id
+    username: "ricky951102"      // 登入 email 的 @ 前面那段；沒有 email 時是 ""
+  },
   systemFontScale: 1.0           // 手機「字體大小」設定的倍率（1.0＝預設，1.3、1.5、2.0…）
 };
 ```
+
+`account.username`：App 沒有獨立的「帳號名稱」欄位（登入是 email／Google），所以取 email 的 `@` 前面（`ricky951102@gmail.com` → `ricky951102`）。好友的暱稱是使用者自己取的，不拿來當帳號。登入或登出時 App 會重新送一次 `silversoleapp` 事件。注意 username 只是拿來比對的名字，不同網域的 email 可以有相同的前綴，不能當作身分證明。
 
 **`systemFontScale`**：長輩常把手機字體調到最大。App 自己的字最多放大到 1.3 倍，WebView 的 `textZoom` 固定 100（不會被系統再放大一次），所以網頁字不會跟著系統放大。要讓網頁自己跟著變大，就看這個欄位：大於等於 1.15 時自動開大字模式（使用者手動切換的設定優先）。
 

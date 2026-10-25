@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
+import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
@@ -59,9 +60,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
 
   Map<String, Object> _appInfo() {
     final friends = ref.read(friendsEnabledProvider);
+    final user = ref.read(authUserProvider);
     return PlazaBridge.info(
       friends: friends,
       friendRequests: friends ? ref.read(incomingRequestCountProvider) : 0,
+      accountId: user?.uuid,
+      accountEmail: user?.email,
       systemFontScale: _systemFontScale,
     );
   }
@@ -144,6 +148,8 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     if (ref.watch(friendsEnabledProvider)) {
       ref.listen(incomingRequestCountProvider, (_, _) => _publishAppInfo());
     }
+    // Sign in / out while the tab is up: tell the page who it is now.
+    ref.listen(authUserProvider, (_, _) => _publishAppInfo());
 
     return PopScope(
       canPop: !_canGoBack,

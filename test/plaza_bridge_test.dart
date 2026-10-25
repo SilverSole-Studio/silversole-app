@@ -37,6 +37,42 @@ void main() {
     });
   });
 
+  group('PlazaBridge.info account', () {
+    test('signed in: id and the email prefix as username', () {
+      final info = PlazaBridge.info(
+        friends: false,
+        friendRequests: 0,
+        accountId: 'u-1',
+        accountEmail: 'ricky951102@gmail.com',
+      );
+      expect(info['account'], {'id': 'u-1', 'username': 'ricky951102'});
+    });
+
+    test('signed out: no account key', () {
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+        ).containsKey('account'),
+        isFalse,
+      );
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+          accountId: '',
+        ).containsKey('account'),
+        isFalse,
+      );
+    });
+
+    test('no email: empty username', () {
+      expect(PlazaBridge.usernameOf(null), '');
+      expect(PlazaBridge.usernameOf(''), '');
+      expect(PlazaBridge.usernameOf('abc'), 'abc');
+    });
+  });
+
   test('publishScript sets window.silversoleApp and fires the event', () {
     final info = PlazaBridge.info(friends: true, friendRequests: 1);
     final js = PlazaBridge.publishScript(info);
