@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
@@ -45,6 +46,10 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   double _progress = 0;
   bool _loaded = false;
 
+  /// The phone's font-size setting, handed to the page so its large-text mode
+  /// can follow it (the app itself caps its own text at [kMaxAppTextScale]).
+  double _systemFontScale = 1.0;
+
   @override
   InAppWebViewController? get soleForwardTarget => _controller;
 
@@ -61,7 +66,19 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       friendRequests: friends ? ref.read(incomingRequestCountProvider) : 0,
       accountId: user?.uuid,
       accountEmail: user?.email,
+      systemFontScale: _systemFontScale,
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scale = SystemFontScale.of(context);
+    if (scale == _systemFontScale) return;
+    _systemFontScale = scale;
+    // The first call happens before the web view exists: nothing to publish
+    // yet, the initial user script reads the value.
+    _publishAppInfo();
   }
 
   static const _infoScriptGroup = 'silversoleApp';
@@ -150,6 +167,9 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                   isInspectable: kDebugMode,
                   mediaPlaybackRequiresUserGesture: false,
                   allowsInlineMediaPlayback: true,
+                  // The phone's font size must not enlarge the web text a
+                  // second time; the page enlarges itself (large-text mode).
+                  textZoom: 100,
                 ),
                 onWebViewCreated: (controller) {
                   _controller = controller;

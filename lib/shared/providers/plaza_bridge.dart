@@ -21,24 +21,30 @@ abstract final class PlazaBridge {
   static const String infoEvent = 'silversoleapp';
 
   /// What the plaza needs to know: whether to show the friends building, the
-  /// red-dot count on it (always 0 while friends are off), and who is signed
-  /// in. `account` is left out when nobody is signed in ([accountId] null or
-  /// empty).
+  /// red-dot count on it (always 0 while friends are off), who is signed in,
+  /// and the phone's font scale. `account` is left out when nobody is signed
+  /// in ([accountId] null or empty).
   ///
   /// The app has no separate username: sign-in is by email (or Google), so
   /// `account.username` is the part of [accountEmail] before the `@`
   /// (`ricky951102@gmail.com` → `ricky951102`). It is empty when there is no
   /// email. It is only a name to match on, not proof of who the user is.
+  ///
+  /// [systemFontScale] is the phone's font-size setting (1.0 = default; the
+  /// app itself caps its own text, the web games can use this to switch on
+  /// their large-text mode).
   static Map<String, Object> info({
     required bool friends,
     required int friendRequests,
     String? accountId,
     String? accountEmail,
+    double systemFontScale = 1.0,
   }) => {
     'features': {'friends': friends},
     'friendRequests': friends ? friendRequests : 0,
     if (accountId != null && accountId.isNotEmpty)
       'account': {'id': accountId, 'username': usernameOf(accountEmail)},
+    'systemFontScale': systemFontScale,
   };
 
   /// The part of [email] before the first `@`, or '' when there is none.

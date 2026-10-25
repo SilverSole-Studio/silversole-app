@@ -13,13 +13,26 @@ void main() {
       expect(PlazaBridge.info(friends: true, friendRequests: 2), {
         'features': {'friends': true},
         'friendRequests': 2,
+        'systemFontScale': 1.0,
       });
+    });
+
+    test('passes on the phone font scale so the page can pick large text', () {
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+          systemFontScale: 1.5,
+        )['systemFontScale'],
+        1.5,
+      );
     });
 
     test('friends off: no building and never a count', () {
       expect(PlazaBridge.info(friends: false, friendRequests: 5), {
         'features': {'friends': false},
         'friendRequests': 0,
+        'systemFontScale': 1.0,
       });
     });
   });
