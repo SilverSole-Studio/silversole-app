@@ -11,9 +11,12 @@ App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `
 ```js
 window.silversoleApp = {
   features: { friends: true },   // false＝不要顯示好友建築
-  friendRequests: 2              // 好友建築上的紅點數字；friends 為 false 時一律 0
+  friendRequests: 2,             // 好友建築上的紅點數字；friends 為 false 時一律 0
+  systemFontScale: 1.0           // 手機「字體大小」設定的倍率（1.0＝預設，1.3、1.5、2.0…）
 };
 ```
+
+**`systemFontScale`**：長輩常把手機字體調到最大。App 自己的字最多放大到 1.3 倍，WebView 的 `textZoom` 固定 100（不會被系統再放大一次），所以網頁字不會跟著系統放大。要讓網頁自己跟著變大，就看這個欄位：大於等於 1.15 時自動開大字模式（使用者手動切換的設定優先）。
 
 並在 `window` 上觸發 `silversoleapp` 事件（`event.detail` 就是上面這個物件）。
 

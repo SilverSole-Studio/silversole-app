@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/routing/router.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
@@ -44,9 +45,15 @@ class App extends ConsumerWidget {
       // purpose: it is a latching alarm and nothing, including the
       // calibration question, may cover it or steal its dismiss button.
       // Remove it together with FallDemoOverlay.
-      builder: (context, child) => FallDemoOverlay(
-        child: FootSideCalibrationOverlay(
-          child: child ?? const SizedBox.shrink(),
+      //
+      // The system font scale is capped (see [kMaxAppTextScale]) outside of
+      // all of them, so the overlays are capped too.
+      builder: (context, child) => applySystemFontScale(
+        context,
+        FallDemoOverlay(
+          child: FootSideCalibrationOverlay(
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

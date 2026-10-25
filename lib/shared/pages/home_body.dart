@@ -31,10 +31,13 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
       220.0,
       screenHeight,
     );
-    return SizedBox(
-      height: bodyHeight,
+    // A minimum, not a fixed height: with a big system font the text needs
+    // more room, and the page scrolls instead of overflowing.
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: bodyHeight),
       child: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: AppSpacing.base,
           children: [

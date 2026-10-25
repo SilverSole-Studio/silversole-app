@@ -62,6 +62,9 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
             // Camera mode: the preview autoplays, inline rather than full screen on iOS.
             mediaPlaybackRequiresUserGesture: false,
             allowsInlineMediaPlayback: true,
+            // The phone's font size must not enlarge the web text a second
+            // time; the game has its own large-text mode.
+            textZoom: 100,
           ),
           onWebViewCreated: (controller) {
             _controller = controller;

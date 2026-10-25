@@ -22,12 +22,18 @@ abstract final class PlazaBridge {
 
   /// What the plaza needs to know: whether to show the friends building, and
   /// the red-dot count on it (always 0 while friends are off).
+  ///
+  /// [systemFontScale] is the phone's font-size setting (1.0 = default; the
+  /// app itself caps its own text, the web games can use this to switch on
+  /// their large-text mode).
   static Map<String, Object> info({
     required bool friends,
     required int friendRequests,
+    double systemFontScale = 1.0,
   }) => {
     'features': {'friends': friends},
     'friendRequests': friends ? friendRequests : 0,
+    'systemFontScale': systemFontScale,
   };
 
   /// The origin (`scheme://host[:port]`) of [gameUrl] — also the form

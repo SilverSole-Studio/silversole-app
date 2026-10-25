@@ -192,8 +192,17 @@ Widget statusCard(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             spacing: AppSpacing.xs,
                             children: [
-                              // Title
-                              Text(title, style: tt.titleLarge),
+                              // Title: a long name or e-mail address (or a
+                              // big system font) wraps, then ends in "…",
+                              // instead of pushing the row wider than the card.
+                              Flexible(
+                                child: Text(
+                                  title,
+                                  style: tt.titleLarge,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
 
                               // Right Tool Widget
                               switch (type) {
