@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,10 +37,19 @@ class _HomePageState extends ConsumerState<HomePage> {
       // A Play install updates through Play only — Play policy forbids
       // pointing it at another download. Sideloaded APKs (GitHub Releases)
       // cannot use Play updates, so they keep the GitHub prompt.
-      if (await PlayInAppUpdate.isInstalledFromPlay()) {
-        await PlayInAppUpdate.checkForUpdate();
-      } else if (mounted) {
-        showUpdateVersionDialog(context);
+      // iOS updates through TestFlight / the App Store.
+      final route = updateRoute(
+        defaultTargetPlatform,
+        installedFromPlay: await PlayInAppUpdate.isInstalledFromPlay(),
+      );
+      if (!mounted) return;
+      switch (route) {
+        case UpdateRoute.play:
+          await PlayInAppUpdate.checkForUpdate();
+        case UpdateRoute.github:
+          showUpdateVersionDialog(context);
+        case UpdateRoute.none:
+          break;
       }
     });
   }

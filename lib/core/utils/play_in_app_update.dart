@@ -47,3 +47,17 @@ class PlayInAppUpdate {
     }
   }
 }
+
+/// How this install should look for a newer version.
+enum UpdateRoute { play, github, none }
+
+/// Play installs update through Play only (Play policy). Sideloaded Android
+/// copies use the GitHub release. Everything else, iOS included (TestFlight /
+/// App Store), updates through its own store and is never offered an APK.
+UpdateRoute updateRoute(
+  TargetPlatform platform, {
+  required bool installedFromPlay,
+}) {
+  if (platform != TargetPlatform.android) return UpdateRoute.none;
+  return installedFromPlay ? UpdateRoute.play : UpdateRoute.github;
+}

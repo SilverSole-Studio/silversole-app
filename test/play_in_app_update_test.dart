@@ -52,4 +52,24 @@ void main() {
     expect(await PlayInAppUpdate.checkForUpdate(), InAppUpdateFlow.none);
     expect(called, isFalse);
   });
+
+  test('only a sideloaded Android copy gets the GitHub APK prompt', () {
+    expect(
+      updateRoute(TargetPlatform.android, installedFromPlay: true),
+      UpdateRoute.play,
+    );
+    expect(
+      updateRoute(TargetPlatform.android, installedFromPlay: false),
+      UpdateRoute.github,
+    );
+    // TestFlight and the App Store update iOS themselves; an APK link is wrong there.
+    expect(
+      updateRoute(TargetPlatform.iOS, installedFromPlay: false),
+      UpdateRoute.none,
+    );
+    expect(
+      updateRoute(TargetPlatform.macOS, installedFromPlay: false),
+      UpdateRoute.none,
+    );
+  });
 }
