@@ -12,6 +12,7 @@ import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
+import 'package:silversole/shared/widgets/privacy_policy_link.dart';
 import 'package:silversole/shared/widgets/status_card.dart';
 
 import '../../core/error/result.dart';
@@ -182,6 +183,12 @@ class _PersonPageState extends ConsumerState<PersonPage> {
             : 'theme_classic'.tr(),
         icon: LucideIcons.palette,
         onClick: switchThemeVariant,
+      ),
+      ListTileData.normal(
+        title: 'privacy_policy'.tr(),
+        icon: LucideIcons.shieldCheck,
+        onClick: () => openPrivacyPolicy(context),
+        trailing: true,
       ),
     ];
 

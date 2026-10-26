@@ -11,6 +11,8 @@ import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/widgets/apple_sign_in_button.dart';
+import 'package:silversole/shared/widgets/privacy_policy_link.dart';
 
 import '../../core/utils/field_validator.dart';
 
@@ -45,17 +47,17 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
   void setConfirmPassword(String value) =>
       setState(() => confirmPassword = value);
 
-  bool _googleBusy = false;
+  bool _socialBusy = false;
 
-  /// A first Google sign-in creates the account, so this page offers it too —
-  /// and, unlike email sign-up, it ends signed in.
-  Future<void> signInGoogle() async {
-    if (_googleBusy) return;
-    _googleBusy = true;
+  /// A first Google or Apple sign-in creates the account, so this page offers
+  /// them too — and, unlike email sign-up, they end signed in.
+  Future<void> signInWith(
+    Future<Result<UserData>> Function(AuthService auth) provider,
+  ) async {
+    if (_socialBusy) return;
+    _socialBusy = true;
     try {
-      final res = await ref
-          .read(authServiceProvider)
-          .supabaseSignInWithGoogle();
+      final res = await provider(ref.read(authServiceProvider));
       switch (res) {
         case Ok<UserData>():
           ref.read(authUserProvider.notifier).setUser(res.value);
@@ -67,7 +69,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
           showErrorSnakeBar(res.error.toString());
       }
     } finally {
-      _googleBusy = false;
+      _socialBusy = false;
     }
   }
 
@@ -201,13 +203,24 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                             ),
                     ),
                   ),
-                  if (googleSignInAvailable) ...[
+                  if (googleSignInAvailable || appleSignInAvailable)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       child: textOnDivider(context, 'or'.tr()),
                     ),
-                    googleSignInButton(context, onPressed: signInGoogle),
-                  ],
+                  if (appleSignInAvailable)
+                    appleSignInButton(
+                      context,
+                      onPressed: () =>
+                          signInWith((auth) => auth.supabaseSignInWithApple()),
+                    ),
+                  if (googleSignInAvailable)
+                    googleSignInButton(
+                      context,
+                      onPressed: () =>
+                          signInWith((auth) => auth.supabaseSignInWithGoogle()),
+                    ),
+                  const PrivacyPolicyLink(),
                 ],
               ),
             ),

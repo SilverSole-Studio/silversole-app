@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../constants.dart';
@@ -12,8 +13,8 @@ import '../../shared/models/auth_model.dart';
 import '../error/result.dart';
 
 /// Android and iOS each have their own OAuth client (see
-/// `Constants.googleWebClientId`). Before the App Store, guideline 4.8 also
-/// requires Sign in with Apple next to this button on iOS.
+/// `Constants.googleWebClientId`). On iOS, guideline 4.8 also requires Sign in
+/// with Apple next to this button ([appleSignInAvailable]).
 bool get googleSignInAvailable =>
     defaultTargetPlatform == TargetPlatform.android ||
     defaultTargetPlatform == TargetPlatform.iOS;
@@ -28,6 +29,12 @@ String _randomNonce() {
   final random = Random.secure();
   return base64Url.encode(List.generate(32, (_) => random.nextInt(256)));
 }
+
+/// Native Sign in with Apple, iOS only: guideline 4.8 asks for it wherever
+/// Google sign-in is offered, and Android has no native flow. Supabase's Apple
+/// provider lists the bundle ID as a client ID; the native flow needs no
+/// Services ID or secret key.
+bool get appleSignInAvailable => defaultTargetPlatform == TargetPlatform.iOS;
 
 /// The form Supabase compares an ID token's `nonce` claim against.
 String hashNonce(String raw) => sha256.convert(utf8.encode(raw)).toString();
@@ -51,7 +58,7 @@ Future<void> initializeGoogleSignIn() async {
   }
 }
 
-/// The user closed Google's account picker. Not a failure worth a message.
+/// The user closed Google's account picker or Apple's sign-in sheet. Not a failure worth a message.
 class SignInCanceled implements Exception {
   const SignInCanceled();
 }
@@ -204,7 +211,6 @@ class AuthService {
 
   /// Native Google sign-in, then a Supabase session from Google's ID token.
   /// A first sign-in creates the Supabase account, so this serves sign-up too.
-  /// Android-only for now (see `Constants.googleWebClientId`).
   Future<Result<UserData>> supabaseSignInWithGoogle() async {
     if (!googleSignInAvailable) {
       return Result.error(Exception('google_sign_in_unsupported'.tr()));
@@ -243,6 +249,56 @@ class AuthService {
       // Supabase leaves `code` null for some rejections (e.g. a token whose
       // audience the Google provider does not list); its message is then the
       // only clue, so show that rather than translating "null".
+      final code = e.code;
+      return Result.error(Exception(code == null ? e.message : code.tr()));
+    } on AuthException catch (e) {
+      return Result.error(e);
+    }
+  }
+
+  /// Native Sign in with Apple, then a Supabase session from Apple's ID
+  /// token. Like Google, a first sign-in creates the account. Only the email is
+  /// asked for — the app names people by the nickname they pick.
+  Future<Result<UserData>> supabaseSignInWithApple() async {
+    if (!appleSignInAvailable) {
+      return Result.error(Exception('apple_sign_in_unsupported'.tr()));
+    }
+    // Apple puts the SHA-256 of this into the token; Supabase wants the raw.
+    final rawNonce = _randomNonce();
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [AppleIDAuthorizationScopes.email],
+        nonce: hashNonce(rawNonce),
+      );
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        return Result.error(Exception('apple_sign_in_failed'.tr()));
+      }
+      final res = await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+      final user = res.user;
+      if (res.session == null || user == null) {
+        return Result.error(Exception('apple_sign_in_failed'.tr()));
+      }
+      return Result.ok(UserData(email: user.email ?? '', uuid: user.id));
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return const Result.error(SignInCanceled());
+      }
+      debugPrint('Apple sign-in failed: ${e.code} ${e.message}');
+      return Result.error(
+        Exception('${'apple_sign_in_failed'.tr()} (${e.code.name})'),
+      );
+    } on SignInWithAppleException catch (e) {
+      debugPrint('Apple sign-in failed: $e');
+      return Result.error(Exception('apple_sign_in_failed'.tr()));
+    } on AuthApiException catch (e) {
+      debugPrint(
+        'Supabase Apple sign-in failed: ${e.statusCode} ${e.code} ${e.message}',
+      );
       final code = e.code;
       return Result.error(Exception(code == null ? e.message : code.tr()));
     } on AuthException catch (e) {

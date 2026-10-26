@@ -14,6 +14,11 @@ password,Password,密碼
 sign_in_with_google,Sign in with Google,使用 Google 帳戶登入
 google_sign_in_failed,Google sign-in failed,Google 登入失敗
 google_sign_in_unsupported,Google sign-in is only available on Android for now,Google 登入目前僅支援 Android
+sign_in_with_apple,Sign in with Apple,使用 Apple 登入
+apple_sign_in_failed,Sign in with Apple failed,Apple 登入失敗
+apple_sign_in_unsupported,Sign in with Apple is only available on iPhone,Apple 登入僅支援 iPhone
+privacy_policy,Privacy policy,隱私權政策
+privacy_policy_open_failed,Could not open the privacy policy,無法開啟隱私權政策
 no_account_prompt,Don't have an account?,還沒有帳號嗎？
 not_signed_in,Not signed in,未登入
 silversole,SilverSole,SilverSole

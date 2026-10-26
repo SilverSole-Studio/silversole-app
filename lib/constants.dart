@@ -34,6 +34,12 @@ abstract class Constants {
   static const String googleIosClientId =
       '350967143148-lg2v3gi0satl9uqpmfo77nc84rnb8ett.apps.googleusercontent.com';
 
+  /// Privacy policy (App Store guideline 5.1.1(i)), also entered in App Store
+  /// Connect. The site has a Traditional Chinese and an English version.
+  static String privacyPolicyUrl(String languageCode) => languageCode == 'zh'
+      ? 'https://dongyu.company/products/silversole/privacy/'
+      : 'https://dongyu.company/products/silversole/privacy/en/';
+
   static const String supabaseUrlKey = 'PUBLIC_SUPABASE_URL';
   static const String supabasePublicDefaultKey =
       'PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY';

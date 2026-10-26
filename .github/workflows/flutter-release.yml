@@ -340,6 +340,17 @@ jobs:
             -archivePath build/ios/Runner.xcarchive \
             CODE_SIGNING_ALLOWED=NO
 
+      # An unsigned archive carries no entitlements, and the export takes them
+      # from the archived app's signature, so without this Sign in with Apple
+      # would be missing from the IPA. An ad-hoc signature (nested code first,
+      # or codesign refuses the app) only carries them; the export re-signs.
+      - name: Attach entitlements to the archived app
+        run: |
+          APP=build/ios/Runner.xcarchive/Products/Applications/Runner.app
+          find "$APP/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) \
+            -exec codesign --force --sign - {} \;
+          codesign --force --sign - --entitlements ios/Runner/Runner.entitlements "$APP"
+
       - name: Export IPA
         run: |
           xcodebuild -exportArchive \
@@ -352,6 +363,15 @@ jobs:
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
           mkdir -p dist
           mv build/ios/ipa/*.ipa "dist/silversole_${RELEASE_NAME#v}.ipa"
+
+      # Fails here rather than in App Review if the capability got lost.
+      - name: Check the IPA's entitlements
+        run: |
+          mkdir -p build/ios/check
+          unzip -q -o dist/*.ipa -d build/ios/check
+          codesign -d --entitlements - --xml build/ios/check/Payload/Runner.app > build/ios/check/ent.xml
+          grep -q com.apple.developer.applesignin build/ios/check/ent.xml \
+            || { echo "::error::Sign in with Apple entitlement missing from the IPA"; cat build/ios/check/ent.xml; exit 1; }
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
