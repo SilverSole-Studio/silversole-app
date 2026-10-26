@@ -47,6 +47,10 @@
 	<true/>
 	<key>MAPS_API_KEY</key>
 	<string>$(MAPS_API_KEY)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>用藍牙連接銀足鞋墊，接收足壓、步態與跌倒偵測資料，並更新鞋墊韌體。</string>
 	<key>NSCameraUsageDescription</key>
 	<string>用相機掃朋友或據點的 QR code、拍頭像照片，以及在遊戲的鏡頭模式判斷動作。遊戲畫面只在手機上即時處理，不錄影、不上傳。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

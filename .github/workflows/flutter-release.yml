@@ -11,6 +11,10 @@ name: Flutter Release
 # Manual runs build a bundle for an explicit track; `none` only builds it,
 # which is how the very first upload to Play Console is made (the Play API
 # cannot upload to an app that has never had a release).
+#
+# iOS: every rc (and a manual run with `testflight` ticked) also builds an IPA
+# and uploads it to TestFlight, with the same build number as Android's
+# version code. App Store submission stays a manual step in App Store Connect.
 
 on:
   push:
@@ -25,6 +29,10 @@ on:
         type: choice
         default: none
         options: [none, internal, alpha]
+      testflight:
+        description: Also build the iOS IPA and upload it to TestFlight
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -49,11 +57,13 @@ jobs:
       version_name: ${{ steps.plan.outputs.version_name }}
       track: ${{ steps.plan.outputs.track }}
       release_name: ${{ steps.plan.outputs.release_name }}
+      testflight: ${{ steps.plan.outputs.testflight }}
     steps:
       - id: plan
         env:
           INPUT_VERSION_NAME: ${{ inputs.version_name }}
           INPUT_TRACK: ${{ inputs.track }}
+          INPUT_TESTFLIGHT: ${{ inputs.testflight }}
         run: |
           semver='^[0-9]+\.[0-9]+\.[0-9]+$'
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -65,16 +75,19 @@ jobs:
             version_name="$INPUT_VERSION_NAME"
             track="$INPUT_TRACK"
             release_name="v${version_name}-manual.${GITHUB_RUN_NUMBER}"
+            testflight="$INPUT_TESTFLIGHT"
           elif [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-rc\.[0-9]+$ ]]; then
             kind=rc
             version_name="${BASH_REMATCH[1]}"
             track=alpha
             release_name="$GITHUB_REF_NAME"
+            testflight=true
           elif [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             kind=final
             version_name="${BASH_REMATCH[1]}"
             track=production
             release_name="$GITHUB_REF_NAME"
+            testflight=false
           else
             echo "::error::Tag must be vX.Y.Z-rc.N (testing) or vX.Y.Z (production), got '$GITHUB_REF_NAME'"
             exit 1
@@ -84,8 +97,9 @@ jobs:
             echo "version_name=$version_name"
             echo "track=$track"
             echo "release_name=$release_name"
+            echo "testflight=$testflight"
           } >> "$GITHUB_OUTPUT"
-          echo "$kind release $release_name -> $track"
+          echo "$kind release $release_name -> $track (TestFlight: $testflight)"
 
   build:
     needs: plan
@@ -251,6 +265,114 @@ jobs:
           content: |
             SilverSole 內測版 ${{ env.RELEASE_NAME }} 已上傳 Google Play 封閉測試。
             測試人員可在 Play 商店更新。
+          wait: true
+
+  ios:
+    needs: plan
+    if: needs.plan.outputs.testflight == 'true'
+    runs-on: macos-latest
+    env:
+      VERSION_NAME: ${{ needs.plan.outputs.version_name }}
+      # Same number as the Android version code of this run; TestFlight only
+      # asks that it be new for this version name.
+      BUILD_NUMBER: ${{ github.run_number }}
+      RELEASE_NAME: ${{ needs.plan.outputs.release_name }}
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Create .env
+        run: |
+          cat > .env <<'EOF'
+          PUBLIC_SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}
+          PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${{ secrets.PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY }}
+          EOF
+
+      # Release.xcconfig includes it; the iOS Maps key is not Android's.
+      - name: Create iOS secrets
+        run: |
+          cat > ios/Flutter/Secrets.xcconfig <<'EOF'
+          MAPS_API_KEY=${{ secrets.IOS_MAPS_API_KEY }}
+          EOF
+
+      # Admin-role Team Key: xcodebuild needs it to cloud-sign the export.
+      # altool looks for the key in ~/.appstoreconnect/private_keys.
+      - name: Write App Store Connect API key
+        env:
+          ASC_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s\n' "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "ASC_KEY_PATH=$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.6
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Compiles Dart and runs pod install; signing happens in the archive.
+      - name: Build iOS (unsigned)
+        run: flutter build ios --release --no-codesign --build-name="$VERSION_NAME" --build-number="$BUILD_NUMBER" --dart-define=FRIENDS_BACKEND=supabase
+
+      - name: Archive
+        run: |
+          xcodebuild -version
+          xcodebuild archive \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/ios/Runner.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: Export IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/ios/Runner.xcarchive \
+            -exportOptionsPlist ios/ExportOptions.plist \
+            -exportPath build/ios/ipa \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          mkdir -p dist
+          mv build/ios/ipa/*.ipa "dist/silversole_${RELEASE_NAME#v}.ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: silversole-${{ env.RELEASE_NAME }}-ipa
+          path: dist/*.ipa
+
+      - name: Upload to TestFlight
+        run: |
+          xcrun altool --upload-app --type ios \
+            --file dist/*.ipa \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
+
+      - name: Notify Discord
+        if: needs.plan.outputs.kind == 'rc'
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: |
+            SilverSole iOS ${{ env.RELEASE_NAME }} 已上傳 TestFlight，Apple 處理完後測試人員可在 TestFlight 更新。
           wait: true
 
   promote:
