@@ -1,7 +1,9 @@
 <!-- supabase/README.md -->
 # supabase：銀足的伺服器端（好友系統）
 
-**狀態：沒有套用到任何 Supabase 專案。套用到正式庫之前要先問 user。**
+**狀態：2026-10-27 已套用到正式庫（SilverSole，`buvdyjzxeojpuiqeyteh`）**：兩支 migration 都已套用，Edge Function `delete-account` 也已部署。這次跳過了下面「套用順序」的第 2–4 步（先在 Supabase 分支實測），原因是正式版 App 已經在呼叫這些表，不套的話好友功能本來就是壞的；實機實測改在 TestFlight 做。套用前跑過「套用前比對」：沒有撞名，本機測試 60/60 通過。正式庫沒有 `supabase_migrations` 紀錄表，這兩支是用 `supabase db query -f` 直接執行的。之後的 migration 一樣要先問 user。
+
+**已知待處理：**`devices` 的 SELECT 政策是 `true`（任何登入者都讀得到所有裝置的電量與心跳時間），應該改成只能讀自己綁定的裝置。
 
 規格：動域科技總倉庫 `02_產品/鞋墊_SilverSole/_好友系統規格書_2026-10-18.md` 第 7、8、10 節。
 App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provider.dart` 已經改接它）。
