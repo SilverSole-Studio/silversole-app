@@ -116,16 +116,24 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   SizedBox(
                     height: 250,
                     child: Center(
-                      child: Text(
-                        'silversole'.tr(),
-                        style: context.textTheme.displayLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
+                      // Shrinks rather than wraps: at a 1.3 system text
+                      // scale on a narrow iPhone the name split as
+                      // "SilverSol / e".
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'silversole'.tr(),
+                          maxLines: 1,
+                          style: context.textTheme.displayLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ),
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
                     decoration: InputDecoration(
                       labelText: 'email'.tr(),
@@ -137,6 +145,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   ),
                   TextFormField(
                     obscureText: true,
+                    textInputAction: TextInputAction.go,
                     autofillHints: const [AutofillHints.password],
                     decoration: InputDecoration(
                       labelText: 'password'.tr(),
@@ -144,6 +153,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     ),
                     validator: (val) => fieldEmptyValidator(val),
                     onChanged: (value) => setPassword(value),
+                    onFieldSubmitted: (_) {
+                      if (enableSignInButton) signIn();
+                    },
                   ),
                   SizedBox(
                     width: double.infinity,

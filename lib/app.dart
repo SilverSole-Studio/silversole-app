@@ -7,6 +7,7 @@ import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/dismiss_keyboard_on_tap_outside.dart';
 import 'package:silversole/shared/widgets/fall_demo_overlay.dart';
 
 class App extends ConsumerWidget {
@@ -50,9 +51,11 @@ class App extends ConsumerWidget {
       // all of them, so the overlays are capped too.
       builder: (context, child) => applySystemFontScale(
         context,
-        FallDemoOverlay(
-          child: FootSideCalibrationOverlay(
-            child: child ?? const SizedBox.shrink(),
+        DismissKeyboardOnTapOutside(
+          child: FallDemoOverlay(
+            child: FootSideCalibrationOverlay(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         ),
       ),

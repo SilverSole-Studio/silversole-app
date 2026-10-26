@@ -145,6 +145,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                   ),
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
                     decoration: InputDecoration(
                       labelText: 'email'.tr(),
@@ -159,6 +160,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                   ),
                   TextFormField(
                     obscureText: true,
+                    textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.newPassword],
                     decoration: InputDecoration(
                       labelText: 'password'.tr(),
