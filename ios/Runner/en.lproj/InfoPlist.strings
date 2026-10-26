@@ -1,0 +1,5 @@
+"NSBluetoothAlwaysUsageDescription" = "SilverSole uses Bluetooth to connect to your insoles for foot pressure, gait and fall detection data, and to update their firmware.";
+"NSCameraUsageDescription" = "The camera scans friends' and venues' QR codes, takes profile photos, and detects movement in camera-mode games. Game video is processed on the phone only, never recorded or uploaded.";
+"NSLocationWhenInUseUsageDescription" = "Your location is used to show where the device is.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Your location is used to keep track of where the device is.";
+"NSPhotoLibraryUsageDescription" = "Photo access lets you pick a profile picture.";

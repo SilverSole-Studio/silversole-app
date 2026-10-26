@@ -1,0 +1,5 @@
+"NSBluetoothAlwaysUsageDescription" = "用藍牙連接銀足鞋墊，接收足壓、步態與跌倒偵測資料，並更新鞋墊韌體。";
+"NSCameraUsageDescription" = "用相機掃朋友或據點的 QR code、拍頭像照片，以及在遊戲的鏡頭模式判斷動作。遊戲畫面只在手機上即時處理，不錄影、不上傳。";
+"NSLocationWhenInUseUsageDescription" = "需要定位來顯示裝置位置";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "需要定位來持續追蹤裝置位置";
+"NSPhotoLibraryUsageDescription" = "需要讀取相簿來挑一張頭像照片";
