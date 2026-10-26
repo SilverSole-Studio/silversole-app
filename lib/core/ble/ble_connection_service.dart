@@ -311,8 +311,8 @@ class BleConnectionService {
     final handlers = _handlers;
     if (device == null || handlers == null) return;
     try {
-      // autoConnect rules out the `mtu` connect argument, so the bump happens
-      // here instead. Android-only in fbp.
+      // fbp's requestMtu is Android-only; iOS negotiates the MTU itself and
+      // `mtuNow` reports it (maximumWriteValueLength + 3).
       if (defaultTargetPlatform == TargetPlatform.android) {
         try {
           await device.requestMtu(_preferredMtu);

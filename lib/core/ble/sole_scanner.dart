@@ -231,6 +231,12 @@ class SoleScanner {
         await FlutterBluePlus.startScan(
           androidScanMode: AndroidScanMode.lowLatency,
           timeout: timeout,
+          // iOS reports a peripheral once per scan unless asked for every
+          // advertisement; the rebooted sole must be seen after `since`.
+          // Android is left as it was: a fresh scan already reports each
+          // sole's first advertisement, and fbp would otherwise stop dropping
+          // repeats and push every one of them over the platform channel.
+          continuousUpdates: defaultTargetPlatform == TargetPlatform.iOS,
         );
         startedHere = true;
       }

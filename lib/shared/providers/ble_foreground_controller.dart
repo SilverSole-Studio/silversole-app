@@ -44,9 +44,15 @@ const _reacquireSettle = Duration(seconds: 3);
 /// reacquire timeout is left.
 const _minHandshakeWait = Duration(seconds: 20);
 
+/// Where the scan-driven connection orchestration runs. Both phones: Android
+/// keeps it alive with its foreground service, iOS with the
+/// `bluetooth-central` background mode (Info.plist). Desktop and tests get
+/// [NoSoleConnection].
+bool bleOrchestrationSupported(TargetPlatform platform) =>
+    platform == TargetPlatform.android || platform == TargetPlatform.iOS;
+
 final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
-  // Check platform
-  if (defaultTargetPlatform != TargetPlatform.android) {
+  if (!bleOrchestrationSupported(defaultTargetPlatform)) {
     return const NoSoleConnection();
   }
   final registry = ref.read(soleSessionsProvider);

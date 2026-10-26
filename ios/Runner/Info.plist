@@ -59,5 +59,9 @@
     <string>需要定位來持續追蹤裝置位置</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>需要讀取相簿來挑一張頭像照片</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+	</array>
 </dict>
 </plist>
