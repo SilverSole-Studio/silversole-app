@@ -201,11 +201,13 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                             ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: textOnDivider(context, 'or'.tr()),
-                  ),
-                  googleSignInButton(context, onPressed: signInGoogle),
+                  if (googleSignInAvailable) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: textOnDivider(context, 'or'.tr()),
+                    ),
+                    googleSignInButton(context, onPressed: signInGoogle),
+                  ],
                 ],
               ),
             ),

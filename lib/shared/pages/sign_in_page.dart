@@ -161,11 +161,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                             ), // ignore: deprecated_member_use
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: textOnDivider(context, 'or'.tr()),
-                  ),
-                  googleSignInButton(context, onPressed: signInGoogle),
+                  if (googleSignInAvailable) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: textOnDivider(context, 'or'.tr()),
+                    ),
+                    googleSignInButton(context, onPressed: signInGoogle),
+                  ],
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

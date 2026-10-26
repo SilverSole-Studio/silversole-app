@@ -6,6 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../shared/models/auth_model.dart';
 import '../error/result.dart';
 
+/// iOS has no OAuth client yet (see `Constants.googleWebClientId`), and App
+/// Store guideline 4.8 would also require Sign in with Apple. Until both
+/// exist, the button is hidden there rather than always failing.
+bool get googleSignInAvailable =>
+    defaultTargetPlatform == TargetPlatform.android;
+
 /// The user closed Google's account picker. Not a failure worth a message.
 class SignInCanceled implements Exception {
   const SignInCanceled();
@@ -40,7 +46,7 @@ class AuthService {
   /// A first sign-in creates the Supabase account, so this serves sign-up too.
   /// Android-only for now (see `Constants.googleWebClientId`).
   Future<Result<UserData>> supabaseSignInWithGoogle() async {
-    if (defaultTargetPlatform != TargetPlatform.android) {
+    if (!googleSignInAvailable) {
       return Result.error(Exception('google_sign_in_unsupported'.tr()));
     }
     try {
