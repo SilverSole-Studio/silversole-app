@@ -6,12 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
+import 'core/auth/auth_service.dart';
 import 'constants.dart';
 
 Future<void> main() async {
@@ -30,13 +30,7 @@ Future<void> main() async {
     url: dotenv.env[Constants.supabaseUrlKey] ?? '',
     anonKey: dotenv.env[Constants.supabasePublicDefaultKey] ?? '',
   );
-  // Must finish before the first authenticate(); Android-only, see
-  // Constants.googleWebClientId.
-  if (defaultTargetPlatform == TargetPlatform.android) {
-    await GoogleSignIn.instance.initialize(
-      serverClientId: Constants.googleWebClientId,
-    );
-  }
+  await initializeGoogleSignIn();
   // Desktop platforms (macOS) have no permission_handler implementation for
   // this channel; skip rather than crash before runApp.
   try {

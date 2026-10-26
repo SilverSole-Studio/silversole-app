@@ -1,16 +1,55 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../constants.dart';
 import '../../shared/models/auth_model.dart';
 import '../error/result.dart';
 
-/// iOS has no OAuth client yet (see `Constants.googleWebClientId`), and App
-/// Store guideline 4.8 would also require Sign in with Apple. Until both
-/// exist, the button is hidden there rather than always failing.
+/// Android and iOS each have their own OAuth client (see
+/// `Constants.googleWebClientId`). Before the App Store, guideline 4.8 also
+/// requires Sign in with Apple next to this button on iOS.
 bool get googleSignInAvailable =>
-    defaultTargetPlatform == TargetPlatform.android;
+    defaultTargetPlatform == TargetPlatform.android ||
+    defaultTargetPlatform == TargetPlatform.iOS;
+
+/// Google's iOS SDK always puts a nonce into the ID token, and Supabase then
+/// accepts the token only when handed the raw value the nonce is the SHA-256
+/// (hex) of. So iOS asks Google to use [hashNonce] of this one, and hands
+/// Supabase this one. Android's tokens carry no nonce and need neither.
+final String _googleRawNonce = _randomNonce();
+
+String _randomNonce() {
+  final random = Random.secure();
+  return base64Url.encode(List.generate(32, (_) => random.nextInt(256)));
+}
+
+/// The form Supabase compares an ID token's `nonce` claim against.
+String hashNonce(String raw) => sha256.convert(utf8.encode(raw)).toString();
+
+/// Must finish before the first `authenticate()`. A no-op where
+/// [googleSignInAvailable] is false.
+Future<void> initializeGoogleSignIn() async {
+  switch (defaultTargetPlatform) {
+    case TargetPlatform.android:
+      await GoogleSignIn.instance.initialize(
+        serverClientId: Constants.googleWebClientId,
+      );
+    case TargetPlatform.iOS:
+      await GoogleSignIn.instance.initialize(
+        clientId: Constants.googleIosClientId,
+        serverClientId: Constants.googleWebClientId,
+        nonce: hashNonce(_googleRawNonce),
+      );
+    default:
+      return;
+  }
+}
 
 /// The user closed Google's account picker. Not a failure worth a message.
 class SignInCanceled implements Exception {
@@ -59,6 +98,9 @@ class AuthService {
         provider: OAuthProvider.google,
         idToken: idToken,
         accessToken: await _googleAccessToken(account),
+        nonce: defaultTargetPlatform == TargetPlatform.iOS
+            ? _googleRawNonce
+            : null,
       );
       final user = res.user;
       if (res.session == null || user == null) {

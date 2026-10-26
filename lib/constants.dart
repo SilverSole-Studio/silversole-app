@@ -20,10 +20,19 @@ abstract class Constants {
   /// Android also needs an *Android* OAuth client in the same project for every
   /// key the app is signed with (package + SHA-1: upload key, debug keystore,
   /// Play app signing key); without the matching one Google refuses with a
-  /// configuration error. iOS would need its own client ID and URL scheme,
-  /// which do not exist yet, so Google sign-in is Android-only for now.
+  /// configuration error. iOS uses [googleIosClientId] instead.
+  ///
+  /// Supabase checks a token's audience against its Client IDs list. An
+  /// Android token is addressed to this web client, but an iOS token is
+  /// addressed to the iOS client, so that list holds both.
   static const String googleWebClientId =
       '350967143148-kodus7fgbnjpvfheqpvhdilad6bq3olg.apps.googleusercontent.com';
+
+  /// OAuth *iOS* client (bundle `com.dongyutech.silversole`) in the same
+  /// project. Its reversed form is the URL scheme in `ios/Runner/Info.plist`,
+  /// through which Google's sign-in sheet returns to the app. Not a secret.
+  static const String googleIosClientId =
+      '350967143148-lg2v3gi0satl9uqpmfo77nc84rnb8ett.apps.googleusercontent.com';
 
   static const String supabaseUrlKey = 'PUBLIC_SUPABASE_URL';
   static const String supabasePublicDefaultKey =
