@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/friends/friend_models.dart';
-import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/shared/widgets/friends/friend_safety.dart';
 
-/// `/friends/person` — one friend: name, picture, their garden, and the
-/// ways to step back. Deliberately no health data here — no steps, streak,
+/// `/friends/person` — one friend: name, picture, and the ways to step back
+/// (remove, block, report). Deliberately no health data here — no steps, streak,
 /// game scores or foot pressure (spec §4.1).
 class FriendDetailPage extends ConsumerWidget {
   const FriendDetailPage({super.key, required this.friend});
@@ -70,19 +70,7 @@ class FriendDetailPage extends ConsumerWidget {
               label: 'friends_block'.tr(),
               destructive: true,
               onPressed: () async {
-                final ok = await confirmFriendAction(
-                  context,
-                  title: 'friends_block_title'.tr(args: [p.nickname]),
-                  body: 'friends_block_confirm'.tr(),
-                  confirmLabel: 'friends_block'.tr(),
-                  destructive: true,
-                );
-                if (!ok) return;
-                final done = await runFriendStep(
-                  ref,
-                  () => repo.blockUser(p.userId),
-                  successText: 'friends_blocked'.tr(args: [p.nickname]),
-                );
+                final done = await blockFriendProfile(context, ref, p);
                 if (done && context.mounted) context.pop();
               },
             ),
@@ -97,7 +85,7 @@ class FriendDetailPage extends ConsumerWidget {
                         minimumSize: const Size.fromHeight(kFriendButtonHeight),
                       ),
                       onPressed: () =>
-                          _report(context, ref, p, ReportKind.photo),
+                          reportFriendProfile(context, ref, p, ReportKind.photo),
                       child: Text(
                         'friends_report_photo'.tr(),
                         style: context.textTheme.titleLarge,
@@ -110,7 +98,7 @@ class FriendDetailPage extends ConsumerWidget {
                       minimumSize: const Size.fromHeight(kFriendButtonHeight),
                     ),
                     onPressed: () =>
-                        _report(context, ref, p, ReportKind.nickname),
+                        reportFriendProfile(context, ref, p, ReportKind.nickname),
                     child: Text(
                       'friends_report_name'.tr(),
                       style: context.textTheme.titleLarge,
@@ -122,55 +110,6 @@ class FriendDetailPage extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Future<void> _report(
-    BuildContext context,
-    WidgetRef ref,
-    FriendProfile p,
-    ReportKind kind,
-  ) async {
-    final reason = await showModalBottomSheet<ReportReason>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.base,
-            0,
-            AppSpacing.base,
-            AppSpacing.xl,
-          ),
-          children: [
-            FriendText(
-              kind == ReportKind.photo
-                  ? 'friends_report_photo_why'.tr()
-                  : 'friends_report_name_why'.tr(),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            for (final r in ReportReason.values)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                child: FriendButton(
-                  label: 'friends_report_reason_${r.name}'.tr(),
-                  secondary: true,
-                  onPressed: () => Navigator.of(sheetContext).pop(r),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (reason == null || !context.mounted) return;
-    await runFriendAction(
-      ref,
-      () => ref
-          .read(friendsRepositoryProvider)
-          .reportProfile(p.userId, kind, reason),
-      successText: 'friends_report_sent'.tr(),
-      scope: FriendErrorScope.report,
     );
   }
 }

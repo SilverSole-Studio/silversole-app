@@ -51,6 +51,10 @@ enum FriendError {
   pendingLimit,
   locked,
   nicknameInvalid,
+
+  /// The nickname contains an obvious slur or profanity ([validateNickname]).
+  /// Checked in the app only; the server does not know this list.
+  nicknameOffensive,
   nicknameChangeLimit,
   uploadBanned,
 
@@ -130,6 +134,60 @@ bool _isReservedNickname(String name) {
   return _reservedInName.any(key.contains) || _reservedWholeName.contains(key);
 }
 
+/// Obvious slurs and profanity, found anywhere in the name once spacing,
+/// symbols and look-alike digits are taken out ([_profanityKey]). Only words
+/// with no innocent use inside a 2–8 character name: 「幹」 alone is not here
+/// (幹練), nor is English that hides in ordinary words (Dickson) —
+/// those are in [_profaneWholeWords].
+const _profaneInName = [
+  // zh
+  '幹你', '幹妳', '幹恁', '幹林', '操你', '肏', '雞掰', '機掰', '雞巴', '王八蛋',
+  '白痴', '白癡', '智障', '腦殘', '婊子', '賤人', '賤貨', '屌你', '靠北', '靠杯',
+  '他媽的', '你媽的', '你娘', '去死', '三小', '支那',
+  // en
+  'fuck', 'fuk', 'shit', 'bitch', 'asshole', 'bastard', 'motherf', 'nigger',
+  'nigga', 'faggot', 'whore', 'slut', 'retard',
+];
+
+/// English words refused only when they stand alone as a word of the name.
+const _profaneWholeWords = ['cunt', 'dick', 'cock', 'piss', 'twat', 'fag'];
+
+/// Digits and symbols people swap in for letters (sh!t, b1tch, a$$hole).
+const _lookAlikes = {
+  '!': 'i',
+  '1': 'i',
+  '|': 'i',
+  '0': 'o',
+  '@': 'a',
+  '4': 'a',
+  r'$': 's',
+  '5': 's',
+  '3': 'e',
+  '7': 't',
+};
+
+final _notLetter = RegExp(r'[^\p{L}]', unicode: true);
+
+String _foldWidth(String name) => String.fromCharCodes(
+  name.runes.map((r) => r >= 0xFF01 && r <= 0xFF5E ? r - 0xFEE0 : r),
+);
+
+/// [name] lower-cased with full-width letters folded, look-alike digits and
+/// symbols turned back into letters, and everything but letters dropped.
+String _profanityKey(String name) {
+  final mapped = _foldWidth(
+    name,
+  ).toLowerCase().split('').map((c) => _lookAlikes[c] ?? c).join();
+  return mapped.replaceAll(_notLetter, '');
+}
+
+bool _isOffensiveNickname(String name) {
+  final key = _profanityKey(name);
+  if (_profaneInName.any(key.contains)) return true;
+  final words = _foldWidth(name).toLowerCase().split(RegExp(r'[^a-z]+'));
+  return words.any(_profaneWholeWords.contains);
+}
+
 final _edgeSpace = RegExp(r'^[\s　]+|[\s　]+$');
 
 /// [raw] trimmed the way the server trims it (spaces, including the
@@ -138,7 +196,9 @@ String trimNickname(String raw) => raw.replaceAll(_edgeSpace, '');
 
 /// Null when [raw] is a usable nickname — the same check as the server's
 /// `friends_clean_nickname()`: 2–8 characters after trimming, no control
-/// characters, and at least one letter or digit from the whitelist.
+/// characters, and at least one letter or digit from the whitelist. On top of
+/// that, and only here in the app, no obvious slur or profanity
+/// ([FriendError.nicknameOffensive]).
 FriendError? validateNickname(String raw) {
   final name = trimNickname(raw);
   final length = name.runes.length;
@@ -151,6 +211,7 @@ FriendError? validateNickname(String raw) {
       _isReservedNickname(name)) {
     return FriendError.nicknameInvalid;
   }
+  if (_isOffensiveNickname(name)) return FriendError.nicknameOffensive;
   return null;
 }
 

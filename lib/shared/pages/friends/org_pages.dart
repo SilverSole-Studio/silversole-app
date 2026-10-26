@@ -9,6 +9,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/shared/widgets/friends/friend_safety.dart';
 
 /// `/friends/orgs` — the community centres / day-care centres I belong to
 /// (at most 3), and how to join one (spec §3.3).
@@ -217,6 +218,9 @@ class _MemberRow extends ConsumerWidget {
             ),
           ),
           trailing,
+          // The list never includes me (get_org_members leaves the caller
+          // out), so every row is someone else and gets report / block.
+          FriendSafetyMenu(person: p),
         ],
       ),
     );

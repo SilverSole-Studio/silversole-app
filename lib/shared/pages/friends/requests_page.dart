@@ -7,6 +7,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/shared/widgets/friends/friend_safety.dart';
 
 /// `/friends/requests` — who wants to add me, and who I am waiting on.
 ///
@@ -95,6 +96,9 @@ class _IncomingCard extends ConsumerWidget {
                     ],
                   ),
                 ),
+                // Report sits here; blocking is the "decline and block"
+                // button below.
+                FriendSafetyMenu(person: request.other, showBlock: false),
               ],
             ),
             FriendButton(
@@ -186,6 +190,7 @@ class _OutgoingRow extends ConsumerWidget {
               ],
             ),
           ),
+          FriendSafetyMenu(person: request.other),
           SizedBox(
             height: 56,
             child: OutlinedButton(

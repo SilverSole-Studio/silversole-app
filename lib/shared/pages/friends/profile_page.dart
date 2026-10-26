@@ -62,9 +62,7 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
   Future<void> _save() async {
     final invalid = validateNickname(_name.text);
     setState(
-      () => _nameError = invalid == null
-          ? null
-          : 'friends_err_nicknameInvalid'.tr(),
+      () => _nameError = invalid == null ? null : friendErrorKey(invalid).tr(),
     );
     if (invalid != null) return;
     setState(() => _saving = true);

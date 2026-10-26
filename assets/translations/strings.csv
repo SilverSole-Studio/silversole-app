@@ -633,3 +633,5 @@ delete_account_confirm,Delete permanently,永久刪除
 delete_account_success,Your account has been deleted,帳號已刪除
 delete_account_failed,Could not delete your account — please try again,刪除帳號失敗，請再試一次
 delete_account_unconfirmed,Could not confirm the deletion so you have been signed out — sign in again to check,無法確認帳號是否已刪除，已先登出。請重新登入確認
+friends_err_nicknameOffensive,That name is not allowed. Please choose another.,這個名字不能用，請換一個。
+friends_more_actions,More,更多

@@ -7,6 +7,7 @@ import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/shared/widgets/friends/friend_safety.dart';
 
 /// Last step of every "add" route: show who was found and send the request.
 /// Returns true when a request went out (or the two became friends).
@@ -33,7 +34,23 @@ Future<bool> showAddFriendSheet(
           mainAxisSize: MainAxisSize.min,
           spacing: AppSpacing.base,
           children: [
-            FriendPreview(profile: person),
+            Stack(
+              children: [
+                Center(child: FriendPreview(profile: person)),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: FriendSafetyMenu(
+                    person: person,
+                    onBlocked: () {
+                      if (sheetContext.mounted) {
+                        Navigator.of(sheetContext).pop(false);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
             FriendButton(
               label: 'friends_add_this_person'.tr(),
               icon: Icons.person_add_alt_1,

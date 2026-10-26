@@ -61,6 +61,48 @@ void main() {
     },
   );
 
+  group('validateNickname refuses obvious slurs and profanity', () {
+    test('blocked words, in either language', () {
+      for (final bad in ['幹你娘', '王八蛋', '你是白痴', 'fuck', 'Bitch', 'SHIT88']) {
+        expect(
+          validateNickname(bad),
+          FriendError.nicknameOffensive,
+          reason: bad,
+        );
+      }
+    });
+
+    test('also with spacing, symbols or full-width letters in between', () {
+      for (final bad in [
+        '幹 你 娘',
+        '王-八-蛋',
+        'f u c k',
+        'F.U.C.K',
+        'ｆｕｃｋ',
+        'sh!t',
+      ]) {
+        expect(
+          validateNickname(bad),
+          FriendError.nicknameOffensive,
+          reason: bad,
+        );
+      }
+    });
+
+    test('ordinary names that merely contain the letters still pass', () {
+      for (final good in ['小美', '陳伯伯88', 'Amy', '王阿姨', '幹練阿伯', 'Dickson']) {
+        expect(validateNickname(good), isNull, reason: good);
+      }
+    });
+
+    test('it has its own message', () {
+      expect(
+        friendErrorKey(FriendError.nicknameOffensive),
+        'friends_err_nicknameOffensive',
+      );
+    });
+  });
+
   test('the new server refusals have their own messages', () {
     expect(friendErrorKey(FriendError.sendLimit), 'friends_err_sendLimit');
     expect(friendErrorKey(FriendError.rateLimited), 'friends_err_rateLimited');

@@ -16,6 +16,7 @@ import 'package:silversole/shared/pages/friends/add_flows.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/shared/widgets/friends/friend_safety.dart';
 
 /// `/friends/my-qr` — show my QR and friend code to someone standing next to
 /// me (spec §3.1).
@@ -237,6 +238,7 @@ class _InlineRequest extends ConsumerWidget {
                     ),
                   ),
                 ),
+                FriendSafetyMenu(person: request.other),
               ],
             ),
             FriendButton(
