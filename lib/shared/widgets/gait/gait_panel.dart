@@ -17,10 +17,14 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// stability group on purpose: a previous fall is the strongest single
 /// predictor there is.
 ///
-/// Figures are mockup copy, see [gaitSnapshot]. Every metric carries an ⓘ that
+/// Figures are mockup copy, see [gaitSnapshot] — so the panel opens with a
+/// banner that says so and cannot be dismissed. Every metric carries an ⓘ that
 /// explains what it is and what it cannot tell you.
 class GaitAnalysisPanel extends StatelessWidget {
   const GaitAnalysisPanel({super.key, required this.scale});
+
+  /// The "sample data" banner, for tests.
+  static const sampleBannerKey = Key('gait-sample-banner');
 
   final GaitScale scale;
 
@@ -32,6 +36,7 @@ class GaitAnalysisPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacing.base,
       children: [
+        const _SampleBanner(),
         _Hero(snapshot: snapshot),
 
         _GroupLabel('gait_group_ability'.tr()),
@@ -75,6 +80,41 @@ class GaitAnalysisPanel extends StatelessWidget {
         if (snapshot.hasAdvice) _AdviceCard(keys: snapshot.adviceKeys),
         _NoteCard(textKey: snapshot.noteKey),
       ],
+    );
+  }
+}
+
+/// Says, above everything else, that the figures are an example: the app does
+/// not measure gait yet. Tinted with the data-orange the sample-clip menu uses,
+/// so "sample" reads the same everywhere.
+class _SampleBanner extends StatelessWidget {
+  const _SampleBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = context.tokens.dataOrange;
+    return Container(
+      key: GaitAnalysisPanel.sampleBannerKey,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: ShapeDecoration(
+        color: tint.withValues(alpha: 0.14),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.cardR,
+          side: BorderSide(color: tint),
+        ),
+      ),
+      child: Row(
+        spacing: AppSpacing.md,
+        children: [
+          Icon(LucideIcons.info, color: tint),
+          Expanded(
+            child: Text(
+              'gait_sample_banner'.tr(),
+              style: context.textTheme.titleSmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

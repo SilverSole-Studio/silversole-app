@@ -44,6 +44,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The figures are an example, and the panel says so before anything else.
+    expect(find.byKey(GaitAnalysisPanelT2.sampleBannerKey), findsOneWidget);
+    expect(find.text('Sample data — not measured yet'), findsOneWidget);
+
     expect(find.text('Walking ability'), findsOneWidget);
     expect(find.text('Walking stability'), findsOneWidget);
     expect(find.text('0.88'), findsOneWidget);
@@ -58,6 +62,6 @@ void main() {
     scale.value = GaitScale.quarter;
     await tester.pumpAndSettle();
     expect(find.text('Four metrics moving together'), findsOneWidget);
-    expect(find.text('Suggested next steps'), findsOneWidget);
+    expect(find.text('Example suggestions'), findsOneWidget);
   });
 }

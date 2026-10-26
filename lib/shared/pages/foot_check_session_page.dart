@@ -8,15 +8,17 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
+import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 
-/// Mock "one-minute foot-pressure check": a 60 s collection session with the
+/// The "one-minute foot-pressure check": a 60 s collection session with the
 /// live pressure map underneath, ending on [FootCheckResultPage].
 ///
-/// Nothing is recorded or uploaded — the session only runs its own clock and
-/// reads the live telemetry providers, and the score it ends on is random.
+/// Nothing is uploaded. The band it ends on is kept on the phone
+/// ([lastFootCheckProvider]) for the home screen — unless the check had too
+/// little data or used a sample clip, which says nothing about the wearer.
 ///
 /// Two separate ways out, because they mean different things: the back button
 /// abandons the minute, while "end early" stops collecting and reports on what
@@ -50,6 +52,9 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
   /// ticking, new IMU) cannot count the same reading twice.
   List<int>? _counted;
 
+  /// Whether any counted reading was a sample-clip frame.
+  bool _sawSample = false;
+
   double get _progress =>
       (_elapsed.inMilliseconds /
               FootCheckSessionPage.sessionLength.inMilliseconds)
@@ -72,10 +77,12 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
 
   /// Counts one reading from the pressure half. Called from `build`, which is
   /// safe because it notifies nothing and ignores a reading already seen.
-  void _collect(List<int> pressure) {
+  void _collect(PressureReading reading) {
+    final pressure = reading.right;
     if (identical(pressure, _counted)) return;
     _counted = pressure;
     _tally.add(pressure);
+    if (reading.isSample) _sawSample = true;
   }
 
   /// Hands over to the report with whatever was collected.
@@ -83,14 +90,17 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
     if (!mounted) return;
     _timer?.cancel();
     _timer = null;
-    context.pushReplacement(
-      '/foot-check-result',
-      extra: FootCheckReport(
-        balance: _tally.balance,
-        samples: _tally.samples,
-        collected: _elapsed,
-      ),
+    final report = FootCheckReport(
+      balance: _tally.balance,
+      samples: _tally.samples,
+      collected: _elapsed,
+      fromSample: _sawSample,
     );
+    final record = FootCheckRecord.fromReport(report, DateTime.now());
+    if (record != null) {
+      unawaited(ref.read(lastFootCheckProvider.notifier).record(record));
+    }
+    context.pushReplacement('/foot-check-result', extra: report);
   }
 
   /// The back button throws the minute away, so it asks first.
@@ -145,7 +155,7 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
           top: false,
           child: PressureDemoScope(
             builder: (context, reading, sampleMenu) {
-              _collect(reading.right);
+              _collect(reading);
               return Column(
                 children: [
                   _SessionHeader(elapsed: _elapsed, progress: _progress),

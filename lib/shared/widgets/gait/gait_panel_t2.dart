@@ -14,9 +14,13 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// records beside the stability group — in this theme's vocabulary: outlined
 /// [MascotCard]s, gold for data and the ink/cream palette.
 ///
-/// Figures are mockup copy, see [gaitSnapshot].
+/// Figures are mockup copy, see [gaitSnapshot] — so the panel opens with a
+/// banner that says so and cannot be dismissed.
 class GaitAnalysisPanelT2 extends StatelessWidget {
   const GaitAnalysisPanelT2({super.key, required this.scale});
+
+  /// The "sample data" banner, for tests.
+  static const sampleBannerKey = Key('gait-sample-banner-t2');
 
   final GaitScale scale;
 
@@ -28,6 +32,7 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 14,
       children: [
+        const _SampleBanner(),
         _Hero(snapshot: snapshot),
 
         _GroupLabel('gait_group_ability'.tr()),
@@ -71,6 +76,35 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
         if (snapshot.hasAdvice) _AdviceCard(keys: snapshot.adviceKeys),
         _NoteCard(textKey: snapshot.noteKey),
       ],
+    );
+  }
+}
+
+/// Says, above everything else, that the figures are an example: the app does
+/// not measure gait yet.
+class _SampleBanner extends StatelessWidget {
+  const _SampleBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return MascotCard(
+      key: GaitAnalysisPanelT2.sampleBannerKey,
+      color: AppPaletteT2.cardWarm,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: AppPaletteT2.flame),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'gait_sample_banner'.tr(),
+              style: context.textTheme.titleSmall?.copyWith(
+                color: AppPaletteT2.ink,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

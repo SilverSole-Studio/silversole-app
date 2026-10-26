@@ -15,7 +15,6 @@ import 'package:silversole/shared/widgets/rader_dot.dart';
 enum StatusCardType { normal, statusDisplay, menu }
 
 /// Actions in the device-status card's overflow menu.
-enum _DeviceMenuAction { rename, settings, delete }
 
 Widget statusCard(
   BuildContext context, {
@@ -339,67 +338,8 @@ Widget _statusDisplayBody(
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  PopupMenuButton<_DeviceMenuAction>(
-                    position: PopupMenuPosition.under,
-                    tooltip: '',
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: AppRadius.cardR,
-                    ),
-                    onSelected: (action) {
-                      // TODO: wire device actions (rename / settings / delete).
-                      switch (action) {
-                        case _DeviceMenuAction.rename:
-                          break;
-                        case _DeviceMenuAction.settings:
-                          break;
-                        case _DeviceMenuAction.delete:
-                          break;
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: _DeviceMenuAction.rename,
-                        child: Row(
-                          spacing: AppSpacing.md,
-                          children: [
-                            const Icon(LucideIcons.pencil, size: 18),
-                            Text('rename_device'.tr()),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: _DeviceMenuAction.settings,
-                        child: Row(
-                          spacing: AppSpacing.md,
-                          children: [
-                            const Icon(LucideIcons.settings, size: 18),
-                            Text('device_settings'.tr()),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: _DeviceMenuAction.delete,
-                        child: Row(
-                          spacing: AppSpacing.md,
-                          children: [
-                            Icon(LucideIcons.trash2, size: 18, color: cs.error),
-                            Text(
-                              'delete_device'.tr(),
-                              style: TextStyle(color: cs.error),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.sm),
-                      child: Icon(
-                        LucideIcons.moreVertical,
-                        size: 18,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
+                  // No overflow menu: rename / settings / delete were never
+                  // wired up, and tapping the card opens My devices instead.
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),

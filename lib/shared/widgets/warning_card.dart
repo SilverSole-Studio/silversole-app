@@ -1,11 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
 
 class WarningCard extends ConsumerStatefulWidget {
   const WarningCard({super.key});
@@ -17,12 +15,6 @@ class WarningCard extends ConsumerStatefulWidget {
 class _WarningCardState extends ConsumerState<WarningCard> {
   //TODO: the eventCount is global currently, make the eventCount per device
   int eventCount = 0;
-
-  void goToRecentWarningsPage(bool enable) {
-    if (enable) {
-      context.push('/device-recent-warnings');
-    }
-  }
 
   Widget bar(bool isOn) {
     return Expanded(
@@ -96,10 +88,6 @@ class _WarningCardState extends ConsumerState<WarningCard> {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
     final color = eventCount > 3 ? context.tokens.alert : cs.primary;
-    final splashColor = cs.primary.withValues(alpha: 0.04);
-    final hoverColor = cs.primary.withValues(alpha: 0.02);
-    final settings = ref.watch(settingsProvider);
-    final isBinding = settings.deviceId != null;
 
     //TODO: save the event to history provider and separate with the deviceId
     ref.listen(fallEventStreamProvider, (_, next) {
@@ -114,43 +102,25 @@ class _WarningCardState extends ConsumerState<WarningCard> {
       width: double.infinity,
       child: Card(
         elevation: 0,
-        child: InkWell(
-          onTap: () => goToRecentWarningsPage(isBinding),
-          splashColor: splashColor,
-          hoverColor: hoverColor,
-          focusColor: hoverColor,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 18,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'device_recent_warnings'.tr(),
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'view_history'.tr(),
-                      style: tt.titleSmall?.copyWith(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                buildCenterContent(eventCount: eventCount, color: color),
-                buildIndicator(
-                  progress: eventCount.toDouble() / 2.0,
-                  bgColor: eventCount == 0 ? context.tokens.success : null,
-                  color: color,
-                ),
-              ],
-            ),
+        // Not tappable: the history page it used to open has no history to
+        // show — falls are only counted in memory since the app opened.
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 18,
+            children: [
+              Text(
+                'device_recent_warnings'.tr(),
+                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              buildCenterContent(eventCount: eventCount, color: color),
+              buildIndicator(
+                progress: eventCount.toDouble() / 2.0,
+                bgColor: eventCount == 0 ? context.tokens.success : null,
+                color: color,
+              ),
+            ],
           ),
         ),
       ),

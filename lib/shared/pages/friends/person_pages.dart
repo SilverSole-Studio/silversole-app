@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
@@ -44,12 +43,7 @@ class FriendDetailPage extends ConsumerWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            FriendButton(
-              label: 'friends_visit_garden'.tr(),
-              icon: Icons.yard_outlined,
-              onPressed: comingSoon,
-            ),
+            // No "visit garden": the garden is not built yet.
             const SizedBox(height: AppSpacing.xxl),
             FriendButton(
               label: 'friends_remove'.tr(),

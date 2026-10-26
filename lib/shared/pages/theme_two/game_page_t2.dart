@@ -8,7 +8,6 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
-import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
@@ -104,35 +103,11 @@ class _MissionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text('today_mission'.tr(), style: context.textTheme.titleMedium),
-              const Spacer(),
-              MascotPill(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('🔥', style: TextStyle(fontSize: 13)),
-                    const SizedBox(width: 3),
-                    Text(
-                      'streak_days'.tr(args: ['${HomeBodyT2.mockStreakDays}']),
-                      style: context.textTheme.labelLarge,
-                    ),
-                  ],
-                ),
-              ),
             ],
           ),
+          // No walking mission and no streak: the app has no pedometer and
+          // keeps no streak, so both could only be made-up figures.
           const SizedBox(height: 12),
-          _MissionRow(
-            icon: 'assets/mascot-assets/icons/nav_analysis.webp',
-            label: 'mission_walk_steps'.tr(
-              args: ['${HomeBodyT2.mockStepGoal}', '${HomeBodyT2.mockSteps}'],
-            ),
-            trailing: const Icon(
-              Icons.check_circle,
-              color: AppPaletteT2.safe,
-              size: 26,
-            ),
-          ),
-          const SizedBox(height: 10),
           _MissionRow(
             icon: 'assets/mascot-assets/cards/card_fish.webp',
             label: 'mission_play_game'.tr(args: ['game_catch_fish'.tr()]),

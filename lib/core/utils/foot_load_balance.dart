@@ -139,6 +139,7 @@ class FootCheckReport {
     required this.balance,
     required this.samples,
     required this.collected,
+    this.fromSample = false,
   });
 
   /// Nothing was collected — a direct visit to the report, or a check with no
@@ -158,4 +159,9 @@ class FootCheckReport {
   /// How long it actually collected for — less than a minute when the wearer
   /// ended it early.
   final Duration collected;
+
+  /// Whether any of it came from a bundled sample clip rather than a sole.
+  /// Such a report describes the sample, not the wearer, so it is never kept
+  /// as the wearer's result.
+  final bool fromSample;
 }

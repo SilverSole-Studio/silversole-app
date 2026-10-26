@@ -68,6 +68,17 @@ class _Findings extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // A sample clip fed this check: say so, since the band describes the
+        // sample and is not kept as the wearer's result.
+        if (report.fromSample) ...[
+          Text(
+            'foot_check_from_sample'.tr(),
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: context.tokens.dataOrange,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.base),
+        ],
         _SectionLabel('foot_check_result_grade'.tr()),
         const SizedBox(height: AppSpacing.md),
         // Three separate segments, same shape as the fall-risk indicator: the

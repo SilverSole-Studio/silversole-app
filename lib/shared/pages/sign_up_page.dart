@@ -95,8 +95,6 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
     }
   }
 
-  void goToSignUp() => comingSoon();
-
   @override
   Widget build(BuildContext context) {
     final tt = context.textTheme;

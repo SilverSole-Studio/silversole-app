@@ -11,7 +11,8 @@ enum LocalSavableKey {
   themeVariant('theme_variant'),
   transmissionMethod('transmission_method'),
   pairedDevices('paired_devices'),
-  firmwareDevMode('firmware_dev_mode');
+  firmwareDevMode('firmware_dev_mode'),
+  lastFootCheck('last_foot_check');
 
   const LocalSavableKey(this.value);
 

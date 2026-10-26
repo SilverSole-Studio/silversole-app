@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friend_rules.dart';
@@ -331,17 +330,11 @@ class FriendRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(
-                height: 56,
-                child: OutlinedButton(
-                  // The garden redesign is a separate branch; until it
-                  // lands there is no garden to visit.
-                  onPressed: comingSoon,
-                  child: Text(
-                    'friends_visit_garden'.tr(),
-                    style: context.textTheme.titleLarge,
-                  ),
-                ),
+              // No "visit garden" button: the garden redesign is a separate
+              // branch, and until it lands there is no garden to visit.
+              Icon(
+                Icons.chevron_right,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ],
           ),

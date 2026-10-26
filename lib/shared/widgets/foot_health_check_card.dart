@@ -1,9 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 
 /// Home "one-minute foot-pressure health check" hero card (DESIGN.md S1 + the
 /// §C3 card anatomy).
@@ -12,26 +14,18 @@ import 'package:silversole/core/utils/useful_extension.dart';
 /// the stock neutral surface and the brand accent (`primary`, blue) is the only
 /// accent — a solid round play button that doubles as the CTA. Gold is
 /// intentionally NOT used: per DESIGN.md blue = action/brand and gold =
-/// rewards/points, and starting the check is an action. The large score stays
-/// near-black (`number/stat`).
+/// rewards/points, and starting the check is an action. The large band label
+/// stays near-black (`number/stat`).
 ///
-/// The figures here are a static placeholder — no health-check score or step
-/// source is wired up yet (see the pipeline status in CLAUDE.md). They live as
-/// named constants so this can later read a provider without touching layout.
-class FootHealthCheckCard extends StatelessWidget {
+/// Shows the last foot check the wearer finished ([lastFootCheckProvider]):
+/// its band and when it was taken. With none on record it says so and offers
+/// the check — never a number it does not have.
+class FootHealthCheckCard extends ConsumerWidget {
   const FootHealthCheckCard({super.key});
 
-  static const int _score = 81;
-  static const String _lastCheck = '6/20';
-  static const String _todaySteps = '4,210';
-
   @override
-  Widget build(BuildContext context) {
-    final meta = [
-      'foot_health_check_last'.tr(args: [_lastCheck]),
-      'foot_health_check_status_good'.tr(),
-      'foot_health_check_today_steps'.tr(args: [_todaySteps]),
-    ].join('  ·  ');
+  Widget build(BuildContext context, WidgetRef ref) {
+    final last = ref.watch(lastFootCheckProvider);
 
     return Card(
       child: Padding(
@@ -48,23 +42,21 @@ class FootHealthCheckCard extends StatelessWidget {
                     style: context.textTheme.titleMedium,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text('$_score', style: context.textTheme.displaySmall),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        'score_unit'.tr(),
-                        style: context.textTheme.titleMedium?.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    last == null
+                        ? 'foot_check_none_yet'.tr()
+                        : last.rating.labelKey.tr(),
+                    style: last == null
+                        ? context.textTheme.titleLarge
+                        : context.textTheme.displaySmall,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    meta,
+                    last == null
+                        ? 'foot_check_none_yet_hint'.tr()
+                        : 'foot_health_check_last'.tr(
+                            args: [lastFootCheckDate(context, last)],
+                          ),
                     style: context.textTheme.bodySmall?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
                     ),
@@ -79,6 +71,15 @@ class FootHealthCheckCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// When [record] was taken, as the home cards print it: the date, plus the
+/// time when it was today.
+String lastFootCheckDate(BuildContext context, FootCheckRecord record) {
+  final locale = context.locale.toString();
+  return record.isOnDay(DateTime.now())
+      ? DateFormat.Hm(locale).format(record.takenAt)
+      : DateFormat.MMMd(locale).format(record.takenAt);
 }
 
 /// Solid round brand-blue play button on the right of [FootHealthCheckCard].

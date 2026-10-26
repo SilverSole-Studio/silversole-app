@@ -76,7 +76,6 @@ weak,weak,弱
 low,low,低
 high,high,高
 alert_severity,alert severity,警報嚴重程度
-view_history,View history,查看歷史
 on,On,開
 off,Off,關
 general,General,一般
@@ -90,8 +89,6 @@ greeting_morning,Good morning,早安
 greeting_afternoon,Good afternoon,午安
 greeting_evening,Good evening,晚安
 today_mission,Today's mission,今日任務
-streak_days,{} day streak,連續 {} 天
-steps_progress,{} / {} steps,{} / {} 步
 foot_check_title,One-minute foot pressure check,一分鐘足壓健檢
 start_check_now,Start check now,立即開始健檢
 fall_guard_active,Fall guard active,跌倒守護運作中
@@ -99,13 +96,9 @@ fall_guard_events,{} events,{} 件事件
 mascot_where_title,Where is Chu?,粗哥在哪？
 last_located,Last located · {},最後定位 · {}
 no_location_yet,No location yet,尚無定位資料
-in_safe_zone,In the safe zone — all good!,在安全範圍內，放心！
-safe_zone_hint,Family is notified when leaving the set area,離開設定範圍會通知家屬
-set_safe_zone,Set safe zone,設定安全範圍
-mission_cta,Play one more round of “Chu Catches Fish” to finish,再玩一場「粗哥接魚」就完成
+mission_cta,See today's missions,查看今日任務
 device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
-foot_check_status,Good condition · {} steps today,狀態良好 · 今日 {} 步
 foot_check_session_title,One-minute foot check,一分鐘足壓檢測
 foot_check_collecting,Collecting data…,正在採集數據…
 foot_check_complete,Collection complete,採集完成
@@ -136,14 +129,12 @@ foot_check_rating_very_good,Very good,很好
 foot_check_rating_excellent,Excellent,非常好
 foot_check_quit_confirm,End,結束
 foot_check_waiting,Waiting for sole data,等待鞋墊資料
-fall_guard_summary,{} events in 7 days · {} family notified,近 7 日 {} 事件 · 已通知 {} 位家屬
 fall_detected_demo,Your family member may need help,您的家人可能有緊急狀況
 fall_demo_body,A possible fall was detected. Please check on them now.,偵測到疑似跌倒，請盡快確認家人的狀況
 fall_demo_dismiss,Got it,我知道了
 games_hub_title,Move with Chu,陪粗哥動一動
 pick_a_game,Pick one to play,選一款來玩
 mission_almost_done,Almost done,快完成了
-mission_walk_steps,Walk {} steps ({}),走 {} 步（{}）
 mission_play_game,Play {},玩 {}
 coin_reward,+{} coins,+{} 幣
 garden,Garden,菜園
@@ -294,17 +285,12 @@ time_ago_days,{} days ago,{} 天前
 time_ago_over_7_days,over 7 days ago,7 天以上
 foot_health_check_title,One-Minute Foot Health Check,一分鐘足壓健檢
 foot_health_check_cta,Start Health Check,立即開始健檢
-foot_health_check_last,Last {},上次 {}
-foot_health_check_status_good,Good condition,狀態良好
-foot_health_check_today_steps,{} steps today,今日 {} 步
+foot_health_check_last,Last check: {},上次健檢：{}
 score_unit,pts,分
 daily_missions_title,Daily missions,每日任務
-daily_missions_subtitle,{} left today — finish all for a +100 bonus,今天還有 {} 項，全部完成再 +100 加碼！
-daily_missions_footer,Coins you earn redeem for shop vouchers and rewards,賺到的活力幣，可到商店換折價券與獎勵
+daily_missions_subtitle,{} left today,今天還有 {} 項
 mission_go,Go,去完成
-mission_claimed,Claimed,已領取
 mission_done,Done,已完成
-mission_walk_title,Walk {} steps,走滿 {} 步
 mission_balance_title,Complete a balance training,完成一次平衡訓練
 mission_balance_subtitle,Play “Balance Penguin” to finish,玩「重心企鵝」即可達成
 mission_balance_game,Balance Penguin,重心企鵝
@@ -355,7 +341,7 @@ gait_threshold_over,Over the detectable threshold,超過門檻
 gait_threshold_rate,About 0.047 slower each month,每月約降 0.047
 gait_phase_stable,Stable,穩定期
 gait_phase_declining,Declining,下降期
-gait_phase_alert,Watch closely,警戒期
+gait_phase_alert,Watch,留意期
 gait_metric_speed,Walking speed,步速
 gait_metric_cadence,Cadence,步頻
 gait_metric_stability,Step stability,步伐穩定度
@@ -370,21 +356,21 @@ gait_reading_cadence_flat,About the same as last week,和上週差不多
 gait_reading_ds_week,More time on both feet than last week,比上週更常用雙腳撐著
 gait_reading_ds_month,More time on both feet than last month,比上月更常用雙腳撐著
 gait_reading_sym_week,The left foot stays down a little longer,左腳踩得比右腳久一些
-gait_reading_sym_month,The gap keeps widening so watch the right side,差距持續擴大，建議留意右側
+gait_reading_sym_month,In this example the gap widens over the month,此範例中左右差距逐月變大
 gait_reading_cv_month,Step rhythm is less even than last month,每一步的節奏比上月更不一致
 gait_fall_title,Falls in the last 3 months,近 3 個月跌倒
-gait_fall_last,Most recent: week 10,最近一次：第 10 週
-gait_fall_last_quarter,Week 10 · same period as the speed drop,第 10 週一次 · 與步速下降同期
+gait_fall_last,Example: most recent in week 10,範例：最近一次在第 10 週
+gait_fall_last_quarter,Example: week 10 · same period as the speed drop,範例：第 10 週一次 · 與步速下降同期
 gait_fall_unit,times,次
-gait_note_week,About 14820 steps over the last 7 days — plenty of data. This much only makes the averages trustworthy; step stability needs a month or more to mean anything so it is not shown here.,近 7 天累積 14820 步，資料量充足。這個資料量只夠讓平均值可信；步伐穩定度需要一個月以上才有意義，因此不在本頁顯示。
-gait_note_month,About 61300 steps over the last 30 days. All four metrics are worsening together — slower walking · less even rhythm · more time on both feet · more asymmetry. That combination usually points to falling confidence in balance rather than one joint problem.,近 30 天累積 61300 步。四項指標同向惡化——走得慢、節奏變亂、雙腳同時著地時間變長、左右更不對稱。這個組合通常代表平衡信心下降，而非單一關節問題。
-gait_note_quarter,The decline has run for twelve weeks and passed the detectable threshold in each of the last three. The fall in week 10 happened in the same period.,下降趨勢已持續十二週，最近三週都超過可偵測門檻。第 10 週那次跌倒也發生在同一期間。
-gait_advice_title,Suggested next steps,建議行動
+gait_note_week,In this example about 14820 steps over 7 days — plenty of data. This much only makes the averages trustworthy; step stability needs a month or more to mean anything so it is not shown here.,此範例近 7 天累積 14820 步，資料量充足。這個資料量只夠讓平均值可信；步伐穩定度需要一個月以上才有意義，因此不在本頁顯示。
+gait_note_month,In this example about 61300 steps over 30 days and all four metrics move the same way — slower walking · less even rhythm · more time on both feet · more asymmetry. A pattern like this can reflect less confidence in balance rather than one joint problem; only a professional assessment can tell.,此範例近 30 天累積 61300 步，四項指標同向變化——走得慢、節奏變亂、雙腳同時著地時間變長、左右更不對稱。這樣的組合可能反映平衡信心下降，而非單一關節問題；實際情況需專業評估才能判斷。
+gait_note_quarter,In this example the decline runs for twelve weeks and passes the detectable threshold in each of the last three. The example fall in week 10 is in the same period.,此範例中下降趨勢持續十二週，最近三週都超過可偵測門檻；範例中第 10 週的跌倒也在同一期間。
+gait_advice_title,Example suggestions,範例建議
 gait_advice_assessment,Arrange a walking assessment and check whether any medication changed recently,安排一次行走功能評估，並確認近期是否有換藥
 gait_advice_home,Check the home — bathroom grab bars · night lighting · non-slip flooring,居家環境檢視：浴室扶手、夜間照明、地面止滑
 gait_advice_pain,Watch for pain on one side (left-right balance is a supporting observation and not a primary judgement),可一併留意是否有單側疼痛（左右平衡為輔助觀察，非主要判定依據）
 gait_help_speed_title,Walking speed,步速
-gait_help_speed_body,How many metres per second. It reflects overall walking ability and is an early sign of functional decline.,每秒走多少公尺。反映整體行走能力，是功能退化的早期訊號。
+gait_help_speed_body,How many metres per second. It reflects overall walking ability; a slowdown can be one early sign of reduced function.,每秒走多少公尺。反映整體行走能力；變慢可能是功能退化的早期訊號之一。
 gait_help_speed_note,Walking speed does not predict falls directly. Walking fast does not mean not falling. For fall risk look at the walking-stability group instead.,注意：步速不直接預測跌倒。走得快不等於不會跌倒。要看跌倒風險，請看「走路穩定度」那一區。
 gait_help_speed_evidence,JAMA 2011 pooled 9 cohorts and 34485 older adults: every 0.1 m/s faster came with 12% lower mortality risk. The 2022 world falls guidelines include walking speed in risk assessment.,JAMA 2011 彙整 9 個世代、34485 位長者：步速每快 0.1 m/s，死亡風險降 12%。2022 世界跌倒防治指引已將步速納入風險評估流程。
 gait_help_cadence_title,Cadence,步頻
@@ -531,7 +517,6 @@ friends_my_orgs,My centres,我的據點
 friends_no_org,Not in any centre yet,還沒加入據點
 friends_list_title,Friends ({} of {}),朋友（{}／{}）
 friends_list_empty,No friends yet. Show your QR to someone next to you or tell them your friend code.,還沒有朋友。可以讓旁邊的人掃你的 QR，或把好友碼念給對方聽。
-friends_visit_garden,Visit garden,去菜園看看
 friends_blocked_title,Blocked,封鎖名單
 friends_nickname_removed,Your name was taken down after a report. Please pick a new one.,你的名字被檢舉後移除了，請取一個新的。
 friends_photo_removed,Your photo was taken down after a report. Friends now see your picture instead.,你的照片被檢舉後移除了，朋友現在看到的是你挑的頭像。
@@ -633,3 +618,10 @@ friends_err_notFound_avatar,That picture is not available. Please pick another.,
 friends_err_limitReached_photo,Photos can be changed 5 times a day. Please try tomorrow.,照片一天只能換 5 次，明天再換。
 friends_err_limitReached_report,You have sent 10 reports today. Please try tomorrow.,今天已經檢舉 10 次了，明天再試。
 friends_qr_retry,Try again,再試一次
+foot_check_none_yet,No foot check yet,尚未做過足部健檢
+foot_check_none_yet_hint,Take the one-minute check and your result shows up here.,做一次一分鐘健檢，結果會顯示在這裡。
+foot_check_from_sample,Calculated from the sample motion and not from your sole — so it is not kept as your result.,依範例動作計算，不是你的量測，因此不會記為你的結果。
+fall_guard_none_since_open,No falls detected since the app was opened,開啟 App 以來未偵測到跌倒
+fall_guard_count_since_open,{} falls detected since the app was opened,開啟 App 以來偵測到 {} 次跌倒
+mission_measure_subtitle,Take the one-minute foot check,做一次一分鐘足壓健檢
+gait_sample_banner,Sample data — not measured yet,範例資料 · 尚未實際量測

@@ -10,6 +10,7 @@ import 'package:silversole/shared/models/live_telemetry_state.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
+import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
@@ -17,6 +18,7 @@ import 'package:silversole/shared/providers/telemetry_process_providers/telemetr
 import 'package:silversole/core/theme/app_palette.dart';
 import 'package:silversole/shared/widgets/chart/chart_section.dart';
 import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
+import 'package:silversole/shared/widgets/foot_health_check_card.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Home screen for the illustrated "mascot" theme.
@@ -25,19 +27,13 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// restyle: the two designs group their content differently. Both read the
 /// same providers, so there is one source of truth for the data.
 ///
-/// Figures the app does not measure yet (step count, streak, health score,
-/// family contacts) are placeholders marked with TODO. The mockup's weather
-/// strip is intentionally absent — there is no weather source and none is
-/// planned.
+/// Every figure shown is real or absent: the mockup's step count, streak and
+/// family contacts have no source in the app, so they are not drawn, and the
+/// foot check shows the last real result or an empty state. The mockup's
+/// weather strip is intentionally absent too — there is no weather source and
+/// none is planned.
 class HomeBodyT2 extends ConsumerWidget {
   const HomeBodyT2({super.key});
-
-  /// Placeholders until the pedometer / scoring / contacts features exist.
-  static const mockSteps = 4210;
-  static const mockStepGoal = 3500;
-  static const mockStreakDays = 6;
-  static const mockScore = 81;
-  static const mockFamilyNotified = 2;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,7 +50,7 @@ class HomeBodyT2 extends ConsumerWidget {
               const _GreetingHeader(),
               const _DailyMissionCard(),
               _DeviceCard(device: device),
-              const _FootCheckCard(),
+              const FootCheckCardT2(),
               const _FallGuardCard(),
               const _RecentDataCard(),
             ],
@@ -122,93 +118,37 @@ class _GreetingHeader extends ConsumerWidget {
 
 // ── 2. Daily mission ──────────────────────────────────────────────────────
 
+/// Opens today's missions. No step count or streak: the app has no pedometer
+/// and keeps no streak, so the card only names what is waiting.
 class _DailyMissionCard extends StatelessWidget {
   const _DailyMissionCard();
 
   @override
   Widget build(BuildContext context) {
-    const steps = HomeBodyT2.mockSteps;
-    const goal = HomeBodyT2.mockStepGoal;
-
     return MascotCard(
       color: AppPaletteT2.cardWarm,
       onTap: () => showDailyMissionsBottomSheet(context),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/mascot-assets/icons/home_play.webp',
-                height: 62,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'today_mission'.tr(),
-                            style: context.textTheme.titleLarge,
-                          ),
-                        ),
-                        MascotPill(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Text('🔥', style: TextStyle(fontSize: 14)),
-                              const SizedBox(width: 4),
-                              Text(
-                                'streak_days'.tr(
-                                  args: ['${HomeBodyT2.mockStreakDays}'],
-                                ),
-                                style: context.textTheme.labelLarge,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: MascotProgressBar(
-                            value: steps / goal,
-                            height: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'steps_progress'.tr(args: ['$steps', '$goal']),
-                          style: context.textTheme.labelLarge,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
+          Image.asset('assets/mascot-assets/icons/home_play.webp', height: 62),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('today_mission'.tr(), style: context.textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(
                   'mission_cta'.tr(),
                   style: context.textTheme.bodyLarge,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const Icon(Icons.chevron_right, size: 20),
-            ],
+              ],
+            ),
           ),
+          const Icon(Icons.chevron_right, size: 20),
         ],
       ),
     );
@@ -312,11 +252,15 @@ class _DeviceCard extends ConsumerWidget {
 
 // ── 4. Foot pressure check ────────────────────────────────────────────────
 
-class _FootCheckCard extends StatelessWidget {
-  const _FootCheckCard();
+/// The last foot check the wearer finished: its band and when. With none on
+/// record it says so — no number — and the button starts one.
+class FootCheckCardT2 extends ConsumerWidget {
+  const FootCheckCardT2({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final last = ref.watch(lastFootCheckProvider);
+
     return MascotCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,27 +274,24 @@ class _FootCheckCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${HomeBodyT2.mockScore}',
-                          style: context.textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppPaletteT2.ink,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'score_unit'.tr(),
-                          style: context.textTheme.bodyLarge,
-                        ),
-                      ],
+                    Text(
+                      last == null
+                          ? 'foot_check_none_yet'.tr()
+                          : last.rating.labelKey.tr(),
+                      style: last == null
+                          ? context.textTheme.titleLarge
+                          : context.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: AppPaletteT2.ink,
+                            ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'foot_check_status'.tr(args: ['${HomeBodyT2.mockSteps}']),
+                      last == null
+                          ? 'foot_check_none_yet_hint'.tr()
+                          : 'foot_health_check_last'.tr(
+                              args: [lastFootCheckDate(context, last)],
+                            ),
                       style: context.textTheme.bodyMedium,
                     ),
                   ],
@@ -376,9 +317,9 @@ class _FootCheckCard extends StatelessWidget {
 
 // ── 5. Fall guard ─────────────────────────────────────────────────────────
 
-/// Mirrors `WarningCard`'s counting model: falls seen since the app started.
-/// The "7 days" framing and the family count are mockup copy — there is no
-/// persisted history and no contacts feature yet.
+/// Mirrors `WarningCard`'s counting model: falls seen since the app started,
+/// and the copy says exactly that — there is no persisted history and no
+/// contacts feature, so no "7 days" and no "family notified".
 class _FallGuardCard extends ConsumerStatefulWidget {
   const _FallGuardCard();
 
@@ -415,9 +356,11 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'fall_guard_summary'.tr(
-                    args: ['$_eventCount', '${HomeBodyT2.mockFamilyNotified}'],
-                  ),
+                  safe
+                      ? 'fall_guard_none_since_open'.tr()
+                      : 'fall_guard_count_since_open'.tr(
+                          args: ['$_eventCount'],
+                        ),
                   style: context.textTheme.bodyMedium,
                   maxLines: 2,
                 ),

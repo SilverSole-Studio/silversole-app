@@ -1,10 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 
 /// Opens the "daily missions" sheet (the home FAB's mission action).
 Future<void> showDailyMissionsBottomSheet(BuildContext context) {
@@ -17,13 +18,13 @@ Future<void> showDailyMissionsBottomSheet(BuildContext context) {
   );
 }
 
-/// A single daily mission (static placeholder — no mission backend yet).
+/// A single daily mission. There is no mission backend: a mission is only
+/// marked done when the app itself knows it happened.
 class _Mission {
   const _Mission({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.progress,
     this.completed = false,
     this.onGo,
   });
@@ -31,9 +32,6 @@ class _Mission {
   final IconData icon;
   final String title;
   final String subtitle;
-
-  /// 0..1 progress bar shown under the subtitle, or null for none.
-  final double? progress;
 
   /// Already finished + claimed → shows the "claimed" pill instead of a button.
   final bool completed;
@@ -44,27 +42,18 @@ class _Mission {
 }
 
 /// Bottom-sheet body listing today's missions. Incomplete missions show a gray
-/// "go" button that routes to where the mission is done (instead of a reward
-/// amount); completed ones show a "claimed" pill.
-class DailyMissionsSheet extends StatelessWidget {
+/// "go" button that routes to where the mission is done (no reward amount —
+/// there are no rewards); completed ones show a "done" pill.
+///
+/// Only missions that lead somewhere real are listed. There is no walking
+/// mission: the app has no pedometer, so it could only show made-up progress.
+/// The foot-pressure mission is done once a foot check finished today
+/// ([lastFootCheckProvider]); the balance game reports nothing back, so that
+/// one always offers "go".
+class DailyMissionsSheet extends ConsumerWidget {
   const DailyMissionsSheet({super.key});
 
-  // Static placeholder figures (mirrors the foot-health card's step count).
-  static const String _steps = '4,210';
-  static const String _stepGoal = '5,000';
-
-  List<_Mission> _missions(BuildContext context) => [
-    _Mission(
-      icon: LucideIcons.footprints,
-      title: 'mission_walk_title'.tr(args: [_stepGoal]),
-      subtitle: '$_steps / $_stepGoal',
-      progress: 4210 / 5000,
-      // No dedicated steps page yet — placeholder.
-      onGo: () {
-        Navigator.of(context).pop();
-        comingSoon();
-      },
-    ),
+  List<_Mission> _missions(BuildContext context, {required bool measured}) => [
     _Mission(
       icon: LucideIcons.scale,
       title: 'mission_balance_title'.tr(),
@@ -85,14 +74,25 @@ class DailyMissionsSheet extends StatelessWidget {
     _Mission(
       icon: LucideIcons.scanLine,
       title: 'mission_measure_title'.tr(),
-      subtitle: 'mission_done'.tr(),
-      completed: true,
+      subtitle: measured
+          ? 'mission_done'.tr()
+          : 'mission_measure_subtitle'.tr(),
+      completed: measured,
+      onGo: measured
+          ? null
+          : () {
+              final router = GoRouter.of(context);
+              Navigator.of(context).pop();
+              router.push('/foot-check');
+            },
     ),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final missions = _missions(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final measured =
+        ref.watch(lastFootCheckProvider)?.isOnDay(DateTime.now()) ?? false;
+    final missions = _missions(context, measured: measured);
     final remaining = missions.where((m) => !m.completed).length;
 
     return SafeArea(
@@ -124,14 +124,6 @@ class DailyMissionsSheet extends StatelessWidget {
                 if (i > 0) const Divider(height: AppSpacing.xl),
                 _MissionRow(mission: missions[i]),
               ],
-              const SizedBox(height: AppSpacing.xl),
-              Text(
-                'daily_missions_footer'.tr(),
-                textAlign: TextAlign.center,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
             ],
           ),
         ),
@@ -173,23 +165,6 @@ class _MissionRow extends StatelessWidget {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (mission.progress != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: mission.progress,
-                    minHeight: 6,
-                    backgroundColor:
-                        context.colorScheme.surfaceContainerHighest,
-                    // Reward gold: missions are a rewards feature (DESIGN.md
-                    // reserves gold for rewards/points).
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      context.tokens.rewardGold,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -221,7 +196,7 @@ class _Trailing extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'mission_claimed'.tr(),
+              'mission_done'.tr(),
               style: context.textTheme.labelLarge?.copyWith(
                 color: context.tokens.success,
               ),

@@ -33,6 +33,7 @@ class PressureReading {
     required this.right,
     required this.left,
     required this.hasData,
+    this.isSample = false,
   });
 
   final List<int> right;
@@ -45,6 +46,10 @@ class PressureReading {
   /// False makes the right foot read as absent instead of as a foot measuring
   /// nothing — a distinction the wearer cannot make from the drawing alone.
   final bool hasData;
+
+  /// Whether these readings are a frame of a bundled sample clip rather than
+  /// a sole's.
+  final bool isSample;
 }
 
 /// Signature of [PressureDemoScope.builder]: the readings to render, plus the
@@ -153,6 +158,7 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
         // right foot only. A lone left sole would otherwise draw the right
         // foot bearing zero load, which reads as a clinical finding.
         hasData: clip != null || rightImu.isNotEmpty,
+        isSample: clip != null,
       ),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,

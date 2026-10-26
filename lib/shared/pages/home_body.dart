@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
@@ -140,19 +139,13 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
                 child: Column(
                   spacing: AppSpacing.base,
                   children: [
-                    Row(
-                      spacing: AppSpacing.base,
-                      children: [
-                        Text(
-                          'welcome_back'.tr(),
-                          style: context.textTheme.displaySmall,
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: comingSoon,
-                          icon: Icon(LucideIcons.bell),
-                        ),
-                      ],
+                    // No bell: there is no notification inbox to open.
+                    Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        'welcome_back'.tr(),
+                        style: context.textTheme.displaySmall,
+                      ),
                     ),
                     if (preferredDevice != null)
                       activeBody(preferredDevice)

@@ -9,7 +9,6 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
-import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -83,30 +82,12 @@ class _MissionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const steps = HomeBodyT2.mockSteps;
-    const goal = HomeBodyT2.mockStepGoal;
-
+    // No walking mission and no streak: the app has no pedometer and keeps
+    // no streak, so both could only be made-up figures.
     return SectionCard(
       title: 'today_mission'.tr(),
-      trailing: _Pill(
-        label: 'streak_days'.tr(args: ['${HomeBodyT2.mockStreakDays}']),
-        color: context.tokens.rewardGold,
-        icon: LucideIcons.flame,
-      ),
       child: Column(
         children: [
-          _MissionRow(
-            icon: LucideIcons.footprints,
-            title: 'mission_walk_title'.tr(args: ['$goal']),
-            subtitle: 'steps_progress'.tr(args: ['$steps', '$goal']),
-            progress: steps / goal,
-            trailing: _Pill(
-              label: 'mission_done'.tr(),
-              color: context.tokens.success,
-              icon: LucideIcons.check,
-            ),
-          ),
-          const Divider(height: AppSpacing.xl),
           _MissionRow(
             icon: LucideIcons.gamepad2,
             title: 'mission_play_game'.tr(args: ['game_catch_fish'.tr()]),
@@ -130,14 +111,12 @@ class _MissionRow extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.trailing,
-    this.progress,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final Widget trailing;
-  final double? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -163,21 +142,6 @@ class _MissionRow extends StatelessWidget {
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (progress != null) ...[
-                const SizedBox(height: AppSpacing.sm),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress!.clamp(0.0, 1.0),
-                    minHeight: 6,
-                    backgroundColor:
-                        context.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      context.tokens.rewardGold,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -192,11 +156,10 @@ class _MissionRow extends StatelessWidget {
 /// "claimed" state, generalized so streak / reward / done all read as one
 /// family instead of three different shapes.
 class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.color, this.icon});
+  const _Pill({required this.label, required this.color});
 
   final String label;
   final Color color;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -209,18 +172,9 @@ class _Pill extends StatelessWidget {
         color: color.withValues(alpha: 0.14),
         shape: const StadiumBorder(),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: AppSpacing.xs),
-          ],
-          Text(
-            label,
-            style: context.textTheme.labelLarge?.copyWith(color: color),
-          ),
-        ],
+      child: Text(
+        label,
+        style: context.textTheme.labelLarge?.copyWith(color: color),
       ),
     );
   }

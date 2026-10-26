@@ -47,6 +47,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // The figures are an example, and the panel says so before anything else.
+    expect(find.byKey(GaitAnalysisPanel.sampleBannerKey), findsOneWidget);
+    expect(find.text('Sample data — not measured yet'), findsOneWidget);
+
     // Both questions the page answers are always on screen as groups.
     expect(find.text('Walking ability'), findsOneWidget);
     expect(find.text('Walking stability'), findsOneWidget);
@@ -61,7 +65,7 @@ void main() {
     expect(find.text('Supporting'), findsOneWidget);
     expect(find.text('Step stability'), findsNothing);
     expect(find.text('Falls in the last 3 months'), findsOneWidget);
-    expect(find.text('Suggested next steps'), findsNothing);
+    expect(find.text('Example suggestions'), findsNothing);
 
     // Month: step stability and the left/right chart appear.
     scale.value = GaitScale.month;
@@ -70,17 +74,17 @@ void main() {
     expect(find.text('Four-week trend'), findsOneWidget);
     expect(find.text('Step stability'), findsOneWidget);
     expect(find.text('Left and right stance time'), findsOneWidget);
-    expect(find.text('Suggested next steps'), findsNothing);
+    expect(find.text('Example suggestions'), findsNothing);
 
     // Quarter: trajectory, phase timeline, small multiples and advice.
     scale.value = GaitScale.quarter;
     await tester.pumpAndSettle();
     // Twice over: the hero pill and the timeline span it labels.
-    expect(find.text('Watch closely'), findsNWidgets(2));
+    expect(find.text('Watch'), findsNWidgets(2));
     expect(find.text('Twelve-week trajectory'), findsOneWidget);
     expect(find.text('Phase'), findsOneWidget);
     expect(find.text('Four metrics moving together'), findsOneWidget);
-    expect(find.text('Suggested next steps'), findsOneWidget);
+    expect(find.text('Example suggestions'), findsOneWidget);
 
     // Every metric can explain itself: the first ⓘ is the phase pill's.
     await tester.tap(find.byIcon(LucideIcons.circleHelp).first);

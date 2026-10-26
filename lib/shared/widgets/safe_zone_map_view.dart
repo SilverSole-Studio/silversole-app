@@ -15,13 +15,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 /// differ, which the caller supplies. Keeping one map widget means the camera,
 /// permission and geolocation logic exist once.
 ///
-/// The safe zone is a front-end demo: [safeRadiusMeters] is a fixed value, not
-/// a user setting, and nothing is persisted or evaluated against it yet.
+/// There is no safe-zone feature yet, so no caller passes [safeRadiusMeters]
+/// and no ring is drawn; the parameter stays for when one exists.
 class SafeZoneMapView extends StatefulWidget {
   const SafeZoneMapView({
     super.key,
     required this.center,
-    this.safeRadiusMeters = 300,
+    this.showDevice = true,
+    this.safeRadiusMeters,
     this.markerIcon,
     this.outlinedControls = false,
     this.zoneColor,
@@ -30,8 +31,13 @@ class SafeZoneMapView extends StatefulWidget {
   /// Where the device was last seen.
   final LatLng center;
 
-  /// Demo radius of the safe zone ring.
-  final double safeRadiusMeters;
+  /// Whether [center] is a real device position. False when the device has
+  /// never reported one and [center] is only a fallback camera target — then
+  /// no marker is drawn, so the map never shows a made-up position.
+  final bool showDevice;
+
+  /// Radius of a safe-zone ring around [center], or null for none.
+  final double? safeRadiusMeters;
 
   /// Marker bitmap; falls back to the platform default pin when null.
   final BitmapDescriptor? markerIcon;
@@ -123,22 +129,24 @@ class _SafeZoneMapViewState extends State<SafeZoneMapView> {
           ),
           onMapCreated: (c) => _controller = c,
           markers: {
-            Marker(
-              markerId: const MarkerId('device'),
-              position: widget.center,
-              icon: widget.markerIcon ?? BitmapDescriptor.defaultMarker,
-              anchor: const Offset(0.5, 0.5),
-            ),
+            if (widget.showDevice)
+              Marker(
+                markerId: const MarkerId('device'),
+                position: widget.center,
+                icon: widget.markerIcon ?? BitmapDescriptor.defaultMarker,
+                anchor: const Offset(0.5, 0.5),
+              ),
           },
           circles: {
-            Circle(
-              circleId: const CircleId('safe_zone'),
-              center: widget.center,
-              radius: widget.safeRadiusMeters,
-              strokeWidth: 3,
-              strokeColor: zone,
-              fillColor: zone.withValues(alpha: 0.10),
-            ),
+            if (widget.showDevice && widget.safeRadiusMeters != null)
+              Circle(
+                circleId: const CircleId('safe_zone'),
+                center: widget.center,
+                radius: widget.safeRadiusMeters!,
+                strokeWidth: 3,
+                strokeColor: zone,
+                fillColor: zone.withValues(alpha: 0.10),
+              ),
           },
           // Let the map win the pan gesture inside a scrolling page.
           gestureRecognizers: {
