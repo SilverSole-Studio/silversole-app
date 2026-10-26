@@ -7,7 +7,6 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
@@ -31,13 +30,8 @@ Future<void> main() async {
     anonKey: dotenv.env[Constants.supabasePublicDefaultKey] ?? '',
   );
   await initializeGoogleSignIn();
-  // Desktop platforms (macOS) have no permission_handler implementation for
-  // this channel; skip rather than crash before runApp.
-  try {
-    await Permission.locationWhenInUse.request();
-  } on MissingPluginException {
-    // No-op: permission not requestable on this platform.
-  }
+  // No location request here: the map views ask for it when the wearer taps
+  // "my location" (App Review 5.1.1 — ask only when the feature needs it).
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(
     ProviderScope(

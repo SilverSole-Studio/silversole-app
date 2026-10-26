@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
@@ -33,13 +32,11 @@ class _MapCardState extends ConsumerState<MapCard> {
   GoogleMapController? _controller;
   LatLng initialCenter = LatLng(25.0330, 121.5654);
   final _zoom = 14.0;
-  bool _hasLocationPermission = false;
 
   @override
   void initState() {
     super.initState();
     _loadStyle();
-    _checkLocationPermission();
   }
 
   Future<void> _loadStyle() async {
@@ -51,14 +48,6 @@ class _MapCardState extends ConsumerState<MapCard> {
     if (!mounted) return;
     setState(() {
       darkStyle = dark;
-    });
-  }
-
-  Future<void> _checkLocationPermission() async {
-    final status = await Permission.locationWhenInUse.status;
-    if (!mounted) return;
-    setState(() {
-      _hasLocationPermission = status.isGranted || status.isLimited;
     });
   }
 
@@ -198,8 +187,6 @@ class _MapCardState extends ConsumerState<MapCard> {
               markers: _marker,
               polylines: _polyline,
               zoomControlsEnabled: false,
-              // myLocationButtonEnabled: _hasLocationPermission,
-              // myLocationEnabled: _hasLocationPermission,
               initialCameraPosition: CameraPosition(
                 target: initialCenter,
                 zoom: _zoom,
@@ -212,8 +199,8 @@ class _MapCardState extends ConsumerState<MapCard> {
               },
             ),
           ),
-          if (_hasLocationPermission)
-            Positioned(
+          // Always offered: the tap asks for location permission on demand.
+          Positioned(
               right: 4,
               top: 4,
               child: FloatingActionButton.small(
