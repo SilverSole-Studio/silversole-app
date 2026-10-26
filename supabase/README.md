@@ -12,15 +12,40 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 |---|---|
 | `migrations/20261019120000_friends.sql` | 9 張表（profiles、friendships、friend_requests、blocks、qr_tokens、orgs、org_members、profile_reports、friend_daily_limits）、RLS、規格 8.1 與 8.2 的函式、私有 bucket `avatars` 與它的 storage 政策、執行權 |
 | `tests/supabase_stubs.sql` | **只給本機測試用**：auth、storage、角色的最小替身，加上 Supabase 的預設權限。正式庫已經有這些東西，不能套上去 |
-| `tests/friends_rpc_test.mjs` | 52 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）加上規格 §10 的 RPC 與 RLS 測試 |
+| `migrations/20261026120000_friends_rpc_abuse.sql` | 修 2026-10-26 技術長藍隊核查的 8 類 RPC 濫用（見下面「RPC 濫用修正」）。接在上一支後面，兩支要一起套 |
+| `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
+| `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 
 ```bash
 cd supabase/tests && npm install && npm test
+npm run test:concurrency   # 真 PostgreSQL，第一次會下載約 30 MB 的 PostgreSQL 執行檔
 ```
 
 測試跑在 PGlite 上（PostgreSQL 17.5 編成 WASM，不用 Docker）。2026-10-23 跑的結果是 52/52 通過。另外做過突變測試：把封鎖判斷或冷卻判斷拿掉，就有 3 個案例失敗，表示這些測試抓得到錯。
 
 **沒測到的：**PGlite 只有一條連線，所以並行的情況沒有測：兩人同時互送邀請、偷菜鎖住好友列的同時有人解除好友。這兩種要在 Supabase 分支上實測。Storage API 本身（上傳、簽網址）也沒有測，替身只模擬了 `storage.objects` 的 RLS。
+
+## RPC 濫用修正（2026-10-26）
+
+技術長用 AI 做藍隊核查，找到 8 類 RPC 濫用。共通原因：限制只寫在「單一請求、單一配對」，沒想到對方會繞過 App 直接打 API、同時送一堆請求、開分身。
+
+| # | 核查找到的 | 怎麼修 | 測試 |
+|---|---|---|---|
+| 1 | 封鎖會刪掉兩人間的邀請，連拒絕紀錄一起刪，30 天冷卻被洗掉 | 冷卻改存獨立的 `friend_cooldowns`，封鎖、解封、刪好友、取消都刪不掉；`block_user` 只把等待中的邀請改成 cancelled | audit 1 |
+| 2 | `create_qr_token` 沒限頻，一秒造 50 列 | 還有 60 秒以上的 token 直接重用；產生新的時刪掉自己過了寬限的舊 token（每人最多兩三列）；另扣限流 | audit 2 |
+| 3 | 取消的邀請不算額度 → 送、通知、取消無限重複 | 每天送出 30 封（含取消、含暫扣）；取消後 24 小時內再送同一人一律暫扣、對方看不到 | audit 3 ×2 |
+| 4 | 大頭貼每日 5 張是事後 count，並發 50 個全過；孤兒檔永久佔空間 | 上傳政策先鎖人、用計數列扣次數；資料夾總數最多 10 張；可以刪自己的舊照片（目前那張不能刪），App 換照片後自動刪舊的 | audit 4（PGlite）＋並發測試（修前 30/30 進、修後 5） |
+| 5 | 檢舉轟炸：100 個假帳號 × 10 次 | 同一人對同一人同一類還沒處理的只留一筆；檢舉人要取好名字且帳號滿 3 天（不到照樣回成功、不記）；被檢舉人一天最多新增 30 筆 | audit 5 |
+| 6 | 20 封未回覆的鎖只鎖一對，並發寄 200 人全過 | `friends_lock_pair` 改成依 user_id 順序鎖兩個「人」，所有上限在鎖裡算 | 並發測試（修前 22/60、修後剛好 20） |
+| 7 | 暱稱可放零寬字、反向字、冒充系統名、自取「銀足朋友」 | NFKC 正規化＋逐字白名單；`friend_reserved_names` 保留名（銀足、官方、客服、管理員、系統、動域、admin、support、粗哥）；App 端同步檢查 | audit 7＋Dart 單元測試 |
+| 8 | 沒有每人全域限流 | `friend_rate_buckets` token bucket（容量 30、每秒回 0.5），`friends_me()`／`friends_uid()` 第一行扣，寫入類 RPC 多扣；同一人的呼叫排隊 | audit 8＋並發測試 |
+
+新的錯誤碼：`rate_limited`（太快了，等一下再試）、`send_limit`（今天的邀請送夠多了）。App 端 `FriendError.rateLimited`、`sendLimit`。
+
+**還沒處理：**
+- 被惡意上傳後又沒登記的照片（資料夾上限 10 張以內）不會自己清，要另寫 Edge Function 用 Storage API 定期清（Postgres 刪不了 Storage 的檔）。
+- 一人開很多帳號本身擋不住；檢舉已改成以「不同帳號、帳號滿 3 天」計，送邀請仍是每個帳號各自的額度。
+- 這些是 AI 查得到的；正式上線前仍建議請專業資安單位審。
 
 ## 套用前比對（正式庫跑這幾句，結果貼回來）
 

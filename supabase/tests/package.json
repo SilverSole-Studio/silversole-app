@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-concurrency=1 friends_rpc_test.mjs"
+    "test": "node --test --test-concurrency=1 friends_rpc_test.mjs",
+    "test:concurrency": "node --test --test-concurrency=1 friends_concurrency_test.mjs"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "0.3.14"
+    "@electric-sql/pglite": "0.3.14",
+    "embedded-postgres": "17.10.0-beta.17",
+    "pg": "8.13.1"
   }
 }
