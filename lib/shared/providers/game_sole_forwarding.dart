@@ -4,16 +4,20 @@ import 'package:collection/collection.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/ble/sole_sample_bus.dart';
+import 'package:silversole/constants.dart';
 import 'package:silversole/core/ble/sole_sample_script.dart';
 import 'package:silversole/shared/providers/foot_telemetry_provider.dart';
+import 'package:silversole/shared/providers/plaza_bridge.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
-/// Every raw sample from every sole, as the script a game page runs.
+/// Every raw sample from every sole, as the script a game page runs —
+/// guarded so it only runs on the games' own site ([gameOriginGuard]).
 ///
 /// The foot side and the primary flag are read per sample rather than watched:
 /// watching would rebuild this provider — and hand subscribers a new stream —
 /// whenever the pairings change, while a lookup in a list of two is free.
 final gameSoleScriptsProvider = Provider<Stream<String>>((ref) {
+  final origin = PlazaBridge.originOf(Constants.gameUrl);
   return ref.watch(soleSampleBusProvider).stream.map((sample) {
     final key = sample.identityKey;
     final foot = ref
@@ -22,7 +26,10 @@ final gameSoleScriptsProvider = Provider<Stream<String>>((ref) {
         .firstWhereOrNull((d) => d.identityKey == key)
         ?.footSide;
     final primary = ref.read(primarySoleKeyProvider) == key;
-    return soleSampleScript(sample.data, foot: foot, primary: primary);
+    return gameOriginGuard(
+      soleSampleScript(sample.data, foot: foot, primary: primary),
+      origin,
+    );
   });
 });
 
@@ -31,7 +38,9 @@ final gameSoleScriptsProvider = Provider<Stream<String>>((ref) {
 ///
 /// Flutter → JS: each raw sample of each sole goes to `window.onSoleSample`,
 /// or — on a page from before two feet — the primary sole's to
-/// `window.onImuData` (see [soleSampleScript]). Nothing is sent until the
+/// `window.onImuData` (see [soleSampleScript]). Each script only runs on the
+/// games' own origin ([gameOriginGuard]), so a page the web view navigated to
+/// elsewhere gets nothing. Nothing is sent until the
 /// page has loaded ([soleForwardReady]), and nothing here calls setState:
 /// samples arrive at 50 Hz per sole and must never rebuild the page.
 mixin GameSoleForwarding<W extends ConsumerStatefulWidget> on ConsumerState<W> {

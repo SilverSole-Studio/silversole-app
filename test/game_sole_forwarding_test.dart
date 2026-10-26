@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:silversole/constants.dart';
 import 'package:silversole/core/ble/sole_sample_bus.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
@@ -58,11 +59,16 @@ ProviderContainer _boot(List<BlePairedDevice> paired) {
   return container;
 }
 
+/// The origin guard every forwarded script starts with.
+final _guardPrefix =
+    'if(location.origin===${jsonEncode(Uri.parse(Constants.gameUrl).origin)}){';
+
 /// The `onSoleSample` payload of a forwarded script.
 Map<String, dynamic> _payload(String script) {
+  expect(script, startsWith(_guardPrefix));
   final match = RegExp(
     r'^window\.onSoleSample \? onSoleSample\((.*?)\) : ',
-  ).firstMatch(script);
+  ).firstMatch(script.substring(_guardPrefix.length));
   expect(match, isNotNull, reason: 'unexpected script shape: $script');
   return jsonDecode(match!.group(1)!) as Map<String, dynamic>;
 }
@@ -104,6 +110,28 @@ void main() {
       expect(scripts[1], contains(': (true && window.onImuData'));
     },
   );
+
+  test('every script only runs on the games origin', () async {
+    // Guarded inside the JS, so a page that navigated away from the games
+    // site between the check and the evaluation still gets nothing.
+    final container = _boot([_sole('A', preferred: true)]);
+    final scripts = _collect(container);
+
+    container
+        .read(soleSampleBusProvider)
+        .emit(SoleSample(identityKey: 'A', data: _imu(7)));
+    await pumpEventQueue();
+
+    expect(
+      scripts.single,
+      allOf(
+        startsWith(
+          'if(location.origin==="https://h5.silversole.dongyu.company"){',
+        ),
+        endsWith('}'),
+      ),
+    );
+  });
 
   test('an unassigned sole is sent with foot null', () async {
     final container = _boot([_sole('A'), _sole('B')]);

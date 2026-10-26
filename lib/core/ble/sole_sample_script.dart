@@ -25,3 +25,13 @@ String soleSampleScript(
   return 'window.onSoleSample ? onSoleSample($json) : '
       '($primary && window.onImuData && onImuData($json))';
 }
+
+/// [script] wrapped so it only runs on a page whose `location.origin` is
+/// [origin] — the games' own site.
+///
+/// The check runs inside the page at evaluation time, so a web view that has
+/// navigated elsewhere since the app last looked at its URL (the plaza links
+/// out in the same web view) never receives a sample. `allowedOriginRules`
+/// would not do: it applies to UserScripts only, and only on Android.
+String gameOriginGuard(String script, String origin) =>
+    'if(location.origin===${jsonEncode(origin)}){$script}';

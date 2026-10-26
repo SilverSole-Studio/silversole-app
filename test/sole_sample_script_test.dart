@@ -111,4 +111,20 @@ void main() {
       false,
     );
   });
+
+  group('gameOriginGuard', () {
+    test('runs the script only on the given origin', () {
+      expect(
+        gameOriginGuard('onSoleSample({})', 'https://h5.example.com'),
+        'if(location.origin==="https://h5.example.com"){onSoleSample({})}',
+      );
+    });
+
+    test('quotes the origin as a JS string literal', () {
+      expect(
+        gameOriginGuard('x()', 'https://a"b'),
+        startsWith(r'if(location.origin==="https://a\"b"){'),
+      );
+    });
+  });
 }
