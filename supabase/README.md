@@ -113,6 +113,18 @@ from pg_policies where schemaname in ('public', 'storage') order by tablename;
 - `profiles (avatar_path) where avatar_path is not null` 有部分索引：`can_read_avatar()` 每次簽網址都用照片路徑反查。
 - storage 政策與 `avatar_upload_allowed()`、`can_read_avatar()` 判斷「自己的資料夾」寫成 `name like auth.uid()::text || '/%'`（不用 `storage.foldername()`），`storage.objects` 的 name 索引用得上。uuid 裡沒有 `%`、`_`，前綴比對不會誤中。
 
+## Edge Function `delete-account`（App 內刪除帳號）
+
+`functions/delete-account/index.ts`：App 個人頁的「刪除帳號」呼叫它（App Store 審核 5.1.1(v)）。只收 POST；用呼叫者自己的 JWT（`Authorization` 標頭）向 Auth 查出是誰，不看 request body，所以刪不到別人。接著用 service role：先刪 `avatars/{user_id}/` 下的照片，再刪這個人的 `user_devices` 列（正式庫 `user_devices.user_id` 參照 auth.users 是 **ON DELETE NO ACTION**，有列就刪不掉帳號），最後 `auth.admin.deleteUser`，好友系統的表都從 auth.users 連帶刪除。好友 migration 和 avatars bucket 還沒套到正式庫也沒關係：找不到 bucket 或表會記 log、跳過，帳號照樣刪。回 `{ ok: true }`（200）或 `{ error }`（401 / 405 / 500）。App 把 401、404 當成「帳號已經不在」直接登出。
+
+部署（不需要額外 secret，`SUPABASE_URL`、`SUPABASE_SERVICE_ROLE_KEY` 是平台內建的）：
+
+```bash
+supabase functions deploy delete-account --project-ref <ref>
+```
+
+函式自己驗 token，所以有沒有加 `--no-verify-jwt` 都能用。
+
 ## 給菜園與之後功能的保證
 
 - `are_friends(a, b, lock)`、`friend_count(u)`、`touch_friendship(a, b)` 對 `public`、`anon`、`authenticated` 都收回了執行權，只有 security definer 函式能呼叫。
@@ -125,6 +137,5 @@ from pg_policies where schemaname in ('public', 'storage') order by tablename;
 - **中控台後台**（規格 8.5）：建據點、換代碼、停用據點、移出成員、處理檢舉（抽掉照片或暱稱）。建議做法是 Edge Function `friends-admin` 加上一組只放在 Cloudflare Secret 的金鑰，要跟安東尼確認。現在要測試就用 SQL editor 直接 insert `orgs`。
   - 抽掉照片：`avatar_path = null`、`avatar_removed = true`、`avatar_removed_count + 1`，滿 3 次設 `avatar_upload_banned_until = now() + 30 days`；檔案要用 Storage API 刪（Postgres 不能直接刪 storage.objects）。
   - 抽掉暱稱：`nickname = '銀足朋友'`、`nickname_removed = true`。
-- **刪除帳號時清掉照片檔**：資料表會跟著 auth.users 連帶刪除，但 avatars 裡的檔案要靠刪帳號流程呼叫 Storage API 刪掉。
 - **換掉的舊照片**留在 Storage（好友已經讀不到），之後由後台清。
 - App 端的照片裁切：現在上傳的是 image_picker 縮到 512 以內的原格式照片，還沒裁成正方形（`profile_page.dart` 的 TODO）。

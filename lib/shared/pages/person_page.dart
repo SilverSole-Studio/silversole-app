@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/core/auth/auth_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -10,6 +11,7 @@ import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
+import 'package:silversole/shared/widgets/delete_account_tile.dart';
 import 'package:silversole/shared/widgets/status_card.dart';
 
 import '../../core/error/result.dart';
@@ -24,7 +26,36 @@ class PersonPage extends ConsumerStatefulWidget {
 }
 
 class _PersonPageState extends ConsumerState<PersonPage> {
+  /// True while the account is being deleted.
+  bool _deleting = false;
+
   void goToLogin() => context.push('/sign-in');
+
+  /// Deletes the account (already confirmed by the user), then leaves the app
+  /// signed out on the sign-in page. A failure that left the account in place
+  /// keeps the session; one that could not be confirmed has signed out anyway
+  /// (see [AuthService.deleteAccount]).
+  Future<void> deleteAccount() async {
+    if (_deleting || ref.read(authUserProvider) == null) return;
+    final authService = ref.read(authServiceProvider);
+    final user = ref.read(authUserProvider.notifier);
+    final router = GoRouter.of(context);
+    setState(() => _deleting = true);
+    final res = await authService.deleteAccount();
+    if (mounted) setState(() => _deleting = false);
+    switch (res) {
+      case Ok<void>():
+        user.setUser(null);
+        showMessage('delete_account_success'.tr());
+        router.go('/sign-in');
+      case Error<void>(error: AccountDeletionUnconfirmed()):
+        user.setUser(null);
+        showErrorSnakeBar(res.error.toString());
+        router.go('/sign-in');
+      case Error<void>():
+        showErrorSnakeBar(res.error.toString());
+    }
+  }
 
   Future<void> signOut() async {
     // Check is signed in
@@ -181,12 +212,26 @@ class _PersonPageState extends ConsumerState<PersonPage> {
               ),
               SizedBox(
                 width: double.infinity,
-                child: buildMaterialList(
-                  context,
-                  title: 'account'.tr(),
-                  raw: accountSettingList,
-                  themeColor: listFill,
-                  side: listSide,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: listSide == null ? 4 : 10,
+                  children: [
+                    buildMaterialList(
+                      context,
+                      title: 'account'.tr(),
+                      raw: accountSettingList,
+                      themeColor: listFill,
+                      side: listSide,
+                    ),
+                    // Below sign out, and only for a signed-in account.
+                    if (isSignedIn)
+                      DeleteAccountTile(
+                        busy: _deleting,
+                        onConfirmed: deleteAccount,
+                        fill: listFill,
+                        side: listSide,
+                      ),
+                  ],
                 ),
               ),
               if (isSignedIn) ...[

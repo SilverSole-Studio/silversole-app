@@ -56,7 +56,128 @@ class SignInCanceled implements Exception {
   const SignInCanceled();
 }
 
+/// [AuthService.deleteAccount] could not tell whether the account was
+/// deleted, and signed out anyway — so the app is signed out despite the error.
+class AccountDeletionUnconfirmed implements Exception {
+  const AccountDeletionUnconfirmed();
+
+  @override
+  String toString() => 'delete_account_unconfirmed'.tr();
+}
+
+/// Calls the `delete-account` Edge Function and returns its HTTP status.
+/// Throws when no response came back at all.
+typedef DeleteAccountCall = Future<int> Function();
+
+/// Asks the Auth server whether the signed-in user still exists: true, false,
+/// or null when it cannot tell (offline).
+typedef AccountExistsCheck = Future<bool?> Function();
+
 class AuthService {
+  /// The three seams exist so [deleteAccount] can be tested without Supabase;
+  /// the app uses the defaults.
+  AuthService({
+    DeleteAccountCall? deleteAccountCall,
+    AccountExistsCheck? accountStillExists,
+    Future<void> Function()? localSignOut,
+  }) : _deleteAccountCall = deleteAccountCall ?? _invokeDeleteAccount,
+       _accountStillExists = accountStillExists ?? _checkAccountStillExists,
+       _localSignOut = localSignOut ?? _signOutLocally;
+
+  final DeleteAccountCall _deleteAccountCall;
+  final AccountExistsCheck _accountStillExists;
+  final Future<void> Function() _localSignOut;
+
+  static Future<int> _invokeDeleteAccount() async {
+    try {
+      final res = await Supabase.instance.client.functions.invoke(
+        'delete-account',
+        method: HttpMethod.post,
+      );
+      return res.status;
+    } on FunctionException catch (e) {
+      // Any non-2xx arrives as an exception; its status is the answer.
+      return e.status;
+    }
+  }
+
+  static Future<bool?> _checkAccountStillExists() async {
+    try {
+      final res = await Supabase.instance.client.auth.getUser();
+      return res.user != null;
+    } on AuthApiException catch (e) {
+      // The token's user is gone: Auth answers 401/403/404 or user_not_found.
+      final status = int.tryParse(e.statusCode ?? '');
+      if (e.code == 'user_not_found' ||
+          status == 401 ||
+          status == 403 ||
+          status == 404) {
+        return false;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Drops this phone's session without asking the server — whose answer for
+  /// a deleted user would only be an error — and Google's cached account.
+  static Future<void> _signOutLocally() async {
+    try {
+      await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+    } catch (e) {
+      debugPrint('delete account: local sign-out failed: $e');
+    }
+    if (googleSignInAvailable) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('delete account: Google sign-out failed: $e');
+      }
+    }
+  }
+
+  /// Deletes the signed-in user's account through the `delete-account` Edge
+  /// Function (`supabase/functions/delete-account`), then signs out here.
+  ///
+  /// Never leaves a session pointing at a deleted user: 401/404 mean the user
+  /// is already gone, and when the call fails the Auth server is asked whether
+  /// the user still exists. Only a user known to still exist stays signed in.
+  /// When even that cannot be checked, this signs out anyway and says the
+  /// deletion is unconfirmed.
+  Future<Result<void>> deleteAccount() async {
+    int? status;
+    try {
+      status = await _deleteAccountCall();
+    } catch (e) {
+      debugPrint('delete account: no response: $e');
+    }
+    if (status != null &&
+        ((status >= 200 && status < 300) || status == 401 || status == 404)) {
+      await _safeLocalSignOut();
+      return const Result.ok(null);
+    }
+
+    switch (await _accountStillExists()) {
+      case false:
+        await _safeLocalSignOut();
+        return const Result.ok(null);
+      case true:
+        return Result.error(Exception('delete_account_failed'.tr()));
+      case null:
+        await _safeLocalSignOut();
+        return const Result.error(AccountDeletionUnconfirmed());
+    }
+  }
+
+  Future<void> _safeLocalSignOut() async {
+    try {
+      await _localSignOut();
+    } catch (e) {
+      debugPrint('delete account: local sign-out failed: $e');
+    }
+  }
+
   Future<Result<UserData>> supabaseSignIn(String email, String password) async {
     try {
       final res = await Supabase.instance.client.auth.signInWithPassword(
@@ -161,7 +282,7 @@ class AuthService {
       await Supabase.instance.client.auth.signOut();
       // Otherwise the next Google sign-in silently reuses this account
       // instead of offering the picker.
-      if (defaultTargetPlatform == TargetPlatform.android) {
+      if (googleSignInAvailable) {
         await GoogleSignIn.instance.signOut();
       }
       return const Result.ok(null);
