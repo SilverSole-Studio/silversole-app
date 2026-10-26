@@ -164,4 +164,30 @@ void main() {
     // Tests run in debug mode, where friends are on for trying the screens.
     expect(container.read(friendsEnabledProvider), isTrue);
   });
+
+  test('the document-start script only publishes on the game origin', () {
+    final info = <String, Object>{'accountId': 'u-1', 'accountEmail': 'a@b.c'};
+    final js = PlazaBridge.guardedPublishScript(
+      info,
+      'https://games.example.com',
+    );
+    expect(
+      js,
+      startsWith('if(location.origin==="https://games.example.com"){'),
+    );
+    expect(js, endsWith('}'));
+    expect(js, contains(PlazaBridge.publishScript(info)));
+  });
+
+  test('a quote in the origin cannot break out of the guard', () {
+    final js = PlazaBridge.guardedPublishScript(
+      const {},
+      'https://x.com"};alert(1);//',
+    );
+    // jsonEncode escapes the quote, so the whole origin stays one string literal.
+    expect(
+      js,
+      startsWith(r'if(location.origin==="https://x.com\"};alert(1);//"){'),
+    );
+  });
 }

@@ -72,4 +72,10 @@ abstract final class PlazaBridge {
       'window.silversoleApp=${jsonEncode(info)};'
       'window.dispatchEvent(new CustomEvent("$infoEvent",'
       '{detail:window.silversoleApp}));';
+
+  /// [publishScript] guarded by the page's origin. `allowedOriginRules` on a
+  /// UserScript is honoured only on Android, so on iOS this guard is what keeps
+  /// the account fields off every other site the plaza navigates to.
+  static String guardedPublishScript(Map<String, Object> info, String origin) =>
+      'if(location.origin===${jsonEncode(origin)}){${publishScript(info)}}';
 }

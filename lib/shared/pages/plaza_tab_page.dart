@@ -87,7 +87,12 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   /// the plaza can read it on its first frame.
   UserScript _infoUserScript() => UserScript(
     groupName: _infoScriptGroup,
-    source: PlazaBridge.publishScript(_appInfo()),
+    // allowedOriginRules is Android-only; the guard in the script itself keeps
+    // the account off other origins on iOS.
+    source: PlazaBridge.guardedPublishScript(
+      _appInfo(),
+      PlazaBridge.originOf(Constants.gameUrl),
+    ),
     injectionTime: UserScriptInjectionTime.AT_DOCUMENT_START,
     allowedOriginRules: {PlazaBridge.originOf(Constants.gameUrl)},
   );
