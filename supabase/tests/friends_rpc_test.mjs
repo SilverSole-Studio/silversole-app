@@ -24,7 +24,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const stubs = readFileSync(join(here, 'supabase_stubs.sql'), 'utf8');
 const migrationsDir = join(here, '..', 'migrations');
 const migration = readdirSync(migrationsDir)
-  .filter((f) => f.endsWith('_friends.sql'))
+  .filter((f) => f.endsWith('.sql') && f.includes('friends'))
+  .sort()
   .map((f) => readFileSync(join(migrationsDir, f), 'utf8'))
   .join('\n');
 
@@ -41,10 +42,14 @@ const uid = (n) => `00000000-0000-4000-9000-${String(n).padStart(12, '0')}`;
 class World {
   constructor(db) {
     this.db = db;
+    // Time does not move in PGlite, so the per-user rate limit never refills.
+    // Every call starts with a full bucket unless a test switches this on.
+    this.throttle = false;
   }
 
   /** Runs [sql] as a signed-in user (role authenticated, RLS on). */
   async as(user, sql, params = []) {
+    if (!this.throttle) await this.db.exec('delete from public.friend_rate_buckets');
     await this.db.exec('set role authenticated');
     await this.db.query("select set_config('request.jwt.claim.sub', $1, false)", [
       user ?? '',
@@ -84,6 +89,8 @@ class World {
   async addUser(user, nickname, code) {
     await this.sql('insert into auth.users (id) values ($1)', [user]);
     await this.rpc(user, 'get_my_profile');
+    // Seeded people are not brand-new accounts (reports need 3 days).
+    await this.sql("update public.profiles set created_at = now() - interval '7 days' where user_id = $1", [user]);
     if (nickname) await this.rpc(user, 'update_profile', nickname, null, null);
     if (code) {
       await this.sql('update public.profiles set friend_code = $2 where user_id = $1', [
@@ -402,6 +409,7 @@ test('after a declined request expires, asking again is quietly held for 30 days
      set expires_at = now() - interval '1 second',
          responded_at = now() - interval '30 days 1 second'`,
   );
+  await w.sql("update public.friend_cooldowns set until = now() - interval '1 second'");
   assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
   assert.equal((await w.rpc(ids.me, 'get_friend_requests')).length, 1);
 });
@@ -586,7 +594,11 @@ test('blocking removes the friendship and pending requests', async () => {
   assert.deepEqual(await w.rpc(ids.chen, 'get_friend_requests'), []);
   const blocked = (await w.rpc(ids.me, 'get_blocked')).map((p) => p.user_id).sort();
   assert.deepEqual(blocked, [ids.wang, ids.chen].sort());
-  assert.equal((await w.sql('select count(*)::int as n from public.friend_requests'))[0].n, 0);
+  // Nothing is left waiting, but the history stays (a decline's cooldown must survive a block).
+  assert.equal(
+    (await w.sql("select count(*)::int as n from public.friend_requests where status = 'pending'"))[0].n,
+    0,
+  );
 });
 
 test('unblocking does not bring the friendship back', async () => {
@@ -852,8 +864,9 @@ test('reports are recorded with a snapshot, 10 a day', async () => {
     await w.rpcErr(ids.me, 'report_profile', ids.wang, 'photo', 'other'),
     'limit_reached',
   );
+  // The same person reporting the same thing again is kept as one open report.
   const rows = await w.sql('select reporter, target_user, snapshot from public.profile_reports');
-  assert.equal(rows.length, 10);
+  assert.equal(rows.length, 1);
   assert.equal(rows[0].snapshot, '王阿姨');
   assert.equal(rows[0].reporter, ids.me);
   assert.equal(await w.rpcErr(ids.me, 'report_profile', ids.me, 'photo', 'other'), 'not_found');
@@ -987,4 +1000,166 @@ test('deleting an account removes everything of theirs', async () => {
   // A report they filed stays for 動域, without the reporter.
   assert.equal((await w.sql('select count(*)::int as n from public.profile_reports'))[0].n, 1);
   assert.deepEqual(await w.rpc(ids.me, 'get_friends'), []);
+});
+
+// ── 2026-10-26 技術長藍隊核查：RPC 濫用（20261026120000_friends_rpc_abuse.sql）────
+// 每個案例照核查的情境重演一次。並發的情境（同時 50 個上傳、同時寄 200 人）PGlite
+// 只有一條連線演不出來，要在 Supabase 分支多連線打。
+
+test('audit 1: blocking and unblocking does not wash out a decline', async () => {
+  const w = await world();
+  await declinedByMe(w);
+  // She blocks me and unblocks me to wipe the record, then asks again.
+  await w.rpc(ids.wang, 'block_user', ids.me);
+  await w.rpc(ids.wang, 'unblock_user', ids.me);
+  await w.sql("update public.friend_requests set expires_at = now() - interval '1 second'");
+  assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  assert.deepEqual(await w.rpc(ids.me, 'get_friend_requests'), []);
+  // Same when I block and unblock her.
+  await w.rpc(ids.me, 'block_user', ids.wang);
+  await w.rpc(ids.me, 'unblock_user', ids.wang);
+  await w.sql("update public.friend_requests set expires_at = now() - interval '1 second'");
+  assert.equal((await w.rpc(ids.wang, 'send_friend_request', 'org', ids.me)).result, 'sent');
+  assert.deepEqual(await w.rpc(ids.me, 'get_friend_requests'), []);
+});
+
+test('audit 2: opening the QR again reuses the token instead of adding rows', async () => {
+  const w = await world();
+  const first = await w.rpc(ids.me, 'create_qr_token');
+  for (let i = 0; i < 50; i++) {
+    assert.equal((await w.rpc(ids.me, 'create_qr_token')).token, first.token);
+  }
+  const count = async () =>
+    (await w.sql('select count(*)::int as n from public.qr_tokens where user_id = $1', [ids.me]))[0].n;
+  assert.equal(await count(), 1);
+  // Under a minute left: a fresh one, the old one stays for the 60 s grace.
+  await w.sql("update public.qr_tokens set expires_at = now() + interval '30 seconds'");
+  assert.notEqual((await w.rpc(ids.me, 'create_qr_token')).token, first.token);
+  assert.equal(await count(), 2);
+  // Long expired ones of mine are gone as soon as I make a new one.
+  await w.sql("update public.qr_tokens set expires_at = now() - interval '2 minutes'");
+  await w.rpc(ids.me, 'create_qr_token');
+  assert.equal(await count(), 1);
+});
+
+test('audit 3: cancelling does not give the send back; asking again right after is held', async () => {
+  const w = await world();
+  await w.rpc(ids.me, 'send_friend_request', 'org', ids.wang);
+  const [r] = await w.rpc(ids.wang, 'get_friend_requests');
+  await w.rpc(ids.me, 'cancel_friend_request', r.id);
+  // Send → cancel → send: she does not get a second request for 24 hours.
+  assert.equal((await w.rpc(ids.me, 'send_friend_request', 'org', ids.wang)).result, 'sent');
+  assert.deepEqual(await w.rpc(ids.wang, 'get_friend_requests'), []);
+  // After 24 hours a new one reaches her again.
+  const [held] = await w.rpc(ids.me, 'get_friend_requests');
+  await w.rpc(ids.me, 'cancel_friend_request', held.id);
+  await w.sql("update public.friend_cooldowns set until = now() - interval '1 second'");
+  assert.equal((await w.rpc(ids.me, 'send_friend_request', 'org', ids.wang)).result, 'sent');
+  assert.equal((await w.rpc(ids.wang, 'get_friend_requests')).length, 1);
+});
+
+test('audit 3: at most 30 requests a day, cancelled ones included', async () => {
+  const w = await world();
+  for (let i = 0; i < 30; i++) {
+    await w.addUser(uid(i), `朋友${i}`);
+    await w.addMember(ORG, uid(i));
+    assert.equal((await w.rpc(ids.me, 'send_friend_request', 'org', uid(i))).result, 'sent');
+    const mine = await w.rpc(ids.me, 'get_friend_requests');
+    await w.rpc(ids.me, 'cancel_friend_request', mine[0].id);
+  }
+  assert.equal(await w.rpcErr(ids.me, 'send_friend_request', 'org', ids.chen), 'send_limit');
+});
+
+test('audit 4: at most 10 photo files in a folder; old photos can be deleted, the current one cannot', async () => {
+  const w = await world();
+  for (let i = 0; i < 10; i++) {
+    if (i === 5) await w.sql('update public.friend_daily_limits set storage_uploads = 0');
+    await w.uploadAvatar(ids.me, `${ids.me}/17600000000${String(i).padStart(2, '0')}.jpg`);
+  }
+  await w.sql('update public.friend_daily_limits set storage_uploads = 0');
+  await assert.rejects(w.uploadAvatar(ids.me, `${ids.me}/1760000000099.jpg`));
+  await w.rpc(ids.me, 'set_avatar_photo', `${ids.me}/1760000000000.jpg`);
+  const del = async (user, name) =>
+    (
+      await w.as(
+        user,
+        "delete from storage.objects where bucket_id = 'avatars' and name = $1 returning name",
+        [name],
+      )
+    ).rows.length;
+  assert.equal(await del(ids.me, `${ids.me}/1760000000000.jpg`), 0); // the current photo stays
+  assert.equal(await del(ids.wang, `${ids.me}/1760000000001.jpg`), 0); // not hers to delete
+  assert.equal(await del(ids.me, `${ids.me}/1760000000001.jpg`), 1);
+  // A freed slot can be used again (today's 5 permitting).
+  await w.uploadAvatar(ids.me, `${ids.me}/1760000000098.jpg`);
+});
+
+test('audit 5: report bombing — one open report per person, new accounts are not filed, 30 a day per target', async () => {
+  const w = await world();
+  // A brand-new account: the call succeeds but nothing is filed.
+  await w.sql('insert into auth.users (id) values ($1)', [uid(900)]);
+  await w.rpc(uid(900), 'update_profile', '新來的', null, null);
+  await w.rpc(uid(900), 'report_profile', ids.wang, 'nickname', 'ads');
+  const filed = async () =>
+    (
+      await w.sql('select count(*)::int as n from public.profile_reports where target_user = $1', [
+        ids.wang,
+      ])
+    )[0].n;
+  assert.equal(await filed(), 0);
+  // Forty older accounts pile on: only 30 are kept for the day.
+  for (let i = 0; i < 40; i++) {
+    await w.addUser(uid(i), `朋友${i}`);
+    await w.rpc(uid(i), 'report_profile', ids.wang, 'nickname', 'ads');
+  }
+  assert.equal(await filed(), 30);
+});
+
+test('audit 7: invisible, reversed and look-alike names are refused', async () => {
+  const w = await world();
+  const bad = [
+    '阿\u200B美', // zero-width space
+    '阿美\u202E', // right-to-left override
+    '\u2066小明\u2069', // isolates
+    '銀足朋友', // the name a taken-down nickname turns into
+    '銀足小幫手',
+    'ＡＤＭＩＮ',
+    'Admin',
+    '客服小美',
+    '系統通知',
+    '粗哥',
+    '\u3164\u3164', // Hangul filler, looks empty
+    '阿美\u0301\u0301\u0301', // stacked combining marks
+  ];
+  for (const name of bad) {
+    assert.equal(
+      await w.rpcErr(ids.me, 'update_profile', name, null, null),
+      'nickname_invalid',
+      JSON.stringify(name),
+    );
+  }
+  // Full-width digits are stored as ordinary ones; an emoji is fine; 粗哥 inside a name is fine.
+  assert.equal((await w.rpc(ids.chen, 'update_profile', '阿美🌸', null, null)).nickname, '阿美🌸');
+  await w.sql('update public.profiles set nickname_changed_today = 0');
+  assert.equal((await w.rpc(ids.chen, 'update_profile', '小明２號', null, null)).nickname, '小明2號');
+  await w.sql('update public.profiles set nickname_changed_today = 0');
+  assert.equal((await w.rpc(ids.chen, 'update_profile', '粗哥迷', null, null)).nickname, '粗哥迷');
+});
+
+test('audit 8: one person cannot hammer the RPCs; others are not affected', async () => {
+  const w = await world();
+  await w.sql('delete from public.friend_rate_buckets');
+  w.throttle = true;
+  let refused = 0;
+  for (let i = 0; i < 45; i++) {
+    try {
+      await w.rpc(ids.me, 'get_friends');
+    } catch (e) {
+      assert.equal(e.message, 'rate_limited');
+      refused++;
+    }
+  }
+  assert.ok(refused > 0, 'some calls were refused');
+  assert.ok(refused <= 15, `at most 15 of 45 refused, got ${refused}`);
+  assert.deepEqual(await w.rpc(ids.wang, 'get_friends'), []);
 });

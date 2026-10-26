@@ -28,6 +28,44 @@ void main() {
     });
   });
 
+  group(
+    'validateNickname refuses names made to fool people (2026-10-26 audit)',
+    () {
+      // The same cases as the "audit 7" test in supabase/tests/friends_rpc_test.mjs.
+      test('invisible, reversed and staff-looking names', () {
+        for (final bad in [
+          '阿\u200B美', // zero-width space
+          '阿美\u202E', // right-to-left override
+          '\u2066小明\u2069', // isolates
+          '銀足朋友', // what a taken-down nickname turns into
+          '銀足小幫手',
+          'ＡＤＭＩＮ',
+          'Admin',
+          '客服小美',
+          '系統通知',
+          '粗哥',
+          '\u3164\u3164', // Hangul filler, looks empty
+          '阿美\u0301\u0301\u0301', // stacked combining marks
+        ]) {
+          expect(
+            validateNickname(bad),
+            FriendError.nicknameInvalid,
+            reason: bad,
+          );
+        }
+      });
+
+      test('粗哥 inside a longer name is fine', () {
+        expect(validateNickname('粗哥迷'), isNull);
+      });
+    },
+  );
+
+  test('the new server refusals have their own messages', () {
+    expect(friendErrorKey(FriendError.sendLimit), 'friends_err_sendLimit');
+    expect(friendErrorKey(FriendError.rateLimited), 'friends_err_rateLimited');
+  });
+
   group('friendErrorKey', () {
     test('not found is worded for what the person was doing', () {
       expect(friendErrorKey(FriendError.notFound), 'friends_err_notFound');

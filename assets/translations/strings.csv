@@ -622,6 +622,8 @@ friends_err_offline,No connection. Please try again once you are online.,沒有�
 friends_err_unknown,Something went wrong. Please try again later.,出了點問題，請等一下再試。
 friends_err_otherFriendLimit,They already have 100 friends and cannot add more.,對方的朋友已經滿了，加不進去。
 friends_err_uploadFailed,The photo did not upload. Please try again.,照片沒傳上去，請再試一次。
+friends_err_sendLimit,You have sent 30 requests today. Please try tomorrow.,今天的邀請送夠多了，明天再送。
+friends_err_rateLimited,Going a bit fast. Please try again in a moment.,太快了，等一下再試。
 friends_err_notFound_qr,This QR does not work. Ask them to open it again.,這個條碼用不了，請對方重新打開 QR。
 friends_err_notFound_org,No centre has this code. Please check it again.,沒有這個據點代碼，請再對一次。
 friends_err_notFound_person,This person is no longer on the list.,這個人已經不在名單上了。

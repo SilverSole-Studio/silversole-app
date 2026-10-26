@@ -15,7 +15,8 @@ const avatarsBucket = 'avatars';
 const _signedUrlTtlSeconds = 3600;
 
 /// The friends backend on Supabase: one method per RPC in
-/// `supabase/migrations/20261019120000_friends.sql`.
+/// `supabase/migrations/20261019120000_friends.sql` (and the fixes in
+/// `20261026120000_friends_rpc_abuse.sql`).
 ///
 /// The RPCs report failures either by raising the spec's error code as the
 /// exception message (`not_found`, `limit_reached`, …) or, where a raise
@@ -77,13 +78,21 @@ class SupabaseFriendsRepository implements FriendsRepository {
         debugPrint('[friends] avatar upload: ${e.statusCode} ${e.message}');
         throw FriendException(await _uploadError(e));
       }
-      return _myProfile(await _rpc('set_avatar_photo', {'p_path': path}));
+      final profile = _myProfile(
+        await _rpc('set_avatar_photo', {'p_path': path}),
+      );
+      await _pruneOldPhotos(userId, keep: path);
+      return profile;
     },
   );
 
   @override
-  Future<Result<MyProfile>> clearAvatarPhoto() =>
-      _guard(() async => _myProfile(await _rpc('clear_avatar_photo')));
+  Future<Result<MyProfile>> clearAvatarPhoto() => _guard(() async {
+    final profile = _myProfile(await _rpc('clear_avatar_photo'));
+    final userId = _client.auth.currentUser?.id;
+    if (userId != null) await _pruneOldPhotos(userId);
+    return profile;
+  });
 
   @override
   Future<Result<void>> acknowledgeRemovals() =>
@@ -270,7 +279,27 @@ class SupabaseFriendsRepository implements FriendsRepository {
     'nickname_invalid': FriendError.nicknameInvalid,
     'nickname_change_limit': FriendError.nicknameChangeLimit,
     'upload_banned': FriendError.uploadBanned,
+    'send_limit': FriendError.sendLimit,
+    'rate_limited': FriendError.rateLimited,
   };
+
+  /// Deletes the photos in the user's folder other than [keep] (the server
+  /// keeps at most 10 files there, and refuses to delete the current one).
+  /// Best effort: a failure here must not undo the photo change.
+  Future<void> _pruneOldPhotos(String userId, {String? keep}) async {
+    try {
+      final files = await _client.storage
+          .from(avatarsBucket)
+          .list(path: userId);
+      final old = [
+        for (final f in files)
+          if ('$userId/${f.name}' != keep) '$userId/${f.name}',
+      ];
+      if (old.isNotEmpty) await _client.storage.from(avatarsBucket).remove(old);
+    } catch (e) {
+      debugPrint('[friends] prune old photos: $e');
+    }
+  }
 
   /// The upload policy (403) refuses a banned user and a sixth photo in a
   /// day; the profile tells those two apart. Anything else — too big, a

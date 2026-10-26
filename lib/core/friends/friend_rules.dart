@@ -54,6 +54,12 @@ enum FriendError {
   nicknameChangeLimit,
   uploadBanned,
 
+  /// 30 requests sent today (cancelled ones count too).
+  sendLimit,
+
+  /// Too many calls in a short time; try again in a moment.
+  rateLimited,
+
   /// The photo did not reach storage for a reason other than the upload
   /// rules (network, size, file type).
   uploadFailed,
@@ -85,6 +91,45 @@ final _nicknameLetter = RegExp(
   r'가-힯豈-﫿０-９Ａ-Ｚａ-ｚ]',
 );
 final _controlChar = RegExp(r'[\u0001-\u001F\u007F]');
+
+/// Invisible and direction-changing characters (zero-width, bidi controls,
+/// fillers, combining marks). The server's whitelist refuses them too; this
+/// gives the same answer before the call.
+final _invisibleChar = RegExp(
+  r'[\u00AD\u0300-\u036F\u034F\u061C\u115F\u1160\u17B4\u17B5\u180B-\u180F'
+  r'\u200B-\u200F\u202A-\u202E\u2060-\u206F\u3164\uFEFF\uFFA0]',
+);
+
+/// Names nobody can take: the one a taken-down nickname turns into, the
+/// brand, and anything that looks like staff (same list as the server's
+/// `friend_reserved_names`). Compared without spaces or symbols, lower case,
+/// full-width letters folded.
+const _reservedInName = [
+  '銀足',
+  'silversole',
+  '官方',
+  '客服',
+  '管理員',
+  '管理者',
+  '系統',
+  '動域',
+  'admin',
+  'support',
+];
+const _reservedWholeName = ['粗哥'];
+
+String _reservedKey(String name) {
+  final folded = String.fromCharCodes(
+    name.runes.map((r) => r >= 0xFF01 && r <= 0xFF5E ? r - 0xFEE0 : r),
+  );
+  return folded.replaceAll(RegExp(r'[\s　·・\-_.~～!！?？♥♡★☆]'), '').toLowerCase();
+}
+
+bool _isReservedNickname(String name) {
+  final key = _reservedKey(name);
+  return _reservedInName.any(key.contains) || _reservedWholeName.contains(key);
+}
+
 final _edgeSpace = RegExp(r'^[\s　]+|[\s　]+$');
 
 /// [raw] trimmed the way the server trims it (spaces, including the
@@ -100,7 +145,10 @@ FriendError? validateNickname(String raw) {
   if (length < kNicknameMinLength || length > kNicknameMaxLength) {
     return FriendError.nicknameInvalid;
   }
-  if (_controlChar.hasMatch(name) || !_nicknameLetter.hasMatch(name)) {
+  if (_controlChar.hasMatch(name) ||
+      _invisibleChar.hasMatch(name) ||
+      !_nicknameLetter.hasMatch(name) ||
+      _isReservedNickname(name)) {
     return FriendError.nicknameInvalid;
   }
   return null;
