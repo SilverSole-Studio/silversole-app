@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:silversole/core/ble/ble_connection_service.dart';
+import 'package:silversole/core/ble/ble_permissions.dart';
 import 'package:silversole/core/ble/ble_service_channel.dart';
 import 'package:silversole/core/ble/ota/dfu_link.dart';
 import 'package:silversole/core/ble/ota/reacquire_match.dart';
@@ -246,20 +247,11 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
     }
   }
 
-  Future<bool> ensureConnectPermission() async {
-    final stats = await Permission.bluetoothConnect.request();
-    return stats.isGranted;
-  }
+  Future<bool> ensureConnectPermission() => requestBleConnectPermission();
 
   /// Mirrors the pairing sheet's request. This only ever runs once the user has
-  /// paired a sole by hand, so both prompts have already been seen by then.
-  Future<bool> ensureScanPermission() async {
-    final statuses = await [
-      Permission.bluetoothScan,
-      Permission.locationWhenInUse,
-    ].request();
-    return statuses[Permission.bluetoothScan]?.isGranted ?? false;
-  }
+  /// paired a sole by hand, so the prompts have already been seen by then.
+  Future<bool> ensureScanPermission() => requestBleScanPermission();
 
   // The service's ongoing notification is what tells the wearer BLE keeps
   // running in the background (and what Play's foreground-service review looks
@@ -268,7 +260,7 @@ final bleForegroundControlProvider = Provider<SoleConnectionController>((ref) {
   // connection. Asked once per launch, not on every search retry.
   var notificationAsked = false;
   Future<void> ensureNotificationPermission() async {
-    if (notificationAsked) return;
+    if (notificationAsked || !bleNeedsNotificationPermission) return;
     notificationAsked = true;
     await Permission.notification.request();
   }
