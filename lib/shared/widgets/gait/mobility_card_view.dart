@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:silversole/core/gait/mobility_grade.dart';
@@ -44,7 +46,11 @@ class MobilityCardView extends StatelessWidget {
           switch (card) {
             final MobilityGraded graded => _Graded(card: graded),
             final MobilityPending pending => Text(
-              'mobility_pending'.tr(args: ['${pending.weeksSoFar}']),
+              // Enough weeks and still no grade means the weeks themselves
+              // are short of data; counting weeks again would read as stuck.
+              pending.weeksSoFar >= pending.weeksNeeded
+                  ? 'mobility_pending_data'.tr()
+                  : 'mobility_pending'.tr(args: ['${pending.weeksSoFar}']),
               style: context.textTheme.bodyLarge,
             ),
           },
@@ -71,6 +77,22 @@ Color mobilityGradeColor(BuildContext context, MobilityGrade grade) {
     MobilityGrade.d => tokens.dataOrange,
     MobilityGrade.e => tokens.alert,
   };
+}
+
+/// The letter color on a grade square: white or [Colors.black87], whichever
+/// has the higher WCAG contrast ratio against [fill].
+Color mobilityLetterColor(Color fill) {
+  double ratio(Color a, Color b) {
+    final la = a.computeLuminance();
+    final lb = b.computeLuminance();
+    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+  }
+
+  // black87 is translucent, so judge it as it lands on the square.
+  final dark = Color.alphaBlend(Colors.black87, fill);
+  return ratio(Colors.white, fill) > ratio(dark, fill)
+      ? Colors.white
+      : Colors.black87;
 }
 
 class _Graded extends StatelessWidget {
@@ -113,9 +135,10 @@ class _Graded extends StatelessWidget {
                   ),
                   if (changes.isNotEmpty)
                     Text(
-                      'mobility_mainly'.tr(
-                        args: [changes.join('mobility_joiner'.tr())],
-                      ),
+                      (card.isCurrentWeek
+                              ? 'mobility_mainly'
+                              : 'mobility_mainly_past')
+                          .tr(args: [changes.join('mobility_joiner'.tr())]),
                       style: context.textTheme.bodyMedium,
                     ),
                 ],
@@ -183,9 +206,7 @@ class _GradeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = mobilityGradeColor(context, grade);
-    final onFill = ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
-        ? Colors.white
-        : Colors.black87;
+    final onFill = mobilityLetterColor(fill);
     return Container(
       width: size,
       height: size,

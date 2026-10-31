@@ -116,6 +116,7 @@ Commit：`feat(gait): decide what the mobility card shows`
 | mobility_grade_d | A little less than usual | 比平常少一點 |
 | mobility_grade_e | Less than usual two weeks running | 連續兩週比平常少 |
 | mobility_mainly | This week mainly: {} | 這週主要是{} |
+| mobility_mainly_past | That week mainly: {} | 那週主要是{} |（非本週時用）
 | mobility_joiner | ` and ` | 、 |
 | mobility_change_dailySteps_up / _down | more steps each day / fewer steps each day | 每天步數變多／每天步數變少 |
 | mobility_change_cadence_up / _down | a quicker cadence / a slower cadence | 步頻變快／步頻變慢 |
@@ -123,7 +124,8 @@ Commit：`feat(gait): decide what the mobility card shows`
 | mobility_change_strideVariation_up / _down | a steadier rhythm / a less even rhythm | 節奏更穩／節奏比較不平均 |
 | mobility_change_doubleSupport_up / _down | less time on both feet / more time on both feet | 雙腳同時著地的時間變短／變長 |
 | mobility_metric_dailySteps … doubleSupport | 用既有 `gait_metric_daily_steps`、`gait_metric_cadence`、`gait_metric_symmetry`、`gait_metric_stride_cv`、`gait_metric_double_support` | 同左 |
-| mobility_pending | Comparisons start after 2 weeks with at least 3 worn days each · {} so far | 每週至少穿 3 天、累積 2 週後開始跟自己比較，目前 {} 週 |
+| mobility_pending | Comparisons start after 3 weeks with at least 3 worn days each · {} of 3 so far | 每週至少穿 3 天、累積 3 週後開始跟自己比較，目前 {}／3 週 |
+| mobility_pending_data | Not enough data to compare yet | 資料還不夠，暫時無法比較 |（週數已夠卻仍沒有等級時用）
 | mobility_disclaimer | This record is for health promotion and exercise participation and is not a medical diagnosis | 本紀錄為健康促進與運動參與紀錄，非醫療診斷 |
 
 （`_up` = 變好方向，`_down` = 變差方向；「／」分開的是兩個 key 的值。`mobility_joiner` 英文值含前後空白，CSV 裡照寫即可，若 loader 會吃掉空白就改用 "and" 並在程式裡補空白，報告說明。）

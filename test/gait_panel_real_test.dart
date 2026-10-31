@@ -100,8 +100,8 @@ void main() {
     expect(find.byKey(MobilityCardView.cardKey), findsOneWidget);
     expect(
       find.text(
-        'Comparisons start after 2 weeks with at least 3 worn days each · '
-        '0 so far',
+        'Comparisons start after 3 weeks with at least 3 worn days each · '
+        '0 of 3 so far',
       ),
       findsOneWidget,
     );
