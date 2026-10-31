@@ -146,6 +146,10 @@ class DailyGait {
 
   bool get hasData => steps > 0;
 
+  /// Strides timed, summed over the feet — the weight of [strideCv] when days
+  /// are averaged.
+  int get strides => _total.strides;
+
   /// Time spent walking. Each foot's total covers the whole walk, so adding
   /// them counts the time both feet walk twice; [bothFeetWalkingMs] holds half
   /// of each foot's walking time over exactly those stretches, which is the
