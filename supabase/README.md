@@ -15,6 +15,7 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 | `migrations/20261019120000_friends.sql` | 9 張表（profiles、friendships、friend_requests、blocks、qr_tokens、orgs、org_members、profile_reports、friend_daily_limits）、RLS、規格 8.1 與 8.2 的函式、私有 bucket `avatars` 與它的 storage 政策、執行權 |
 | `tests/supabase_stubs.sql` | **只給本機測試用**：auth、storage、角色的最小替身，加上 Supabase 的預設權限。正式庫已經有這些東西，不能套上去 |
 | `migrations/20261026120000_friends_rpc_abuse.sql` | 修 2026-10-26 技術長藍隊核查的 8 類 RPC 濫用（見下面「RPC 濫用修正」）。接在上一支後面，兩支要一起套 |
+| `migrations/20261031120000_game_saves.sql` | H5 遊戲雲端存檔（2026-10-31）：表 `game_saves`、`game_save_load()`、`game_save_store(rev, data)`；只走 RPC、256 KB 上限、每人限流、rev 比對。測試：`npm run test:saves`、`npm run test:saves-concurrency`。**還沒套用**，要先問 user |
 | `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
 | `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 

@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "test": "node --test --test-concurrency=1 friends_rpc_test.mjs",
-    "test:concurrency": "node --test --test-concurrency=1 friends_concurrency_test.mjs"
+    "test:concurrency": "node --test --test-concurrency=1 friends_concurrency_test.mjs",
+    "test:saves": "node --test --test-concurrency=1 game_saves_test.mjs",
+    "test:saves-concurrency": "node --test --test-concurrency=1 game_saves_concurrency_test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",

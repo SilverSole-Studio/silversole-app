@@ -12,12 +12,31 @@ import 'dart:convert';
 /// Page → app: `window.flutter_inappwebview.callHandler('openFriends')` opens
 /// the friends screen and resolves to `true`, or `false` when friends are off.
 ///
+/// Cloud save: `callHandler('gameSaveLoad')` resolves to the account's saved
+/// blob, `callHandler('gameSaveStore', {rev, data})` writes it (see
+/// `GameSaveRepository` for the answers).
+///
 /// Only the games' own site is served ([isGameOrigin]): the plaza links out
 /// to other pages in the same web view, and none of them may read the app's
 /// state, open app screens or get the camera.
 abstract final class PlazaBridge {
   static const String openFriends = 'openFriends';
   static const String appInfo = 'appInfo';
+  static const String gameSaveLoad = 'gameSaveLoad';
+  static const String gameSaveStore = 'gameSaveStore';
+
+  /// The `{rev, data}` the page passes to [gameSaveStore], or null when it is
+  /// not that shape (the call then answers `bad_data` without a round trip).
+  static ({int rev, String data})? storeArgs(List<dynamic> args) {
+    if (args.isEmpty) return null;
+    final a = args.first;
+    if (a is! Map) return null;
+    final rev = a['rev'], data = a['data'];
+    if (rev is! num || rev < 0 || rev != rev.truncate() || data is! String) {
+      return null;
+    }
+    return (rev: rev.toInt(), data: data);
+  }
   static const String infoEvent = 'silversoleapp';
 
   /// What the plaza needs to know: whether to show the friends building, the

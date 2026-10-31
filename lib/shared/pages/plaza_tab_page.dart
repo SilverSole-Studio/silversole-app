@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/game_save/game_save_repository.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -144,6 +145,23 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       callback: (_) async {
         if (!await _onGamePage(controller)) return false;
         return _openFriends();
+      },
+    );
+    // Cloud save: only the games' own site may read or write the account's save.
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.gameSaveLoad,
+      callback: (_) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        return ref.read(gameSaveRepositoryProvider).load();
+      },
+    );
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.gameSaveStore,
+      callback: (args) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        final a = PlazaBridge.storeArgs(args);
+        if (a == null) return const {'ok': false, 'reason': 'bad_data'};
+        return ref.read(gameSaveRepositoryProvider).store(a.rev, a.data);
       },
     );
   }
