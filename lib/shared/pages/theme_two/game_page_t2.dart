@@ -2,27 +2,21 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
-import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Games hub, mascot theme: today's mission, the village shortcuts, and the
 /// game grid. Tapping a game opens the existing HTML5 web view.
 ///
-/// Every figure here (steps, streak, coins, nutrients) is mockup copy —
-/// none of it is measured or stored yet. The friends card reads the friends
-/// repository (demo data until its backend exists).
+/// No coins, garden or shop: none of them is stored anywhere yet, so they
+/// stay out of the app until they are real. The friends card reads the
+/// friends repository.
 class GamePageT2 extends StatelessWidget {
   const GamePageT2({super.key});
-
-  // Coins come from MockShop so the hub and the shop agree.
-  static const _mockNutrient = 4;
-  static const _mockGameReward = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -111,12 +105,6 @@ class _MissionCard extends StatelessWidget {
           _MissionRow(
             icon: 'assets/mascot-assets/cards/card_fish.webp',
             label: 'mission_play_game'.tr(args: ['game_catch_fish'.tr()]),
-            trailing: MascotPill(
-              child: Text(
-                'coin_reward'.tr(args: ['${GamePageT2._mockGameReward}']),
-                style: context.textTheme.labelLarge,
-              ),
-            ),
           ),
         ],
       ),
@@ -125,15 +113,10 @@ class _MissionCard extends StatelessWidget {
 }
 
 class _MissionRow extends StatelessWidget {
-  const _MissionRow({
-    required this.icon,
-    required this.label,
-    required this.trailing,
-  });
+  const _MissionRow({required this.icon, required this.label});
 
   final String icon;
   final String label;
-  final Widget trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -152,8 +135,6 @@ class _MissionRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        const SizedBox(width: 8),
-        trailing,
       ],
     );
   }
@@ -168,26 +149,6 @@ class _VillageRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
-        Expanded(
-          child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_farm.webp',
-            title: 'garden'.tr(),
-            subtitle: 'garden_nutrient'.tr(
-              args: ['${GamePageT2._mockNutrient}'],
-            ),
-            onTap: comingSoon,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_shop.webp',
-            title: 'shop'.tr(),
-            subtitle: 'shop_coins'.tr(args: ['${MockShop.coins}']),
-            onTap: () => context.push('/shop'),
-          ),
-        ),
-        const SizedBox(width: 10),
         Expanded(
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_mailbox.webp',

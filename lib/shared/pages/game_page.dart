@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
-import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -25,11 +23,10 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// Illustrations appear in two places only, and both are content rather than
 /// chrome: the game covers and the village shortcuts.
 ///
-/// Mission figures are mockup copy; nothing here is measured yet.
+/// No coins, garden or shop: none of them is stored anywhere yet, so they
+/// stay out of the app until they are real.
 class GamePage extends StatelessWidget {
   const GamePage({super.key});
-
-  static const _mockGameReward = 30;
 
   @override
   Widget build(BuildContext context) {
@@ -92,10 +89,6 @@ class _MissionCard extends StatelessWidget {
             icon: LucideIcons.gamepad2,
             title: 'mission_play_game'.tr(args: ['game_catch_fish'.tr()]),
             subtitle: 'mission_go'.tr(),
-            trailing: _Pill(
-              label: 'coin_reward'.tr(args: ['${GamePage._mockGameReward}']),
-              color: context.tokens.rewardGold,
-            ),
           ),
         ],
       ),
@@ -110,13 +103,11 @@ class _MissionRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.trailing,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
-  final Widget trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -145,8 +136,6 @@ class _MissionRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: AppSpacing.md),
-        trailing,
       ],
     );
   }
@@ -155,31 +144,6 @@ class _MissionRow extends StatelessWidget {
 /// Tinted stadium pill — the same treatment `DailyMissionsSheet` uses for its
 /// "claimed" state, generalized so streak / reward / done all read as one
 /// family instead of three different shapes.
-class _Pill extends StatelessWidget {
-  const _Pill({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: ShapeDecoration(
-        color: color.withValues(alpha: 0.14),
-        shape: const StadiumBorder(),
-      ),
-      child: Text(
-        label,
-        style: context.textTheme.labelLarge?.copyWith(color: color),
-      ),
-    );
-  }
-}
-
 // ── Village shortcuts ─────────────────────────────────────────────────────
 
 class _VillageRow extends ConsumerWidget {
@@ -190,22 +154,6 @@ class _VillageRow extends ConsumerWidget {
     return Row(
       spacing: AppSpacing.sm,
       children: [
-        Expanded(
-          child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_farm.webp',
-            title: 'garden'.tr(),
-            subtitle: 'garden_nutrient'.tr(args: ['4']),
-            onTap: comingSoon,
-          ),
-        ),
-        Expanded(
-          child: _VillageCard(
-            art: 'assets/mascot-assets/farm/ent_shop.webp',
-            title: 'shop'.tr(),
-            subtitle: 'shop_coins'.tr(args: ['${MockShop.coins}']),
-            onTap: () => context.push('/shop'),
-          ),
-        ),
         Expanded(
           child: _VillageCard(
             art: 'assets/mascot-assets/farm/ent_mailbox.webp',
