@@ -73,9 +73,7 @@ List<RawSample> sineSignal({
             ((high - low) *
                     (0.5 +
                         0.5 *
-                            math.sin(
-                              2 * math.pi * us / period.inMicroseconds,
-                            )))
+                            math.sin(2 * math.pi * us / period.inMicroseconds)))
                 .round(),
       ),
   ];
@@ -98,7 +96,10 @@ RawSample _sample(DateTime origin, Duration at, int load) {
   final total = math.max(0, load);
   final hallux = total * 3 ~/ 10;
   final little = total * 2 ~/ 10;
-  return (t: origin.add(at), pressure: [hallux, little, total - hallux - little]);
+  return (
+    t: origin.add(at),
+    pressure: [hallux, little, total - hallux - little],
+  );
 }
 
 int _load(

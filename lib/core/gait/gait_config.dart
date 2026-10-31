@@ -19,7 +19,12 @@ class GaitConfig {
     this.maxStrideChange = 0.4,
     this.minBoutContacts = 5,
     this.otherFootActive = const Duration(seconds: 3),
-  });
+  }) : assert(minBoutContacts >= 2, 'a bout needs at least two contacts'),
+       assert(offFraction < onFraction, 'off threshold must sit below on');
+
+  // Duration comparisons are not constant expressions, so the checks on
+  // [minContact]/[maxContact] and [minStride]/[maxStride] live in the
+  // constructors of the classes that use them (StepDetector, BoutFilter).
 
   /// How far back the detector looks for the foot's low and high load.
   final Duration window;

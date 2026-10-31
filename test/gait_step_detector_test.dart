@@ -105,4 +105,83 @@ void main() {
     );
     expect(found, isEmpty);
   });
+
+  test('a single spike does not blind the detector', () {
+    final samples = footSignal(
+      origin: _origin,
+      length: const Duration(seconds: 15),
+      contacts: walkContacts(count: 12),
+    );
+    // Contact 2 ends at 3.85 s and contact 3 starts at 4.3 s, so 4.0 s is
+    // mid-swing: the foot is in the air and one glitch sample lands there.
+    final glitched = [
+      for (final s in samples)
+        s.t.difference(_origin) == const Duration(seconds: 4)
+            ? (t: s.t, pressure: [10000, 10000, 10000])
+            : s,
+    ];
+    expect(glitched.where((s) => s.pressure[0] == 10000), hasLength(1));
+
+    expect(_run(StepDetector(), glitched), hasLength(12));
+  });
+
+  test('a light wearer is still seen', () {
+    final found = _run(
+      StepDetector(),
+      footSignal(
+        origin: _origin,
+        length: const Duration(seconds: 15),
+        contacts: walkContacts(count: 12),
+        peak: 600,
+      ),
+    );
+    expect(found, hasLength(12));
+  });
+
+  test('a stance with a dip in the middle is one contact', () {
+    final planned = walkContacts(count: 12);
+    final samples = footSignal(
+      origin: _origin,
+      length: const Duration(seconds: 15),
+      contacts: planned,
+    );
+    // Heel hump, trough at 55 % of peak, push-off hump.
+    bool inDip(DateTime t) {
+      final at = t.difference(_origin);
+      return planned.any((c) {
+        final third = (c.end - c.start) ~/ 3;
+        return at >= c.start + third && at <= c.end - third;
+      });
+    }
+
+    final dipped = [
+      for (final s in samples)
+        inDip(s.t)
+            ? (
+                t: s.t,
+                pressure: [for (final p in s.pressure) (p * 0.55).round()],
+              )
+            : s,
+    ];
+
+    expect(_run(StepDetector(), dipped), hasLength(12));
+  });
+
+  test('a short gap does not reset', () {
+    final samples = footSignal(
+      origin: _origin,
+      length: const Duration(seconds: 15),
+      contacts: walkContacts(count: 12),
+    );
+    // Contact 3 ends at 4.95 s and contact 4 starts at 5.4 s: 300 ms of
+    // silence in the middle of that swing.
+    final cut = [
+      for (final s in samples)
+        if (s.t.isBefore(_origin.add(const Duration(milliseconds: 5000))) ||
+            s.t.isAfter(_origin.add(const Duration(milliseconds: 5300))))
+          s,
+    ];
+
+    expect(_run(StepDetector(), cut), hasLength(12));
+  });
 }

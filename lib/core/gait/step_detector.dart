@@ -34,25 +34,41 @@ class Contact {
 ///
 /// Must be fed **unaveraged** samples: the live moving average would smear
 /// the moment the heel lands.
+///
+/// Each sample first goes through a 3-sample median, stamped with the middle
+/// sample's time so contact timing is not delayed. One glitch sample would
+/// otherwise stretch the window's high load and blind the detector until it
+/// scrolled out of the window.
 class StepDetector {
-  StepDetector([this.config = const GaitConfig()]);
+  StepDetector([this.config = const GaitConfig()])
+    : assert(
+        config.minContact < config.maxContact,
+        'minContact must be below maxContact',
+      );
 
   final GaitConfig config;
 
+  final _raw = <({DateTime t, int load})>[];
   final _window = Queue<({DateTime t, int load})>();
   DateTime? _last;
   DateTime? _contactStart;
 
   /// Feeds one sample; returns the contact it closes, if any.
-  Contact? add(DateTime t, List<int> pressure) {
+  Contact? add(DateTime at, List<int> pressure) {
     final last = _last;
     if (last != null &&
-        (t.isBefore(last) || t.difference(last) > config.maxSampleGap)) {
+        (at.isBefore(last) || at.difference(last) > config.maxSampleGap)) {
       reset();
     }
-    _last = t;
+    _last = at;
 
-    final load = pressure.fold<int>(0, (sum, p) => sum + p);
+    _raw.add((t: at, load: pressure.fold<int>(0, (sum, p) => sum + p)));
+    if (_raw.length > 3) _raw.removeAt(0);
+    if (_raw.length < 3) return null;
+
+    final sorted = [for (final s in _raw) s.load]..sort();
+    final t = _raw[1].t;
+    final load = sorted[1];
     _window.add((t: t, load: load));
     while (t.difference(_window.first.t) > config.window) {
       _window.removeFirst();
@@ -86,6 +102,7 @@ class StepDetector {
 
   /// Forgets everything: the next sample starts a fresh window.
   void reset() {
+    _raw.clear();
     _window.clear();
     _last = null;
     _contactStart = null;

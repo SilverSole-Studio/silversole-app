@@ -64,9 +64,10 @@ void main() {
 
   test('a sudden change of rhythm ends the bout', () {
     final filter = BoutFilter();
-    for (final c in _at([0, 1.0, 2.0, 3.0, 4.0])) {
-      filter.add(c);
-    }
+    final first = [
+      for (final c in _at([0, 1.0, 2.0, 3.0, 4.0])) filter.add(c),
+    ];
+    expect(first.last, hasLength(5));
     // 1.5 s after a 1.0 s stride: 50 %, over the 40 % limit.
     expect(filter.add(_at([5.5]).single), isEmpty);
   });
@@ -76,5 +77,17 @@ void main() {
     for (final c in _at([for (var i = 0; i < 12; i++) i * 0.5])) {
       expect(filter.add(c), isEmpty);
     }
+  });
+
+  test('a 30 % change keeps the bout going', () {
+    final filter = BoutFilter();
+    for (final c in _at([0, 1.0, 2.0, 3.0, 4.0])) {
+      filter.add(c);
+    }
+
+    final released = filter.add(_at([5.3]).single);
+
+    expect(released, hasLength(1));
+    expect(released.single.stride, const Duration(milliseconds: 1300));
   });
 }

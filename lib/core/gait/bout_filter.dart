@@ -29,7 +29,12 @@ class BoutContact {
 /// rhythm starts a new candidate bout. Fidgeting while seated, shifting
 /// weight while standing and a few odd steps therefore count for nothing.
 class BoutFilter {
-  BoutFilter([this.config = const GaitConfig()]);
+  BoutFilter([this.config = const GaitConfig()])
+    : assert(config.minStride > Duration.zero, 'minStride must be positive'),
+      assert(
+        config.minStride < config.maxStride,
+        'minStride must be below maxStride',
+      );
 
   final GaitConfig config;
 
