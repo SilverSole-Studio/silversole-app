@@ -19,6 +19,7 @@ import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
+import 'helpers/translations.dart';
 
 /// Settings a test can hand straight in, skipping the shared_preferences load.
 class _Settings extends SettingsNotifier {
@@ -66,7 +67,7 @@ Future<void> _pumpAnalytics(WidgetTester tester, Widget page) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await settleTranslations(tester);
 }
 
 /// Switches to the pressure tab, replays the walk clip and returns the

@@ -13,6 +13,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_safety.dart';
+import '../helpers/translations.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -57,7 +58,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // Requests: two incoming and one outgoing, each with its own menu.
     expect(find.byType(FriendSafetyMenu), findsNWidgets(3));

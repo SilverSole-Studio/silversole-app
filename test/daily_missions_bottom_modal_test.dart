@@ -8,6 +8,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
+import 'helpers/translations.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -41,7 +42,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // No foot check yet: both missions wait, nothing reads as done.
     expect(find.widgetWithText(FilledButton, 'Go'), findsNWidgets(2));

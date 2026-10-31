@@ -11,6 +11,7 @@ import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/widgets/foot_health_check_card.dart';
+import 'helpers/translations.dart';
 
 /// Every text inside [card] that contains a digit.
 Finder _digitsIn(Finder card) => find.descendant(
@@ -77,7 +78,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     final classic = find.byType(FootHealthCheckCard);
     final mascot = find.byType(FootCheckCardT2);
