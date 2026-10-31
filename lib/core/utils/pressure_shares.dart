@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:clock/clock.dart';
+
 /// How the load on one foot splits, as plain ratios.
 ///
 /// Raw sensor counts are not shown to wearers; these ratios are. Neither is a
@@ -21,6 +23,8 @@ class PressureShares {
 
   /// [meanPressure] is `[big-toe ball, little toe, heel]`, already averaged.
   /// Null when the foot is not on the insole ([PressureShareWindow.minLoad]).
+  /// Too few or too old samples are [PressureShareWindow]'s business, not this
+  /// method's.
   static PressureShares? from(List<num> meanPressure) {
     if (meanPressure.length < 3) return null;
     final medial = meanPressure[0];
@@ -57,13 +61,28 @@ class PressureShareWindow {
   void add(DateTime at, List<int> pressure) {
     if (pressure.length < 3) return;
     _samples.addLast((at, pressure));
-    final cutoff = at.subtract(span);
+    _dropOlderThan(at.subtract(span));
+  }
+
+  void _dropOlderThan(DateTime cutoff) {
     while (_samples.isNotEmpty && _samples.first.$1.isBefore(cutoff)) {
       _samples.removeFirst();
     }
   }
 
+  /// Whether any sample arrived within the last [span] of `clock.now()`. False
+  /// once a foot has gone silent, even if its last reading is still held.
+  bool get hasFresh {
+    _dropOlderThan(clock.now().subtract(span));
+    return _samples.isNotEmpty;
+  }
+
+  /// The split over the last [span], measured against `clock.now()` rather than
+  /// the newest sample, so a foot that went silent reads null instead of
+  /// holding its last numbers. Also null with fewer than [minSamples] samples
+  /// or when the foot is not loaded ([minLoad]).
   PressureShares? get shares {
+    _dropOlderThan(clock.now().subtract(span));
     if (_samples.length < minSamples) return null;
     final sum = [0.0, 0.0, 0.0];
     for (final (_, p) in _samples) {
@@ -80,26 +99,32 @@ class PressureShareWindow {
 /// Feeds one [PressureShareWindow] per foot from a stream of readings that may
 /// be rebuilt from more often than they change.
 ///
-/// A reading counts once: the same list object handed in twice is skipped. A
+/// A reading counts once: the same source object handed in twice is skipped.
+/// The source is whatever stands for "this one sample" (the telemetry sample
+/// itself), not the pressure list, which a model may rebuild on every read. A
 /// foot with nothing feeding it keeps no history, and switching between live
 /// data and a sample clip starts both windows over so the two never mix.
 class PressureShareTracker {
   final right = PressureShareWindow();
   final left = PressureShareWindow();
 
-  List<int>? _lastRight;
-  List<int>? _lastLeft;
+  Object? _lastRight;
+  Object? _lastLeft;
   bool _sample = false;
 
-  /// [hasRight] false means nothing feeds the right foot ([right] is then only
-  /// a placeholder); a null [left] means nothing feeds the left foot.
-  void update({
+  /// [hasRight] false means nothing feeds the right foot ([rightReading] is then
+  /// only a placeholder); a null [leftReading] means nothing feeds the left
+  /// foot. Returns whether a new sample was accepted for either foot.
+  bool update({
     required DateTime at,
     required List<int> rightReading,
+    required Object rightSource,
     required bool hasRight,
     required List<int>? leftReading,
+    required Object? leftSource,
     required bool isSample,
   }) {
+    var accepted = false;
     if (isSample != _sample) {
       _sample = isSample;
       clear();
@@ -107,17 +132,20 @@ class PressureShareTracker {
     if (!hasRight) {
       right.clear();
       _lastRight = null;
-    } else if (!identical(rightReading, _lastRight)) {
-      _lastRight = rightReading;
+    } else if (!identical(rightSource, _lastRight)) {
+      _lastRight = rightSource;
       right.add(at, rightReading);
+      accepted = true;
     }
     if (leftReading == null) {
       left.clear();
       _lastLeft = null;
-    } else if (!identical(leftReading, _lastLeft)) {
-      _lastLeft = leftReading;
+    } else if (!identical(leftSource ?? leftReading, _lastLeft)) {
+      _lastLeft = leftSource ?? leftReading;
       left.add(at, leftReading);
+      accepted = true;
     }
+    return accepted;
   }
 
   void clear() {

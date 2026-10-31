@@ -34,6 +34,8 @@ class PressureReading {
     required this.left,
     required this.hasData,
     this.isSample = false,
+    this.rightSource,
+    this.leftSource,
   });
 
   final List<int> right;
@@ -50,6 +52,13 @@ class PressureReading {
   /// Whether these readings are a frame of a bundled sample clip rather than
   /// a sole's.
   final bool isSample;
+
+  /// Stands for the one sample [right] / [left] came from: the same object for
+  /// as long as that sample is the latest, a new one with the next. Lets a
+  /// listener tell a new sample from a rebuild, which the lists cannot (a
+  /// model may hand out a fresh list on every read). Null when unknown.
+  final Object? rightSource;
+  final Object? leftSource;
 }
 
 /// Signature of [PressureDemoScope.builder]: the readings to render, plus the
@@ -176,6 +185,12 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
         // foot bearing zero load, which reads as a clinical finding.
         hasData: clip != null || rightImu.isNotEmpty,
         isSample: clip != null,
+        rightSource: clip != null
+            ? clip.right[_frame]
+            : (rightImu.isNotEmpty ? rightImu.last : null),
+        leftSource: clip != null
+            ? (clipLeft?[_frame])
+            : (leftImu.isNotEmpty ? leftImu.last : null),
       ),
       widget.showMenu
           ? Row(
