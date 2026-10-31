@@ -37,14 +37,17 @@ class GaitReferenceBand {
 }
 
 /// Y range padded past the data and snapped to [step], so a nearly flat series
-/// does not render glued to the frame.
+/// does not render glued to the frame. Data that never goes below zero keeps
+/// the axis at zero or above: a day without the insoles is a 0, and a bar
+/// drawn below the axis would read as negative steps.
 ({double min, double max}) _bounds(List<double> values, double step) {
   if (values.isEmpty) return (min: 0, max: step);
   final lo = values.reduce(math.min);
   final hi = values.reduce(math.max);
   final pad = math.max((hi - lo) * 0.35, step);
+  final min = ((lo - pad) / step).floorToDouble() * step;
   return (
-    min: ((lo - pad) / step).floorToDouble() * step,
+    min: lo >= 0 ? math.max(0, min) : min,
     max: ((hi + pad) / step).ceilToDouble() * step,
   );
 }

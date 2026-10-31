@@ -7,6 +7,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
+import 'helpers/translations.dart';
 
 FootCheckReport _report(double foreRatio, double medialRatio) =>
     FootCheckReport(
@@ -59,7 +60,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // A textbook 40/60 split with an even forefoot: both axes balanced.
     expect(find.text('Excellent'), findsOneWidget);

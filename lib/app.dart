@@ -6,6 +6,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
+import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/dismiss_keyboard_on_tap_outside.dart';
 import 'package:silversole/shared/widgets/fall_demo_overlay.dart';
@@ -23,6 +24,10 @@ class App extends ConsumerWidget {
     final isMascot = settings.themeVariant == AppThemeVariant.mascot;
 
     ref.watch(bleForegroundControlProvider);
+    // Both run for the whole app session: gait totals and the fall count
+    // must not start only when the gait tab is first opened.
+    ref.watch(gaitTrackingProvider);
+    ref.watch(fallCountSinceOpenProvider);
 
     return MaterialApp.router(
       title: 'Silver Sole',

@@ -84,4 +84,12 @@ abstract class Constants {
     'FRIENDS_BACKEND',
   );
   static const bool friendsOnSupabase = friendsBackend == 'supabase';
+
+  /// Whether the gait tab shows the wearer's own figures instead of the
+  /// sample page. Off in release until the step detection has been tuned on
+  /// real recordings (`docs/superpowers/specs/2026-10-31-daily-gait-design.md`
+  /// §6); debug builds are always on (see `realGaitEnabledProvider`).
+  ///
+  ///     flutter run --release --dart-define=REAL_GAIT=on
+  static const bool realGait = String.fromEnvironment('REAL_GAIT') == 'on';
 }

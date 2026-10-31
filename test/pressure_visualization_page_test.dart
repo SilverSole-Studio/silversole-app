@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/pressure_visualization_page.dart';
+import 'helpers/translations.dart';
 
 Future<void> _pumpPage(WidgetTester tester) async {
   // Pumped through runAsync because easy_localization reads strings.csv off
@@ -31,7 +32,7 @@ Future<void> _pumpPage(WidgetTester tester) async {
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await settleTranslations(tester);
 }
 
 /// Opens the sample menu and waits out its reveal animation. Avoids

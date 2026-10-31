@@ -640,3 +640,31 @@ delete_account_failed,Could not delete your account — please try again,刪除�
 delete_account_unconfirmed,Could not confirm the deletion so you have been signed out — sign in again to check,無法確認帳號是否已刪除，已先登出。請重新登入確認
 friends_err_nicknameOffensive,That name is not allowed. Please choose another.,這個名字不能用，請換一個。
 friends_more_actions,More,更多
+gait_pending_days,Collecting data: {} more day(s) needed,資料累積中，還要 {} 天
+gait_help_steps_title,Daily walking steps,每日走路步數
+gait_help_steps_body,Steps taken during walks of 10 or more steps in a row. Short shuffles and sitting or shifting weight while standing are left out — so the number is lower than a phone or band pedometer.,連續走 10 步以上時的步數。零星幾步、坐著、站著換重心都不算，所以會比手機或手環計步少。
+gait_help_steps_note,With one sole the steps are estimated as that foot's landings times two.,只穿一隻鞋墊時，步數是用那隻腳落地次數乘以 2 估算。
+gait_help_stance_title,Stance share,站立期比例
+gait_help_stance_body,Of each step the share the foot spends on the ground rather than swinging through. It comes from when the pressure under the sole rises and falls.,每一步裡，腳踩在地上（而不是抬起來往前擺）的時間占比，用鞋墊壓力升起和落下的時間算出來。
+gait_help_variation_title,Step timing variation,每步時間差異
+gait_help_variation_body,How much the time each step takes varies — the coefficient of variation of stride time. Lower means a steadier rhythm.,每一步花的時間有多不一樣，用跨步時間的變異係數表示。越小代表節奏越穩，忽快忽慢會讓數字變大。
+gait_help_variation_evidence,Arch Phys Med Rehabil 2001: 52 older adults wore force-sensing insoles for a year. Stride-time variability was 106±30 ms among those who fell against 49±4 ms among those who did not.,Arch Phys Med Rehabil 2001：52 位長者穿力感應鞋墊追蹤 1 年。跌倒者跨步時間變異度 106±30 ms、未跌倒者 49±4 ms，與本產品同一類感測方式。
+gait_hero_steps_week,Average steps on days worn · last 7 days,近 7 天有穿的日子平均步數
+gait_hero_steps_month,Average steps on days worn · last 4 weeks,近 4 週有穿的日子平均步數
+gait_hero_steps_quarter,Average steps on days worn · last 12 weeks,近 12 週有穿的日子平均步數
+gait_sect_daily_steps,Walking steps per day,每日走路步數
+gait_sect_weekly_metrics,Week by week,每週指標
+gait_unit_steps,steps,步
+gait_unit_min,min,分鐘
+gait_metric_walk_minutes,Walking time per day,每日走路時間
+gait_metric_stance,Stance share,站立期比例
+gait_metric_stride_cv,Step timing variation,每步時間差異
+gait_metric_daily_steps,Daily steps,每日步數
+gait_reading_cadence_real,Steps per minute while walking,走路時每分鐘的步數
+gait_reading_walk_minutes,Only walks of 10 or more steps count,只算連續走 10 步以上
+gait_reading_stance_real,Share of each step with the foot down,每一步裡腳踩在地上的時間占比
+gait_reading_stride_cv,Lower means a steadier rhythm,越小代表節奏越穩
+gait_reading_sym_real,How alike the two feet's stance times are,左右腳踩地時間有多接近
+gait_reading_ds_real,Share of walking time with both feet down,走路時雙腳同時著地的時間占比
+gait_fall_title_since_open,Falls since the app was opened,開啟 App 以來跌倒
+gait_note_real,Only walks of 10 or more steps in a row count. Sitting and shifting weight while standing do not. With one sole the steps are estimated as that foot's landings times two.,只計算連續走 10 步以上的走路，坐著、站著換重心都不算。只穿一隻鞋墊時，步數是用那隻腳落地次數乘以 2 估算。

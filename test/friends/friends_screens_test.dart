@@ -14,6 +14,7 @@ import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
+import '../helpers/translations.dart';
 
 /// The demo backend, with a first QR request that fails and a count of how
 /// often the friend list is read.
@@ -78,7 +79,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // The first request failed: say so and offer a retry, no endless spinner.
     expect(find.byType(QrImageView), findsNothing);

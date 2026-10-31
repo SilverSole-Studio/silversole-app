@@ -10,6 +10,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/fall_tilt_detector.dart';
 import 'package:silversole/shared/providers/fall_demo_provider.dart';
 import 'package:silversole/shared/widgets/fall_demo_overlay.dart';
+import 'helpers/translations.dart';
 
 /// Stands in for the real notifier so the test drives the judgement directly
 /// instead of feeding telemetry through the detector.
@@ -94,7 +95,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // Nothing steep yet: the page shows through, no panel, no buzzing.
     expect(find.text('page content'), findsOneWidget);

@@ -17,64 +17,70 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// stability group on purpose: a previous fall is the strongest single
 /// predictor there is.
 ///
-/// Figures are mockup copy, see [gaitSnapshot] — so the panel opens with a
-/// banner that says so and cannot be dismissed. Every metric carries an ⓘ that
-/// explains what it is and what it cannot tell you.
+/// Draws whatever [snapshot] it is given: the bundled example ([gaitSnapshot]),
+/// which opens with a banner that says so and cannot be dismissed, or the
+/// wearer's own figures. Every metric carries an ⓘ that explains what it is and
+/// what it cannot tell you.
 class GaitAnalysisPanel extends StatelessWidget {
-  const GaitAnalysisPanel({super.key, required this.scale});
+  const GaitAnalysisPanel({super.key, required this.snapshot});
 
   /// The "sample data" banner, for tests.
   static const sampleBannerKey = Key('gait-sample-banner');
 
-  final GaitScale scale;
+  /// The "still collecting" card, for tests.
+  static const pendingKey = Key('gait-pending');
+
+  final GaitSnapshot snapshot;
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = gaitSnapshot(scale);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacing.base,
       children: [
-        const _SampleBanner(),
-        _Hero(snapshot: snapshot),
+        if (snapshot.isSample) const _SampleBanner(),
+        if (snapshot.isPending)
+          _PendingCard(days: snapshot.pendingDays!)
+        else ...[
+          _Hero(snapshot: snapshot),
 
-        _GroupLabel('gait_group_ability'.tr()),
-        _SpeedChartCard(snapshot: snapshot),
-        for (final metric in snapshot.ability) _MetricTile(metric: metric),
+          _GroupLabel('gait_group_ability'.tr()),
+          _SpeedChartCard(snapshot: snapshot),
+          for (final metric in snapshot.ability) _MetricTile(metric: metric),
 
-        _GroupLabel('gait_group_stability'.tr()),
-        for (final metric in snapshot.stability) _MetricTile(metric: metric),
-        if (snapshot.hasStanceChart)
-          SectionCard(
-            title: 'gait_sect_lr_stance'.tr(),
-            child: SizedBox(
-              height: 170,
-              child: GaitStanceChart(
-                left: snapshot.stanceLeft,
-                right: snapshot.stanceRight,
-                leftColor: context.colorScheme.primary,
-                rightColor: context.tokens.dataOrange,
+          _GroupLabel('gait_group_stability'.tr()),
+          for (final metric in snapshot.stability) _MetricTile(metric: metric),
+          if (snapshot.hasStanceChart)
+            SectionCard(
+              title: 'gait_sect_lr_stance'.tr(),
+              child: SizedBox(
+                height: 170,
+                child: GaitStanceChart(
+                  left: snapshot.stanceLeft,
+                  right: snapshot.stanceRight,
+                  leftColor: context.colorScheme.primary,
+                  rightColor: context.tokens.dataOrange,
+                ),
               ),
             ),
-          ),
-        if (snapshot.hasPhaseTimeline)
-          SectionCard(
-            title: 'gait_sect_phase'.tr(),
-            trailing: const GaitTopicButton(topic: GaitTopic.phase),
-            child: GaitPhaseTimeline(
-              spans: snapshot.phaseSpans,
-              colorOf: (phase) => phaseColor(context, phase),
+          if (snapshot.hasPhaseTimeline)
+            SectionCard(
+              title: 'gait_sect_phase'.tr(),
+              trailing: const GaitTopicButton(topic: GaitTopic.phase),
+              child: GaitPhaseTimeline(
+                spans: snapshot.phaseSpans,
+                colorOf: (phase) => phaseColor(context, phase),
+              ),
             ),
-          ),
-        if (snapshot.hasSmallMultiples)
-          SectionCard(
-            title: 'gait_sect_four_metrics'.tr(),
-            child: GaitSmallMultiples(
-              lines: snapshot.smallMultiples,
-              colorOf: (tone) => toneColor(context, tone),
+          if (snapshot.hasSmallMultiples)
+            SectionCard(
+              title: snapshot.smallMultiplesTitleKey.tr(),
+              child: GaitSmallMultiples(
+                lines: snapshot.smallMultiples,
+                colorOf: (tone) => toneColor(context, tone),
+              ),
             ),
-          ),
+        ],
 
         _FallCard(snapshot: snapshot),
         if (snapshot.hasAdvice) _AdviceCard(keys: snapshot.adviceKeys),
@@ -119,6 +125,35 @@ class _SampleBanner extends StatelessWidget {
   }
 }
 
+/// Shown instead of the figures while a scale has too few days behind it —
+/// an empty state rather than a number the data cannot support yet.
+class _PendingCard extends StatelessWidget {
+  const _PendingCard({required this.days});
+
+  final int days;
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyedSubtree(
+      key: GaitAnalysisPanel.pendingKey,
+      child: SectionCard(
+        child: Row(
+          spacing: AppSpacing.md,
+          children: [
+            Icon(LucideIcons.clock, color: context.colorScheme.primary),
+            Expanded(
+              child: Text(
+                'gait_pending_days'.tr(args: ['$days']),
+                style: context.textTheme.titleSmall,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// The speed chart for the scale in view. On the long trajectory the phases are
 /// tinted behind the plot and every point takes its phase's color, so the
 /// stable/declining/watch split can be seen on the chart itself rather than
@@ -137,7 +172,7 @@ class _SpeedChartCard extends StatelessWidget {
     return SectionCard(
       title: snapshot.chartLabelKey.tr(),
       trailing: GaitTopicButton(
-        topic: isWeek ? GaitTopic.speed : GaitTopic.binning,
+        topic: isWeek ? snapshot.heroTopic : GaitTopic.binning,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,11 +182,13 @@ class _SpeedChartCard extends StatelessWidget {
             height: snapshot.hasPhaseTimeline ? 185 : 155,
             child: isWeek
                 ? GaitSpeedBars(
-                    values: snapshot.speedSeries,
+                    values: snapshot.series,
+                    step: snapshot.seriesStep,
                     color: context.colorScheme.primary,
                   )
                 : GaitTrendChart(
-                    values: snapshot.speedSeries,
+                    values: snapshot.series,
+                    step: snapshot.seriesStep,
                     color: context.colorScheme.primary,
                     openLast: true,
                     weekLabels: true,
@@ -235,7 +272,7 @@ class _GroupLabel extends StatelessWidget {
   }
 }
 
-/// Speed, the one figure read at a glance, with the phase it sits in.
+/// The one figure read at a glance, with the phase it sits in when there is one.
 class _Hero extends StatelessWidget {
   const _Hero({required this.snapshot});
 
@@ -243,19 +280,22 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final phase = phaseColor(context, snapshot.phase);
+    final phase = snapshot.phase;
+    final delta = snapshot.heroDelta;
+    final threshold = snapshot.thresholdNoteKey;
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: AppSpacing.sm,
         children: [
-          Row(
-            children: [
-              _PhasePill(phase: snapshot.phase, color: phase),
-              const GaitTopicButton(topic: GaitTopic.phase),
-            ],
-          ),
+          if (phase != null)
+            Row(
+              children: [
+                _PhasePill(phase: phase, color: phaseColor(context, phase)),
+                const GaitTopicButton(topic: GaitTopic.phase),
+              ],
+            ),
           Row(
             children: [
               Flexible(
@@ -266,7 +306,7 @@ class _Hero extends StatelessWidget {
                   ),
                 ),
               ),
-              const GaitTopicButton(topic: GaitTopic.speed),
+              GaitTopicButton(topic: snapshot.heroTopic),
               Text(
                 'gait_live_daily'.tr(),
                 style: context.textTheme.labelMedium?.copyWith(
@@ -285,37 +325,40 @@ class _Hero extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                'gait_unit_mps'.tr(),
+                snapshot.heroUnitKey.tr(),
                 style: context.textTheme.titleLarge?.copyWith(
                   color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: AppSpacing.sm,
-            children: [
-              Text(
-                '${snapshot.heroDelta} ${snapshot.heroDeltaSuffixKey.tr()}',
-                style: context.textTheme.titleMedium.bold?.copyWith(
-                  color: toneColor(context, snapshot.heroTone),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          if (delta != null || threshold != null)
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.sm,
+              children: [
+                if (delta != null)
                   Text(
-                    snapshot.thresholdNoteKey.tr(),
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
+                    '$delta ${snapshot.heroDeltaSuffixKey?.tr() ?? ''}',
+                    style: context.textTheme.titleMedium.bold?.copyWith(
+                      color: toneColor(context, snapshot.heroTone),
                     ),
                   ),
-                  const GaitTopicButton(topic: GaitTopic.threshold),
-                ],
-              ),
-            ],
-          ),
+                if (threshold != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        threshold.tr(),
+                        style: context.textTheme.bodyMedium?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const GaitTopicButton(topic: GaitTopic.threshold),
+                    ],
+                  ),
+              ],
+            ),
         ],
       ),
     );
@@ -506,19 +549,20 @@ class _FallCard extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'gait_fall_title'.tr(),
+                        snapshot.fallTitleKey.tr(),
                         style: context.textTheme.titleMedium,
                       ),
                     ),
                     const GaitTopicButton(topic: GaitTopic.falls),
                   ],
                 ),
-                Text(
-                  snapshot.fallLastKey.tr(),
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
+                if (snapshot.fallLastKey case final last?)
+                  Text(
+                    last.tr(),
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
