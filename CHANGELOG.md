@@ -5,14 +5,28 @@
 更新內容:
 
 - 新增好友：用好友碼加好友、收發好友邀請，廣場的冒險者公會小屋有新邀請時會亮紅點。
+- 好友、據點成員、好友邀請都可以檢舉或封鎖；暱稱不能用不雅字。
+- 遊戲進度會存到帳號上：換手機、重裝 App，登入同一個帳號就接得回來。
 - 遊戲世界會認得你登入的帳號。
+- 可以在 App 裡刪除帳號；登入頁與個人頁可以看隱私權政策。
 - 手機系統字體調到很大時，畫面不再跑版；遊戲會自動切換成大字模式。
+- 沒有資料的地方不再顯示示範數字，直接說還沒有資料。
+- 遊戲頁拿掉還沒開放的金幣、菜園與商店入口。
+- 吉祥物主題的首頁更簡潔，粗哥的頭像統一成同一張臉。
+- iPhone：可以用 Apple 或 Google 登入、鞋墊會自動重新連線、打開 App 時不再先要定位權限。
 
 Updates:
 
 - Friends: add friends by friend code and send or accept invites; the guild hut in the plaza shows a red dot for new invites.
+- Friends, centre members and friend invites can be reported or blocked; nicknames cannot use rude words.
+- Game progress is saved to your account: on a new phone or after reinstalling, sign in with the same account to pick up where you left off.
 - The game world now knows which account you are signed in with.
+- You can delete your account in the app; the sign-in and profile pages link to the privacy policy.
 - With the phone's font size set very large, screens no longer overflow, and the games switch to large-text mode on their own.
+- Where there is no data yet, the app says so instead of showing sample numbers.
+- The games page no longer shows coin, garden and shop entries that are not open yet.
+- The mascot theme's home screen is simpler, and 粗哥's avatar is the same face everywhere.
+- iPhone: sign in with Apple or Google, the insoles reconnect on their own, and the app no longer asks for location as soon as it opens.
 
 ## v1.10.0
 
