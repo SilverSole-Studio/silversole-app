@@ -33,7 +33,7 @@ BLE live notify
       └─ (新增) GaitTracker.addSample(soleKey, foot, raw.pressure, now)
              → StepDetector(每隻腳一個) → StepEvent
              → BoutFilter → 走路段落裡的 StepEvent
-             → DailyGaitAccumulator → 每小時與 App 進背景時寫入本機
+             → DailyGaitAccumulator → 每 5 分鐘與 App 進背景時寫入本機
   步態分頁 ← dailyGaitHistoryProvider（讀本機的每日統計）
 ```
 
@@ -46,7 +46,7 @@ BLE live notify
 ### 3.1 `StepDetector`（一隻腳一個）
 
 - 輸入：`(DateTime t, List<int> pressure)`。
-- 看「腳跟」和「前腳掌（大拇趾球＋小趾球）」兩條壓力。
+- 第一版用三顆 FSR 相加的總負荷判斷踩下與抬起。腳跟、前腳掌分開看，留到校正時視需要再加。
 - **自適應門檻**：不做開機校正。持續追蹤這隻腳最近 5 秒的低點與高點，門檻放在兩者之間，上下各留遲滯區間，避免在門檻附近抖動重複觸發。跟雙腳遊戲輸入「壓力參考值自己適應」是同一個思路。
 - 輸出 `StepEvent`：`heelStrike`（總負荷由低轉高的時間）、`toeOff`（由高轉低的時間）。
 - 缺資料超過 0.5 秒（斷線、掉封包）就重置狀態，那一步不算。
@@ -54,10 +54,10 @@ BLE live notify
 
 ### 3.2 `BoutFilter`
 
-- 同一隻腳連續 5 個步幅（≈ 10 步）以上、每個步幅時間在 0.7–2.0 秒之間、相鄰步幅時間變化不超過 40%，才算「在走路」。
-- 段落中間超過 2.5 秒沒有落地就結束這個段落。
+- 同一隻腳連續落地 5 次以上（≈ 10 步）、每個步幅時間在 0.7–2.0 秒之間、相鄰步幅時間變化不超過 40%，才算「在走路」。
+- 步幅超過 2.0 秒（中間太久沒落地）就結束這個段落。
 - 段落未達門檻前的事件先暫存，達標才一起放行；沒達標就丟掉。坐著抖腳、站著換重心、零星幾步因此不計。
-- 數值（5 個步幅、0.7–2.0 秒、40%、2.5 秒）是初始值，校正時調整，集中放在一個設定物件裡。
+- 數值（5 次落地、0.7–2.0 秒、40%）是初始值，校正時調整，集中放在一個設定物件裡。
 
 ### 3.3 `DailyGaitAccumulator`
 
@@ -83,7 +83,7 @@ BLE live notify
 
 - 沿用 `save_service.dart` 的 shared_preferences，新增一個 `LocalSavableKey`，值是「日期 → 每日統計」的 JSON。
 - 保留最近 90 天（季檢視要 12 週），更早的刪掉。
-- 寫入時機：每小時一次，加上 App 進背景時（`AppLifecycleState.paused`）。程式被系統砍掉時，最多掉最後一小時。
+- 寫入時機：每 5 分鐘一次（步態頁才不會落後太久），加上 App 進背景時（`AppLifecycleState.paused`）。程式被系統砍掉時，最多掉最後 5 分鐘。
 
 ## 5. 步態頁
 
