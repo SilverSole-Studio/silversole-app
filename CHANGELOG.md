@@ -10,6 +10,7 @@
 - 遊戲世界會認得你登入的帳號。
 - 可以在 App 裡刪除帳號；登入頁與個人頁可以看隱私權政策。
 - 手機系統字體調到很大時，畫面不再跑版；遊戲會自動切換成大字模式。
+- 足壓分佈多了前後、內外的受力比例；原始數字收進開發者模式。
 - 沒有資料的地方不再顯示示範數字，直接說還沒有資料。
 - 遊戲頁拿掉還沒開放的金幣、菜園與商店入口。
 - 吉祥物主題的首頁更簡潔，粗哥的頭像統一成同一張臉。
@@ -23,6 +24,7 @@ Updates:
 - The game world now knows which account you are signed in with.
 - You can delete your account in the app; the sign-in and profile pages link to the privacy policy.
 - With the phone's font size set very large, screens no longer overflow, and the games switch to large-text mode on their own.
+- Foot pressure now shows the front/back and inner/outer balance; the raw numbers moved to developer mode.
 - Where there is no data yet, the app says so instead of showing sample numbers.
 - The games page no longer shows coin, garden and shop entries that are not open yet.
 - The mascot theme's home screen is simpler, and 粗哥's avatar is the same face everywhere.
