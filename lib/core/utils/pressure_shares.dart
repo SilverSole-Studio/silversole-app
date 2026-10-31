@@ -76,3 +76,54 @@ class PressureShareWindow {
 
   void clear() => _samples.clear();
 }
+
+/// Feeds one [PressureShareWindow] per foot from a stream of readings that may
+/// be rebuilt from more often than they change.
+///
+/// A reading counts once: the same list object handed in twice is skipped. A
+/// foot with nothing feeding it keeps no history, and switching between live
+/// data and a sample clip starts both windows over so the two never mix.
+class PressureShareTracker {
+  final right = PressureShareWindow();
+  final left = PressureShareWindow();
+
+  List<int>? _lastRight;
+  List<int>? _lastLeft;
+  bool _sample = false;
+
+  /// [hasRight] false means nothing feeds the right foot ([right] is then only
+  /// a placeholder); a null [left] means nothing feeds the left foot.
+  void update({
+    required DateTime at,
+    required List<int> rightReading,
+    required bool hasRight,
+    required List<int>? leftReading,
+    required bool isSample,
+  }) {
+    if (isSample != _sample) {
+      _sample = isSample;
+      clear();
+    }
+    if (!hasRight) {
+      right.clear();
+      _lastRight = null;
+    } else if (!identical(rightReading, _lastRight)) {
+      _lastRight = rightReading;
+      right.add(at, rightReading);
+    }
+    if (leftReading == null) {
+      left.clear();
+      _lastLeft = null;
+    } else if (!identical(leftReading, _lastLeft)) {
+      _lastLeft = leftReading;
+      left.add(at, leftReading);
+    }
+  }
+
+  void clear() {
+    right.clear();
+    left.clear();
+    _lastRight = null;
+    _lastLeft = null;
+  }
+}
