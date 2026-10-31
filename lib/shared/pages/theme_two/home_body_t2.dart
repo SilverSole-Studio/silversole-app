@@ -15,9 +15,6 @@ import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
-import 'package:silversole/core/theme/app_palette.dart';
-import 'package:silversole/shared/widgets/chart/chart_section.dart';
-import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
 import 'package:silversole/shared/widgets/foot_health_check_card.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
@@ -32,6 +29,9 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// foot check shows the last real result or an empty state. The mockup's
 /// weather strip is intentionally absent too — there is no weather source and
 /// none is planned.
+///
+/// The raw IMU trace is not on this screen: twelve channel names mean nothing
+/// to a wearer. It stays one tap away on the analytics detail page.
 class HomeBodyT2 extends ConsumerWidget {
   const HomeBodyT2({super.key});
 
@@ -52,7 +52,6 @@ class HomeBodyT2 extends ConsumerWidget {
               _DeviceCard(device: device),
               const FootCheckCardT2(),
               const _FallGuardCard(),
-              const _RecentDataCard(),
             ],
           ),
         ),
@@ -131,7 +130,25 @@ class _DailyMissionCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset('assets/mascot-assets/icons/home_play.webp', height: 62),
+          // A plain play button, not a mascot sticker: the greeting above is
+          // this screen's one mascot.
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppPaletteT2.gold,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppPaletteT2.ink,
+                width: AppPaletteT2.outlineWidth,
+              ),
+            ),
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              size: 32,
+              color: AppPaletteT2.ink,
+            ),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -186,8 +203,9 @@ class _DeviceCard extends ConsumerWidget {
     );
     final name = device?.name ?? 'not_binding'.tr();
 
+    // Plain white, not gold: gold is the colour of the buttons, and this card
+    // is status, not the thing to press first.
     return MascotCard(
-      color: AppPaletteT2.gold,
       onTap: () => context.push('/my-devices'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,34 +234,41 @@ class _DeviceCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            online ? 'device_synced'.tr() : 'offline'.tr(),
+            device == null
+                ? 'device_tap_to_pair'.tr()
+                : online
+                ? 'device_synced'.tr()
+                : 'offline'.tr(),
             style: context.textTheme.bodyMedium?.copyWith(
               color: AppPaletteT2.ink,
             ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: MascotProgressBar(
-                  value: battery.fraction,
-                  height: 20,
-                  fill: battery.isLive
-                      ? AppPaletteT2.safe
-                      : AppPaletteT2.inkFaint,
+          // An empty gray bar says nothing before a sole is paired.
+          if (device != null) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: MascotProgressBar(
+                    value: battery.fraction,
+                    height: 20,
+                    fill: battery.isLive
+                        ? AppPaletteT2.safe
+                        : AppPaletteT2.inkFaint,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                battery.label,
-                style: battery.isLive
-                    ? context.textTheme.headlineMedium
-                    : context.textTheme.headlineMedium?.copyWith(
-                        color: AppPaletteT2.inkMuted,
-                      ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                Text(
+                  battery.label,
+                  style: battery.isLive
+                      ? context.textTheme.headlineMedium
+                      : context.textTheme.headlineMedium?.copyWith(
+                          color: AppPaletteT2.inkMuted,
+                        ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -297,7 +322,10 @@ class FootCheckCardT2 extends ConsumerWidget {
                   ],
                 ),
               ),
-              Image.asset('assets/mascot-assets/checking.webp', height: 86),
+              // The mascot invites a first check; once there is a result
+              // the result is the picture.
+              if (last == null)
+                Image.asset('assets/mascot-assets/checking.webp', height: 86),
             ],
           ),
           const SizedBox(height: 14),
@@ -341,11 +369,8 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
     return MascotCard(
       child: Row(
         children: [
-          Image.asset(
-            'assets/mascot-assets/icons/home_shield.webp',
-            height: 54,
-          ),
-          const SizedBox(width: 10),
+          const Icon(Icons.shield_outlined, size: 32, color: AppPaletteT2.ink),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,103 +396,13 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
           MascotPill(
             color: safe ? AppPaletteT2.card : AppPaletteT2.danger,
             child: Text(
-              safe ? 'safe'.tr() : 'alert_severity'.tr(),
+              // "Watching", not "safe": the guard cannot promise safety.
+              safe
+                  ? 'fall_guard_watching'.tr()
+                  : 'fall_guard_events'.tr(args: ['$_eventCount']),
               style: context.textTheme.labelLarge?.copyWith(
                 color: safe ? AppPaletteT2.safe : AppPaletteT2.card,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── 6. Recent device data ─────────────────────────────────────────────────
-
-/// Live IMU trace + a legend, tapping through to the detail panel.
-///
-/// Real data — the mascot theme's counterpart to `RecentDataChartCard`. The
-/// line colors come from `AppPalette.chartSeries` in both themes: they encode
-/// which channel is which, so they are not restyled per theme.
-class _RecentDataCard extends StatelessWidget {
-  const _RecentDataCard();
-
-  @override
-  Widget build(BuildContext context) {
-    Color colorOf(int i) =>
-        AppPalette.chartSeries[i % AppPalette.chartSeries.length];
-
-    return MascotCard(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      onTap: () => context.push('/analytics-detail'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'device_recent_data'.tr(),
-                  style: context.textTheme.titleMedium,
-                ),
-              ),
-              Text('view'.tr(), style: context.textTheme.labelLarge),
-              const Icon(Icons.chevron_right, size: 20),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ImuChartSection(type: ChardDisplayType.all),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (var i = 0; i < imuChannelLabels.length; i++)
-                _LegendChip(color: colorOf(i), label: imuChannelLabels[i]),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Small outlined swatch + channel name, this theme's answer to the classic
-/// card's Material chips.
-class _LegendChip extends StatelessWidget {
-  const _LegendChip({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppPaletteT2.card,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppPaletteT2.ink, width: 1.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              border: Border.all(color: AppPaletteT2.ink, width: 1),
-            ),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: context.textTheme.bodyMedium?.copyWith(
-              fontSize: 12,
-              color: AppPaletteT2.ink,
             ),
           ),
         ],

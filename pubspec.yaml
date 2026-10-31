@@ -147,7 +147,6 @@ flutter:
     - assets/mascot-assets/shop/sh_skin_chef.webp
     - assets/mascot-assets/happy.webp
     - assets/mascot-assets/checking.webp
-    - assets/mascot-assets/determined.webp
     - assets/mascot-assets/insole.webp
     # Friends: the 12 preset avatars (粗哥 poses, 256px squares).
     - assets/mascot-assets/avatars/

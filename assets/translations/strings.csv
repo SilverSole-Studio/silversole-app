@@ -640,3 +640,5 @@ delete_account_failed,Could not delete your account — please try again,刪除�
 delete_account_unconfirmed,Could not confirm the deletion so you have been signed out — sign in again to check,無法確認帳號是否已刪除，已先登出。請重新登入確認
 friends_err_nicknameOffensive,That name is not allowed. Please choose another.,這個名字不能用，請換一個。
 friends_more_actions,More,更多
+fall_guard_watching,Watching,守護中
+device_tap_to_pair,Tap to pair your insoles,點這裡綁定鞋墊
