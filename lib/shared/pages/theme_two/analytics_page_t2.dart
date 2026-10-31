@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -174,10 +176,24 @@ class _PressurePanel extends ConsumerStatefulWidget {
 class _PressurePanelState extends ConsumerState<_PressurePanel> {
   final _tracker = PressureShareTracker();
 
+  /// Fires once the newest sample has aged out of the window, so a foot that
+  /// goes silent is redrawn blank instead of keeping its last numbers.
+  Timer? _staleTimer;
+
   @override
-  void didUpdateWidget(_PressurePanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.feet != widget.feet) _tracker.clear();
+  void dispose() {
+    _staleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armStaleTimer() {
+    _staleTimer?.cancel();
+    _staleTimer = Timer(
+      PressureShareWindow.span + const Duration(milliseconds: 300),
+      () {
+        if (mounted) setState(() {});
+      },
+    );
   }
 
   @override
@@ -189,13 +205,25 @@ class _PressurePanelState extends ConsumerState<_PressurePanel> {
     return PressureDemoScope(
       showMenu: devMode,
       builder: (context, reading, header) {
-        _tracker.update(
+        final accepted = _tracker.update(
           at: clock.now(),
           rightReading: reading.right,
+          rightSource: reading.rightSource ?? reading.right,
           hasRight: reading.hasData,
           leftReading: reading.left,
+          leftSource: reading.leftSource,
           isSample: reading.isSample,
         );
+        if (accepted) _armStaleTimer();
+        // A foot that has gone quiet is drawn blank rather than frozen on its
+        // last frame. A playing sample clip is always fresh.
+        final rightHeat = reading.isSample || _tracker.right.hasFresh
+            ? reading.right
+            : const <int>[0, 0, 0];
+        final leftHeat =
+            reading.left == null || reading.isSample || _tracker.left.hasFresh
+            ? reading.left
+            : const <int>[0, 0, 0];
         return MascotCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -203,8 +231,8 @@ class _PressurePanelState extends ConsumerState<_PressurePanel> {
               header,
               Center(
                 child: FootPressureHeatmap(
-                  pressure: reading.right,
-                  leftPressure: reading.left,
+                  pressure: rightHeat,
+                  leftPressure: leftHeat,
                   feet: feet,
                 ),
               ),
