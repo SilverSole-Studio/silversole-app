@@ -1,16 +1,20 @@
+import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel.dart';
 import 'package:silversole/shared/widgets/gait/gait_raw_record_button.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 import 'package:silversole/shared/widgets/pressure_readouts.dart';
+import 'package:silversole/shared/widgets/pressure_share_bars.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
 /// Analytics, classic theme.
@@ -19,10 +23,11 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// theme's own vocabulary: stock [SegmentedButton]s styled by the theme,
 /// [SectionCard], and the blue accent for data.
 ///
-/// The pressure map is live BLE FSR data. The gait figures come from
-/// [gaitViewSnapshotProvider]: the wearer's own walking once gait tracking is
-/// on, the bundled sample until then. The gait layout itself lives in
-/// [GaitAnalysisPanel], shared in shape with the mascot theme's version.
+/// The pressure map is live BLE FSR data, with its load splits; the raw
+/// readings and the sample menu are for developer mode only. The gait figures
+/// come from [gaitViewSnapshotProvider]: the wearer's own walking once gait
+/// tracking is on, the bundled sample until then. The gait layout itself lives
+/// in [GaitAnalysisPanel], shared in shape with the mascot theme's version.
 class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
@@ -128,38 +133,83 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
 
 // ── Pressure ──────────────────────────────────────────────────────────────
 
-/// The live foot-pressure heat map — the one panel here backed by real data,
-/// with an example menu that replays a canned motion instead.
-class _PressurePanel extends StatelessWidget {
+/// The live foot-pressure heat map and the forefoot-heel and inner-outer
+/// splits under it, for everyone. The raw sensor readings and the example menu
+/// (which replays a canned motion) show only in developer mode.
+class _PressurePanel extends ConsumerStatefulWidget {
   const _PressurePanel({required this.feet});
 
   final FootView feet;
 
   @override
+  ConsumerState<_PressurePanel> createState() => _PressurePanelState();
+}
+
+class _PressurePanelState extends ConsumerState<_PressurePanel> {
+  final _tracker = PressureShareTracker();
+
+  @override
+  void didUpdateWidget(_PressurePanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.feet != widget.feet) _tracker.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final devMode = ref.watch(
+      settingsProvider.select((s) => s.firmwareDevMode),
+    );
+    final feet = widget.feet;
     return PressureDemoScope(
-      builder: (context, reading, header) => SectionCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            header,
-            Center(
-              child: FootPressureHeatmap(
-                pressure: reading.right,
-                leftPressure: reading.left,
-                feet: feet,
+      showMenu: devMode,
+      builder: (context, reading, header) {
+        _tracker.update(
+          at: clock.now(),
+          rightReading: reading.right,
+          hasRight: reading.hasData,
+          leftReading: reading.left,
+          isSample: reading.isSample,
+        );
+        return SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header,
+              Center(
+                child: FootPressureHeatmap(
+                  pressure: reading.right,
+                  leftPressure: reading.left,
+                  feet: feet,
+                ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.base),
-            PressureReadouts(
-              feet: feet,
-              right: reading.right,
-              left: reading.left,
-              hasData: reading.hasData,
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: AppSpacing.base),
+              PressureShareBars(
+                feet: feet,
+                right: _tracker.right.shares,
+                left: _tracker.left.shares,
+                rightConnected: reading.hasData,
+                leftConnected: reading.left != null,
+              ),
+              if (devMode) ...[
+                const SizedBox(height: AppSpacing.base),
+                Text(
+                  'pressure_raw_title'.tr(),
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                PressureReadouts(
+                  feet: feet,
+                  right: reading.right,
+                  left: reading.left,
+                  hasData: reading.hasData,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

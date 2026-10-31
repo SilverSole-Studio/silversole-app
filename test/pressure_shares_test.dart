@@ -59,4 +59,42 @@ void main() {
     window.clear();
     expect(window.shares, isNull);
   });
+
+  group('PressureShareTracker', () {
+    test('counts one reading once and keeps no history for an absent foot', () {
+      final tracker = PressureShareTracker();
+      final reading = [900, 600, 1500];
+      for (var i = 0; i < 10; i++) {
+        tracker.update(
+          at: t0.add(Duration(milliseconds: i * 100)),
+          rightReading: reading,
+          hasRight: true,
+          leftReading: null,
+          isSample: false,
+        );
+      }
+      // The same list handed in ten times is a single sample.
+      expect(tracker.right.shares, isNull);
+      expect(tracker.left.shares, isNull);
+    });
+
+    test('switching to a sample starts both feet over', () {
+      final tracker = PressureShareTracker();
+      void feed(bool sample, int i) => tracker.update(
+        at: t0.add(Duration(milliseconds: i * 100)),
+        rightReading: [900, 600, 1500],
+        hasRight: true,
+        leftReading: [900, 600, 1500],
+        isSample: sample,
+      );
+      for (var i = 0; i < 6; i++) {
+        feed(false, i);
+      }
+      expect(tracker.right.shares, isNotNull);
+      expect(tracker.left.shares, isNotNull);
+      feed(true, 6);
+      expect(tracker.right.shares, isNull);
+      expect(tracker.left.shares, isNull);
+    });
+  });
 }
