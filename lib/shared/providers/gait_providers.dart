@@ -121,15 +121,16 @@ final fallCountSinceOpenProvider =
 
 /// What the gait tab draws for a scale: the bundled sample while
 /// [realGaitEnabledProvider] is off, otherwise the wearer's own history.
-final gaitViewSnapshotProvider = Provider.family<GaitSnapshot, GaitScale>((
-  ref,
-  scale,
-) {
-  if (!ref.watch(realGaitEnabledProvider)) return gaitSnapshot(scale);
-  return realGaitSnapshot(
-    scale: scale,
-    history: ref.watch(gaitHistoryProvider),
-    today: clock.now(),
-    fallCount: ref.watch(fallCountSinceOpenProvider),
-  );
-});
+///
+/// Disposed once the gait tab is left, so coming back re-reads the clock and
+/// a tab left open past midnight starts the new day.
+final gaitViewSnapshotProvider = Provider.autoDispose
+    .family<GaitSnapshot, GaitScale>((ref, scale) {
+      if (!ref.watch(realGaitEnabledProvider)) return gaitSnapshot(scale);
+      return realGaitSnapshot(
+        scale: scale,
+        history: ref.watch(gaitHistoryProvider),
+        today: clock.now(),
+        fallCount: ref.watch(fallCountSinceOpenProvider),
+      );
+    });

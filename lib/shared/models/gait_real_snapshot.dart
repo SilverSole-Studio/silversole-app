@@ -72,7 +72,7 @@ GaitSnapshot realGaitSnapshot({
       GaitScale.month => 'gait_sect_four_weeks',
       GaitScale.quarter => 'gait_sect_twelve_weeks',
     },
-    series: [for (final b in buckets) _dailySteps(b) ?? 0],
+    series: [for (final b in _charted(scale, buckets)) _dailySteps(b) ?? 0],
     seriesStep: 100,
     ability: [
       if (window.cadence case final cadence?)
@@ -149,6 +149,15 @@ GaitSnapshot realGaitSnapshot({
               ?line,
           ],
   );
+}
+
+/// The buckets to draw as the step chart. Weeks and months start at the first
+/// bucket with data, so a new wearer's line does not climb from zero; the
+/// last bucket always stays. Days of the week keep every bar.
+List<_Bucket> _charted(GaitScale scale, List<_Bucket> buckets) {
+  if (scale == GaitScale.week) return buckets;
+  final first = buckets.indexWhere((b) => b.days > 0);
+  return buckets.sublist(first < 0 ? buckets.length - 1 : first);
 }
 
 const _fallTitleKey = 'gait_fall_title_since_open';

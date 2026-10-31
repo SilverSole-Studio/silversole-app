@@ -141,8 +141,8 @@ void main() {
       fallCount: 0,
     );
     expect(s.isPending, isFalse);
-    expect(s.series, hasLength(4));
-    expect(s.series.last, 3000);
+    // The three weeks before the first one worn are not drawn.
+    expect(s.series, [3000]);
   });
 
   test('both feet bring balance and double support', () {
@@ -164,7 +164,8 @@ void main() {
       fallCount: 0,
     );
     expect(s.isPending, isFalse);
-    expect(s.series, hasLength(12));
+    // Eight empty weeks before the first one worn are not drawn.
+    expect(s.series, hasLength(4));
     expect(s.smallMultiplesTitleKey, 'gait_sect_weekly_metrics');
     expect(
       s.smallMultiples.map((l) => l.nameKey),

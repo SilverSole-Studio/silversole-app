@@ -98,7 +98,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(GaitAnalysisPanel.pendingKey), findsNothing);
     expect(find.text('3200'), findsOneWidget);
-    expect(find.text('Daily walking steps · 7-day average'), findsOneWidget);
+    expect(
+      find.text('Average steps on days worn · last 7 days'),
+      findsOneWidget,
+    );
     expect(find.text('Walking steps per day'), findsOneWidget);
     expect(find.text('Cadence'), findsOneWidget);
     expect(find.text('Step timing variation'), findsOneWidget);

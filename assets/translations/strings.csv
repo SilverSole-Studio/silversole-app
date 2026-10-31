@@ -649,9 +649,9 @@ gait_help_stance_body,Of each step the share the foot spends on the ground rathe
 gait_help_variation_title,Step timing variation,每步時間差異
 gait_help_variation_body,How much the time each step takes varies — the coefficient of variation of stride time. Lower means a steadier rhythm.,每一步花的時間有多不一樣，用跨步時間的變異係數表示。越小代表節奏越穩，忽快忽慢會讓數字變大。
 gait_help_variation_evidence,Arch Phys Med Rehabil 2001: 52 older adults wore force-sensing insoles for a year. Stride-time variability was 106±30 ms among those who fell against 49±4 ms among those who did not.,Arch Phys Med Rehabil 2001：52 位長者穿力感應鞋墊追蹤 1 年。跌倒者跨步時間變異度 106±30 ms、未跌倒者 49±4 ms，與本產品同一類感測方式。
-gait_hero_steps_week,Daily walking steps · 7-day average,近 7 天平均每日走路步數
-gait_hero_steps_month,Daily walking steps · 4-week average,近 4 週平均每日走路步數
-gait_hero_steps_quarter,Daily walking steps · 12-week average,近 12 週平均每日走路步數
+gait_hero_steps_week,Average steps on days worn · last 7 days,近 7 天有穿的日子平均步數
+gait_hero_steps_month,Average steps on days worn · last 4 weeks,近 4 週有穿的日子平均步數
+gait_hero_steps_quarter,Average steps on days worn · last 12 weeks,近 12 週有穿的日子平均步數
 gait_sect_daily_steps,Walking steps per day,每日走路步數
 gait_sect_weekly_metrics,Week by week,每週指標
 gait_unit_steps,steps,步

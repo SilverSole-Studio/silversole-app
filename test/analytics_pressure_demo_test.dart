@@ -133,7 +133,7 @@ Future<void> _pumpScope(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await settleTranslations(tester);
 }
 
 ProviderContainer _containerWith(List<BlePairedDevice> paired) {
