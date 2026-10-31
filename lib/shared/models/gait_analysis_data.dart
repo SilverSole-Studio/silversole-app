@@ -1,12 +1,9 @@
 /// Data behind the gait-analysis tab, shared by both themes.
 ///
-/// **Every figure here is mockup copy.** The app measures none of it: there is
-/// no step detection, no speed model and no aggregation pipeline (see the
-/// pipeline status in `CLAUDE.md`). The numbers follow the approved design so
-/// the layout can be reviewed with realistic content, and they live in one
-/// place so a real source replaces them without touching layout.
-///
-/// The wearer's own figures, when gait tracking is on, come from
+/// The [gaitSnapshot] constants are mockup copy: they follow the approved
+/// design so the layout can be reviewed with realistic content, and are what
+/// the tab shows while gait tracking is off. The wearer's own figures, when it
+/// is on (see the pipeline status in `CLAUDE.md`), come from
 /// `realGaitSnapshot()` in `gait_real_snapshot.dart` in the same shape.
 library;
 

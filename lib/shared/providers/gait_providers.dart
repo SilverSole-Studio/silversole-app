@@ -104,7 +104,8 @@ final gaitTrackingProvider = Provider<void>((ref) {
 });
 
 /// Falls reported since the app was opened. Nothing is stored, so this is
-/// the honest count — the same one the mascot home card shows.
+/// the honest count. Counted per event, so one fall reported by both soles
+/// counts twice — the home cards count the same way.
 class FallCountSinceOpenNotifier extends Notifier<int> {
   @override
   int build() {
