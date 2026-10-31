@@ -189,4 +189,42 @@ void main() {
     expect(last.metrics.containsKey(MobilityMetric.symmetry), isFalse);
     expect(last.values.values.every((v) => v.isFinite), isTrue);
   });
+
+  DateTime date(int week, int day) =>
+      DateTime(_monday.year, _monday.month, _monday.day + week * 7 + day);
+
+  test("today's unfinished day is left out of its week", () {
+    final today = date(3, 2);
+    final history = {
+      ..._usual(3),
+      for (final (i, steps) in [3000, 3000, 300].indexed)
+        gaitDateKey(date(3, i)): _day(date(3, i), steps: steps),
+    };
+    // Without a clock the third day counts and the week is graded.
+    expect(gradeMobility(history).last.wornDays, 3);
+    expect(gradeMobility(history).last.grade, isNotNull);
+    // With it, only the two finished days count: too few to grade.
+    final last = gradeMobility(history, today: today).last;
+    expect(last.wornDays, 2);
+    expect(last.grade, isNull);
+  });
+
+  test('the week in progress is at most D, and becomes E once it is over', () {
+    Map<String, DailyGait> bad(int week) =>
+        _week(week, steps: 2100, cadence: 92, symmetry: 0.88, cv: 0.05);
+    final history = {..._usual(3), ...bad(3), ...bad(4)};
+
+    final during = gradeMobility(history, today: date(4, 4));
+    expect(during[3].grade, MobilityGrade.d);
+    expect(during[4].wornDays, 4);
+    expect(during[4].grade, MobilityGrade.d);
+    expect(
+      during[4].metrics.values.every((m) => m.grade != MobilityGrade.e),
+      isTrue,
+    );
+
+    final after = gradeMobility(history, today: date(5, 0));
+    expect(after[4].grade, MobilityGrade.e);
+    expect(gradeMobility(history)[4].grade, MobilityGrade.e);
+  });
 }

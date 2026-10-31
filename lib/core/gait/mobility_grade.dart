@@ -159,13 +159,21 @@ class WeekMobility {
 /// of up to [MobilityGradeConfig.maxBaselineWeeks] earlier weeks that had
 /// enough worn days, so a slow drift moves the baseline with it — a grade
 /// shows a change, not a level.
+///
+/// With [today], the day in progress is left out altogether — half a day of
+/// walking would pull its week down — and the week it belongs to is never
+/// graded E: that needs two clearly low weeks, and this one is not over yet.
+/// A finished week is graded normally once [today] has moved on.
 List<WeekMobility> gradeMobility(
   Map<String, DailyGait> history, {
   MobilityGradeConfig config = const MobilityGradeConfig(),
+  DateTime? today,
 }) {
+  final todayKey = today == null ? null : gaitDateKey(today);
+  final currentWeek = todayKey == null ? null : _weekStart(todayKey);
   final weeks = <String, List<DailyGait>>{};
   for (final day in history.values) {
-    if (!day.hasData) continue;
+    if (!day.hasData || day.date == todayKey) continue;
     weeks.putIfAbsent(_weekStart(day.date), () => []).add(day);
   }
   final keys = weeks.keys.toList()..sort();
@@ -206,6 +214,7 @@ List<WeekMobility> gradeMobility(
         if (low) lowMetricWeeks.putIfAbsent(entry.key, () => {}).add(key);
         final persistent =
             low &&
+            key != currentWeek &&
             (lowMetricWeeks[entry.key]?.contains(_previousWeek(key)) ?? false);
         scores[entry.key] = MetricScore(
           metric: entry.key,
@@ -225,7 +234,7 @@ List<WeekMobility> gradeMobility(
       if (low) lowWeeks.add(key);
       grade = _grade(
         mean,
-        low && lowWeeks.contains(_previousWeek(key)),
+        low && key != currentWeek && lowWeeks.contains(_previousWeek(key)),
         config,
       );
     }

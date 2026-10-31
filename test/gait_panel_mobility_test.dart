@@ -95,6 +95,6 @@ void main() {
     expect(find.byKey(GaitAnalysisPanel.sampleBannerKey), findsNothing);
     expect(find.byKey(MobilityCardView.cardKey), findsNWidgets(2));
     expect(find.text('Mobility'), findsNWidgets(2));
-    expect(find.textContaining('· 0 so far'), findsNWidgets(2));
+    expect(find.textContaining('· 0 of 3 so far'), findsNWidgets(2));
   });
 }

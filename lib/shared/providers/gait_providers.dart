@@ -146,8 +146,9 @@ final gaitViewSnapshotProvider = Provider.autoDispose
 /// read again on return.
 final mobilityCardProvider = Provider.autoDispose<MobilityCard?>((ref) {
   if (!ref.watch(realGaitEnabledProvider)) return null;
+  final now = clock.now();
   return mobilityCard(
-    gradeMobility(ref.watch(gaitHistoryProvider)),
-    today: clock.now(),
+    gradeMobility(ref.watch(gaitHistoryProvider), today: now),
+    today: now,
   );
 });

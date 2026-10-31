@@ -16,8 +16,46 @@ const _disclaimer =
 
 const _letters = ['A', 'B', 'C', 'D', 'E'];
 
+double _contrast(Color a, Color b) {
+  final hi = a.computeLuminance() > b.computeLuminance() ? a : b;
+  final lo = identical(hi, a) ? b : a;
+  return (hi.computeLuminance() + 0.05) / (lo.computeLuminance() + 0.05);
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('the letter takes whichever of white and black87 contrasts more', () {
+    Color seen(Color fill) {
+      final letter = mobilityLetterColor(fill);
+      expect(letter, anyOf(Colors.white, Colors.black87));
+      return letter;
+    }
+
+    expect(seen(Colors.white), Colors.black87);
+    expect(seen(Colors.black), Colors.white);
+
+    // Every grade colour of the light theme gets the better of the two.
+    final tokens = AppTokens.light;
+    final fills = [
+      tokens.success,
+      Color.lerp(tokens.success, Colors.white, 0.35)!,
+      tokens.dataOrange,
+      tokens.alert,
+      Colors.grey.shade600,
+    ];
+    for (final fill in fills) {
+      final onBlack = _contrast(Color.alphaBlend(Colors.black87, fill), fill);
+      final onWhite = _contrast(Colors.white, fill);
+      expect(
+        seen(fill),
+        onWhite >= onBlack ? Colors.white : Colors.black87,
+        reason: 'fill $fill',
+      );
+    }
+    // A's green is light enough that dark text wins.
+    expect(seen(tokens.success), Colors.black87);
+  });
 
   // One mount: EasyLocalization keeps global state between mounts.
   testWidgets('graded and pending cards, in both themes', (tester) async {
@@ -120,9 +158,10 @@ void main() {
     expect(find.text('Week of 11/2'), findsOneWidget);
     expect(find.text('Less than usual two weeks running'), findsOneWidget);
     expect(
-      find.text('This week mainly: a bigger gap between feet'),
+      find.text('That week mainly: a bigger gap between feet'),
       findsOneWidget,
     );
+    expect(find.textContaining('This week mainly'), findsNothing);
     expect(find.text('E'), findsNWidgets(2));
     expect(find.text('Left-right balance'), findsOneWidget);
     expect(find.text(_disclaimer), findsOneWidget);
@@ -135,8 +174,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text(
-        'Comparisons start after 2 weeks with at least 3 worn days each · '
-        '2 so far',
+        'Comparisons start after 3 weeks with at least 3 worn days each · '
+        '2 of 3 so far',
       ),
       findsOneWidget,
     );
@@ -146,5 +185,18 @@ void main() {
     }
     expect(find.byType(GaitSparkline), findsNothing);
     expect(find.textContaining('usual'), findsNothing);
+
+    // Enough weeks but still no grade: say so instead of counting weeks.
+    shown.value = (
+      const MobilityPending(weeksSoFar: 3, weeksNeeded: 3),
+      appTheme(Brightness.light),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Not enough data to compare yet'), findsOneWidget);
+    expect(find.textContaining('so far'), findsNothing);
+    expect(find.text(_disclaimer), findsOneWidget);
+    for (final letter in _letters) {
+      expect(find.text(letter), findsNothing);
+    }
   });
 }
