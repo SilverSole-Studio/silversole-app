@@ -4,8 +4,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
+import 'package:silversole/shared/models/mobility_card.dart';
 import 'package:silversole/shared/widgets/gait/gait_charts.dart';
 import 'package:silversole/shared/widgets/gait/gait_topic_sheet.dart';
+import 'package:silversole/shared/widgets/gait/mobility_card_view.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
 /// The gait analysis tab, classic theme.
@@ -22,7 +24,7 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// wearer's own figures. Every metric carries an ⓘ that explains what it is and
 /// what it cannot tell you.
 class GaitAnalysisPanel extends StatelessWidget {
-  const GaitAnalysisPanel({super.key, required this.snapshot});
+  const GaitAnalysisPanel({super.key, required this.snapshot, this.mobility});
 
   /// The "sample data" banner, for tests.
   static const sampleBannerKey = Key('gait-sample-banner');
@@ -32,6 +34,10 @@ class GaitAnalysisPanel extends StatelessWidget {
 
   final GaitSnapshot snapshot;
 
+  /// The mobility card for the top of the tab; null leaves it out, as on the
+  /// sample page.
+  final MobilityCard? mobility;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -39,6 +45,8 @@ class GaitAnalysisPanel extends StatelessWidget {
       spacing: AppSpacing.base,
       children: [
         if (snapshot.isSample) const _SampleBanner(),
+        if (mobility case final card?)
+          SectionCard(child: MobilityCardView(card: card)),
         if (snapshot.isPending)
           _PendingCard(days: snapshot.pendingDays!)
         else ...[

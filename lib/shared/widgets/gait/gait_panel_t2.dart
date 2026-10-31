@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
+import 'package:silversole/shared/models/mobility_card.dart';
 import 'package:silversole/shared/widgets/gait/gait_charts.dart';
 import 'package:silversole/shared/widgets/gait/gait_topic_sheet.dart';
+import 'package:silversole/shared/widgets/gait/mobility_card_view.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// The gait analysis tab, mascot theme.
@@ -18,7 +20,7 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// which opens with a banner that says so and cannot be dismissed, or the
 /// wearer's own figures.
 class GaitAnalysisPanelT2 extends StatelessWidget {
-  const GaitAnalysisPanelT2({super.key, required this.snapshot});
+  const GaitAnalysisPanelT2({super.key, required this.snapshot, this.mobility});
 
   /// The "sample data" banner, for tests.
   static const sampleBannerKey = Key('gait-sample-banner-t2');
@@ -28,6 +30,10 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
 
   final GaitSnapshot snapshot;
 
+  /// The mobility card for the top of the tab; null leaves it out, as on the
+  /// sample page.
+  final MobilityCard? mobility;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -35,6 +41,8 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
       spacing: 14,
       children: [
         if (snapshot.isSample) const _SampleBanner(),
+        if (mobility case final card?)
+          MascotCard(child: MobilityCardView(card: card)),
         if (snapshot.isPending)
           _PendingCard(days: snapshot.pendingDays!)
         else ...[
