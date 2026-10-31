@@ -9,6 +9,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel.dart';
+import 'package:silversole/shared/widgets/gait/mobility_card_view.dart';
 import 'helpers/translations.dart';
 
 /// Holds whatever history a test hands it, without touching storage.
@@ -75,6 +76,7 @@ void main() {
                     builder: (_, value, _) => Consumer(
                       builder: (_, ref, _) => GaitAnalysisPanel(
                         snapshot: ref.watch(gaitViewSnapshotProvider(value)),
+                        mobility: ref.watch(mobilityCardProvider),
                       ),
                     ),
                   ),
@@ -92,6 +94,20 @@ void main() {
     expect(find.byKey(GaitAnalysisPanel.pendingKey), findsOneWidget);
     expect(find.text('Collecting data: 6 more day(s) needed'), findsOneWidget);
     expect(find.text('Falls since the app was opened'), findsOneWidget);
+
+    // One day of history: the mobility card is there but still collecting,
+    // with no grade letter.
+    expect(find.byKey(MobilityCardView.cardKey), findsOneWidget);
+    expect(
+      find.text(
+        'Comparisons start after 3 weeks with at least 3 worn days each · '
+        '0 of 3 so far',
+      ),
+      findsOneWidget,
+    );
+    for (final letter in ['A', 'B', 'C', 'D', 'E']) {
+      expect(find.text(letter), findsNothing);
+    }
 
     // Week: today's steps, no phase, no speed, one sole so no balance row.
     scale.value = GaitScale.week;

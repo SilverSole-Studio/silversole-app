@@ -54,13 +54,13 @@ GaitSnapshot realGaitSnapshot({
   for (final b in buckets) {
     window = window.merge(b.total);
   }
-  final windowCv = _meanStrideCv([for (final b in buckets) ...b.list]);
+  final windowCv = meanDailyStrideCv([for (final b in buckets) ...b.list]);
   // A stored day can parse and still be corrupt, which turns a ratio into
   // NaN or infinity; such a figure is left out rather than drawn.
-  final cadence = _finite(window.cadence);
-  final stance = _finite(window.stanceRatio);
-  final symmetry = _finite(window.symmetry);
-  final doubleSupport = _finite(window.doubleSupportRatio);
+  final cadence = finiteOrNull(window.cadence);
+  final stance = finiteOrNull(window.stanceRatio);
+  final symmetry = finiteOrNull(window.symmetry);
+  final doubleSupport = finiteOrNull(window.doubleSupportRatio);
 
   return GaitSnapshot(
     scale: scale,
@@ -144,7 +144,7 @@ GaitSnapshot realGaitSnapshot({
               _line(
                 'gait_metric_stride_cv',
                 buckets,
-                (b) => _percent(_meanStrideCv(b.list)),
+                (b) => _percent(meanDailyStrideCv(b.list)),
               ),
               _line(
                 'gait_metric_symmetry',
@@ -203,30 +203,11 @@ _Bucket _bucket(
   return (total: total, days: withData, list: list);
 }
 
-/// Stride variation over [days]: each day's own variation, weighted by its
-/// strides. Pooling the strides would count a slow day next to a fast one as
-/// irregular walking, when it is only a different pace. Days too short to
-/// have a variation are skipped; null when none has one.
-double? _meanStrideCv(List<DailyGait> days) {
-  var weighted = 0.0;
-  var strides = 0;
-  for (final day in days) {
-    final cv = _finite(day.strideCv);
-    if (cv == null) continue;
-    weighted += cv * day.strides;
-    strides += day.strides;
-  }
-  return strides == 0 ? null : _finite(weighted / strides);
-}
-
-/// [v] unless it is null, NaN or infinite.
-double? _finite(double? v) => v != null && v.isFinite ? v : null;
-
 /// Average daily steps over the days in [b] that have data.
 double? _dailySteps(_Bucket b) => b.days == 0 ? null : b.total.steps / b.days;
 
 double? _percent(double? fraction) {
-  final f = _finite(fraction);
+  final f = finiteOrNull(fraction);
   return f == null ? null : f * 100;
 }
 
@@ -239,7 +220,7 @@ GaitTrendLine? _line(
 ) {
   final values = <double>[
     for (final b in buckets)
-      if (b.days > 0) ?_finite(valueOf(b)),
+      if (b.days > 0) ?finiteOrNull(valueOf(b)),
   ];
   if (values.length < 2) return null;
   return GaitTrendLine(

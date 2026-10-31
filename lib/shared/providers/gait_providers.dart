@@ -11,8 +11,10 @@ import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/gait/daily_gait.dart';
 import 'package:silversole/core/gait/gait_history.dart';
 import 'package:silversole/core/gait/gait_tracker.dart';
+import 'package:silversole/core/gait/mobility_grade.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/models/gait_real_snapshot.dart';
+import 'package:silversole/shared/models/mobility_card.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
@@ -135,3 +137,18 @@ final gaitViewSnapshotProvider = Provider.autoDispose
         fallCount: ref.watch(fallCountSinceOpenProvider),
       );
     });
+
+/// The mobility card at the top of the gait tab: this week's A-E grade against
+/// the wearer's own earlier weeks. Null while the sample page is showing, which
+/// has no history to grade.
+///
+/// Disposed with the gait tab, like [gaitViewSnapshotProvider], so the clock is
+/// read again on return.
+final mobilityCardProvider = Provider.autoDispose<MobilityCard?>((ref) {
+  if (!ref.watch(realGaitEnabledProvider)) return null;
+  final now = clock.now();
+  return mobilityCard(
+    gradeMobility(ref.watch(gaitHistoryProvider), today: now),
+    today: now,
+  );
+});
