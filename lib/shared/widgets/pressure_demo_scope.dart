@@ -68,9 +68,17 @@ typedef PressureDemoBuilder =
 /// State is local to this widget, so nothing here touches the live telemetry
 /// providers and playback stops as soon as the host leaves the screen.
 class PressureDemoScope extends ConsumerStatefulWidget {
-  const PressureDemoScope({super.key, required this.builder});
+  const PressureDemoScope({
+    super.key,
+    required this.builder,
+    this.showMenu = true,
+  });
 
   final PressureDemoBuilder builder;
+
+  /// Whether the sample menu is offered. False hides it and makes sure no
+  /// sample is playing, so only live telemetry reaches [builder].
+  final bool showMenu;
 
   @override
   ConsumerState<PressureDemoScope> createState() => _PressureDemoScopeState();
@@ -85,6 +93,15 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
   /// Bumped per selection so a slow asset load cannot revive a motion the user
   /// has already switched away from.
   int _loadId = 0;
+
+  @override
+  void didUpdateWidget(PressureDemoScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The menu went away mid-playback: nothing is left to stop the sample.
+    if (oldWidget.showMenu && !widget.showMenu && _motion != null) {
+      _select(null);
+    }
+  }
 
   @override
   void dispose() {
@@ -160,10 +177,12 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
         hasData: clip != null || rightImu.isNotEmpty,
         isSample: clip != null,
       ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [_DemoMenuButton(active: _motion, onSelect: _select)],
-      ),
+      widget.showMenu
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [_DemoMenuButton(active: _motion, onSelect: _select)],
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

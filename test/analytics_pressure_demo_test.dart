@@ -218,6 +218,24 @@ void main() {
     expect(find.text('left=null'), findsOneWidget);
   });
 
+  testWidgets('the sample menu can be hidden', (tester) async {
+    await EasyLocalization.ensureInitialized();
+    await _pumpAnalytics(
+      tester,
+      Scaffold(
+        body: PressureDemoScope(
+          showMenu: false,
+          builder: (context, reading, header) =>
+              Column(children: [header, Text('p=${reading.right}')]),
+        ),
+      ),
+    );
+
+    expect(find.text('p=[0, 0, 0]'), findsOneWidget);
+    expect(find.text('Sample'), findsNothing);
+    expect(find.byType(PopupMenuButton<void>), findsNothing);
+  });
+
   testWidgets('a left sole feeds the left foot instead of a dash', (
     tester,
   ) async {
