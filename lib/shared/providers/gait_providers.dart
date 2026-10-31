@@ -11,6 +11,8 @@ import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/gait/daily_gait.dart';
 import 'package:silversole/core/gait/gait_history.dart';
 import 'package:silversole/core/gait/gait_tracker.dart';
+import 'package:silversole/shared/models/gait_analysis_data.dart';
+import 'package:silversole/shared/models/gait_real_snapshot.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 
@@ -116,3 +118,18 @@ final fallCountSinceOpenProvider =
     NotifierProvider<FallCountSinceOpenNotifier, int>(
       FallCountSinceOpenNotifier.new,
     );
+
+/// What the gait tab draws for a scale: the bundled sample while
+/// [realGaitEnabledProvider] is off, otherwise the wearer's own history.
+final gaitViewSnapshotProvider = Provider.family<GaitSnapshot, GaitScale>((
+  ref,
+  scale,
+) {
+  if (!ref.watch(realGaitEnabledProvider)) return gaitSnapshot(scale);
+  return realGaitSnapshot(
+    scale: scale,
+    history: ref.watch(gaitHistoryProvider),
+    today: clock.now(),
+    fallCount: ref.watch(fallCountSinceOpenProvider),
+  );
+});

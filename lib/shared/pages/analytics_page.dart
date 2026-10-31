@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
+import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
@@ -15,17 +17,18 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// theme's own vocabulary: stock [SegmentedButton]s styled by the theme,
 /// [SectionCard], and the blue accent for data.
 ///
-/// Only the pressure map is real (live BLE FSR values); the gait figures are
-/// mockup copy from [gaitSnapshot]. The gait layout itself lives in
+/// The pressure map is live BLE FSR data. The gait figures come from
+/// [gaitViewSnapshotProvider]: the wearer's own walking once gait tracking is
+/// on, the bundled sample until then. The gait layout itself lives in
 /// [GaitAnalysisPanel], shared in shape with the mascot theme's version.
-class AnalyticsPage extends StatefulWidget {
+class AnalyticsPage extends ConsumerStatefulWidget {
   const AnalyticsPage({super.key});
 
   @override
-  State<AnalyticsPage> createState() => _AnalyticsPageState();
+  ConsumerState<AnalyticsPage> createState() => _AnalyticsPageState();
 }
 
-class _AnalyticsPageState extends State<AnalyticsPage> {
+class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
   bool _showPressure = false;
   FootView _feet = FootView.both;
   GaitScale _scale = GaitScale.week;
@@ -108,7 +111,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   selected: {_scale},
                   onSelectionChanged: (s) => setState(() => _scale = s.first),
                 ),
-                GaitAnalysisPanel(snapshot: gaitSnapshot(_scale)),
+                GaitAnalysisPanel(
+                  snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
+                ),
               ],
             ],
           ),
