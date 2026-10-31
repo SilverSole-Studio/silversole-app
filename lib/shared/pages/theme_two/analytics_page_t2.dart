@@ -79,6 +79,7 @@ class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
                 ],
                 GaitAnalysisPanelT2(
                   snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
+                  mobility: ref.watch(mobilityCardProvider),
                 ),
               ],
             ],

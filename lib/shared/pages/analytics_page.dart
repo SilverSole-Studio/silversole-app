@@ -116,6 +116,7 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                 if (kDebugMode) const GaitRawRecordButton(),
                 GaitAnalysisPanel(
                   snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
+                  mobility: ref.watch(mobilityCardProvider),
                 ),
               ],
             ],
