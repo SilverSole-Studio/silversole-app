@@ -55,6 +55,12 @@ GaitSnapshot realGaitSnapshot({
     window = window.merge(b.total);
   }
   final windowCv = _meanStrideCv([for (final b in buckets) ...b.list]);
+  // A stored day can parse and still be corrupt, which turns a ratio into
+  // NaN or infinity; such a figure is left out rather than drawn.
+  final cadence = _finite(window.cadence);
+  final stance = _finite(window.stanceRatio);
+  final symmetry = _finite(window.symmetry);
+  final doubleSupport = _finite(window.doubleSupportRatio);
 
   return GaitSnapshot(
     scale: scale,
@@ -75,7 +81,7 @@ GaitSnapshot realGaitSnapshot({
     series: [for (final b in _charted(scale, buckets)) _dailySteps(b) ?? 0],
     seriesStep: 100,
     ability: [
-      if (window.cadence case final cadence?)
+      if (cadence != null)
         _metric(
           'gait_metric_cadence',
           GaitTopic.cadence,
@@ -90,7 +96,7 @@ GaitSnapshot realGaitSnapshot({
         (window.walkingMs / 60000 / daysWithData).round().toString(),
         'gait_unit_min',
       ),
-      if (window.stanceRatio case final stance?)
+      if (stance != null)
         _metric(
           'gait_metric_stance',
           GaitTopic.stance,
@@ -108,7 +114,7 @@ GaitSnapshot realGaitSnapshot({
           (cv * 100).toStringAsFixed(1),
           'gait_unit_percent',
         ),
-      if (window.symmetry case final symmetry?)
+      if (symmetry != null)
         _metric(
           'gait_metric_symmetry',
           GaitTopic.symmetry,
@@ -116,12 +122,12 @@ GaitSnapshot realGaitSnapshot({
           (symmetry * 100).round().toString(),
           'gait_unit_percent',
         ),
-      if (window.doubleSupportRatio case final ds?)
+      if (doubleSupport != null)
         _metric(
           'gait_metric_double_support',
           GaitTopic.doubleSupport,
           'gait_reading_ds_real',
-          (ds * 100).toStringAsFixed(1),
+          (doubleSupport * 100).toStringAsFixed(1),
           'gait_unit_percent',
         ),
     ],
@@ -205,18 +211,24 @@ double? _meanStrideCv(List<DailyGait> days) {
   var weighted = 0.0;
   var strides = 0;
   for (final day in days) {
-    final cv = day.strideCv;
+    final cv = _finite(day.strideCv);
     if (cv == null) continue;
     weighted += cv * day.strides;
     strides += day.strides;
   }
-  return strides == 0 ? null : weighted / strides;
+  return strides == 0 ? null : _finite(weighted / strides);
 }
+
+/// [v] unless it is null, NaN or infinite.
+double? _finite(double? v) => v != null && v.isFinite ? v : null;
 
 /// Average daily steps over the days in [b] that have data.
 double? _dailySteps(_Bucket b) => b.days == 0 ? null : b.total.steps / b.days;
 
-double? _percent(double? fraction) => fraction == null ? null : fraction * 100;
+double? _percent(double? fraction) {
+  final f = _finite(fraction);
+  return f == null ? null : f * 100;
+}
 
 /// A weekly line over the buckets that have data, or null with fewer than
 /// two points to draw.
@@ -227,7 +239,7 @@ GaitTrendLine? _line(
 ) {
   final values = <double>[
     for (final b in buckets)
-      if (b.days > 0) ?valueOf(b),
+      if (b.days > 0) ?_finite(valueOf(b)),
   ];
   if (values.length < 2) return null;
   return GaitTrendLine(

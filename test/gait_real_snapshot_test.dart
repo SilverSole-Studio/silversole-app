@@ -175,4 +175,35 @@ void main() {
       expect(line.values, hasLength(4), reason: 'only weeks with data');
     }
   });
+
+  test('a stored day whose figures are not finite leaves those rows out', () {
+    // Parsable but corrupt: strides are counted yet carry no time at all, so
+    // stance and stride variation come to 0 / 0.
+    const broken = FootGaitStats(
+      contacts: 10,
+      walkingMs: 6000,
+      stanceMs: 0,
+      swingMs: 0,
+      strides: 10,
+      strideMs: 0,
+      strideSqMs: 0,
+    );
+    final day = DailyGait(
+      date: gaitDateKey(DateTime(_today.year, _today.month, _today.day)),
+      steps: 20,
+      feet: const {GaitFoot.right: broken},
+    );
+
+    final s = realGaitSnapshot(
+      scale: GaitScale.week,
+      history: _history([day]),
+      today: _today,
+      fallCount: 0,
+    );
+
+    expect(s.isPending, isFalse);
+    expect(_value(s.ability, 'gait_metric_stance'), isNull);
+    expect(_value(s.stability, 'gait_metric_stride_cv'), isNull);
+    expect(_value(s.ability, 'gait_metric_cadence'), isNotNull);
+  });
 }
