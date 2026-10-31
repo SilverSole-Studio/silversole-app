@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
@@ -7,6 +8,7 @@ import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel_t2.dart';
+import 'package:silversole/shared/widgets/gait/gait_raw_record_button.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 import 'package:silversole/shared/widgets/pressure_readouts.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
@@ -71,6 +73,10 @@ class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
                       setState(() => _scale = GaitScale.values[i]),
                 ),
                 const SizedBox(height: 14),
+                if (kDebugMode) ...[
+                  const GaitRawRecordButton(),
+                  const SizedBox(height: 14),
+                ],
                 GaitAnalysisPanelT2(
                   snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
                 ),
