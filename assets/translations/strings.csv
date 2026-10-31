@@ -668,3 +668,5 @@ gait_reading_sym_real,How alike the two feet's stance times are,左右腳踩地�
 gait_reading_ds_real,Share of walking time with both feet down,走路時雙腳同時著地的時間占比
 gait_fall_title_since_open,Falls since the app was opened,開啟 App 以來跌倒
 gait_note_real,Only walks of 10 or more steps in a row count. Sitting and shifting weight while standing do not. With one sole the steps are estimated as that foot's landings times two.,只計算連續走 10 步以上的走路，坐著、站著換重心都不算。只穿一隻鞋墊時，步數是用那隻腳落地次數乘以 2 估算。
+fall_guard_watching,Watching,守護中
+device_tap_to_pair,Tap to pair your insoles,點這裡綁定鞋墊
