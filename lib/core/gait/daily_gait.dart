@@ -17,8 +17,9 @@ enum GaitFoot {
   };
 }
 
-/// The local calendar date of [t] as `yyyy-MM-dd` — the key days are stored
-/// under, which also sorts in date order.
+/// The calendar date of [t] as `yyyy-MM-dd` — the key days are stored under,
+/// which also sorts in date order. Callers must pass local time: it reads the
+/// fields as they are and does not convert.
 String gaitDateKey(DateTime t) =>
     '${t.year.toString().padLeft(4, '0')}-'
     '${t.month.toString().padLeft(2, '0')}-'
@@ -99,7 +100,7 @@ class FootGaitStats {
       json['stride_ms'],
       json['stride_sq_ms'],
     ];
-    if (values.any((v) => v is! int)) return null;
+    if (values.any((v) => v is! int || v < 0)) return null;
     final v = values.cast<int>();
     return FootGaitStats(
       contacts: v[0],
@@ -145,9 +146,15 @@ class DailyGait {
 
   bool get hasData => steps > 0;
 
-  /// The feet walk at the same time, so the longest foot total is the day's
-  /// walking time rather than the sum.
-  int get walkingMs => feet.values.fold(0, (m, f) => math.max(m, f.walkingMs));
+  /// Time spent walking. Each foot's total covers the whole walk, so adding
+  /// them counts the time both feet walk twice; [bothFeetWalkingMs] holds half
+  /// of each foot's walking time over exactly those stretches, which is the
+  /// time to take off again: alone gives T, both feet give 2T - T. Unlike a
+  /// maximum over the feet this adds up across merged days.
+  int get walkingMs {
+    final sum = feet.values.fold(0, (n, f) => n + f.walkingMs);
+    return math.max(0, sum - bothFeetWalkingMs);
+  }
 
   /// Steps per minute of walking.
   double? get cadence => walkingMs == 0 ? null : steps / (walkingMs / 60000);
@@ -229,6 +236,8 @@ class DailyGait {
     'both_walking_ms': bothFeetWalkingMs,
   };
 
+  static final _dateKey = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+
   /// Null for anything this app did not write — better a missing day than a
   /// wrong one.
   static DailyGait? tryFromJson(Object? json) {
@@ -239,10 +248,14 @@ class DailyGait {
     final doubleSupport = json['double_support_ms'];
     final bothWalking = json['both_walking_ms'];
     if (date is! String ||
+        !_dateKey.hasMatch(date) ||
         steps is! int ||
+        steps < 0 ||
         feet is! Map ||
         doubleSupport is! int ||
-        bothWalking is! int) {
+        doubleSupport < 0 ||
+        bothWalking is! int ||
+        bothWalking < 0) {
       return null;
     }
     final parsed = <GaitFoot, FootGaitStats>{};

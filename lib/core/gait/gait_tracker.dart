@@ -19,6 +19,11 @@ typedef FootLookup = FootSide? Function(String soleKey);
 /// foot, so it is counted at half weight; together the feet come to the real
 /// figure. An overlap between two contacts, on the other hand, is counted once
 /// by whichever of the two ends later, so it needs no halving.
+///
+/// Known limitation: another sole counts as walking on any raw contact within
+/// [GaitConfig.otherFootActive], even if its own bout filter rejects those
+/// contacts (fidgeting). Steps are then undercounted and double support
+/// overstated. To be revisited with real recordings.
 class GaitTracker {
   GaitTracker({required FootLookup footOf, this.config = const GaitConfig()})
     : _footOf = footOf;
@@ -30,9 +35,9 @@ class GaitTracker {
   final _pending = <String, DailyGait>{};
   int _rawContacts = 0;
 
-  /// Raw contacts kept per sole for the double-support overlap: enough to
-  /// cover a bout's backlog when it is released.
-  static const _rawKept = 8;
+  /// Raw contacts kept per sole for the double-support overlap: a bout's
+  /// backlog when it is released, plus a few more for the contacts around it.
+  int get _rawKept => config.minBoutContacts + 3;
 
   /// Contacts found before the bout filter — for tuning (`tool/gait_replay.dart`).
   int get rawContactCount => _rawContacts;

@@ -94,38 +94,75 @@ void main() {
     expect(tracker.takePending(), isEmpty);
   });
 
+  List<({String sole, RawSample sample})> twoSoles(String a, String b) =>
+      interleave({
+        // Short ramps: with the default 40 ms the thresholds cut ~25 ms off
+        // each end of a contact and the overlaps shrink to half.
+        a: footSignal(
+          origin: _origin,
+          length: const Duration(seconds: 26),
+          contacts: walkContacts(count: 20),
+          ramp: const Duration(milliseconds: 10),
+          seed: 1,
+        ),
+        b: footSignal(
+          origin: _origin,
+          length: const Duration(seconds: 26),
+          contacts: walkContacts(
+            count: 20,
+            first: const Duration(milliseconds: 1550),
+          ),
+          ramp: const Duration(milliseconds: 10),
+          seed: 2,
+        ),
+      });
+
+  void feedAll(GaitTracker tracker, List<({String sole, RawSample sample})> f) {
+    for (final x in f) {
+      tracker.add(x.sole, x.sample.t, x.sample.pressure);
+    }
+  }
+
   test('two soles walking count each contact once', () {
     final tracker = _tracker();
-    final feed = interleave({
-      // Short ramps: with the default 40 ms the thresholds cut ~25 ms off
-      // each end of a contact and the overlaps shrink to half.
-      'R': footSignal(
-        origin: _origin,
-        length: const Duration(seconds: 26),
-        contacts: walkContacts(count: 20),
-        ramp: const Duration(milliseconds: 10),
-        seed: 1,
-      ),
-      'L': footSignal(
-        origin: _origin,
-        length: const Duration(seconds: 26),
-        contacts: walkContacts(
-          count: 20,
-          first: const Duration(milliseconds: 1550),
-        ),
-        ramp: const Duration(milliseconds: 10),
-        seed: 2,
-      ),
-    });
-    for (final f in feed) {
-      tracker.add(f.sole, f.sample.t, f.sample.pressure);
-    }
+    feedAll(tracker, twoSoles('R', 'L'));
 
     final day = _single(tracker.takePending());
     expect(day.steps, 40);
+    expect(day.cadence, inInclusiveRange(100, 115));
     expect(day.symmetry, closeTo(1, 0.05));
     // Each foot overlaps the other by 0.1 s at both ends of a 1.1 s stride.
     expect(day.doubleSupportRatio, closeTo(0.2 / 1.1, 0.05));
+  });
+
+  test('two unassigned soles walking together keep a normal cadence', () {
+    final tracker = _tracker();
+    feedAll(tracker, twoSoles('X', 'Y'));
+
+    final day = _single(tracker.takePending());
+    expect(day.steps, 40);
+    expect(day.cadence, inInclusiveRange(100, 115));
+  });
+
+  test('a second sole that is connected but idle does not halve the steps', () {
+    final tracker = _tracker();
+    feedAll(
+      tracker,
+      interleave({
+        'R': footSignal(
+          origin: _origin,
+          length: const Duration(seconds: 25),
+          contacts: walkContacts(count: 20),
+        ),
+        'L': footSignal(
+          origin: _origin,
+          length: const Duration(seconds: 25),
+          seed: 2,
+        ),
+      }),
+    );
+
+    expect(_single(tracker.takePending()).steps, 40);
   });
 
   test('a walk across midnight is split between the two days', () {

@@ -86,6 +86,17 @@ void main() {
     expect(day.stanceRatio, closeTo(600 / (600 + 400), 1e-9));
   });
 
+  test('walking time adds up across merged days', () {
+    DailyGait day(int leftMs, int rightMs) {
+      var d = const DailyGait(date: '2026-11-02');
+      d = _add(d, GaitFoot.left, _walked(0, 600), walkingMs: leftMs);
+      return _add(d, GaitFoot.right, _walked(500, 600), walkingMs: rightMs);
+    }
+
+    final merged = day(10000, 4000).merge(day(4000, 10000));
+    expect(merged.walkingMs, 28000);
+  });
+
   test('left-right balance needs both feet', () {
     var day = const DailyGait(date: '2026-11-02');
     day = _add(day, GaitFoot.right, _walked(0, 600));
@@ -173,5 +184,14 @@ void main() {
     expect(DailyGait.tryFromJson(day.toJson())?.toJson(), day.toJson());
     expect(DailyGait.tryFromJson('nope'), isNull);
     expect(DailyGait.tryFromJson({'date': '2026-11-02'}), isNull);
+
+    final json = day.toJson();
+    final feet = (json['feet']! as Map).map(
+      (k, v) => MapEntry(k, Map<String, Object?>.from(v as Map)),
+    );
+    (feet['left']! as Map)['stance_ms'] = -1;
+    expect(DailyGait.tryFromJson({...json, 'feet': feet}), isNull);
+    expect(DailyGait.tryFromJson({...json, 'date': '2026/11/02'}), isNull);
+    expect(DailyGait.tryFromJson({...json, 'steps': -2}), isNull);
   });
 }
