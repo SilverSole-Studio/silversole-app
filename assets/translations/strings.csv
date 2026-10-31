@@ -668,3 +668,26 @@ gait_reading_sym_real,How alike the two feet's stance times are,左右腳踩地�
 gait_reading_ds_real,Share of walking time with both feet down,走路時雙腳同時著地的時間占比
 gait_fall_title_since_open,Falls since the app was opened,開啟 App 以來跌倒
 gait_note_real,Only walks of 10 or more steps in a row count. Sitting and shifting weight while standing do not. With one sole the steps are estimated as that foot's landings times two.,只計算連續走 10 步以上的走路，坐著、站著換重心都不算。只穿一隻鞋墊時，步數是用那隻腳落地次數乘以 2 估算。
+mobility_title,Mobility,行動力
+mobility_subtitle,Compared with your own recent weeks,跟自己前幾週比
+mobility_week_current,This week (in progress),本週（進行中）
+mobility_week_of,Week of {},{} 那週
+mobility_grade_a,Much better than usual,比平常進步很多
+mobility_grade_b,A little better than usual,比平常好一點
+mobility_grade_c,About the same as usual,跟平常差不多
+mobility_grade_d,A little less than usual,比平常少一點
+mobility_grade_e,Less than usual two weeks running,連續兩週比平常少
+mobility_mainly,This week mainly: {},這週主要是{}
+mobility_joiner, and ,、
+mobility_change_dailySteps_up,more steps each day,每天步數變多
+mobility_change_dailySteps_down,fewer steps each day,每天步數變少
+mobility_change_cadence_up,a quicker cadence,步頻變快
+mobility_change_cadence_down,a slower cadence,步頻變慢
+mobility_change_symmetry_up,more even feet,左右腳更平均
+mobility_change_symmetry_down,a bigger gap between feet,左右腳差距變大
+mobility_change_strideVariation_up,a steadier rhythm,節奏更穩
+mobility_change_strideVariation_down,a less even rhythm,節奏比較不平均
+mobility_change_doubleSupport_up,less time on both feet,雙腳同時著地的時間變短
+mobility_change_doubleSupport_down,more time on both feet,雙腳同時著地的時間變長
+mobility_pending,Comparisons start after 2 weeks with at least 3 worn days each · {} so far,每週至少穿 3 天、累積 2 週後開始跟自己比較，目前 {} 週
+mobility_disclaimer,This record is for health promotion and exercise participation and is not a medical diagnosis,本紀錄為健康促進與運動參與紀錄，非醫療診斷

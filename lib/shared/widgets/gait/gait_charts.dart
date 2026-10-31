@@ -492,7 +492,7 @@ class GaitSmallMultiples extends StatelessWidget {
                 flex: 5,
                 child: SizedBox(
                   height: 30,
-                  child: _Sparkline(
+                  child: GaitSparkline(
                     values: line.values,
                     color: colorOf(line.tone),
                   ),
@@ -517,8 +517,8 @@ class GaitSmallMultiples extends StatelessWidget {
   }
 }
 
-class _Sparkline extends StatelessWidget {
-  const _Sparkline({required this.values, required this.color});
+class GaitSparkline extends StatelessWidget {
+  const GaitSparkline({required this.values, required this.color});
 
   final List<double> values;
   final Color color;
