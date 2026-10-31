@@ -5,6 +5,7 @@
   "scripts": {
     "test": "node --test --test-concurrency=1 friends_rpc_test.mjs",
     "test:concurrency": "node --test --test-concurrency=1 friends_concurrency_test.mjs",
+    "test:devices": "node --test --test-concurrency=1 devices_rls_test.mjs",
     "test:saves": "node --test --test-concurrency=1 game_saves_test.mjs",
     "test:saves-concurrency": "node --test --test-concurrency=1 game_saves_concurrency_test.mjs"
   },

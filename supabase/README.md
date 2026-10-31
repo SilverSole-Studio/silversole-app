@@ -3,7 +3,7 @@
 
 **狀態：2026-10-27 已套用到正式庫（SilverSole，`buvdyjzxeojpuiqeyteh`）**：兩支 migration 都已套用，Edge Function `delete-account` 也已部署。這次跳過了下面「套用順序」的第 2–4 步（先在 Supabase 分支實測），原因是正式版 App 已經在呼叫這些表，不套的話好友功能本來就是壞的；實機實測改在 TestFlight 做。套用前跑過「套用前比對」：沒有撞名，本機測試 60/60 通過。正式庫沒有 `supabase_migrations` 紀錄表，這兩支是用 `supabase db query -f` 直接執行的。之後的 migration 一樣要先問 user。
 
-**已知待處理：**`devices` 的 SELECT 政策是 `true`（任何登入者都讀得到所有裝置的電量與心跳時間），應該改成只能讀自己綁定的裝置。
+**`devices` 的 SELECT 政策是 `true`（任何登入者都讀得到所有裝置的電量與心跳時間），且 `user_devices` 任何人都能替自己綁別人的 device_id：** `20261101120000_devices_rls.sql` 修了這兩個洞（只讀自己綁定的裝置、拿掉直接 INSERT 綁定）。**還沒套用到正式庫，要先問 user。**
 
 規格：動域科技總倉庫 `02_產品/鞋墊_SilverSole/_好友系統規格書_2026-10-18.md` 第 7、8、10 節。
 App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provider.dart` 已經改接它）。
@@ -16,6 +16,8 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 | `tests/supabase_stubs.sql` | **只給本機測試用**：auth、storage、角色的最小替身，加上 Supabase 的預設權限。正式庫已經有這些東西，不能套上去 |
 | `migrations/20261026120000_friends_rpc_abuse.sql` | 修 2026-10-26 技術長藍隊核查的 8 類 RPC 濫用（見下面「RPC 濫用修正」）。接在上一支後面，兩支要一起套 |
 | `migrations/20261031120000_game_saves.sql` | H5 遊戲雲端存檔（2026-10-31）：表 `game_saves`、`game_save_load()`、`game_save_store(rev, data)`；只走 RPC、256 KB 上限、每人限流、rev 比對。測試：`npm run test:saves`、`npm run test:saves-concurrency`。**還沒套用**，要先問 user |
+| `migrations/20261101120000_devices_rls.sql` | 補 `devices`、`user_devices` 的 RLS：`devices` 改成只讀得到自己綁定的裝置，拿掉 `user_devices` 的 INSERT 政策（防止替自己綁別人的 device_id 來讀電量、位置、足壓紀錄）。不用改 App。**還沒套用**，要先問 user |
+| `tests/devices_rls_test.mjs` | 11 個案例：只讀自己的裝置、不能直接綁定、heartbeat（service role）照常更新、anon 讀不到；另有一個在「不套這支」的版本證明洞存在。stubs 末段重建了正式庫原本的兩張表與寬鬆政策。`npm run test:devices` |
 | `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
 | `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 
@@ -137,6 +139,7 @@ supabase functions deploy delete-account --project-ref <ref>
 
 ## 還沒做
 
+- **綁定裝置的 RPC**：`user_devices` 現在沒有任何寫入路徑。之後要做 security definer 的綁定 RPC，要求證明人拿著那隻鞋墊（驗證鞋墊簽的狀態封包，對 `devices_secret`），加上限流與每台裝置的綁定人數上限。
 - **中控台後台**（規格 8.5）：建據點、換代碼、停用據點、移出成員、處理檢舉（抽掉照片或暱稱）。建議做法是 Edge Function `friends-admin` 加上一組只放在 Cloudflare Secret 的金鑰，要跟安東尼確認。現在要測試就用 SQL editor 直接 insert `orgs`。
   - 抽掉照片：`avatar_path = null`、`avatar_removed = true`、`avatar_removed_count + 1`，滿 3 次設 `avatar_upload_banned_until = now() + 30 days`；檔案要用 Storage API 刪（Postgres 不能直接刪 storage.objects）。
   - 抽掉暱稱：`nickname = '銀足朋友'`、`nickname_removed = true`。
