@@ -16,11 +16,12 @@ DailyGait _day(
   double symmetry = 0.95,
   double cv = 0.03,
   double doubleSupport = 0.25,
+  int strideMs = 1200,
+  double stance = 700,
 }) {
   final walkingMs = (steps / cadence * 60000).round();
   final contacts = steps ~/ 2;
   final strides = contacts - 1;
-  const strideMs = 1200;
   final sd = cv * strideMs;
   FootGaitStats foot(double stanceMs) => FootGaitStats(
     contacts: contacts,
@@ -34,7 +35,10 @@ DailyGait _day(
   return DailyGait(
     date: gaitDateKey(date),
     steps: steps,
-    feet: {GaitFoot.left: foot(700), GaitFoot.right: foot(700 * symmetry)},
+    feet: {
+      GaitFoot.left: foot(stance),
+      GaitFoot.right: foot(stance * symmetry),
+    },
     doubleSupportMs: (doubleSupport * walkingMs).round(),
     bothFeetWalkingMs: walkingMs,
   );
@@ -150,5 +154,39 @@ void main() {
       ..._week(3, steps: 3150, cadence: 101),
     });
     expect(weeks.last.grade, MobilityGrade.c);
+  });
+
+  test('stride variation is graded per day, not pooled over a slow and a '
+      'fast day', () {
+    final days = <String, DailyGait>{
+      for (var i = 0; i < 3; i++)
+        gaitDateKey(
+          DateTime(_monday.year, _monday.month, _monday.day + i),
+        ): _day(
+          DateTime(_monday.year, _monday.month, _monday.day + i),
+          cv: 0,
+          strideMs: i.isEven ? 1000 : 1200,
+        ),
+    };
+    final weeks = gradeMobility(days);
+    expect(weeks.single.values[MobilityMetric.strideVariation], 0);
+    expect(weeks.single.values[MobilityMetric.dailySteps], 3000);
+  });
+
+  test('a corrupt day with a NaN ratio is skipped, not thrown on', () {
+    final weeks = gradeMobility({
+      ..._usual(3),
+      for (var i = 0; i < 4; i++)
+        gaitDateKey(
+          DateTime(_monday.year, _monday.month, _monday.day + 21 + i),
+        ): _day(
+          DateTime(_monday.year, _monday.month, _monday.day + 21 + i),
+          stance: 0,
+        ),
+    });
+    final last = weeks.last;
+    expect(last.values.containsKey(MobilityMetric.symmetry), isFalse);
+    expect(last.metrics.containsKey(MobilityMetric.symmetry), isFalse);
+    expect(last.values.values.every((v) => v.isFinite), isTrue);
   });
 }

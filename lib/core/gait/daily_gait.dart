@@ -278,3 +278,23 @@ class DailyGait {
     );
   }
 }
+
+/// Stride variation over [days]: each day's own variation, weighted by its
+/// strides. Pooling the strides would count a slow day next to a fast one as
+/// irregular walking, when it is only a different pace. Days too short to
+/// have a variation are skipped; null when none has one.
+double? meanDailyStrideCv(Iterable<DailyGait> days) {
+  var weighted = 0.0;
+  var strides = 0;
+  for (final day in days) {
+    final cv = finiteOrNull(day.strideCv);
+    if (cv == null) continue;
+    weighted += cv * day.strides;
+    strides += day.strides;
+  }
+  return strides == 0 ? null : finiteOrNull(weighted / strides);
+}
+
+/// [v] unless it is null, NaN or infinite. A stored day can parse and still be
+/// corrupt, which turns a ratio into NaN or infinity.
+double? finiteOrNull(double? v) => v != null && v.isFinite ? v : null;
