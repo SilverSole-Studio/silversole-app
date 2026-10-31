@@ -34,6 +34,8 @@ class PressureReading {
     required this.left,
     required this.hasData,
     this.isSample = false,
+    this.rightSource,
+    this.leftSource,
   });
 
   final List<int> right;
@@ -50,6 +52,13 @@ class PressureReading {
   /// Whether these readings are a frame of a bundled sample clip rather than
   /// a sole's.
   final bool isSample;
+
+  /// Stands for the one sample [right] / [left] came from: the same object for
+  /// as long as that sample is the latest, a new one with the next. Lets a
+  /// listener tell a new sample from a rebuild, which the lists cannot (a
+  /// model may hand out a fresh list on every read). Null when unknown.
+  final Object? rightSource;
+  final Object? leftSource;
 }
 
 /// Signature of [PressureDemoScope.builder]: the readings to render, plus the
@@ -68,9 +77,17 @@ typedef PressureDemoBuilder =
 /// State is local to this widget, so nothing here touches the live telemetry
 /// providers and playback stops as soon as the host leaves the screen.
 class PressureDemoScope extends ConsumerStatefulWidget {
-  const PressureDemoScope({super.key, required this.builder});
+  const PressureDemoScope({
+    super.key,
+    required this.builder,
+    this.showMenu = true,
+  });
 
   final PressureDemoBuilder builder;
+
+  /// Whether the sample menu is offered. False hides it and makes sure no
+  /// sample is playing, so only live telemetry reaches [builder].
+  final bool showMenu;
 
   @override
   ConsumerState<PressureDemoScope> createState() => _PressureDemoScopeState();
@@ -85,6 +102,15 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
   /// Bumped per selection so a slow asset load cannot revive a motion the user
   /// has already switched away from.
   int _loadId = 0;
+
+  @override
+  void didUpdateWidget(PressureDemoScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The menu went away mid-playback: nothing is left to stop the sample.
+    if (oldWidget.showMenu && !widget.showMenu && _motion != null) {
+      _select(null);
+    }
+  }
 
   @override
   void dispose() {
@@ -159,11 +185,19 @@ class _PressureDemoScopeState extends ConsumerState<PressureDemoScope> {
         // foot bearing zero load, which reads as a clinical finding.
         hasData: clip != null || rightImu.isNotEmpty,
         isSample: clip != null,
+        rightSource: clip != null
+            ? clip.right[_frame]
+            : (rightImu.isNotEmpty ? rightImu.last : null),
+        leftSource: clip != null
+            ? (clipLeft?[_frame])
+            : (leftImu.isNotEmpty ? leftImu.last : null),
       ),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [_DemoMenuButton(active: _motion, onSelect: _select)],
-      ),
+      widget.showMenu
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [_DemoMenuButton(active: _motion, onSelect: _select)],
+            )
+          : const SizedBox.shrink(),
     );
   }
 }

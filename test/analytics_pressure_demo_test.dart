@@ -43,28 +43,41 @@ ImuNotifyDataModel _imu(List<int> pressure) => ImuNotifyDataModel(
   isCharging: false,
 );
 
-Future<void> _pumpAnalytics(WidgetTester tester, Widget page) async {
+Future<void> _pumpAnalytics(
+  WidgetTester tester,
+  Widget page, {
+  bool devMode = false,
+  ProviderContainer? container,
+}) async {
   // Pumped through runAsync because easy_localization reads strings.csv off
   // disk, and the fake-async zone never settles on real file I/O.
+  final app = EasyLocalization(
+    supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
+    path: 'assets/translations/strings.csv',
+    assetLoader: CsvAssetLoader(),
+    fallbackLocale: const Locale('en'),
+    child: Builder(
+      builder: (context) => MaterialApp(
+        locale: context.locale,
+        supportedLocales: context.supportedLocales,
+        localizationsDelegates: context.localizationDelegates,
+        theme: appTheme(Brightness.light),
+        home: page,
+      ),
+    ),
+  );
   await tester.runAsync(
     () => tester.pumpWidget(
-      ProviderScope(
-        child: EasyLocalization(
-          supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
-          path: 'assets/translations/strings.csv',
-          assetLoader: CsvAssetLoader(),
-          fallbackLocale: const Locale('en'),
-          child: Builder(
-            builder: (context) => MaterialApp(
-              locale: context.locale,
-              supportedLocales: context.supportedLocales,
-              localizationsDelegates: context.localizationDelegates,
-              theme: appTheme(Brightness.light),
-              home: page,
+      container != null
+          ? UncontrolledProviderScope(container: container, child: app)
+          : ProviderScope(
+              overrides: [
+                settingsProvider.overrideWith(
+                  () => _Settings(AppSettings(firmwareDevMode: devMode)),
+                ),
+              ],
+              child: app,
             ),
-          ),
-        ),
-      ),
     ),
   );
   await settleTranslations(tester);
@@ -158,11 +171,11 @@ BlePairedDevice _sole(String id, FootSide side) => BlePairedDevice(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('classic analytics replays the walk clip on the pressure tab', (
+  testWidgets('classic analytics replays the walk clip in developer mode', (
     tester,
   ) async {
     await EasyLocalization.ensureInitialized();
-    await _pumpAnalytics(tester, const AnalyticsPage());
+    await _pumpAnalytics(tester, const AnalyticsPage(), devMode: true);
 
     // First frame of silversole_v1.1_walk_right.json.
     expect(await _playWalkOnPressureTab(tester), [600, 380, 2600]);
@@ -176,11 +189,11 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('mascot analytics replays the walk clip on the pressure tab', (
+  testWidgets('mascot analytics replays the walk clip in developer mode', (
     tester,
   ) async {
     await EasyLocalization.ensureInitialized();
-    await _pumpAnalytics(tester, const AnalyticsPageT2());
+    await _pumpAnalytics(tester, const AnalyticsPageT2(), devMode: true);
 
     expect(await _playWalkOnPressureTab(tester), [600, 380, 2600]);
 
@@ -190,6 +203,157 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.widgetWithText(PopupMenuItem<void>, 'Stop sample'));
     await tester.pumpAndSettle();
+  });
+
+  group('what the pressure tab shows', () {
+    ProviderContainer containerFor({required bool devMode}) {
+      final container = ProviderContainer(
+        overrides: [
+          settingsProvider.overrideWith(
+            () => _Settings(
+              AppSettings(
+                pairedDevicesList: [_sole('R', FootSide.right)],
+                firmwareDevMode: devMode,
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    /// Opens the pressure tab, optionally after six readings from the right
+    /// sole. `[900, 600, 1500]` is a steady stand: forefoot 50%, medial 60%.
+    Future<void> openPressureTab(
+      WidgetTester tester,
+      Widget page,
+      ProviderContainer container, {
+      List<int>? stream,
+    }) async {
+      await EasyLocalization.ensureInitialized();
+      await _pumpAnalytics(tester, page, container: container);
+      await tester.tap(find.text('Pressure map'));
+      await tester.pumpAndSettle();
+      if (stream != null) {
+        for (var i = 0; i < 6; i++) {
+          container
+              .read(liveTelemetryProvider('R').notifier)
+              .updateImuNotifyData(_imu(stream));
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+      }
+    }
+
+    for (final (name, page) in [
+      ('classic', const AnalyticsPage()),
+      ('mascot', const AnalyticsPageT2()),
+    ]) {
+      testWidgets('$name: customers get the heat map and the splits only', (
+        tester,
+      ) async {
+        final container = containerFor(devMode: false);
+        await openPressureTab(
+          tester,
+          page,
+          container,
+          stream: const [900, 600, 1500],
+        );
+
+        expect(find.byType(FootPressureHeatmap), findsOneWidget);
+        expect(find.text('Forefoot 50%'), findsOneWidget);
+        expect(find.text('50% Heel'), findsOneWidget);
+        expect(find.text('Medial 60%'), findsOneWidget);
+        expect(find.text('40% Lateral'), findsOneWidget);
+        // The left foot has no sole.
+        expect(find.text('No insole connected'), findsOneWidget);
+
+        expect(find.text('Sample'), findsNothing);
+        for (final label in kSensorLabels) {
+          expect(find.text(label), findsNothing);
+        }
+        expect(find.text('Raw readings (developer mode)'), findsNothing);
+      });
+
+      testWidgets('$name: developer mode adds the sample menu and readings', (
+        tester,
+      ) async {
+        final container = containerFor(devMode: true);
+        await openPressureTab(
+          tester,
+          page,
+          container,
+          stream: const [900, 600, 1500],
+        );
+
+        expect(find.text('Forefoot 50%'), findsOneWidget);
+        expect(find.text('Sample'), findsOneWidget);
+        expect(find.text('Raw readings (developer mode)'), findsOneWidget);
+        for (final label in kSensorLabels) {
+          expect(find.text(label), findsNWidgets(2));
+        }
+        expect(find.text('900'), findsOneWidget);
+      });
+
+      testWidgets('$name: no insole connected shows no percentage', (
+        tester,
+      ) async {
+        final container = containerFor(devMode: false);
+        await openPressureTab(tester, page, container, stream: null);
+
+        expect(find.text('No insole connected'), findsNWidgets(2));
+        expect(find.textContaining('%'), findsNothing);
+      });
+
+      testWidgets('$name: a streaming insole with no load shows the hint', (
+        tester,
+      ) async {
+        final container = containerFor(devMode: false);
+        await openPressureTab(
+          tester,
+          page,
+          container,
+          stream: const [20, 10, 30],
+        );
+
+        expect(
+          find.text('Stand on the insole to see the split'),
+          findsOneWidget,
+        );
+        // Only the left foot, which has no sole, reads "no insole".
+        expect(find.text('No insole connected'), findsOneWidget);
+        expect(find.textContaining('%'), findsNothing);
+      });
+
+      testWidgets(
+        '$name: a silent insole drops its numbers and blanks the map',
+        (tester) async {
+          final container = containerFor(devMode: false);
+          await openPressureTab(
+            tester,
+            page,
+            container,
+            stream: const [900, 600, 1500],
+          );
+
+          FootPressureHeatmap map() => tester.widget<FootPressureHeatmap>(
+            find.byType(FootPressureHeatmap),
+          );
+          expect(find.text('Forefoot 50%'), findsOneWidget);
+          expect(map().pressure, [900, 600, 1500]);
+
+          // No new samples: the last ones age out of the two-second window.
+          await tester.pump(const Duration(seconds: 3));
+
+          expect(find.textContaining('%'), findsNothing);
+          expect(
+            find.text('Stand on the insole to see the split'),
+            findsOneWidget,
+          );
+          expect(map().pressure, [0, 0, 0]);
+        },
+      );
+    }
   });
 
   testWidgets('the demo scope falls back to live telemetry when idle', (
@@ -216,6 +380,63 @@ void main() {
     expect(find.text('has=false'), findsOneWidget);
     // Nothing is paired, so no sole feeds the left foot and no clip is playing.
     expect(find.text('left=null'), findsOneWidget);
+  });
+
+  testWidgets('the sample menu can be hidden', (tester) async {
+    await EasyLocalization.ensureInitialized();
+    await _pumpAnalytics(
+      tester,
+      Scaffold(
+        body: PressureDemoScope(
+          showMenu: false,
+          builder: (context, reading, header) =>
+              Column(children: [header, Text('p=${reading.right}')]),
+        ),
+      ),
+    );
+
+    expect(find.text('p=[0, 0, 0]'), findsOneWidget);
+    expect(find.text('Sample'), findsNothing);
+    expect(find.byType(PopupMenuButton<void>), findsNothing);
+  });
+
+  testWidgets('hiding the menu mid-sample stops the sample', (tester) async {
+    await EasyLocalization.ensureInitialized();
+    final showMenu = ValueNotifier(true);
+    addTearDown(showMenu.dispose);
+    await _pumpAnalytics(
+      tester,
+      ValueListenableBuilder<bool>(
+        valueListenable: showMenu,
+        builder: (context, show, _) => Scaffold(
+          body: PressureDemoScope(
+            showMenu: show,
+            builder: (context, reading, header) =>
+                Column(children: [header, Text('p=${reading.right}')]),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Sample'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<void>, 'Walk'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 20)),
+    );
+    await tester.pump();
+    expect(find.text('p=[600, 380, 2600]'), findsOneWidget);
+
+    // Developer mode switched off while the clip is looping.
+    showMenu.value = false;
+    await tester.pump();
+
+    expect(find.text('Sample'), findsNothing);
+    expect(find.text('p=[0, 0, 0]'), findsOneWidget);
+    // The ticker is cancelled, so time passing changes nothing.
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('p=[0, 0, 0]'), findsOneWidget);
   });
 
   testWidgets('a left sole feeds the left foot instead of a dash', (
