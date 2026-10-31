@@ -517,8 +517,9 @@ class GaitSmallMultiples extends StatelessWidget {
   }
 }
 
+/// A bare trend line with no axes, drawn in [color].
 class GaitSparkline extends StatelessWidget {
-  const GaitSparkline({required this.values, required this.color});
+  const GaitSparkline({super.key, required this.values, required this.color});
 
   final List<double> values;
   final Color color;
