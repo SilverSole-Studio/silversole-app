@@ -108,7 +108,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   selected: {_scale},
                   onSelectionChanged: (s) => setState(() => _scale = s.first),
                 ),
-                GaitAnalysisPanel(scale: _scale),
+                GaitAnalysisPanel(snapshot: gaitSnapshot(_scale)),
               ],
             ],
           ),

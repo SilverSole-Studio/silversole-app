@@ -34,7 +34,8 @@ void main() {
               body: SingleChildScrollView(
                 child: ValueListenableBuilder(
                   valueListenable: scale,
-                  builder: (_, value, _) => GaitAnalysisPanelT2(scale: value),
+                  builder: (_, value, _) =>
+                      GaitAnalysisPanelT2(snapshot: gaitSnapshot(value)),
                 ),
               ),
             ),

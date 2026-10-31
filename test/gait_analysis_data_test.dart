@@ -42,10 +42,10 @@ Set<String> _keysFromData() {
     final snapshot = gaitSnapshot(scale);
     keys.addAll([
       snapshot.heroLabelKey,
-      snapshot.heroDeltaSuffixKey,
-      snapshot.thresholdNoteKey,
+      ?snapshot.heroDeltaSuffixKey,
+      ?snapshot.thresholdNoteKey,
       snapshot.chartLabelKey,
-      snapshot.fallLastKey,
+      ?snapshot.fallLastKey,
       snapshot.noteKey,
       ...snapshot.adviceKeys,
       ...snapshot.smallMultiples.map((line) => line.nameKey),
@@ -75,7 +75,7 @@ void main() {
     final quarter = gaitSnapshot(GaitScale.quarter);
 
     // A week of data carries averages but not per-step variability.
-    expect(week.speedSeries, hasLength(7));
+    expect(week.series, hasLength(7));
     expect(
       week.stability.map((m) => m.nameKey),
       isNot(contains('gait_metric_stability')),
@@ -84,7 +84,7 @@ void main() {
     expect(week.hasAdvice, isFalse);
 
     // A month adds step stability and the left/right comparison.
-    expect(month.speedSeries, hasLength(4));
+    expect(month.series, hasLength(4));
     expect(
       month.stability.map((m) => m.nameKey),
       contains('gait_metric_stability'),
@@ -93,7 +93,7 @@ void main() {
     expect(month.stanceLeft, hasLength(month.stanceRight.length));
 
     // A quarter is where a trajectory and a recommendation become honest.
-    expect(quarter.speedSeries, hasLength(12));
+    expect(quarter.series, hasLength(12));
     expect(quarter.hasPhaseTimeline, isTrue);
     expect(quarter.hasSmallMultiples, isTrue);
     expect(quarter.hasAdvice, isTrue);
@@ -126,7 +126,7 @@ void main() {
       ...[GaitPhase.alert, GaitPhase.alert, GaitPhase.alert],
     ];
     expect([
-      for (var week = 0; week < quarter.speedSeries.length; week++)
+      for (var week = 0; week < quarter.series.length; week++)
         quarter.phaseAt(week),
     ], expected);
   });

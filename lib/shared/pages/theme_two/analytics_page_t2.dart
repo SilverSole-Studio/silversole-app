@@ -68,7 +68,7 @@ class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
                       setState(() => _scale = GaitScale.values[i]),
                 ),
                 const SizedBox(height: 14),
-                GaitAnalysisPanelT2(scale: _scale),
+                GaitAnalysisPanelT2(snapshot: gaitSnapshot(_scale)),
               ],
             ],
           ),
