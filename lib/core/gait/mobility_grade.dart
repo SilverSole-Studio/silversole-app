@@ -116,6 +116,7 @@ class WeekMobility {
   const WeekMobility({
     required this.weekStart,
     required this.wornDays,
+    required this.values,
     required this.metrics,
     required this.score,
     required this.grade,
@@ -124,6 +125,10 @@ class WeekMobility {
   /// [gaitDateKey] of the week's Monday.
   final String weekStart;
   final int wornDays;
+
+  /// The week's value for every metric that could be worked out, whether or
+  /// not the week was graded — what a trend line is drawn from.
+  final Map<MobilityMetric, double> values;
   final Map<MobilityMetric, MetricScore> metrics;
 
   /// Mean of the metric scores; null with too little data.
@@ -229,6 +234,7 @@ List<WeekMobility> gradeMobility(
       WeekMobility(
         weekStart: key,
         wornDays: days.length,
+        values: values,
         metrics: scores,
         score: mean,
         grade: grade,
@@ -241,13 +247,16 @@ List<WeekMobility> gradeMobility(
 
 Map<MobilityMetric, double> _weekValues(List<DailyGait> days) {
   final week = days.skip(1).fold(days.first, (w, d) => w.merge(d));
+  final values = <MobilityMetric, double?>{
+    MobilityMetric.dailySteps: finiteOrNull(week.steps / days.length),
+    MobilityMetric.cadence: finiteOrNull(week.cadence),
+    MobilityMetric.symmetry: finiteOrNull(week.symmetry),
+    MobilityMetric.strideVariation: meanDailyStrideCv(days),
+    MobilityMetric.doubleSupport: finiteOrNull(week.doubleSupportRatio),
+  };
   return {
-    MobilityMetric.dailySteps: week.steps / days.length,
-    if (week.cadence != null) MobilityMetric.cadence: week.cadence!,
-    if (week.symmetry != null) MobilityMetric.symmetry: week.symmetry!,
-    if (week.strideCv != null) MobilityMetric.strideVariation: week.strideCv!,
-    if (week.doubleSupportRatio != null)
-      MobilityMetric.doubleSupport: week.doubleSupportRatio!,
+    for (final entry in values.entries)
+      if (entry.value != null) entry.key: entry.value!,
   };
 }
 
