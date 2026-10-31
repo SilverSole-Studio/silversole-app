@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel_t2.dart';
+import 'helpers/translations.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -34,7 +35,8 @@ void main() {
               body: SingleChildScrollView(
                 child: ValueListenableBuilder(
                   valueListenable: scale,
-                  builder: (_, value, _) => GaitAnalysisPanelT2(scale: value),
+                  builder: (_, value, _) =>
+                      GaitAnalysisPanelT2(snapshot: gaitSnapshot(value)),
                 ),
               ),
             ),
@@ -42,7 +44,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // The figures are an example, and the panel says so before anything else.
     expect(find.byKey(GaitAnalysisPanelT2.sampleBannerKey), findsOneWidget);

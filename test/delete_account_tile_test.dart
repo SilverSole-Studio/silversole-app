@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
+import 'helpers/translations.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -44,7 +45,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // The dialog says what goes and that it is final.
     await tester.tap(find.text('Delete account'));

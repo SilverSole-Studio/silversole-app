@@ -1,10 +1,10 @@
 /// Data behind the gait-analysis tab, shared by both themes.
 ///
-/// **Every figure here is mockup copy.** The app measures none of it: there is
-/// no step detection, no speed model and no aggregation pipeline (see the
-/// pipeline status in `CLAUDE.md`). The numbers follow the approved design so
-/// the layout can be reviewed with realistic content, and they live in one
-/// place so a real source replaces them without touching layout.
+/// The [gaitSnapshot] constants are mockup copy: they follow the approved
+/// design so the layout can be reviewed with realistic content, and are what
+/// the tab shows while gait tracking is off. The wearer's own figures, when it
+/// is on (see the pipeline status in `CLAUDE.md`), come from
+/// `realGaitSnapshot()` in `gait_real_snapshot.dart` in the same shape.
 library;
 
 /// Which window the gait tab is summarising.
@@ -51,7 +51,10 @@ enum GaitTone { neutral, good, warn, alert }
 /// actually has.
 enum GaitTopic {
   speed(hasNote: true, hasEvidence: true),
+  steps(hasNote: true),
   cadence(hasEvidence: true),
+  stance(),
+  variation(hasEvidence: true),
   stability(hasNote: true, hasEvidence: true),
   doubleSupport(hasNote: true, hasEvidence: true),
   symmetry(hasNote: true, hasEvidence: true),
@@ -138,20 +141,27 @@ class GaitTrendLine {
 class GaitSnapshot {
   const GaitSnapshot({
     required this.scale,
-    required this.phase,
     required this.heroLabelKey,
     required this.heroValue,
-    required this.heroDelta,
-    required this.heroDeltaSuffixKey,
-    required this.heroTone,
-    required this.thresholdNoteKey,
     required this.chartLabelKey,
-    required this.speedSeries,
+    required this.series,
     required this.ability,
     required this.stability,
     required this.fallCount,
-    required this.fallLastKey,
     required this.noteKey,
+    this.isSample = true,
+    this.phase,
+    this.heroUnitKey = 'gait_unit_mps',
+    this.heroTopic = GaitTopic.speed,
+    this.heroDelta,
+    this.heroDeltaSuffixKey,
+    this.heroTone = GaitTone.neutral,
+    this.thresholdNoteKey,
+    this.seriesStep = 0.05,
+    this.fallTitleKey = 'gait_fall_title',
+    this.fallLastKey,
+    this.pendingDays,
+    this.smallMultiplesTitleKey = 'gait_sect_four_metrics',
     this.stanceLeft = const [],
     this.stanceRight = const [],
     this.phaseSpans = const [],
@@ -162,30 +172,50 @@ class GaitSnapshot {
   });
 
   final GaitScale scale;
-  final GaitPhase phase;
+
+  /// True for the bundled example ([gaitSnapshot]): the panel then opens with
+  /// the "sample data" banner.
+  final bool isSample;
+
+  /// The trend stage on the hero card; null when there is no staging to show
+  /// — the wearer's own data is never staged (design §5.3).
+  final GaitPhase? phase;
 
   /// Keys in `strings.csv`.
   final String heroLabelKey;
-  final String thresholdNoteKey;
+  final String heroUnitKey;
   final String chartLabelKey;
-  final String fallLastKey;
+  final String fallTitleKey;
   final String noteKey;
+  final String smallMultiplesTitleKey;
+  final String? thresholdNoteKey;
+  final String? fallLastKey;
+
+  /// The explanation behind the hero's ⓘ, and the week chart's.
+  final GaitTopic heroTopic;
 
   /// Already formatted — the hero is the one figure read at a glance.
   final String heroValue;
-  final String heroDelta;
+  final String? heroDelta;
 
   /// What the delta is measured against, e.g. "vs previous 7 days".
-  final String heroDeltaSuffixKey;
+  final String? heroDeltaSuffixKey;
   final GaitTone heroTone;
 
-  /// Speed per bucket: days on the week scale, whole weeks after that.
-  final List<double> speedSeries;
+  /// One value per bucket: days on the week scale, whole weeks after that.
+  final List<double> series;
+
+  /// Snapping step for the chart's y range, in the series' own unit.
+  final double seriesStep;
 
   final List<GaitMetric> ability;
   final List<GaitMetric> stability;
 
   final int fallCount;
+
+  /// Days of data still missing before this scale can show figures; null
+  /// when it can. The panel then shows a "still collecting" card instead.
+  final int? pendingDays;
 
   /// Left and right stance share per week — the month scale's second chart.
   final List<double> stanceLeft;
@@ -204,15 +234,15 @@ class GaitSnapshot {
 
   bool get hasStanceChart => stanceLeft.isNotEmpty;
 
-  /// Which phase a bucket fell in, so each point on the trajectory can be
-  /// colored by it.
+  /// Which phase a bucket fell in — only asked when [hasPhaseTimeline]. Each
+  /// point on the trajectory can be colored by it.
   GaitPhase phaseAt(int bucket) {
     var week = 0;
     for (final span in phaseSpans) {
       week += span.weeks;
       if (bucket < week) return span.phase;
     }
-    return phaseSpans.isEmpty ? phase : phaseSpans.last.phase;
+    return phaseSpans.last.phase;
   }
 
   /// The phases as x ranges for the trajectory chart: each covers its own
@@ -237,6 +267,7 @@ class GaitSnapshot {
   bool get hasPhaseTimeline => phaseSpans.isNotEmpty;
   bool get hasSmallMultiples => smallMultiples.isNotEmpty;
   bool get hasAdvice => adviceKeys.isNotEmpty;
+  bool get isPending => pendingDays != null;
 }
 
 const _cadence = GaitMetric(
@@ -260,7 +291,7 @@ GaitSnapshot gaitSnapshot(GaitScale scale) => switch (scale) {
     heroTone: GaitTone.neutral,
     thresholdNoteKey: 'gait_threshold_under',
     chartLabelKey: 'gait_sect_daily_speed',
-    speedSeries: [0.86, 0.90, 0.87, 0.89, 0.85, 0.91, 0.88],
+    series: [0.86, 0.90, 0.87, 0.89, 0.85, 0.91, 0.88],
     ability: [_cadence],
     stability: [
       GaitMetric(
@@ -300,7 +331,7 @@ GaitSnapshot gaitSnapshot(GaitScale scale) => switch (scale) {
     heroTone: GaitTone.warn,
     thresholdNoteKey: 'gait_threshold_over',
     chartLabelKey: 'gait_sect_four_weeks',
-    speedSeries: [0.96, 0.94, 0.93, 0.91],
+    series: [0.96, 0.94, 0.93, 0.91],
     ability: [_cadence],
     stability: [
       GaitMetric(
@@ -351,7 +382,7 @@ GaitSnapshot gaitSnapshot(GaitScale scale) => switch (scale) {
     heroTone: GaitTone.alert,
     thresholdNoteKey: 'gait_threshold_rate',
     chartLabelKey: 'gait_sect_twelve_weeks',
-    speedSeries: [
+    series: [
       1.02,
       1.01,
       1.00,

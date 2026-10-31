@@ -13,6 +13,7 @@ import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
+import '../helpers/translations.dart';
 
 /// Every piece of text on screen is at least 18px, apart from the debug-only
 /// demo hint (spec §5.3).
@@ -92,7 +93,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // First visit: pick a name before anything else.
     expect(find.text('先取一個稱呼'), findsOneWidget);

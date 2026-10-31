@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/ble/sole_notification_text.dart';
 import 'package:silversole/core/utils/battery_level.dart';
+import 'helpers/translations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     final now = DateTime(2026, 10, 11, 12);
     ({String title, String text}) at({

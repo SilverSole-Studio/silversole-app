@@ -12,6 +12,7 @@ import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'helpers/translations.dart';
 
 const _left = BlePairedDevice(
   remoteId: 'l',
@@ -93,7 +94,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     expect(find.text('Left foot'), findsOneWidget);
     expect(find.text('Right foot'), findsOneWidget);

@@ -1,10 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
+import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel_t2.dart';
+import 'package:silversole/shared/widgets/gait/gait_raw_record_button.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 import 'package:silversole/shared/widgets/pressure_readouts.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
@@ -12,17 +16,18 @@ import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 /// Analytics, mascot theme: gait analysis over three time scales, the badge
 /// wall, and the live pressure map under its own tab.
 ///
-/// Only the pressure map is real (live BLE FSR values); the gait figures are
-/// mockup copy from [gaitSnapshot]. The gait layout lives in
+/// The pressure map is live BLE FSR data. The gait figures come from
+/// [gaitViewSnapshotProvider]: the wearer's own walking once gait tracking is
+/// on, the bundled sample until then. The gait layout lives in
 /// [GaitAnalysisPanelT2], the same shape as the classic theme's version.
-class AnalyticsPageT2 extends StatefulWidget {
+class AnalyticsPageT2 extends ConsumerStatefulWidget {
   const AnalyticsPageT2({super.key});
 
   @override
-  State<AnalyticsPageT2> createState() => _AnalyticsPageT2State();
+  ConsumerState<AnalyticsPageT2> createState() => _AnalyticsPageT2State();
 }
 
-class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
+class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
   bool _showPressure = false;
   FootView _feet = FootView.both;
   GaitScale _scale = GaitScale.week;
@@ -68,7 +73,13 @@ class _AnalyticsPageT2State extends State<AnalyticsPageT2> {
                       setState(() => _scale = GaitScale.values[i]),
                 ),
                 const SizedBox(height: 14),
-                GaitAnalysisPanelT2(scale: _scale),
+                if (kDebugMode) ...[
+                  const GaitRawRecordButton(),
+                  const SizedBox(height: 14),
+                ],
+                GaitAnalysisPanelT2(
+                  snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
+                ),
               ],
             ],
           ),

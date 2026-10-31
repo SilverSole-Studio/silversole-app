@@ -17,6 +17,7 @@ import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
+import 'helpers/translations.dart';
 
 /// Seniors run the phone's font size at its largest. The app caps its own text
 /// at [kMaxAppTextScale]; pages must not overflow at the cap, or when the
@@ -134,7 +135,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     Future<void> show(String name, Widget page) async {
       router.value = _single(page);

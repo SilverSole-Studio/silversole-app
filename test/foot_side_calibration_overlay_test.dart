@@ -17,6 +17,7 @@ import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
+import 'helpers/translations.dart';
 
 const _left = BlePairedDevice(
   remoteId: 'l',
@@ -117,7 +118,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     // It asks, unprompted, as soon as the second foot is on.
     expect(find.text('Step on your left foot'), findsOneWidget);

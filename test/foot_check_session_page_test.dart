@@ -9,6 +9,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
+import 'helpers/translations.dart';
 
 /// Fresh finders per call: Finder instances cache their results, so sharing one
 /// across frames reads a stale tree.
@@ -73,7 +74,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleTranslations(tester);
 
     await tester.tap(find.text('start'));
     await tester.pumpAndSettle();
