@@ -1,24 +1,31 @@
+import 'dart:async';
+
+import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
+import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/gait/gait_panel_t2.dart';
 import 'package:silversole/shared/widgets/gait/gait_raw_record_button.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 import 'package:silversole/shared/widgets/pressure_readouts.dart';
+import 'package:silversole/shared/widgets/pressure_share_bars.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Analytics, mascot theme: gait analysis over three time scales, the badge
 /// wall, and the live pressure map under its own tab.
 ///
-/// The pressure map is live BLE FSR data. The gait figures come from
-/// [gaitViewSnapshotProvider]: the wearer's own walking once gait tracking is
-/// on, the bundled sample until then. The gait layout lives in
+/// The pressure map is live BLE FSR data, with its load splits; the raw
+/// readings and the sample menu are for developer mode only. The gait figures
+/// come from [gaitViewSnapshotProvider]: the wearer's own walking once gait
+/// tracking is on, the bundled sample until then. The gait layout lives in
 /// [GaitAnalysisPanelT2], the same shape as the classic theme's version.
 class AnalyticsPageT2 extends ConsumerStatefulWidget {
   const AnalyticsPageT2({super.key});
@@ -154,36 +161,109 @@ class _Segmented extends StatelessWidget {
 
 // ── Pressure ──────────────────────────────────────────────────────────────
 
-class _PressurePanel extends StatelessWidget {
+/// The live foot-pressure heat map and the forefoot-heel and inner-outer
+/// splits under it, for everyone. The raw sensor readings and the example menu
+/// (which replays a canned motion) show only in developer mode.
+class _PressurePanel extends ConsumerStatefulWidget {
   const _PressurePanel({required this.feet});
 
   final FootView feet;
 
   @override
+  ConsumerState<_PressurePanel> createState() => _PressurePanelState();
+}
+
+class _PressurePanelState extends ConsumerState<_PressurePanel> {
+  final _tracker = PressureShareTracker();
+
+  /// Fires once the newest sample has aged out of the window, so a foot that
+  /// goes silent is redrawn blank instead of keeping its last numbers.
+  Timer? _staleTimer;
+
+  @override
+  void dispose() {
+    _staleTimer?.cancel();
+    super.dispose();
+  }
+
+  void _armStaleTimer() {
+    _staleTimer?.cancel();
+    _staleTimer = Timer(
+      PressureShareWindow.span + const Duration(milliseconds: 300),
+      () {
+        if (mounted) setState(() {});
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final devMode = ref.watch(
+      settingsProvider.select((s) => s.firmwareDevMode),
+    );
+    final feet = widget.feet;
     return PressureDemoScope(
-      builder: (context, reading, header) => MascotCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            header,
-            Center(
-              child: FootPressureHeatmap(
-                pressure: reading.right,
-                leftPressure: reading.left,
-                feet: feet,
+      showMenu: devMode,
+      builder: (context, reading, header) {
+        final accepted = _tracker.update(
+          at: clock.now(),
+          rightReading: reading.right,
+          rightSource: reading.rightSource ?? reading.right,
+          hasRight: reading.hasData,
+          leftReading: reading.left,
+          leftSource: reading.leftSource,
+          isSample: reading.isSample,
+        );
+        if (accepted) _armStaleTimer();
+        // A foot that has gone quiet is drawn blank rather than frozen on its
+        // last frame. A playing sample clip is always fresh.
+        final rightHeat = reading.isSample || _tracker.right.hasFresh
+            ? reading.right
+            : const <int>[0, 0, 0];
+        final leftHeat =
+            reading.left == null || reading.isSample || _tracker.left.hasFresh
+            ? reading.left
+            : const <int>[0, 0, 0];
+        return MascotCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              header,
+              Center(
+                child: FootPressureHeatmap(
+                  pressure: rightHeat,
+                  leftPressure: leftHeat,
+                  feet: feet,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            PressureReadouts(
-              feet: feet,
-              right: reading.right,
-              left: reading.left,
-              hasData: reading.hasData,
-            ),
-          ],
-        ),
-      ),
+              const SizedBox(height: 14),
+              PressureShareBars(
+                feet: feet,
+                right: _tracker.right.shares,
+                left: _tracker.left.shares,
+                rightConnected: reading.hasData,
+                leftConnected: reading.left != null,
+              ),
+              if (devMode) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'pressure_raw_title'.tr(),
+                  style: context.textTheme.labelMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                PressureReadouts(
+                  feet: feet,
+                  right: reading.right,
+                  left: reading.left,
+                  hasData: reading.hasData,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
