@@ -7,10 +7,14 @@ import 'package:silversole/core/ble/sole_sample_bus.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/gait/daily_gait.dart';
 import 'package:silversole/core/gait/gait_history.dart';
+import 'package:silversole/shared/models/app_settings.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/fall_detect_event_model.dart';
+import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/models/imu_notify_data_model.dart';
 import 'package:silversole/shared/providers/fall_event_provider.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 
 import 'helpers/gait_signal.dart';
 
@@ -28,7 +32,7 @@ ImuNotifyDataModel _imu(List<int> pressure) => ImuNotifyDataModel(
 
 /// Streams a twenty-contact walk onto the bus in fake time, one sample per
 /// 20 ms, so the tracker's `clock.now()` stamps match the signal.
-void _walk(FakeAsync async, SoleSampleBus bus) {
+void _walk(FakeAsync async, SoleSampleBus bus, {String key = 'R'}) {
   final samples = footSignal(
     origin: clock.now(),
     length: const Duration(seconds: 25),
@@ -36,8 +40,22 @@ void _walk(FakeAsync async, SoleSampleBus bus) {
   );
   for (final s in samples) {
     async.elapse(const Duration(milliseconds: 20));
-    bus.emit(SoleSample(identityKey: 'R', data: _imu(s.pressure)));
+    bus.emit(SoleSample(identityKey: key, data: _imu(s.pressure)));
   }
+}
+
+class _LeftSolePaired extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings(
+    pairedDevicesList: [
+      BlePairedDevice(
+        deviceId: 'AABBCCDDEEFF0011',
+        remoteId: 'AA:BB:CC:DD:EE:FF',
+        name: 'SilverSole',
+        footSide: FootSide.left,
+      ),
+    ],
+  );
 }
 
 void main() {
@@ -58,6 +76,35 @@ void main() {
 
       final today = gaitDateKey(clock.now());
       expect(container.read(gaitHistoryProvider)[today]?.steps, 40);
+      container.dispose();
+    });
+  });
+
+  test('a sole assigned to the left foot is filed under left', () {
+    fakeAsync((async) {
+      SharedPreferences.setMockInitialValues({});
+      final container = ProviderContainer(
+        overrides: [
+          realGaitEnabledProvider.overrideWithValue(true),
+          settingsProvider.overrideWith(_LeftSolePaired.new),
+        ],
+      );
+      container.read(gaitTrackingProvider);
+      async.flushMicrotasks();
+
+      _walk(
+        async,
+        container.read(soleSampleBusProvider),
+        key: 'AABBCCDDEEFF0011',
+      );
+      async.elapse(gaitFlushInterval);
+      async.flushMicrotasks();
+
+      final today = container.read(
+        gaitHistoryProvider,
+      )[gaitDateKey(clock.now())];
+      expect(today?.feet[GaitFoot.left]?.contacts, 20);
+      expect(today?.feet.containsKey(GaitFoot.unknown), isFalse);
       container.dispose();
     });
   });

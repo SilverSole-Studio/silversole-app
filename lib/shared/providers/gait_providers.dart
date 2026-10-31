@@ -38,9 +38,15 @@ class GaitHistoryNotifier extends Notifier<Map<String, DailyGait>> {
   }
 
   Future<void> _load() async {
-    final saved = decodeGaitHistory(
-      await loadLocalValue(LocalSavableKey.gaitHistory),
-    );
+    var saved = const <String, DailyGait>{};
+    try {
+      saved = decodeGaitHistory(
+        await loadLocalValue(LocalSavableKey.gaitHistory),
+      );
+    } catch (_) {
+      // Unreadable storage: start empty rather than fail every later add.
+    }
+    if (!ref.mounted) return;
     state = mergeGaitHistory(saved, const [], clock.now());
   }
 
@@ -48,7 +54,7 @@ class GaitHistoryNotifier extends Notifier<Map<String, DailyGait>> {
   /// early flush can never overwrite it.
   Future<void> add(List<DailyGait> deltas) async {
     await _loading;
-    if (deltas.isEmpty) return;
+    if (!ref.mounted || deltas.isEmpty) return;
     state = mergeGaitHistory(state, deltas, clock.now());
     await saveLocalValue(LocalSavableKey.gaitHistory, encodeGaitHistory(state));
   }
@@ -61,7 +67,9 @@ final gaitHistoryProvider =
 
 /// Feeds every raw sample on the bus to a [GaitTracker] and flushes its
 /// totals into [gaitHistoryProvider] every [gaitFlushInterval], when the app
-/// goes to the background, and on dispose.
+/// goes to the background, and on dispose. The flush on dispose is best
+/// effort: by then the history notifier may be gone too, and the pending
+/// totals are lost.
 ///
 /// Watched once in `App`. Reads the unaveraged bus rather than the live
 /// telemetry window, which is moving-averaged.

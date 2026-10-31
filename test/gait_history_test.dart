@@ -22,11 +22,27 @@ void main() {
       {
         '2026-08-04': _day('2026-08-04', 1), // 90 days before today: dropped
         '2026-08-05': _day('2026-08-05', 1), // 89 days before: kept
+        '2026-11-01': _day('2026-11-01', 1),
       },
       const [],
       today,
     );
-    expect(merged.keys, ['2026-08-05']);
+    expect(merged.keys, ['2026-08-05', '2026-11-01']);
+  });
+
+  test('a clock ahead by a year keeps the stored days', () {
+    final merged = mergeGaitHistory(
+      {
+        '2026-11-01': _day('2026-11-01', 1),
+        '2026-10-15': _day('2026-10-15', 1),
+      },
+      [_day('2027-11-02', 5)],
+      DateTime(2027, 11, 2),
+    );
+    expect(
+      merged.keys,
+      containsAll(['2026-10-15', '2026-11-01', '2027-11-02']),
+    );
   });
 
   test('round-trips, and anything unreadable comes back empty', () {

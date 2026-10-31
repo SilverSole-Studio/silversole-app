@@ -6,7 +6,13 @@ import 'package:silversole/core/gait/daily_gait.dart';
 const gaitHistoryDays = 90;
 
 /// [history] with [deltas] added day by day, and every day older than
-/// [gaitHistoryDays] before [today] dropped.
+/// [gaitHistoryDays] dropped.
+///
+/// The ninety days are counted back from [today], but never from further
+/// than a week past the newest day already in [history]. A phone clock that
+/// is wrong and ahead would otherwise delete real days for good; keeping a
+/// few extra days after a long gap is harmless, since they age out once
+/// newer days arrive.
 Map<String, DailyGait> mergeGaitHistory(
   Map<String, DailyGait> history,
   Iterable<DailyGait> deltas,
@@ -17,8 +23,15 @@ Map<String, DailyGait> mergeGaitHistory(
     final stored = merged[delta.date];
     merged[delta.date] = stored == null ? delta : stored.merge(delta);
   }
+  var anchor = DateTime(today.year, today.month, today.day);
+  if (history.isNotEmpty) {
+    final newest = history.keys.reduce((a, b) => a.compareTo(b) >= 0 ? a : b);
+    final limit = DateTime.parse(newest).add(const Duration(days: 7));
+    final limitDay = DateTime(limit.year, limit.month, limit.day);
+    if (limitDay.isBefore(anchor)) anchor = limitDay;
+  }
   final cutoff = gaitDateKey(
-    DateTime(today.year, today.month, today.day - (gaitHistoryDays - 1)),
+    DateTime(anchor.year, anchor.month, anchor.day - (gaitHistoryDays - 1)),
   );
   merged.removeWhere((date, _) => date.compareTo(cutoff) < 0);
   return merged;
