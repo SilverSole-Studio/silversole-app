@@ -72,3 +72,21 @@ function openFriends() {
 
 - 開發版（debug）：一律開，用 App 內建的假資料，可以試畫面。
 - 正式版：資料庫（`supabase/migrations/20261019120000_friends.sql`）套用後，用 `--dart-define=FRIENDS_BACKEND=supabase` 打包才會開。沒開之前 `features.friends` 都是 `false`，廣場不會出現好友建築。
+
+## 雲端存檔（2026-10-31）
+
+遊戲的進度（金幣、收藏冊、車、農場、旅行紀錄…）原本只存在手機的 localStorage。廣場分頁另外接兩個 handler，把整包存到帳號上（`supabase/migrations/20261031120000_game_saves.sql`）：
+
+```js
+// 開廣場時：拿雲端那包
+const r = await window.flutter_inappwebview.callHandler("gameSaveLoad");
+// { ok: true, rev: 3, savedAt: "...", data: "<JSON 字串>" }；沒存過 rev 0、data null
+// 失敗：{ ok: false, reason: "signed_out" | "rate_limited" | "offline" }
+
+// 存：rev 是手上那份的版本，只有跟伺服器一樣才寫得進去
+const w = await window.flutter_inappwebview.callHandler("gameSaveStore", { rev: 3, data: "<JSON 字串>" });
+// { ok: true, rev: 4 }，或 { ok: false, reason: "conflict", rev: 5 }（別支手機先存了 → 改成載入雲端）
+// 其他失敗：too_big（> 256 KB）、bad_data、signed_out、rate_limited、offline
+```
+
+一樣只有遊戲自己的網站（`isGameOrigin`）呼叫得到。遊戲端怎麼打包、什麼時候存、換帳號怎麼辦，見總倉庫 `02_產品/鞋墊_SilverSole/_遊戲雲端存檔_介面_2026-10-31.md`。
