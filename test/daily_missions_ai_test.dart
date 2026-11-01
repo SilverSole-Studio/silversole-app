@@ -6,11 +6,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/data/save_service.dart';
+import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/core/missions/mission_plan.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/providers/ai_missions_provider.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
+import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/mission_plan_provider.dart';
 
 import 'helpers/fake_ai_mission_client.dart';
@@ -108,8 +110,9 @@ void main() {
       'steps and cadence and walking minutes and mobility grade',
       'Dongyu Tech server',
       'Claude from Anthropic',
-      'Your name is not sent',
-      'does not keep these raw numbers',
+      'Your name and account are not handed to Claude',
+      'keeps only the text the AI wrote for that day',
+      'not these raw numbers',
     ]) {
       expect(find.textContaining(part), findsOneWidget, reason: part);
     }
@@ -178,6 +181,16 @@ void main() {
     expect(find.text('Good morning! A gentle day today.'), findsOneWidget);
     expect(tester.widget<SwitchListTile>(_switch).value, isTrue);
     expect(find.widgetWithText(FilledButton, 'Go'), findsNWidgets(3));
+    expect(find.text('Easy and fun to start with'), findsOneWidget);
+
+    // A finished row says "Done" instead of the AI's reason.
+    await c
+        .read(gameActivityProvider.notifier)
+        .record(GameActivity(slug: 'fish', seconds: 30, at: DateTime.now()));
+    await tester.pumpAndSettle();
+    expect(find.text('Easy and fun to start with'), findsNothing);
+    expect(find.text('It has been a few days'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Go'), findsNWidgets(2));
 
     // 6. Agreed but the server has nothing: the rules' plan, no label.
     final empty = FakeAiMissionClient();

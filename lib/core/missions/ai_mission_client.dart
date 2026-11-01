@@ -10,22 +10,53 @@ import 'package:silversole/core/missions/rule_planner.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// How long the app waits for the server before it plans by rules.
-const aiMissionsTimeout = Duration(seconds: 8);
+/// How long the app waits for the server before it keeps the rules' plan.
+/// The server gives Claude 8 seconds of its own; this adds room for the
+/// network on both sides.
+const aiMissionsTimeout = Duration(seconds: 12);
 
 /// Rounds from yesterday and distinct games from the week the server takes.
 const _maxYesterdayRounds = 20;
 const _maxWeekGames = 30;
+
+/// How a request to the server ended.
+enum AiMissionOutcome {
+  /// The server wrote a plan.
+  planned,
+
+  /// The server answered but not with a plan: a `fallback` reply
+  /// (`not_configured`, `failed`, `daily_cap`, `busy`, `error`) or something
+  /// the app cannot read. Asking again the same day would get the same.
+  refused,
+
+  /// No answer: offline, too slow, or an HTTP error. Worth asking again the
+  /// next time the sheet opens.
+  unreachable,
+}
+
+/// The end of one request: [plan] is set exactly when [outcome] is
+/// [AiMissionOutcome.planned].
+class AiMissionResult {
+  const AiMissionResult.planned(MissionPlan this.plan)
+    : outcome = AiMissionOutcome.planned;
+  const AiMissionResult.refused()
+    : outcome = AiMissionOutcome.refused,
+      plan = null;
+  const AiMissionResult.unreachable()
+    : outcome = AiMissionOutcome.unreachable,
+      plan = null;
+
+  final AiMissionOutcome outcome;
+  final MissionPlan? plan;
+}
 
 /// Asks the server (and through it Claude) to write today's missions.
 ///
 /// An interface so the sheet's tests can put a fake in its place; the real
 /// one is [SupabaseAiMissionClient].
 abstract class AiMissionClient {
-  /// Today's plan as the server wrote it, or null for anything else: not
-  /// signed in, not set up, too slow, refused, or an answer the app does not
-  /// understand. Never throws.
-  Future<MissionPlan?> plan({
+  /// Today's plan as the server wrote it, or why there is none. Never throws.
+  Future<AiMissionResult> plan({
     required DateTime today,
     required GameActivityLog activity,
     required FootCheckRecord? lastFootCheck,
@@ -159,16 +190,17 @@ MissionPlan? parseAiMissionResponse(Object? data, {required String day}) {
   );
 }
 
-/// Sends one request: the body in, the server's JSON out, null for any
-/// non-2xx answer. Injectable for tests.
+/// Sends one request: the body in, the server's JSON out. Throws for anything
+/// that is not a 2xx answer. Injectable for tests.
 typedef AiMissionInvoke = Future<Object?> Function(Map<String, Object?> body);
 
 Future<Object?> _invokeSupabase(Map<String, Object?> body) async {
+  // Any non-2xx answer arrives as a FunctionException.
   final res = await Supabase.instance.client.functions.invoke(
     'daily-missions',
     body: body,
   );
-  return res.status >= 200 && res.status < 300 ? res.data : null;
+  return res.data;
 }
 
 /// Calls the `daily-missions` Edge Function with the signed-in wearer's token.
@@ -179,12 +211,13 @@ class SupabaseAiMissionClient implements AiMissionClient {
   final AiMissionInvoke _invoke;
 
   @override
-  Future<MissionPlan?> plan({
+  Future<AiMissionResult> plan({
     required DateTime today,
     required GameActivityLog activity,
     required FootCheckRecord? lastFootCheck,
     Map<String, DailyGait>? gaitHistory,
   }) async {
+    final Object? data;
     try {
       final body = buildAiMissionBody(
         today: today,
@@ -192,12 +225,14 @@ class SupabaseAiMissionClient implements AiMissionClient {
         lastFootCheck: lastFootCheck,
         gaitHistory: gaitHistory,
       );
-      final data = await _invoke(body).timeout(aiMissionsTimeout);
-      return parseAiMissionResponse(data, day: gaitDateKey(today));
+      data = await _invoke(body).timeout(aiMissionsTimeout);
     } catch (_) {
-      // Signed out, offline, too slow, a non-2xx answer (arrives as an
-      // exception) or a body the app cannot read: the rules plan the day.
-      return null;
+      // Signed out, offline, too slow or a non-2xx answer: no reply to go by.
+      return const AiMissionResult.unreachable();
     }
+    final plan = parseAiMissionResponse(data, day: gaitDateKey(today));
+    return plan == null
+        ? const AiMissionResult.refused()
+        : AiMissionResult.planned(plan);
   }
 }

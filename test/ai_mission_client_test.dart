@@ -323,7 +323,7 @@ void main() {
   });
 
   group('SupabaseAiMissionClient', () {
-    Future<MissionPlan?> ask(AiMissionInvoke invoke) =>
+    Future<AiMissionResult> ask(AiMissionInvoke invoke) =>
         SupabaseAiMissionClient(invoke: invoke).plan(
           today: _today,
           activity: const GameActivityLog(),
@@ -332,7 +332,7 @@ void main() {
 
     test('sends the body and turns the answer into a plan', () async {
       Map<String, Object?>? sent;
-      final plan = await ask((body) async {
+      final result = await ask((body) async {
         sent = body;
         return {
           'mode': 'ai',
@@ -345,33 +345,45 @@ void main() {
         };
       });
       expect(sent!['day'], '2026-11-01');
-      expect(plan?.source, MissionPlanSource.ai);
-      expect(plan?.items.map((i) => i.id), ['fish', 'pool', 'ski']);
+      expect(result.outcome, AiMissionOutcome.planned);
+      expect(result.plan?.source, MissionPlanSource.ai);
+      expect(result.plan?.items.map((i) => i.id), ['fish', 'pool', 'ski']);
     });
 
-    test(
-      'a fallback answer, a null answer and an error are all null',
-      () async {
-        expect(
-          await ask(
-            (_) async => {'mode': 'fallback', 'reason': 'not_configured'},
-          ),
-          isNull,
-        );
-        expect(await ask((_) async => null), isNull);
-        expect(await ask((_) async => throw Exception('401')), isNull);
-      },
-    );
+    test('a reply without a plan is refused, whatever it says', () async {
+      for (final reply in <Object?>[
+        {'mode': 'fallback', 'reason': 'not_configured'},
+        {'mode': 'fallback', 'reason': 'failed'},
+        {'mode': 'fallback', 'reason': 'daily_cap'},
+        {'mode': 'fallback', 'reason': 'busy'},
+        null,
+        'ai',
+        {'mode': 'ai', 'greeting': 'x', 'missions': []},
+      ]) {
+        final result = await ask((_) async => reply);
+        expect(result.outcome, AiMissionOutcome.refused, reason: '$reply');
+        expect(result.plan, isNull);
+      }
+    });
 
-    testWidgets('waits eight seconds and no longer', (tester) async {
+    test('an error is unreachable, not a refusal', () async {
+      final result = await ask((_) async => throw Exception('offline'));
+      expect(result.outcome, AiMissionOutcome.unreachable);
+      expect(result.plan, isNull);
+    });
+
+    testWidgets('waits twelve seconds and no longer, then unreachable', (
+      tester,
+    ) async {
+      expect(aiMissionsTimeout, const Duration(seconds: 12));
       final never = Completer<Object?>();
       final answer = ask((_) => never.future);
       var done = false;
       unawaited(answer.whenComplete(() => done = true));
-      await tester.pump(const Duration(seconds: 7));
+      await tester.pump(const Duration(seconds: 11));
       expect(done, isFalse);
       await tester.pump(const Duration(seconds: 2));
-      expect(await answer, isNull);
+      expect((await answer).outcome, AiMissionOutcome.unreachable);
     });
   });
 }

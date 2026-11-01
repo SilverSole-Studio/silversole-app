@@ -716,6 +716,6 @@ ai_missions_consent_item_games,What games you played yesterday and for how many 
 ai_missions_consent_item_plays,How many times you played each game in the last 7 days,最近 7 天各款遊戲玩了幾次
 ai_missions_consent_item_check,How many days ago your last foot check was and its result,最近一次足壓健檢是幾天前、結果如何
 ai_missions_consent_item_gait,Only when gait tracking is on: yesterday's steps and cadence and walking minutes and mobility grade,只有步態紀錄開著時：昨天的步數、步頻、走路分鐘數和行動力等級
-ai_missions_consent_outro,These numbers go to the Dongyu Tech server and then to Claude from Anthropic to write the text. Your name is not sent and Dongyu Tech does not keep these raw numbers. You can turn this off any time at the bottom of the missions sheet.,這些數字會送到動域科技的伺服器，再交給 Anthropic 的 Claude 產生文字。不會送出你的姓名，動域科技也不會保存這些原始數字。隨時可以在任務面板最下面關掉。
+ai_missions_consent_outro,These numbers go to the Dongyu Tech server and then to Claude from Anthropic to write the text. Your name and account are not handed to Claude. Dongyu Tech keeps only the text the AI wrote for that day and not these raw numbers. You can turn this off any time at the bottom of the missions sheet.,這些數字會送到動域科技的伺服器，再交給 Anthropic 的 Claude 產生文字。你的姓名和帳號不會交給 Claude。動域科技只會留下 AI 寫好的當天文字，不會保存這些原始數字。隨時可以在任務面板最下面關掉。
 ai_missions_consent_yes,Agree,同意
 ai_missions_consent_no,Not now,先不要

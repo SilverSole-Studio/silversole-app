@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/gait/daily_gait.dart';
 import 'package:silversole/core/gait/gait_history.dart';
+import 'package:silversole/core/missions/ai_mission_client.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/core/missions/mission_plan.dart';
 import 'package:silversole/core/missions/rule_planner.dart';
@@ -24,13 +27,20 @@ Future<String?> _tryLoad(LocalSavableKey key) async {
 /// opens that day — one made by [planByRules] and saved.
 ///
 /// With `AI_MISSIONS` on ([aiMissionsEnabledProvider]) and the wearer's
-/// consent ([aiMissionsConsentProvider] is yes), the plan is asked of the
-/// server first ([aiMissionClientProvider]): a plan it wrote (`source: ai`)
-/// is saved and kept like any other. When it cannot write one, the rules'
-/// plan stands and the day is marked, so that day is not asked again. A
-/// change of consent makes the plan again: yes asks for an AI plan, no puts
+/// consent ([aiMissionsConsentProvider] is yes), the rules' plan is made, saved
+/// and returned at once — the sheet never waits on the server — and the server
+/// ([aiMissionClientProvider]) is asked in the background. A plan it writes
+/// (`source: ai`) replaces today's plan when it arrives, provided nothing has
+/// changed meanwhile (the consent, the sheet). When the server answers without
+/// a plan the day is marked and not asked again; when it cannot be reached
+/// (offline, too slow) nothing is marked and the next opening asks again.
+///
+/// A change of consent makes the plan again: yes asks for an AI plan, no puts
 /// an AI plan back to the rules' (a rules plan already made that day is kept).
-/// With the flag off none of this runs and the client is never touched.
+/// Every build takes a new generation number, and a background answer from an
+/// older one is dropped without saving anything, so a slow answer can never
+/// land after the wearer switched AI off. With the flag off none of this runs
+/// and the client is never touched.
 ///
 /// The inputs are read from what is stored on the phone rather than from the
 /// providers, which fill in after launch: a plan made from a half-loaded
@@ -46,8 +56,16 @@ Future<String?> _tryLoad(LocalSavableKey key) async {
 ///
 /// Disposed with the sheet, so the next opening reads the clock again.
 class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
+  /// Bumped by every [build]. `ref.mounted` does not turn false when the
+  /// notifier is rebuilt, so this is what tells an old build's background work
+  /// that it has been replaced.
+  int _generation = 0;
+
+  bool _current(int generation) => ref.mounted && generation == _generation;
+
   @override
   Future<MissionPlan> build() async {
+    final generation = ++_generation;
     final today = clock.now();
     final todayKey = gaitDateKey(today);
     // Everything that is watched or read from the providers comes before the
@@ -73,7 +91,7 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
     if (saved != null) {
       final isAi = saved.source == MissionPlanSource.ai;
       if (isAi == wantAi) return saved;
-      // A rules plan with AI wanted: keep it if the server already failed
+      // A rules plan with AI wanted: keep it if the server already refused
       // today, otherwise ask. An AI plan with AI not wanted: made again below.
       if (wantAi &&
           await _tryLoad(LocalSavableKey.aiMissionsFailedDay) == todayKey) {
@@ -92,7 +110,7 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
         ? decodeGaitHistory(await _tryLoad(LocalSavableKey.gaitHistory))
         : null;
 
-    var plan = saved != null && saved.source == MissionPlanSource.rule
+    final rules = saved != null && saved.source == MissionPlanSource.rule
         ? saved
         : planByRules(
             today: today,
@@ -100,30 +118,62 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
             lastFootCheck: lastFootCheck,
             gaitHistory: gait,
           );
-    if (wantAi) {
-      MissionPlan? written;
-      try {
-        written = await client!.plan(
+    // A newer build owns the plan now: do not save over it.
+    if (!_current(generation)) return rules;
+    if (!identical(rules, saved)) {
+      await _trySave(LocalSavableKey.dailyMissionPlan, rules.encode());
+    }
+    if (wantAi && _current(generation)) {
+      unawaited(
+        _askServer(
+          generation,
+          client!,
           today: today,
           activity: activity,
           lastFootCheck: lastFootCheck,
-          gaitHistory: gait,
-        );
-      } catch (_) {
-        written = null;
-      }
-      // Asked again by a newer build (the consent changed meanwhile): this
-      // answer is stale and must not be saved over it.
-      if (!ref.mounted) return plan;
-      if (written != null && written.day == todayKey) {
-        plan = written;
-      } else {
-        await _trySave(LocalSavableKey.aiMissionsFailedDay, todayKey);
-      }
+          gait: gait,
+        ),
+      );
     }
-    if (!ref.mounted) return plan;
-    await _trySave(LocalSavableKey.dailyMissionPlan, plan.encode());
-    return plan;
+    return rules;
+  }
+
+  /// Asks for an AI plan after the rules' plan is already showing, and swaps it
+  /// in if the answer is a plan and this is still the current build.
+  Future<void> _askServer(
+    int generation,
+    AiMissionClient client, {
+    required DateTime today,
+    required GameActivityLog activity,
+    required FootCheckRecord? lastFootCheck,
+    required Map<String, DailyGait>? gait,
+  }) async {
+    AiMissionResult result;
+    try {
+      result = await client.plan(
+        today: today,
+        activity: activity,
+        lastFootCheck: lastFootCheck,
+        gaitHistory: gait,
+      );
+    } catch (_) {
+      result = const AiMissionResult.unreachable();
+    }
+    final todayKey = gaitDateKey(today);
+    // Replaced by a newer build or closed meanwhile (the consent changed, the
+    // sheet went away): this answer is stale, so nothing is saved or marked.
+    if (!_current(generation)) return;
+    if (ref.read(aiMissionsConsentProvider).value != AiMissionsConsent.yes) {
+      return;
+    }
+
+    final plan = result.plan;
+    if (plan != null && plan.day == todayKey) {
+      await _trySave(LocalSavableKey.dailyMissionPlan, plan.encode());
+      if (_current(generation)) state = AsyncData(plan);
+    } else if (result.outcome != AiMissionOutcome.unreachable) {
+      await _trySave(LocalSavableKey.aiMissionsFailedDay, todayKey);
+    }
   }
 }
 

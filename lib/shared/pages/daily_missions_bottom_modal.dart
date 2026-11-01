@@ -129,11 +129,12 @@ class _DailyMissionsSheetState extends ConsumerState<DailyMissionsSheet> {
     return _Mission(
       icon: _missionIcons[id] ?? LucideIcons.circle,
       title: title,
-      subtitle:
-          item.reason ??
-          (done
-              ? 'mission_done'.tr()
-              : (isCheck
+      // A finished row says so, whatever the plan wrote; the AI's reason is
+      // for the missions still to do.
+      subtitle: done
+          ? 'mission_done'.tr()
+          : (item.reason ??
+                (isCheck
                     ? 'mission_measure_subtitle'.tr()
                     : 'mission_game_subtitle'.tr())),
       completed: done,
