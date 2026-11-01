@@ -92,4 +92,13 @@ abstract class Constants {
   ///
   ///     flutter run --release --dart-define=REAL_GAIT=on
   static const bool realGait = String.fromEnvironment('REAL_GAIT') == 'on';
+
+  /// Whether the daily missions sheet may ask Claude to write its wording.
+  /// Off everywhere, debug builds included: the server function behind it
+  /// (`supabase/functions/daily-missions`) is not deployed and has no key.
+  /// With it off the sheet has no consent prompt, no switch and no AI label,
+  /// and the app never calls the server for missions.
+  ///
+  ///     flutter run --dart-define=AI_MISSIONS=on
+  static const bool aiMissions = String.fromEnvironment('AI_MISSIONS') == 'on';
 }

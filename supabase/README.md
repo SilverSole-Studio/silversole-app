@@ -18,6 +18,8 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 | `migrations/20261031120000_game_saves.sql` | H5 遊戲雲端存檔（2026-10-31）：表 `game_saves`、`game_save_load()`、`game_save_store(rev, data)`；只走 RPC、256 KB 上限、每人限流、rev 比對。測試：`npm run test:saves`、`npm run test:saves-concurrency`。**還沒套用**，要先問 user |
 | `migrations/20261101120000_devices_rls.sql` | 補 `devices`、`user_devices` 的 RLS：`devices` 改成只讀得到自己綁定的裝置，拿掉 `user_devices` 的 INSERT 政策（防止替自己綁別人的 device_id 來讀電量、位置、足壓紀錄）。不用改 App。**2026-10-31 已套用**（`devices_rls`） |
 | `tests/devices_rls_test.mjs` | 11 個案例：只讀自己的裝置、不能直接綁定、heartbeat（service role）照常更新、anon 讀不到；另有一個在「不套這支」的版本證明洞存在。stubs 末段重建了正式庫原本的兩張表與寬鬆政策。`npm run test:devices` |
+| `migrations/20261101130000_daily_mission_plans.sql` | 每日任務 AI 版的表 `daily_mission_plans`（一人一天一列：`status` pending／done／failed、`payload`＝Claude 寫好的文字）。開 RLS、不給任何政策、收回 anon 與 authenticated 的權限，只有 service role 讀寫。**還沒套用**，要先問 user |
+| `functions/daily-missions/` | Edge Function，用 Claude Haiku 5.5 為每日任務寫一句鼓勵話與每個任務的理由。`logic.ts`（純函式，不 import 任何東西：欄位驗證、prompt、輸出驗證、既有列的判斷）、`index.ts`（Deno，只做驗身分、讀列／搶位／接手、呼叫 Claude）、`logic.test.ts`（`npm run test:missions`）、`tests/daily_missions_db_test.mjs`（`npm run test:missions-db`）。**還沒部署**，App 端用開關 `AI_MISSIONS` 關著 |
 | `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
 | `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 
@@ -129,6 +131,30 @@ supabase functions deploy delete-account --project-ref <ref>
 ```
 
 函式自己驗 token，所以有沒有加 `--no-verify-jwt` 都能用。
+
+## Edge Function `daily-missions`（每日任務的 AI 文字，**未部署**）
+
+`functions/daily-missions/`：首頁的每日任務面板，App 把「昨天玩的遊戲與秒數、最近 7 天各遊戲次數、上次健檢是幾天前與結果、（步態開關開時）昨天的步數／步頻／走路分鐘／行動力等級」送來，函式請 Claude Haiku 5.5（`claude-haiku-5-5`）從 11 個任務 id 挑 3 個，寫一句 greeting（≤ 30 字）與每個任務的 reason（≤ 20 字）。App 端的開關是 `--dart-define=AI_MISSIONS=on`，預設關。
+
+- 只收 POST；身分從呼叫者的 JWT 查（寫法同 `delete-account`），不看 body；沒登入回 401。
+- `ANTHROPIC_API_KEY` 沒設：回 `{mode: "fallback", reason: "not_configured"}`（200），**不寫任何資料**。
+- body 只認 `day` 與 `stats` 裡列出的欄位，型別與範圍都檢查（`logic.ts` 的 `validateInput`），其他欄位丟掉；**沒有任何使用者輸入的文字欄位**。slug／stage 只能是 `[a-z0-9_-]`，而且 prompt 裡只寫認得的任務名，不認得的 slug 併成「其他遊戲」。`day` 與伺服器的 UTC 日期相差要在 1 天內。
+- 全站當天（UTC，看 `created_at`）`daily_mission_plans` 已有 ≥ 5000 列：回 `reason: "daily_cap"`（只對還沒有列的人檢查）。
+- 請求本文先看 `Content-Length` 標頭，超過 20000 就回 400、不讀；讀完再量一次。
+- 一人一天最多呼叫一次 Claude：**先讀自己那天的列**（`logic.ts` 的 `classifyRow`）：`done` 回同一份文字、`failed` 回 `failed`、`pending` 不到 60 秒回 `busy`、`pending` 超過 60 秒（上一個請求死掉了）就用條件式 update（`status='pending' and created_at < now() - 60 秒`，並把 `created_at` 改成現在）接手，同時間只有一個請求接得到。**沒有列才**檢查全站上限，再用 `insert ... on conflict do nothing` 搶位，搶到的才呼叫 Claude；沒搶到回 `busy`（App 用規則排任務）。
+- 呼叫 Claude：`client.messages.parse`，`output_config: {effort: "low", format: zodOutputFormat(schema)}`，不送 temperature／top_p／top_k，不用 prefill，逾時 8 秒、不重試。`stop_reason` 為 `refusal`、`parsed_output` 為空、或 `validateOutput` 不合格（不是剛好 3 個不重複 id、超長、含禁用字，清單見下一條）都標 `failed` 回規則版。
+- 模型原文與金鑰資訊不回給客戶端；log 只記錯誤名稱與狀態碼。資料表只存寫好的文字，不存 App 送來的數字。
+- 提示詞要求 greeting ≤ 24 字、reason ≤ 16 字，驗證放寬到 30／20（模型數不準字數）。禁用字：治療、診斷、處方、風險、異常、安全、沒問題、病、跌、復健、預防、退化、失智、改善（提示詞與輸出驗證用同一份清單）。
+- 套件版本釘死：`npm:@anthropic-ai/sdk@1.3.0`（含 `/helpers/zod`）、`npm:zod@4.6.7`（SDK 的 peer dependency 是 `zod ^3.25.0 || ^4.0.0`，這組相容；2026-11-01 用 `npm view` 查的最新版）。`npm:@supabase/supabase-js@2` 沿用 `delete-account` 的寫法。
+- 測試：`cd supabase/tests && npm run test:missions`（Node 24 直接跑 TypeScript，測 `logic.ts`）與 `npm run test:missions-db`（PGlite：RLS 開著且沒有政策、anon／authenticated 沒有任何權限、搶位只有一人拿到、接手過期 pending 剛好動一列）。`index.ts` 沒有在本機執行過，因為這台沒有 Deno。
+
+**部署（每一步都要先問 user，目前一步都還沒做）：**
+
+0. **部署前一定要做**：`deno check supabase/functions/daily-missions/index.ts`（本機沒跑過），以及用**沙盒金鑰**實際呼叫一次（確認 `messages.parse`、`output_config`、`zodOutputFormat` 在釘住的版本上能跑、回來的 `parsed_output` 過得了 `validateOutput`）。
+1. 套 migration `20261101130000_daily_mission_plans.sql`（建議先在 Supabase 分支，再正式庫）。
+2. 設 secret：`supabase secrets set ANTHROPIC_API_KEY=<金鑰> --project-ref <ref>`（金鑰只放 Supabase secret，不進 repo）。
+3. `supabase functions deploy daily-missions --project-ref <ref>`（函式自己驗 token，有沒有 `--no-verify-jwt` 都能用）。
+4. 之後 App 用 `--dart-define=AI_MISSIONS=on` 打包的版本才會問使用者同意並呼叫它。
 
 ## 給菜園與之後功能的保證
 

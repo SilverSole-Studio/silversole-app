@@ -11,6 +11,7 @@ import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
+import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
 
@@ -162,6 +163,14 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
         final a = PlazaBridge.storeArgs(args);
         if (a == null) return const {'ok': false, 'reason': 'bad_data'};
         return ref.read(gameSaveRepositoryProvider).store(a.rev, a.data);
+      },
+    );
+    // A finished round, for the daily missions: same origin rule as the save.
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.gameActivity,
+      callback: (args) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        return recordGameActivity(ref, args);
       },
     );
   }

@@ -63,6 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return GameWebViewPage(
             url: (args['url'] as String?) ?? 'https://example.com',
             title: args['title'] as String?,
+            closeOnLeavePath: args['closeOnLeavePath'] == true,
           );
         },
       ),

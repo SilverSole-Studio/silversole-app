@@ -296,9 +296,6 @@ daily_missions_title,Daily missions,每日任務
 daily_missions_subtitle,{} left today,今天還有 {} 項
 mission_go,Go,去完成
 mission_done,Done,已完成
-mission_balance_title,Complete a balance training,完成一次平衡訓練
-mission_balance_subtitle,Play “Balance Penguin” to finish,玩「重心企鵝」即可達成
-mission_balance_game,Balance Penguin,重心企鵝
 mission_measure_title,Measure foot pressure once,量測一次足壓
 my_devices,My devices,我的裝置
 device_hero_caption,SilverSole Smart Insole · L / R,SilverSole 智慧鞋墊 · 左 / 右
@@ -700,3 +697,25 @@ mobility_change_doubleSupport_down,more time on both feet,雙腳同時著地的�
 mobility_pending,Comparisons start after 3 weeks with at least 3 worn days each · {} of 3 so far,每週至少穿 3 天、累積 3 週後開始跟自己比較，目前 {}／3 週
 mobility_pending_data,Not enough data to compare yet,資料還不夠，暫時無法比較
 mobility_disclaimer,This record is for health promotion and exercise participation and is not a medical diagnosis,本紀錄為健康促進與運動參與紀錄，非醫療診斷
+mission_play_walkgroup,Play a round of Group Walk,玩一局揪團健走
+mission_play_bike,Play a round of Chu Bike,玩一局粗哥腳踏車
+mission_play_canoe,Play a round of Chu Canoe,玩一局粗哥獨木舟
+mission_play_fish,Play a round of Chu Fish Catch,玩一局粗哥接魚
+mission_play_ski,Play a round of Chu Ski,玩一局粗哥滑雪
+mission_play_hop,Play a round of Chu Hop,玩一局粗哥跑跑
+mission_play_rhythm,Play a round of Rhythm Steps,玩一局節奏踩踩
+mission_play_quiz,Play a round of Foot Quiz,玩一局足底知識王
+mission_play_pool,Play a round of Pool,玩一局撞球
+mission_play_laojie,Play one stage of Step into Old Street,踩進老街玩一關
+mission_game_subtitle,Finish one round and it counts,玩完一局就算完成
+ai_missions_badge,AI picks,AI 推薦
+ai_missions_toggle,Let AI plan my missions,AI 幫我排任務
+ai_missions_consent_title,Let AI plan your missions?,讓 AI 幫你排任務？
+ai_missions_consent_intro,AI picks today's missions and writes a few lines about them. To do that the app sends these numbers:,AI 會幫你挑今天的任務，再寫幾句話。為了這樣，會送出這些數字：
+ai_missions_consent_item_games,What games you played yesterday and for how many seconds,昨天玩了哪些遊戲、各玩了幾秒
+ai_missions_consent_item_plays,How many times you played each game in the last 7 days,最近 7 天各款遊戲玩了幾次
+ai_missions_consent_item_check,How many days ago your last foot check was and its result,最近一次足壓健檢是幾天前、結果如何
+ai_missions_consent_item_gait,Only when gait tracking is on: yesterday's steps and cadence and walking minutes and mobility grade,只有步態紀錄開著時：昨天的步數、步頻、走路分鐘數和行動力等級
+ai_missions_consent_outro,These numbers go to the Dongyu Tech server and then to Claude from Anthropic to write the text. Your name and account are not handed to Claude. Dongyu Tech keeps only the text the AI wrote for that day and not these raw numbers. You can turn this off any time at the bottom of the missions sheet.,這些數字會送到動域科技的伺服器，再交給 Anthropic 的 Claude 產生文字。你的姓名和帳號不會交給 Claude。動域科技只會留下 AI 寫好的當天文字，不會保存這些原始數字。隨時可以在任務面板最下面關掉。
+ai_missions_consent_yes,Agree,同意
+ai_missions_consent_no,Not now,先不要

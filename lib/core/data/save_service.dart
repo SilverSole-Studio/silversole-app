@@ -13,7 +13,11 @@ enum LocalSavableKey {
   pairedDevices('paired_devices'),
   firmwareDevMode('firmware_dev_mode'),
   lastFootCheck('last_foot_check'),
-  gaitHistory('gait_history');
+  gaitHistory('gait_history'),
+  gameActivity('game_activity'),
+  dailyMissionPlan('daily_mission_plan'),
+  aiMissionsConsent('ai_missions_consent'),
+  aiMissionsFailedDay('ai_missions_failed_day');
 
   const LocalSavableKey(this.value);
 

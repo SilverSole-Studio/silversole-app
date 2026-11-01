@@ -16,6 +16,11 @@ import 'dart:convert';
 /// blob, `callHandler('gameSaveStore', {rev, data})` writes it (see
 /// `GameSaveRepository` for the answers).
 ///
+/// Activity: `callHandler('gameActivity', {slug, stage?, seconds})` is what a
+/// game sends when a round ends; the app keeps it for the daily missions and
+/// resolves to `{ok: true}`, or `{ok: false}` for a report of the wrong shape
+/// (see `GameActivity.tryParse`).
+///
 /// Only the games' own site is served ([isGameOrigin]): the plaza links out
 /// to other pages in the same web view, and none of them may read the app's
 /// state, open app screens or get the camera.
@@ -24,6 +29,7 @@ abstract final class PlazaBridge {
   static const String appInfo = 'appInfo';
   static const String gameSaveLoad = 'gameSaveLoad';
   static const String gameSaveStore = 'gameSaveStore';
+  static const String gameActivity = 'gameActivity';
 
   /// The `{rev, data}` the page passes to [gameSaveStore], or null when it is
   /// not that shape (the call then answers `bad_data` without a round trip).
@@ -37,6 +43,7 @@ abstract final class PlazaBridge {
     }
     return (rev: rev.toInt(), data: data);
   }
+
   static const String infoEvent = 'silversoleapp';
 
   /// What the plaza needs to know: whether to show the friends building, the
