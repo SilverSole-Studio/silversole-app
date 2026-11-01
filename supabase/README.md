@@ -142,7 +142,7 @@ supabase functions deploy delete-account --project-ref <ref>
 - 全站當天（UTC，看 `created_at`）`daily_mission_plans` 已有 ≥ 5000 列：回 `reason: "daily_cap"`（只對還沒有列的人檢查）。
 - 請求本文先看 `Content-Length` 標頭，超過 20000 就回 400、不讀；讀完再量一次。
 - 一人一天最多呼叫一次 Claude：**先讀自己那天的列**（`logic.ts` 的 `classifyRow`）：`done` 回同一份文字、`failed` 回 `failed`、`pending` 不到 60 秒回 `busy`、`pending` 超過 60 秒（上一個請求死掉了）就用條件式 update（`status='pending' and created_at < now() - 60 秒`，並把 `created_at` 改成現在）接手，同時間只有一個請求接得到。**沒有列才**檢查全站上限，再用 `insert ... on conflict do nothing` 搶位，搶到的才呼叫 Claude；沒搶到回 `busy`（App 用規則排任務）。
-- 呼叫 Claude：`client.messages.parse`，`output_config: {effort: "low", format: zodOutputFormat(schema)}`，不送 temperature／top_p／top_k，不用 prefill，逾時 8 秒、不重試。`stop_reason` 為 `refusal`、`parsed_output` 為空、或 `validateOutput` 不合格（不是剛好 3 個不重複 id、超長、含「治療、診斷、處方、風險、異常、安全、沒問題、病」）都標 `failed` 回規則版。
+- 呼叫 Claude：`client.messages.parse`，`output_config: {effort: "low", format: zodOutputFormat(schema)}`，不送 temperature／top_p／top_k，不用 prefill，逾時 8 秒、不重試。`stop_reason` 為 `refusal`、`parsed_output` 為空、或 `validateOutput` 不合格（不是剛好 3 個不重複 id、超長、含禁用字，清單見下一條）都標 `failed` 回規則版。
 - 模型原文與金鑰資訊不回給客戶端；log 只記錯誤名稱與狀態碼。資料表只存寫好的文字，不存 App 送來的數字。
 - 提示詞要求 greeting ≤ 24 字、reason ≤ 16 字，驗證放寬到 30／20（模型數不準字數）。禁用字：治療、診斷、處方、風險、異常、安全、沒問題、病、跌、復健、預防、退化、失智、改善（提示詞與輸出驗證用同一份清單）。
 - 套件版本釘死：`npm:@anthropic-ai/sdk@1.3.0`（含 `/helpers/zod`）、`npm:zod@4.6.7`（SDK 的 peer dependency 是 `zod ^3.25.0 || ^4.0.0`，這組相容；2026-11-01 用 `npm view` 查的最新版）。`npm:@supabase/supabase-js@2` 沿用 `delete-account` 的寫法。
