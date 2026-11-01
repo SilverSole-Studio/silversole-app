@@ -9,11 +9,23 @@ import 'package:silversole/shared/providers/plaza_bridge.dart';
 
 void main() {
   group('PlazaBridge.info', () {
+    test('passes the subscription flag (no billing yet, test switch only)', () {
+      expect(
+        PlazaBridge.info(friends: false, friendRequests: 0, subscribed: true)['subscription'],
+        {'active': true},
+      );
+      expect(
+        PlazaBridge.info(friends: false, friendRequests: 0)['subscription'],
+        {'active': false},
+      );
+    });
+
     test('friends on: the building shows with its red-dot count', () {
       expect(PlazaBridge.info(friends: true, friendRequests: 2), {
         'features': {'friends': true},
         'friendRequests': 2,
         'systemFontScale': 1.0,
+        'subscription': {'active': false},
       });
     });
 
@@ -33,6 +45,7 @@ void main() {
         'features': {'friends': false},
         'friendRequests': 0,
         'systemFontScale': 1.0,
+        'subscription': {'active': false},
       });
     });
   });

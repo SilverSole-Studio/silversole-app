@@ -719,3 +719,13 @@ ai_missions_consent_item_gait,Only when gait tracking is on: yesterday's steps a
 ai_missions_consent_outro,These numbers go to the Dongyu Tech server and then to Claude from Anthropic to write the text. Your name and account are not handed to Claude. Dongyu Tech keeps only the text the AI wrote for that day and not these raw numbers. You can turn this off any time at the bottom of the missions sheet.,這些數字會送到動域科技的伺服器，再交給 Anthropic 的 Claude 產生文字。你的姓名和帳號不會交給 Claude。動域科技只會留下 AI 寫好的當天文字，不會保存這些原始數字。隨時可以在任務面板最下面關掉。
 ai_missions_consent_yes,Agree,同意
 ai_missions_consent_no,Not now,先不要
+subscription,Subscription,訂閱
+subscription_plan_name,SilverSole Member,銀足會員
+subscription_price,NT${} / month,每月 {} 元
+subscription_active,Subscribed,已訂閱
+subscription_perks_title,What you get,訂閱可以
+subscription_perk_real_goods,Exchange game coins for real goods at the redeem shop,在兌換站用遊戲金幣換實體獎品
+subscription_perk_more,More member content later,之後的會員內容
+subscription_coming_soon,Coming soon,即將開放
+subscription_notes,Renews monthly and can be cancelled anytime. Game coins are earned only by playing and cannot be bought.,每月自動續訂，隨時可以取消。遊戲金幣只能玩遊戲賺，不能用錢買。
+subscription_test_switch,Test: pretend subscribed,測試用：假裝已訂閱
