@@ -9,7 +9,9 @@ import {
   BANNED_WORDS,
   MISSION_IDS,
   MISSION_NAMES,
+  PENDING_STALE_MS,
   buildPrompt,
+  classifyRow,
   validateInput,
   validateOutput,
 } from './logic.ts';
@@ -260,6 +262,12 @@ test('validateOutput: every banned word is refused, in greeting and reasons', ()
     '安全',
     '沒問題',
     '病',
+    '跌',
+    '復健',
+    '預防',
+    '退化',
+    '失智',
+    '改善',
   ]);
   for (const word of BANNED_WORDS) {
     const g = good();
@@ -311,8 +319,10 @@ test('buildPrompt: the system prompt carries the rules', () => {
   );
   assert.ok(system.includes('繁體中文'));
   assert.ok(system.includes('臺灣'));
-  assert.ok(system.includes('30'));
-  assert.ok(system.includes('20'));
+  // The model is asked for less than the validator accepts (30 / 20).
+  assert.ok(system.includes('greeting 最多 24 個字'));
+  assert.ok(system.includes('reason 最多 16 個字'));
+  assert.ok(!system.includes('30'));
   assert.ok(system.includes('踩進老街'));
   for (const word of BANNED_WORDS) assert.ok(system.includes(`「${word}」`), word);
 });
@@ -384,4 +394,42 @@ test('buildPrompt: no record, and slugs the server does not know stay out', () =
   assert.ok(empty.ok);
   const p = buildPrompt(empty.value.stats, empty.value.day).user;
   assert.ok(p.includes('昨天玩過的遊戲：沒有紀錄'));
+});
+
+// ------------------------------------------------------------------ classifyRow
+
+test('classifyRow: done hands the payload back, a bad payload falls back', () => {
+  const now = Date.parse('2026-11-01T10:00:00Z');
+  const created_at = '2026-11-01T09:00:00Z';
+  const ok = classifyRow({ status: 'done', payload: good(), created_at }, now);
+  assert.equal(ok.kind, 'ai');
+  assert.equal(ok.output.missions.length, 3);
+  assert.equal(classifyRow({ status: 'done', payload: null, created_at }, now).kind, 'failed');
+  assert.equal(classifyRow({ status: 'done', payload: { greeting: 'x' }, created_at }, now).kind, 'failed');
+});
+
+test('classifyRow: failed and unknown statuses fall back', () => {
+  const now = Date.parse('2026-11-01T10:00:00Z');
+  for (const status of ['failed', 'weird', '']) {
+    assert.equal(
+      classifyRow({ status, payload: null, created_at: '2026-11-01T09:59:59Z' }, now).kind,
+      'failed',
+    );
+  }
+});
+
+test('classifyRow: pending is busy until it is a minute old, then stale', () => {
+  const now = Date.parse('2026-11-01T10:00:00Z');
+  const at = (msAgo: number) => new Date(now - msAgo).toISOString();
+  const pending = (msAgo: number) =>
+    classifyRow({ status: 'pending', payload: null, created_at: at(msAgo) }, now).kind;
+  assert.equal(pending(0), 'busy');
+  assert.equal(pending(PENDING_STALE_MS - 1), 'busy');
+  assert.equal(pending(PENDING_STALE_MS), 'stale');
+  assert.equal(pending(60 * 60 * 1000), 'stale');
+  // A time that cannot be read never means "take over".
+  assert.equal(
+    classifyRow({ status: 'pending', payload: null, created_at: 'not a date' }, now).kind,
+    'busy',
+  );
 });

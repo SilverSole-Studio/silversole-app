@@ -16,16 +16,21 @@
 //   500 { error }   the function itself is not set up
 //
 // NOT DEPLOYED. Deploying needs, from the owner: the ANTHROPIC_API_KEY secret,
-// the `daily_mission_plans` migration, and `supabase functions deploy`.
-// See supabase/README.md.
+// the `daily_mission_plans` migration, `deno check`, one call against a
+// sandbox key, and `supabase functions deploy`. See supabase/README.md.
 //
 // Order matters:
 //   1. Who is asking comes from the caller's JWT, never from the body.
-//   2. No ANTHROPIC_API_KEY → fallback, before anything is written.
-//   3. The body is checked (logic.ts: only listed fields, ranges, no free text).
-//   4. A site-wide daily cap on rows.
-//   5. Claim the (user, day) row with insert-on-conflict-do-nothing. Only the
-//      request that wins the insert may call Claude, so one person costs at
+//   2. No ANTHROPIC_API_KEY → fallback, before anything is read or written.
+//   3. The body is checked (Content-Length first, then logic.ts: only listed
+//      fields, ranges, no free text).
+//   4. The caller's own row for the day comes first (logic.ts classifyRow):
+//      done → its payload; failed → fallback; pending for under a minute →
+//      busy; pending for longer → the caller takes it over with a conditional
+//      update (only one of several racing takeovers can match).
+//   5. Only when there is no row: the site-wide daily cap, then the claim
+//      insert (INSERT ... ON CONFLICT DO NOTHING). Only the request that wins
+//      the claim, or the takeover, may call Claude, so one person costs at
 //      most one call a day however many requests arrive at once.
 //   6. Call Claude. A refusal, an empty or invalid answer marks the row failed.
 //   7. Nothing from the model's raw text or from the key ever leaves this
@@ -34,14 +39,16 @@
 // Mobile only, so no CORS. The function checks the token itself.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import Anthropic from 'npm:@anthropic-ai/sdk';
-import { zodOutputFormat } from 'npm:@anthropic-ai/sdk/helpers/zod';
-import { z } from 'npm:zod';
+import Anthropic from 'npm:@anthropic-ai/sdk@1.3.0';
+import { zodOutputFormat } from 'npm:@anthropic-ai/sdk@1.3.0/helpers/zod';
+import { z } from 'npm:zod@4.6.7';
 
 import {
   MAX_BODY_CHARS,
   MISSION_IDS,
+  PENDING_STALE_MS,
   buildPrompt,
+  classifyRow,
   validateInput,
   validateOutput,
 } from './logic.ts';
@@ -77,7 +84,22 @@ function startOfUtcDay(): string {
   ).toISOString();
 }
 
+function logError(what: string, e: unknown): void {
+  // An error's message can quote the request; log only what it is.
+  const status = (e as { status?: number } | null)?.status;
+  console.error(`daily-missions: ${what}: ${(e as Error)?.name ?? 'Error'} ${status ?? ''}`.trim());
+}
+
 Deno.serve(async (req: Request) => {
+  try {
+    return await handle(req);
+  } catch (e) {
+    logError('unhandled', e);
+    return json({ error: 'internal' }, 500);
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   // 1. Who is asking.
@@ -101,7 +123,11 @@ Deno.serve(async (req: Request) => {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) return fallback('not_configured');
 
-  // 3. The body.
+  // 3. The body: the declared size first, so a huge one is never read.
+  const declared = Number(req.headers.get('Content-Length'));
+  if (Number.isFinite(declared) && declared > MAX_BODY_CHARS) {
+    return json({ error: 'bad_request' }, 400);
+  }
   let raw: unknown;
   try {
     const text = await req.text();
@@ -115,55 +141,80 @@ Deno.serve(async (req: Request) => {
   const { day, stats } = input.value;
   const userId = user.id;
 
-  // 4. Site-wide cap for today.
-  const { count, error: countError } = await admin
+  // 4. The caller's own row first.
+  const { data: row, error: readError } = await admin
     .from(TABLE)
-    .select('user_id', { count: 'exact', head: true })
-    .gte('created_at', startOfUtcDay());
-  if (countError) {
-    console.error(`daily-missions: cap check failed: ${countError.code ?? 'error'}`);
+    .select('status, payload, created_at')
+    .eq('user_id', userId)
+    .eq('day', day)
+    .maybeSingle();
+  if (readError) {
+    console.error(`daily-missions: read failed: ${readError.code ?? 'error'}`);
     return fallback('error');
   }
-  if ((count ?? 0) >= DAILY_CAP) return fallback('daily_cap');
 
-  // 5. Claim the row. With ignoreDuplicates this is INSERT ... ON CONFLICT DO
-  //    NOTHING and the response holds only the rows that were really inserted.
-  const { data: claimed, error: claimError } = await admin
-    .from(TABLE)
-    .upsert({ user_id: userId, day, status: 'pending' }, {
-      onConflict: 'user_id,day',
-      ignoreDuplicates: true,
-    })
-    .select('user_id');
-  if (claimError) {
-    console.error(`daily-missions: claim failed: ${claimError.code ?? 'error'}`);
-    return fallback('error');
-  }
-  if (!claimed || claimed.length === 0) {
-    // Someone (usually the same person, a moment ago) got there first.
-    const { data: row, error: readError } = await admin
+  if (row) {
+    const verdict = classifyRow(row, Date.now());
+    if (verdict.kind === 'ai') return json({ mode: 'ai', ...verdict.output }, 200);
+    if (verdict.kind === 'failed') return fallback('failed');
+    if (verdict.kind === 'busy') return fallback('busy');
+    // Stale pending: take it over. Setting created_at to now means a second
+    // request racing for the same takeover no longer matches the condition.
+    const { data: taken, error: takeError } = await admin
       .from(TABLE)
-      .select('status, payload')
+      .update({ created_at: new Date().toISOString() })
       .eq('user_id', userId)
       .eq('day', day)
-      .maybeSingle();
-    if (readError || !row) return fallback('error');
-    if (row.status === 'done') {
-      const saved = validateOutput(row.payload);
-      if (saved) return json({ mode: 'ai', ...saved }, 200);
-      return fallback('failed');
+      .eq('status', 'pending')
+      .lt('created_at', new Date(Date.now() - PENDING_STALE_MS).toISOString())
+      .select('user_id');
+    if (takeError) {
+      console.error(`daily-missions: takeover failed: ${takeError.code ?? 'error'}`);
+      return fallback('error');
     }
-    return fallback(row.status === 'pending' ? 'busy' : 'failed');
+    if (!taken || taken.length !== 1) return fallback('busy');
+  } else {
+    // 5. No row yet: the site-wide cap, then the claim. With ignoreDuplicates
+    //    this is INSERT ... ON CONFLICT DO NOTHING and the response holds only
+    //    the rows that were really inserted.
+    const { count, error: countError } = await admin
+      .from(TABLE)
+      .select('user_id', { count: 'exact', head: true })
+      .gte('created_at', startOfUtcDay());
+    if (countError) {
+      console.error(`daily-missions: cap check failed: ${countError.code ?? 'error'}`);
+      return fallback('error');
+    }
+    if ((count ?? 0) >= DAILY_CAP) return fallback('daily_cap');
+
+    const { data: claimed, error: claimError } = await admin
+      .from(TABLE)
+      .upsert({ user_id: userId, day, status: 'pending' }, {
+        onConflict: 'user_id,day',
+        ignoreDuplicates: true,
+      })
+      .select('user_id');
+    if (claimError) {
+      console.error(`daily-missions: claim failed: ${claimError.code ?? 'error'}`);
+      return fallback('error');
+    }
+    // Lost the race to a request that came in between the read and the insert.
+    if (!claimed || claimed.length === 0) return fallback('busy');
   }
 
-  // 6. Ask Claude. Whatever happens next, the row must leave "pending".
-  const finish = async (status: 'done' | 'failed', payload: unknown) => {
-    const { error } = await admin
-      .from(TABLE)
-      .update({ status, payload: payload ?? null })
-      .eq('user_id', userId)
-      .eq('day', day);
-    if (error) console.error(`daily-missions: update failed: ${error.code ?? 'error'}`);
+  // 6. Ask Claude. Whatever happens next, the row must leave "pending", and a
+  //    database error while saying so must not become a 500.
+  const finish = async (status: 'done' | 'failed', payload: unknown): Promise<void> => {
+    try {
+      const { error } = await admin
+        .from(TABLE)
+        .update({ status, payload: payload ?? null })
+        .eq('user_id', userId)
+        .eq('day', day);
+      if (error) console.error(`daily-missions: update failed: ${error.code ?? 'error'}`);
+    } catch (e) {
+      logError('update threw', e);
+    }
   };
 
   try {
@@ -189,10 +240,8 @@ Deno.serve(async (req: Request) => {
     await finish('done', checked);
     return json({ mode: 'ai', ...checked }, 200);
   } catch (e) {
-    // The error's message can quote the request; log only what it is.
-    const status = (e as { status?: number } | null)?.status;
-    console.error(`daily-missions: claude call failed: ${(e as Error)?.name ?? 'Error'} ${status ?? ''}`);
+    logError('claude call failed', e);
     await finish('failed', null);
     return fallback('failed');
   }
-});
+}

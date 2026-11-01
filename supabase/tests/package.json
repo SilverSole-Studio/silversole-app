@@ -8,7 +8,8 @@
     "test:devices": "node --test --test-concurrency=1 devices_rls_test.mjs",
     "test:saves": "node --test --test-concurrency=1 game_saves_test.mjs",
     "test:saves-concurrency": "node --test --test-concurrency=1 game_saves_concurrency_test.mjs",
-    "test:missions": "node --test ../functions/daily-missions/logic.test.ts"
+    "test:missions": "node --test ../functions/daily-missions/logic.test.ts",
+    "test:missions-db": "node --test --test-concurrency=1 daily_missions_db_test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
