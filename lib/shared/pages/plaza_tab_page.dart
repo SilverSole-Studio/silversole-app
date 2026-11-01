@@ -14,6 +14,7 @@ import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
+import 'package:silversole/shared/providers/subscription_provider.dart';
 
 /// Games tab: the H5 「粗哥廣場」 fills the whole tab instead of a card list.
 ///
@@ -69,6 +70,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       accountId: user?.uuid,
       accountEmail: user?.email,
       systemFontScale: _systemFontScale,
+      subscribed: ref.read(subscriptionActiveProvider),
     );
   }
 
@@ -182,6 +184,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     }
     // Sign in / out while the tab is up: tell the page who it is now.
     ref.listen(authUserProvider, (_, _) => _publishAppInfo());
+    ref.listen(subscriptionActiveProvider, (_, _) => _publishAppInfo());
 
     return PopScope(
       canPop: !_canGoBack,

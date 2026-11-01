@@ -10,6 +10,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
 import 'package:silversole/shared/widgets/privacy_policy_link.dart';
@@ -139,7 +140,18 @@ class _PersonPageState extends ConsumerState<PersonPage> {
           )
         : null;
 
+    final subscribed = ref.watch(subscriptionActiveProvider);
     final accountSettingList = [
+      // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
+      ListTileData.normal(
+        title: 'subscription'.tr(),
+        subtitle: subscribed
+            ? 'subscription_active'.tr()
+            : 'subscription_price'.tr(args: ['$kSubscriptionMonthlyPrice']),
+        icon: LucideIcons.crown,
+        onClick: () => context.push('/subscription'),
+        trailing: true,
+      ),
       ListTileData.normal(
         title: 'sign_in'.tr(),
         icon: LucideIcons.logIn,

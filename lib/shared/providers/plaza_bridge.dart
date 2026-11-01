@@ -65,12 +65,15 @@ abstract final class PlazaBridge {
     String? accountId,
     String? accountEmail,
     double systemFontScale = 1.0,
+    bool subscribed = false,
   }) => {
     'features': {'friends': friends},
     'friendRequests': friends ? friendRequests : 0,
     if (accountId != null && accountId.isNotEmpty)
       'account': {'id': accountId, 'username': usernameOf(accountEmail)},
     'systemFontScale': systemFontScale,
+    // 2026-11-01：訂閱（還沒接金流，測試開關）；遊戲兌換站的實物分頁看這個
+    'subscription': {'active': subscribed},
   };
 
   /// The part of [email] before the first `@`, or '' when there is none.

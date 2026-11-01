@@ -17,7 +17,8 @@ enum LocalSavableKey {
   gameActivity('game_activity'),
   dailyMissionPlan('daily_mission_plan'),
   aiMissionsConsent('ai_missions_consent'),
-  aiMissionsFailedDay('ai_missions_failed_day');
+  aiMissionsFailedDay('ai_missions_failed_day'),
+  fakeSubscription('fake_subscription');
 
   const LocalSavableKey(this.value);
 
