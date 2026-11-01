@@ -49,7 +49,11 @@ void main() {
           path: '/game-webview',
           builder: (_, state) {
             final extra = state.extra as Map;
-            return Scaffold(body: Text('at game ${extra['url']}'));
+            return Scaffold(
+              body: Text(
+                'at game ${extra['url']} close=${extra['closeOnLeavePath']}',
+              ),
+            );
           },
         ),
       ],
@@ -154,7 +158,11 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Go'));
     await tester.pumpAndSettle();
     final path = MissionCatalog.gamePath(games.last, DateTime.now());
-    expect(find.text('at game ${Constants.gameUrl}$path'), findsOneWidget);
+    // A mission's game closes itself when it tries to leave its own path.
+    expect(
+      find.text('at game ${Constants.gameUrl}$path close=true'),
+      findsOneWidget,
+    );
 
     // Back home the sheet reopens with the same plan, not a new draw.
     router.pop();

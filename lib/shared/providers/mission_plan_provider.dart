@@ -9,6 +9,16 @@ import 'package:silversole/core/missions/rule_planner.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 
+/// [loadLocalValue], or null when the phone's storage cannot be read: the
+/// plan is then made from what is left rather than not at all.
+Future<String?> _tryLoad(LocalSavableKey key) async {
+  try {
+    return await loadLocalValue(key);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Today's missions: the plan saved for today, or — the first time the sheet
 /// opens that day — one made by [planByRules] and saved.
 ///
@@ -17,24 +27,36 @@ import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 /// record would think the wearer never played or never checked, and then stay
 /// that way all day.
 ///
+/// Storage that cannot be read or written never leaves the sheet without
+/// missions: unreadable parts count as empty, and a plan that could not be
+/// saved is still returned (the next opening makes it again).
+///
+/// A saved plan with fewer than [missionsPerDay] missions the app still knows
+/// (the catalog changed since) is made again.
+///
 /// Disposed with the sheet, so the next opening reads the clock again.
 class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
   @override
   Future<MissionPlan> build() async {
     final today = clock.now();
     final saved = MissionPlan.tryDecode(
-      await loadLocalValue(LocalSavableKey.dailyMissionPlan),
+      await _tryLoad(LocalSavableKey.dailyMissionPlan),
     );
-    if (saved != null && saved.day == gaitDateKey(today)) return saved;
+    if (saved != null &&
+        saved.day == gaitDateKey(today) &&
+        saved.items.length >= missionsPerDay) {
+      return saved;
+    }
 
     final activity = GameActivityLog.decode(
-      await loadLocalValue(LocalSavableKey.gameActivity),
+      await _tryLoad(LocalSavableKey.gameActivity),
+      today: today,
     );
     final lastFootCheck = FootCheckRecord.tryDecode(
-      await loadLocalValue(LocalSavableKey.lastFootCheck),
+      await _tryLoad(LocalSavableKey.lastFootCheck),
     );
     final gait = ref.read(realGaitEnabledProvider)
-        ? decodeGaitHistory(await loadLocalValue(LocalSavableKey.gaitHistory))
+        ? decodeGaitHistory(await _tryLoad(LocalSavableKey.gaitHistory))
         : null;
     final plan = planByRules(
       today: today,
@@ -42,7 +64,11 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
       lastFootCheck: lastFootCheck,
       gaitHistory: gait,
     );
-    await saveLocalValue(LocalSavableKey.dailyMissionPlan, plan.encode());
+    try {
+      await saveLocalValue(LocalSavableKey.dailyMissionPlan, plan.encode());
+    } catch (_) {
+      // Not saved: this plan is still the one shown.
+    }
     return plan;
   }
 }

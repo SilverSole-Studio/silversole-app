@@ -71,7 +71,7 @@ void main() {
           played('hop', 1),
           played('rhythm', 2),
           played('quiz', 3), // not lately: three days ago
-        ]),
+        ], today: today),
         lastFootCheck: checkedDaysAgo(1),
       );
       expect(ids(plan), ['quiz', 'pool', 'laojie']);
@@ -83,7 +83,7 @@ void main() {
         activity: const GameActivityLog().addAll([
           for (final id in MissionCatalog.gameIds)
             played(id, const ['bike', 'canoe', 'fish'].contains(id) ? 2 : 1),
-        ]),
+        ], today: today),
         lastFootCheck: checkedDaysAgo(1),
       );
       // Two days ago, in the order the rotation reaches them.
@@ -99,7 +99,7 @@ void main() {
         ];
         final plan = planByRules(
           today: today,
-          activity: const GameActivityLog().addAll(lately),
+          activity: const GameActivityLog().addAll(lately, today: today),
           lastFootCheck: checkedDaysAgo(1),
         );
         // ski was not played at all; then rotation order among the two-day-old.
@@ -139,7 +139,7 @@ void main() {
           if (i % 4 == 0) played(MissionCatalog.gameIds[(i + 3) % 10], 0, day),
           if (i % 5 == 0)
             for (final id in MissionCatalog.gameIds) played(id, i % 3, day),
-        ]);
+        ], today: day);
         final plan = planByRules(
           today: day,
           activity: activity,

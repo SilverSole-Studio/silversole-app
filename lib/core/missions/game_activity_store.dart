@@ -8,6 +8,13 @@ const gameActivityDays = 8;
 /// Longest play session the app believes: three hours.
 const maxGameSeconds = 10800;
 
+/// Rounds kept per day: a page that reports in a loop cannot grow the stored
+/// log without bound. The oldest of a day go first.
+const maxGameActivitiesPerDay = 200;
+
+/// A report the same as the one before it, this soon after, is a repeat.
+const _repeatWindow = Duration(seconds: 1);
+
 final _slugPattern = RegExp(r'^[a-z0-9_-]{1,32}$');
 
 /// One finished round of a web game, as the game itself reported it.
@@ -116,34 +123,70 @@ class GameActivityLog {
     }
   }
 
-  /// This log with [activities] added and every day older than
-  /// [gameActivityDays] dropped.
+  /// This log with [activities] added, every day out of the window dropped,
+  /// and each day cut to its newest [maxGameActivitiesPerDay].
   ///
-  /// The window is counted back from the newest day kept, not from the clock:
-  /// a phone clock that is wrong and ahead cannot wipe the real days, and
-  /// the days still age out once newer ones arrive.
-  GameActivityLog addAll(Iterable<GameActivity> activities) {
+  /// The window is the last [gameActivityDays] days counted back from
+  /// [today], but never from further than a week past the newest day already
+  /// in this log (the way `mergeGaitHistory` does it): a phone clock that is
+  /// wrong and ahead cannot wipe the real days, and a stored entry dated far
+  /// in the future cannot either. An added round dated more than a day after
+  /// [today] is not believed and is left out.
+  GameActivityLog addAll(
+    Iterable<GameActivity> activities, {
+    required DateTime today,
+  }) {
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final latestDay = gaitDateKey(
+      DateTime(todayDay.year, todayDay.month, todayDay.day + 1),
+    );
     final merged = {
       for (final e in byDay.entries) e.key: [...e.value],
     };
     for (final a in activities) {
+      if (a.day.compareTo(latestDay) > 0) continue;
       merged.putIfAbsent(a.day, () => []).add(a);
     }
-    if (merged.isEmpty) return const GameActivityLog();
-    final newest = DateTime.parse(
-      merged.keys.reduce((a, b) => a.compareTo(b) >= 0 ? a : b),
-    );
+    var anchor = todayDay;
+    if (byDay.isNotEmpty) {
+      final newest = DateTime.parse(
+        byDay.keys.reduce((a, b) => a.compareTo(b) >= 0 ? a : b),
+      );
+      final limit = DateTime(newest.year, newest.month, newest.day + 7);
+      if (limit.isBefore(anchor)) anchor = limit;
+    }
     final cutoff = gaitDateKey(
-      DateTime(newest.year, newest.month, newest.day - (gameActivityDays - 1)),
+      DateTime(anchor.year, anchor.month, anchor.day - (gameActivityDays - 1)),
     );
     merged.removeWhere((day, _) => day.compareTo(cutoff) < 0);
-    for (final list in merged.values) {
-      list.sort((a, b) => a.at.compareTo(b.at));
+    for (final entry in merged.entries) {
+      final list = entry.value..sort((a, b) => a.at.compareTo(b.at));
+      if (list.length > maxGameActivitiesPerDay) {
+        entry.value.removeRange(0, list.length - maxGameActivitiesPerDay);
+      }
     }
     return GameActivityLog(merged);
   }
 
-  GameActivityLog add(GameActivity activity) => addAll([activity]);
+  GameActivityLog add(GameActivity activity, {required DateTime today}) =>
+      addAll([activity], today: today);
+
+  /// Whether [activity] is the same report (slug, stage, seconds) as the
+  /// latest one kept, less than a second after it: a page that sends twice
+  /// for one round.
+  bool isRepeat(GameActivity activity) {
+    GameActivity? last;
+    for (final a in all) {
+      if (last == null || !a.at.isBefore(last.at)) last = a;
+    }
+    if (last == null) return false;
+    final gap = activity.at.difference(last.at);
+    return last.slug == activity.slug &&
+        last.stage == activity.stage &&
+        last.seconds == activity.seconds &&
+        !gap.isNegative &&
+        gap < _repeatWindow;
+  }
 
   /// The slugs played on [day].
   Set<String> slugsOn(DateTime day) => {
@@ -178,7 +221,7 @@ class GameActivityLog {
 
   /// The stored log; empty for nothing or anything unreadable, and an entry
   /// that cannot be read is skipped rather than failing the rest.
-  static GameActivityLog decode(String? raw) {
+  static GameActivityLog decode(String? raw, {required DateTime today}) {
     if (raw == null) return const GameActivityLog();
     final Object? decoded;
     try {
@@ -190,6 +233,6 @@ class GameActivityLog {
     return const GameActivityLog().addAll([
       for (final item in decoded)
         if (GameActivity.tryFromJson(item) case final a?) a,
-    ]);
+    ], today: today);
   }
 }

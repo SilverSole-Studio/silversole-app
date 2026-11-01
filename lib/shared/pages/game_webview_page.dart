@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
+import 'package:silversole/core/utils/game_path.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
@@ -21,10 +22,21 @@ import 'package:silversole/shared/providers/plaza_bridge.dart';
 /// A game's camera mode asks for the camera from the page; only that, and only
 /// for the game site, is granted — see [answerGamePermission].
 class GameWebViewPage extends ConsumerStatefulWidget {
-  const GameWebViewPage({super.key, required this.url, this.title});
+  const GameWebViewPage({
+    super.key,
+    required this.url,
+    this.title,
+    this.closeOnLeavePath = false,
+  });
 
   final String url;
   final String? title;
+
+  /// Close the page instead of loading a page of this site at a different
+  /// path than [url] (see [staysOnGamePath]). Set for a game opened from a
+  /// daily mission, where the game's own "back to the town" would otherwise
+  /// load the whole town inside the mission's page; off for every other use.
+  final bool closeOnLeavePath;
 
   @override
   ConsumerState<GameWebViewPage> createState() => _GameWebViewPageState();
@@ -34,6 +46,7 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
     with GameSoleForwarding {
   InAppWebViewController? _controller;
   double _progress = 0;
+  bool _closing = false;
 
   @override
   InAppWebViewController? get soleForwardTarget => _controller;
@@ -68,7 +81,27 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
             // The phone's font size must not enlarge the web text a second
             // time; the game has its own large-text mode.
             textZoom: 100,
+            useShouldOverrideUrlLoading: widget.closeOnLeavePath,
           ),
+          shouldOverrideUrlLoading: widget.closeOnLeavePath
+              ? (controller, action) async {
+                  // Only the page itself: frames and sub-requests are left alone.
+                  if (!action.isForMainFrame) {
+                    return NavigationActionPolicy.ALLOW;
+                  }
+                  if (staysOnGamePath(
+                    Uri.tryParse(widget.url),
+                    action.request.url?.uriValue,
+                  )) {
+                    return NavigationActionPolicy.ALLOW;
+                  }
+                  if (!_closing && mounted) {
+                    _closing = true;
+                    Navigator.of(context).maybePop();
+                  }
+                  return NavigationActionPolicy.CANCEL;
+                }
+              : null,
           onWebViewCreated: (controller) {
             _controller = controller;
             // Game → Flutter: the game reports its score here.

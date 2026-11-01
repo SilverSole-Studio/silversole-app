@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/missions/mission_catalog.dart';
 import 'package:silversole/core/missions/mission_plan.dart';
+import 'package:silversole/core/missions/rule_planner.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
@@ -109,6 +110,9 @@ class DailyMissionsSheet extends ConsumerWidget {
                     'url':
                         '${Constants.gameUrl}${MissionCatalog.gamePath(id, today)}',
                     'title': title,
+                    // A finished game's "back to the town" leaves this game:
+                    // close the page and land back on the home screen.
+                    'closeOnLeavePath': true,
                   },
                 );
               }
@@ -118,10 +122,21 @@ class DailyMissionsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final plan = ref.watch(todayMissionPlanProvider).value;
     final footCheck = ref.watch(lastFootCheckProvider);
     final activity = ref.watch(gameActivityProvider);
     final today = clock.now();
+    final saved = ref.watch(todayMissionPlanProvider);
+    // The plan only fails to load if something unexpected broke: show the
+    // rules' pick for today rather than a spinner that never ends.
+    final plan =
+        saved.value ??
+        (saved.hasError
+            ? planByRules(
+                today: today,
+                activity: activity,
+                lastFootCheck: footCheck,
+              )
+            : null);
     final missions = [
       for (final item in plan?.items ?? const <MissionPlanItem>[])
         _mission(

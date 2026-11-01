@@ -2,6 +2,8 @@ import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/core/missions/mission_catalog.dart';
@@ -62,7 +64,7 @@ void main() {
           seconds: 5,
           at: today.subtract(const Duration(days: 1)),
         ),
-      ]);
+      ], today: today);
       bool done(String id) => MissionCatalog.isCompleted(
         id,
         today: today,
@@ -167,6 +169,59 @@ void main() {
       },
     );
 
+    test(
+      'a stored plan with under three known missions is made again',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          LocalSavableKey.dailyMissionPlan.value:
+              '{"day":"2026-11-01","source":"rule","items":'
+              '[{"id":"fish"},{"id":"golf"},{"id":"racer"}]}',
+        });
+        final plan = await withClock(Clock.fixed(today), read);
+        expect(plan.items, hasLength(3));
+        expect(plan.items.every((i) => MissionCatalog.isKnown(i.id)), isTrue);
+        expect(
+          MissionPlan.tryDecode(
+            await loadLocalValue(LocalSavableKey.dailyMissionPlan),
+          ),
+          plan,
+        );
+      },
+    );
+
+    test('a stored plan of three known missions is kept as it is', () async {
+      SharedPreferences.setMockInitialValues({
+        LocalSavableKey.dailyMissionPlan.value:
+            '{"day":"2026-11-01","source":"ai","greeting":"hi","items":'
+            '[{"id":"fish"},{"id":"quiz"},{"id":"pool"}]}',
+      });
+      final plan = await withClock(Clock.fixed(today), read);
+      expect([for (final i in plan.items) i.id], ['fish', 'quiz', 'pool']);
+      expect(plan.greeting, 'hi');
+    });
+
+    test('storage that cannot be read still gives a plan', () async {
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance = _BrokenStore(
+        failReads: true,
+        failWrites: true,
+      );
+      final plan = await withClock(Clock.fixed(today), read);
+      expect(plan.items, hasLength(3));
+      expect(plan.items.first.id, MissionCatalog.footCheck);
+    });
+
+    test('a plan that cannot be saved is still the one returned', () async {
+      SharedPreferences.resetStatic();
+      SharedPreferencesStorePlatform.instance = _BrokenStore(
+        failReads: false,
+        failWrites: true,
+      );
+      final plan = await withClock(Clock.fixed(today), read);
+      expect(plan.items, hasLength(3));
+      expect(plan.day, '2026-11-01');
+    });
+
     test('a new day plans again', () async {
       final first = await withClock(Clock.fixed(today), read);
       final next = await withClock(
@@ -192,6 +247,7 @@ void main() {
                   seconds: 9,
                   at: DateTime(2026, 10, 31),
                 ),
+                today: today,
               )
               .encode(),
         });
@@ -201,4 +257,27 @@ void main() {
       },
     );
   });
+}
+
+/// A phone store that fails: for a broken or full disk.
+class _BrokenStore extends SharedPreferencesStorePlatform {
+  _BrokenStore({required this.failReads, required this.failWrites});
+
+  final bool failReads;
+  final bool failWrites;
+
+  @override
+  Future<bool> clear() async => false;
+
+  @override
+  Future<Map<String, Object>> getAll() async =>
+      failReads ? throw Exception('unreadable') : {};
+
+  @override
+  Future<bool> remove(String key) async =>
+      failWrites ? throw Exception('disk full') : true;
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async =>
+      failWrites ? throw Exception('disk full') : true;
 }

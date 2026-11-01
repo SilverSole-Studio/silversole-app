@@ -1,6 +1,9 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// ignore: depend_on_referenced_packages
+import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
@@ -132,7 +135,7 @@ void main() {
         act('quiz', DateTime(2026, 11, 1, 21), seconds: 100),
         act('fish', DateTime(2026, 10, 30, 12)),
         act('bike', DateTime(2026, 10, 29, 12)),
-      ]);
+      ], today: DateTime(2026, 11, 1, 23));
       final today = DateTime(2026, 11, 1, 23, 59);
       expect(log.byDay.keys.toSet(), {
         '2026-11-01',
@@ -153,7 +156,7 @@ void main() {
       final log = const GameActivityLog().addAll([
         for (var d = 0; d < 12; d++)
           act('fish', DateTime(2026, 11, 12 - d, 12)),
-      ]);
+      ], today: DateTime(2026, 11, 12, 20));
       expect(log.byDay.length, gameActivityDays);
       expect(
         log.byDay.keys.reduce((a, b) => a.compareTo(b) < 0 ? a : b),
@@ -168,7 +171,7 @@ void main() {
         act('fish', DateTime(2026, 10, 25)),
         act('fish', DateTime(2026, 10, 24)),
         act('fish', DateTime(2026, 11, 1)),
-      ]);
+      ], today: DateTime(2026, 11, 1, 20));
       expect(log.byDay.keys.toSet(), {'2026-10-25', '2026-11-01'});
     });
 
@@ -176,21 +179,129 @@ void main() {
       final log = const GameActivityLog().addAll([
         act('laojie', DateTime(2026, 11, 1, 8), stage: 'lantern', seconds: 45),
         act('fish', DateTime(2026, 10, 31, 8)),
-      ]);
-      final back = GameActivityLog.decode(log.encode());
+      ], today: DateTime(2026, 11, 1, 20));
+      final back = GameActivityLog.decode(
+        log.encode(),
+        today: DateTime(2026, 11, 1, 20),
+      );
       expect(back.all.toList(), log.all.toList());
       expect(back.all.first.stage, isNull);
       expect(back.all.last.stage, 'lantern');
     });
 
     test('anything unreadable decodes to an empty log', () {
-      expect(GameActivityLog.decode(null).isEmpty, isTrue);
-      expect(GameActivityLog.decode('nope').isEmpty, isTrue);
-      expect(GameActivityLog.decode('{"a":1}').isEmpty, isTrue);
+      expect(GameActivityLog.decode(null, today: at).isEmpty, isTrue);
+      expect(GameActivityLog.decode('nope', today: at).isEmpty, isTrue);
+      expect(GameActivityLog.decode('{"a":1}', today: at).isEmpty, isTrue);
       final partly = GameActivityLog.decode(
         '[{"slug":"fish","seconds":5,"at":${at.millisecondsSinceEpoch}},{"slug":3}]',
+        today: at,
       );
       expect(partly.all.length, 1);
+    });
+  });
+
+  group('GameActivityLog limits', () {
+    test('a day keeps its newest 200 rounds', () {
+      final day = DateTime(2026, 11, 1);
+      final log = const GameActivityLog().addAll([
+        for (var i = 0; i < 250; i++)
+          act('fish', day.add(Duration(seconds: i * 10)), seconds: i),
+      ], today: DateTime(2026, 11, 1, 23));
+      final kept = log.byDay['2026-11-01']!;
+      expect(kept, hasLength(maxGameActivitiesPerDay));
+      // The oldest 50 went: seconds 0..49 are gone, 50..249 stay.
+      expect(kept.first.seconds, 50);
+      expect(kept.last.seconds, 249);
+      // Another day is not touched by it.
+      final more = log.add(
+        act('quiz', DateTime(2026, 10, 31, 9)),
+        today: DateTime(2026, 11, 1, 23),
+      );
+      expect(more.byDay['2026-10-31'], hasLength(1));
+      expect(more.byDay['2026-11-01'], hasLength(maxGameActivitiesPerDay));
+    });
+
+    test('isRepeat: the same report less than a second after the last', () {
+      final first = act('fish', at, seconds: 60);
+      final log = const GameActivityLog().add(first, today: at);
+      GameActivity again(
+        Duration after, {
+        String slug = 'fish',
+        String? stage,
+        int seconds = 60,
+      }) => GameActivity(
+        slug: slug,
+        stage: stage,
+        seconds: seconds,
+        at: at.add(after),
+      );
+      expect(log.isRepeat(again(const Duration(milliseconds: 999))), isTrue);
+      expect(log.isRepeat(again(Duration.zero)), isTrue);
+      expect(log.isRepeat(again(const Duration(seconds: 1))), isFalse);
+      expect(
+        log.isRepeat(again(const Duration(milliseconds: 100), seconds: 61)),
+        isFalse,
+      );
+      expect(
+        log.isRepeat(again(const Duration(milliseconds: 100), slug: 'quiz')),
+        isFalse,
+      );
+      expect(
+        log.isRepeat(again(const Duration(milliseconds: 100), stage: 'x')),
+        isFalse,
+      );
+      expect(
+        log.isRepeat(again(const Duration(milliseconds: -100))),
+        isFalse,
+        reason: 'not after it',
+      );
+      expect(const GameActivityLog().isRepeat(first), isFalse);
+    });
+
+    test('a stored entry dated 2030 does not wipe the real days', () {
+      final real = [
+        act('fish', DateTime(2026, 10, 30, 9)),
+        act('bike', DateTime(2026, 10, 31, 9)),
+      ];
+      final stored = GameActivityLog({
+        '2030-01-01': [act('hop', DateTime(2030, 1, 1, 9))],
+        for (final a in real) a.day: [a],
+      });
+      final now = DateTime(2026, 11, 1, 10);
+      final after = stored.add(act('quiz', now), today: now);
+      expect(after.playedOn('fish', DateTime(2026, 10, 30)), isTrue);
+      expect(after.playedOn('bike', DateTime(2026, 10, 31)), isTrue);
+      expect(after.playedOn('quiz', now), isTrue, reason: 'today is kept');
+
+      // Loaded from the phone, the entry from the future is not believed
+      // and the real days stay.
+      final raw = GameActivityLog({...stored.byDay}).encode();
+      final loaded = GameActivityLog.decode(raw, today: now);
+      expect(loaded.playedOn('hop', DateTime(2030, 1, 1)), isFalse);
+      expect(loaded.playedOn('fish', DateTime(2026, 10, 30)), isTrue);
+      expect(loaded.playedOn('bike', DateTime(2026, 10, 31)), isTrue);
+    });
+
+    test('a clock that jumped ahead keeps the real days a week more', () {
+      final stored = const GameActivityLog().addAll([
+        act('fish', DateTime(2026, 11, 1, 9)),
+        act('bike', DateTime(2026, 10, 28, 9)),
+      ], today: DateTime(2026, 11, 1, 10));
+      final wrong = DateTime(2030, 6, 1, 10);
+      final after = stored.add(act('quiz', wrong), today: wrong);
+      expect(after.playedOn('fish', DateTime(2026, 11, 1)), isTrue);
+      expect(after.playedOn('quiz', wrong), isTrue);
+      expect(after.playedOn('bike', DateTime(2026, 10, 28)), isFalse);
+    });
+
+    test('a round dated more than a day after today is left out', () {
+      final now = DateTime(2026, 11, 1, 10);
+      final log = const GameActivityLog().addAll([
+        act('fish', DateTime(2026, 11, 2, 9)),
+        act('bike', DateTime(2026, 11, 3, 9)),
+      ], today: now);
+      expect(log.byDay.keys, ['2026-11-02']);
     });
   });
 
@@ -201,14 +312,19 @@ void main() {
       final first = ProviderContainer();
       addTearDown(first.dispose);
       first.read(gameActivityProvider);
-      await first.read(gameActivityProvider.notifier).record(act('fish', at));
+      await withClock(
+        Clock.fixed(at),
+        () => first.read(gameActivityProvider.notifier).record(act('fish', at)),
+      );
       expect(first.read(gameActivityProvider).playedOn('fish', at), isTrue);
 
       final second = ProviderContainer();
       addTearDown(second.dispose);
-      second.read(gameActivityProvider);
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
+      await withClock(Clock.fixed(at), () async {
+        second.read(gameActivityProvider);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+      });
       expect(second.read(gameActivityProvider).playedOn('fish', at), isTrue);
     });
 
@@ -218,20 +334,80 @@ void main() {
         final yesterday = at.subtract(const Duration(days: 1));
         SharedPreferences.setMockInitialValues({
           LocalSavableKey.gameActivity.value: const GameActivityLog()
-              .add(act('bike', yesterday))
+              .add(act('bike', yesterday), today: at)
               .encode(),
         });
         final c = ProviderContainer();
         addTearDown(c.dispose);
-        await c.read(gameActivityProvider.notifier).record(act('quiz', at));
+        await withClock(
+          Clock.fixed(at),
+          () => c.read(gameActivityProvider.notifier).record(act('quiz', at)),
+        );
         final log = c.read(gameActivityProvider);
         expect(log.playedOn('bike', yesterday), isTrue);
         expect(log.playedOn('quiz', at), isTrue);
         final saved = GameActivityLog.decode(
           await loadLocalValue(LocalSavableKey.gameActivity),
+          today: at,
         );
         expect(saved.all.length, 2);
       },
     );
+
+    test('a report repeating the one before it is dropped', () async {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(gameActivityProvider.notifier);
+      await withClock(Clock.fixed(at), () async {
+        expect(await notifier.record(act('fish', at, seconds: 40)), isTrue);
+        expect(
+          await notifier.record(
+            act('fish', at.add(const Duration(milliseconds: 400)), seconds: 40),
+          ),
+          isTrue,
+        );
+        expect(
+          await notifier.record(
+            act('fish', at.add(const Duration(seconds: 2)), seconds: 40),
+          ),
+          isTrue,
+        );
+      });
+      expect(c.read(gameActivityProvider).byDay['2026-11-01'], hasLength(2));
+    });
+
+    test('a save that fails keeps the round and answers false', () async {
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      final notifier = c.read(gameActivityProvider.notifier);
+      await withClock(
+        Clock.fixed(at),
+        () =>
+            notifier.record(act('quiz', at.subtract(const Duration(days: 1)))),
+      );
+      SharedPreferencesStorePlatform.instance = _FailingStore();
+      final ok = await withClock(
+        Clock.fixed(at),
+        () => notifier.record(act('fish', at)),
+      );
+      expect(ok, isFalse);
+      expect(c.read(gameActivityProvider).playedOn('fish', at), isTrue);
+    });
   });
+}
+
+/// A phone store that cannot be written (or cleared): for a full or broken disk.
+class _FailingStore extends SharedPreferencesStorePlatform {
+  @override
+  Future<bool> clear() async => false;
+
+  @override
+  Future<Map<String, Object>> getAll() async => {};
+
+  @override
+  Future<bool> remove(String key) async => throw Exception('disk full');
+
+  @override
+  Future<bool> setValue(String valueType, String key, Object value) async =>
+      throw Exception('disk full');
 }
