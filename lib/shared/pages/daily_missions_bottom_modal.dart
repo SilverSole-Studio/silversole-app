@@ -10,6 +10,7 @@ import 'package:silversole/core/missions/mission_plan.dart';
 import 'package:silversole/core/missions/rule_planner.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/ai_missions_provider.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/providers/mission_plan_provider.dart';
@@ -73,8 +74,48 @@ const _missionIcons = <String, IconData>{
 /// or a round of that very game the game page reported today
 /// ([gameActivityProvider]). There is no walking mission here: the app has no
 /// pedometer of its own to count it with.
-class DailyMissionsSheet extends ConsumerWidget {
+///
+/// Only with `AI_MISSIONS` on ([aiMissionsEnabledProvider]): the first opening
+/// asks whether the wearer agrees to have their numbers sent so Claude can
+/// write the day's wording, the bottom of the sheet has a switch to change
+/// that, and a plan the server wrote shows its greeting, each mission's
+/// reason and an "AI picks" label. With it off none of that exists.
+class DailyMissionsSheet extends ConsumerStatefulWidget {
   const DailyMissionsSheet({super.key});
+
+  @override
+  ConsumerState<DailyMissionsSheet> createState() => _DailyMissionsSheetState();
+}
+
+class _DailyMissionsSheetState extends ConsumerState<DailyMissionsSheet> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _askFirstTime());
+  }
+
+  /// The first time the sheet opens with AI on and no answer yet. Closing the
+  /// dialog any other way than a button leaves it unanswered: asked again next
+  /// time.
+  Future<void> _askFirstTime() async {
+    if (!ref.read(aiMissionsEnabledProvider)) return;
+    final consent = await ref.read(aiMissionsConsentProvider.future);
+    if (!mounted || consent != AiMissionsConsent.unset) return;
+    final agreed = await _askConsent(context);
+    if (agreed == null) return;
+    await ref
+        .read(aiMissionsConsentProvider.notifier)
+        .set(agreed ? AiMissionsConsent.yes : AiMissionsConsent.no);
+  }
+
+  /// The switch at the bottom. Turning it on from anything but a yes asks
+  /// again, so what is sent is always shown before it is agreed to.
+  Future<void> _onSwitch(bool on) async {
+    final notifier = ref.read(aiMissionsConsentProvider.notifier);
+    if (!on) return notifier.set(AiMissionsConsent.no);
+    final agreed = await _askConsent(context);
+    if (agreed == true) await notifier.set(AiMissionsConsent.yes);
+  }
 
   _Mission _mission(
     BuildContext context,
@@ -121,7 +162,7 @@ class DailyMissionsSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final footCheck = ref.watch(lastFootCheckProvider);
     final activity = ref.watch(gameActivityProvider);
     final today = clock.now();
@@ -152,6 +193,12 @@ class DailyMissionsSheet extends ConsumerWidget {
         ),
     ];
     final remaining = missions.where((m) => !m.completed).length;
+    final aiEnabled = ref.watch(aiMissionsEnabledProvider);
+    final consent = aiEnabled
+        ? ref.watch(aiMissionsConsentProvider).value
+        : null;
+    final isAi = plan?.source == MissionPlanSource.ai;
+    final greeting = isAi ? plan?.greeting : null;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -166,11 +213,23 @@ class DailyMissionsSheet extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'daily_missions_title'.tr(),
-                style: context.textTheme.displaySmall,
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AppSpacing.md,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  Text(
+                    'daily_missions_title'.tr(),
+                    style: context.textTheme.displaySmall,
+                  ),
+                  if (isAi) const _AiBadge(),
+                ],
               ),
               const SizedBox(height: AppSpacing.sm),
+              if (greeting != null) ...[
+                Text(greeting, style: context.textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               if (plan != null)
                 Text(
                   'daily_missions_subtitle'.tr(args: ['$remaining']),
@@ -188,9 +247,104 @@ class DailyMissionsSheet extends ConsumerWidget {
                 if (i > 0) const Divider(height: AppSpacing.xl),
                 _MissionRow(mission: missions[i]),
               ],
+              if (aiEnabled) ...[
+                const Divider(height: AppSpacing.xl),
+                SwitchListTile(
+                  key: const Key('ai_missions_switch'),
+                  contentPadding: EdgeInsets.zero,
+                  secondary: Icon(
+                    LucideIcons.sparkles,
+                    color: context.colorScheme.primary,
+                  ),
+                  title: Text('ai_missions_toggle'.tr()),
+                  value: consent == AiMissionsConsent.yes,
+                  onChanged: consent == null ? null : _onSwitch,
+                ),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Asks whether the numbers may be sent. True for agree, false for "not now",
+/// null when the dialog is closed some other way.
+Future<bool?> _askConsent(BuildContext context) {
+  return showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) {
+      const bullets = [
+        'ai_missions_consent_item_games',
+        'ai_missions_consent_item_plays',
+        'ai_missions_consent_item_check',
+        'ai_missions_consent_item_gait',
+      ];
+      return AlertDialog(
+        title: Text('ai_missions_consent_title'.tr()),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('ai_missions_consent_intro'.tr()),
+              const SizedBox(height: AppSpacing.sm),
+              for (final key in bullets)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                  child: Text('・${key.tr()}'),
+                ),
+              const SizedBox(height: AppSpacing.sm),
+              Text('ai_missions_consent_outro'.tr()),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            key: const Key('ai_consent_no'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text('ai_missions_consent_no'.tr()),
+          ),
+          FilledButton(
+            key: const Key('ai_consent_yes'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('ai_missions_consent_yes'.tr()),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+/// The "AI picks" label by the sheet's title: an icon and words, so it does
+/// not rest on a colour or a symbol alone.
+class _AiBadge extends StatelessWidget {
+  const _AiBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: ShapeDecoration(
+        color: color.withValues(alpha: 0.12),
+        shape: const StadiumBorder(),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.sparkles, size: 16, color: color),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            'ai_missions_badge'.tr(),
+            style: context.textTheme.labelLarge?.copyWith(color: color),
+          ),
+        ],
       ),
     );
   }

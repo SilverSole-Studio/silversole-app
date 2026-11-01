@@ -192,7 +192,7 @@ void main() {
     test('a stored plan of three known missions is kept as it is', () async {
       SharedPreferences.setMockInitialValues({
         LocalSavableKey.dailyMissionPlan.value:
-            '{"day":"2026-11-01","source":"ai","greeting":"hi","items":'
+            '{"day":"2026-11-01","source":"rule","greeting":"hi","items":'
             '[{"id":"fish"},{"id":"quiz"},{"id":"pool"}]}',
       });
       final plan = await withClock(Clock.fixed(today), read);

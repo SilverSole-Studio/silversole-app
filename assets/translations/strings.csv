@@ -708,3 +708,14 @@ mission_play_quiz,Play a round of Foot Quiz,玩一局足底知識王
 mission_play_pool,Play a round of Pool,玩一局撞球
 mission_play_laojie,Play one stage of Step into Old Street,踩進老街玩一關
 mission_game_subtitle,Finish one round and it counts,玩完一局就算完成
+ai_missions_badge,AI picks,AI 推薦
+ai_missions_toggle,Let AI plan my missions,AI 幫我排任務
+ai_missions_consent_title,Let AI plan your missions?,讓 AI 幫你排任務？
+ai_missions_consent_intro,AI picks today's missions and writes a few lines about them. To do that the app sends these numbers:,AI 會幫你挑今天的任務，再寫幾句話。為了這樣，會送出這些數字：
+ai_missions_consent_item_games,What games you played yesterday and for how many seconds,昨天玩了哪些遊戲、各玩了幾秒
+ai_missions_consent_item_plays,How many times you played each game in the last 7 days,最近 7 天各款遊戲玩了幾次
+ai_missions_consent_item_check,How many days ago your last foot check was and its result,最近一次足壓健檢是幾天前、結果如何
+ai_missions_consent_item_gait,Only when gait tracking is on: yesterday's steps and cadence and walking minutes and mobility grade,只有步態紀錄開著時：昨天的步數、步頻、走路分鐘數和行動力等級
+ai_missions_consent_outro,These numbers go to the Dongyu Tech server and then to Claude from Anthropic to write the text. Your name is not sent and Dongyu Tech does not keep these raw numbers. You can turn this off any time at the bottom of the missions sheet.,這些數字會送到動域科技的伺服器，再交給 Anthropic 的 Claude 產生文字。不會送出你的姓名，動域科技也不會保存這些原始數字。隨時可以在任務面板最下面關掉。
+ai_missions_consent_yes,Agree,同意
+ai_missions_consent_no,Not now,先不要

@@ -6,6 +6,7 @@ import 'package:silversole/core/gait/gait_history.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/core/missions/mission_plan.dart';
 import 'package:silversole/core/missions/rule_planner.dart';
+import 'package:silversole/shared/providers/ai_missions_provider.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 
@@ -21,6 +22,15 @@ Future<String?> _tryLoad(LocalSavableKey key) async {
 
 /// Today's missions: the plan saved for today, or — the first time the sheet
 /// opens that day — one made by [planByRules] and saved.
+///
+/// With `AI_MISSIONS` on ([aiMissionsEnabledProvider]) and the wearer's
+/// consent ([aiMissionsConsentProvider] is yes), the plan is asked of the
+/// server first ([aiMissionClientProvider]): a plan it wrote (`source: ai`)
+/// is saved and kept like any other. When it cannot write one, the rules'
+/// plan stands and the day is marked, so that day is not asked again. A
+/// change of consent makes the plan again: yes asks for an AI plan, no puts
+/// an AI plan back to the rules' (a rules plan already made that day is kept).
+/// With the flag off none of this runs and the client is never touched.
 ///
 /// The inputs are read from what is stored on the phone rather than from the
 /// providers, which fill in after launch: a plan made from a half-loaded
@@ -39,13 +49,36 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
   @override
   Future<MissionPlan> build() async {
     final today = clock.now();
-    final saved = MissionPlan.tryDecode(
+    final todayKey = gaitDateKey(today);
+    // Everything that is watched or read from the providers comes before the
+    // first await, so a change in any of them makes this plan again.
+    final aiEnabled = ref.watch(aiMissionsEnabledProvider);
+    final consentFuture = aiEnabled
+        ? ref.watch(aiMissionsConsentProvider.future)
+        : null;
+    final realGait = ref.read(realGaitEnabledProvider);
+    final client = aiEnabled ? ref.read(aiMissionClientProvider) : null;
+
+    final wantAi = aiEnabled && await consentFuture! == AiMissionsConsent.yes;
+
+    final decoded = MissionPlan.tryDecode(
       await _tryLoad(LocalSavableKey.dailyMissionPlan),
     );
-    if (saved != null &&
-        saved.day == gaitDateKey(today) &&
-        saved.items.length >= missionsPerDay) {
-      return saved;
+    final saved =
+        decoded != null &&
+            decoded.day == todayKey &&
+            decoded.items.length >= missionsPerDay
+        ? decoded
+        : null;
+    if (saved != null) {
+      final isAi = saved.source == MissionPlanSource.ai;
+      if (isAi == wantAi) return saved;
+      // A rules plan with AI wanted: keep it if the server already failed
+      // today, otherwise ask. An AI plan with AI not wanted: made again below.
+      if (wantAi &&
+          await _tryLoad(LocalSavableKey.aiMissionsFailedDay) == todayKey) {
+        return saved;
+      }
     }
 
     final activity = GameActivityLog.decode(
@@ -55,21 +88,51 @@ class TodayMissionPlanNotifier extends AsyncNotifier<MissionPlan> {
     final lastFootCheck = FootCheckRecord.tryDecode(
       await _tryLoad(LocalSavableKey.lastFootCheck),
     );
-    final gait = ref.read(realGaitEnabledProvider)
+    final gait = realGait
         ? decodeGaitHistory(await _tryLoad(LocalSavableKey.gaitHistory))
         : null;
-    final plan = planByRules(
-      today: today,
-      activity: activity,
-      lastFootCheck: lastFootCheck,
-      gaitHistory: gait,
-    );
-    try {
-      await saveLocalValue(LocalSavableKey.dailyMissionPlan, plan.encode());
-    } catch (_) {
-      // Not saved: this plan is still the one shown.
+
+    var plan = saved != null && saved.source == MissionPlanSource.rule
+        ? saved
+        : planByRules(
+            today: today,
+            activity: activity,
+            lastFootCheck: lastFootCheck,
+            gaitHistory: gait,
+          );
+    if (wantAi) {
+      MissionPlan? written;
+      try {
+        written = await client!.plan(
+          today: today,
+          activity: activity,
+          lastFootCheck: lastFootCheck,
+          gaitHistory: gait,
+        );
+      } catch (_) {
+        written = null;
+      }
+      // Asked again by a newer build (the consent changed meanwhile): this
+      // answer is stale and must not be saved over it.
+      if (!ref.mounted) return plan;
+      if (written != null && written.day == todayKey) {
+        plan = written;
+      } else {
+        await _trySave(LocalSavableKey.aiMissionsFailedDay, todayKey);
+      }
     }
+    if (!ref.mounted) return plan;
+    await _trySave(LocalSavableKey.dailyMissionPlan, plan.encode());
     return plan;
+  }
+}
+
+/// Saves, ignoring a phone that cannot: the plan is still the one shown.
+Future<void> _trySave(LocalSavableKey key, String value) async {
+  try {
+    await saveLocalValue(key, value);
+  } catch (_) {
+    // Not saved.
   }
 }
 
