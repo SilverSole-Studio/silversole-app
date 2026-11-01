@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/constants.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
+import 'package:silversole/shared/providers/plaza_bridge.dart';
 
 /// Full-screen in-app browser for a game URL (flutter_inappwebview v6).
 ///
@@ -74,6 +77,19 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
               callback: (args) {
                 // TODO: persist the score (Supabase). For now just log it.
                 debugPrint('[Game] gameScore: $args');
+              },
+            );
+            // A finished round, for the daily missions (a mission opens its
+            // game in this page): only the games' own site may report one.
+            controller.addJavaScriptHandler(
+              handlerName: PlazaBridge.gameActivity,
+              callback: (args) async {
+                final onGameSite = PlazaBridge.isGameOrigin(
+                  await controller.getUrl(),
+                  Constants.gameUrl,
+                );
+                if (!onGameSite || !mounted) return null;
+                return recordGameActivity(ref, args);
               },
             );
           },

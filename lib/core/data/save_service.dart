@@ -13,7 +13,8 @@ enum LocalSavableKey {
   pairedDevices('paired_devices'),
   firmwareDevMode('firmware_dev_mode'),
   lastFootCheck('last_foot_check'),
-  gaitHistory('gait_history');
+  gaitHistory('gait_history'),
+  gameActivity('game_activity');
 
   const LocalSavableKey(this.value);
 

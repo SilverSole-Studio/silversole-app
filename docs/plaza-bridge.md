@@ -90,3 +90,18 @@ const w = await window.flutter_inappwebview.callHandler("gameSaveStore", { rev: 
 ```
 
 一樣只有遊戲自己的網站（`isGameOrigin`）呼叫得到。遊戲端怎麼打包、什麼時候存、換帳號怎麼辦，見總倉庫 `02_產品/鞋墊_SilverSole/_遊戲雲端存檔_介面_2026-10-31.md`。
+
+## 遊戲紀錄（每日任務用，2026-11-01）
+
+每款遊戲結算時回報一次，App 把它記在手機上（只留最近 8 天），「每日任務」靠它判斷「今天有沒有玩過這款」：
+
+```js
+window.flutter_inappwebview.callHandler("gameActivity", { slug: "fish", stage: "lantern", seconds: 95 });
+// 回傳 { ok: true }；格式不對回 { ok: false }；不是遊戲網站來的頁面回 null
+```
+
+- `slug`：網址 `/game/` 後那段。踩進老街一律用 `laojie`，並多帶 `stage`（關卡代號）。slug、stage 都要符合 `^[a-z0-9_-]{1,32}$`，`stage` 可省略。
+- `seconds`：實際遊玩秒數，0–10800 的整數。
+- 不看回傳值也可以（fire-and-forget）。App 只擋格式，不認得的 slug 照記。
+- 一樣只有遊戲自己的網站（`isGameOrigin`）呼叫得到。**廣場分頁與每日任務開的遊戲頁（`GameWebViewPage`）都有接這個 handler**，所以從哪裡進的遊戲都記得到。
+- 清單與開法見總倉庫 `02_產品/鞋墊_SilverSole/_遊戲slug清單_2026-11-01.md`。
