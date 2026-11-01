@@ -1,11 +1,17 @@
+import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/constants.dart';
+import 'package:silversole/core/missions/mission_catalog.dart';
+import 'package:silversole/core/missions/mission_plan.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
+import 'package:silversole/shared/providers/mission_plan_provider.dart';
 
 /// Opens the "daily missions" sheet (the home FAB's mission action).
 Future<void> showDailyMissionsBottomSheet(BuildContext context) {
@@ -18,8 +24,7 @@ Future<void> showDailyMissionsBottomSheet(BuildContext context) {
   );
 }
 
-/// A single daily mission. There is no mission backend: a mission is only
-/// marked done when the app itself knows it happened.
+/// A single daily mission, as the sheet draws it.
 class _Mission {
   const _Mission({
     required this.icon,
@@ -33,7 +38,7 @@ class _Mission {
   final String title;
   final String subtitle;
 
-  /// Already finished + claimed → shows the "claimed" pill instead of a button.
+  /// Already done → shows the "done" pill instead of a button.
   final bool completed;
 
   /// Tapped from the gray "go" button on an incomplete mission. Null when
@@ -41,58 +46,96 @@ class _Mission {
   final VoidCallback? onGo;
 }
 
+/// The icon of each mission in [MissionCatalog].
+const _missionIcons = <String, IconData>{
+  MissionCatalog.footCheck: LucideIcons.scanLine,
+  'walkgroup': LucideIcons.users,
+  'bike': LucideIcons.bike,
+  'canoe': LucideIcons.ship,
+  'fish': LucideIcons.fish,
+  'ski': LucideIcons.snowflake,
+  'hop': LucideIcons.footprints,
+  'rhythm': LucideIcons.music,
+  'quiz': LucideIcons.circleQuestionMark,
+  'pool': LucideIcons.circleDot,
+  MissionCatalog.laojie: LucideIcons.landmark,
+};
+
 /// Bottom-sheet body listing today's missions. Incomplete missions show a gray
 /// "go" button that routes to where the mission is done (no reward amount —
 /// there are no rewards); completed ones show a "done" pill.
 ///
-/// Only missions that lead somewhere real are listed. There is no walking
-/// mission: the app has no pedometer, so it could only show made-up progress.
-/// The foot-pressure mission is done once a foot check finished today
-/// ([lastFootCheckProvider]); the balance game reports nothing back, so that
-/// one always offers "go".
+/// Which missions are listed is today's [MissionPlan]
+/// ([todayMissionPlanProvider]): picked from the wearer's own record the first
+/// time the sheet opens that day, then kept. A mission is done only when the
+/// app itself recorded it: a foot check finished today ([lastFootCheckProvider])
+/// or a round of that very game the game page reported today
+/// ([gameActivityProvider]). There is no walking mission here: the app has no
+/// pedometer of its own to count it with.
 class DailyMissionsSheet extends ConsumerWidget {
   const DailyMissionsSheet({super.key});
 
-  List<_Mission> _missions(BuildContext context, {required bool measured}) => [
-    _Mission(
-      icon: LucideIcons.scale,
-      title: 'mission_balance_title'.tr(),
-      subtitle: 'mission_balance_subtitle'.tr(),
-      // Done by playing the balance game → open it in the webview.
-      onGo: () {
-        final router = GoRouter.of(context);
-        Navigator.of(context).pop();
-        router.push(
-          '/game-webview',
-          extra: {
-            'url': 'https://h5.silversole.dongyu.company/',
-            'title': 'mission_balance_game'.tr(),
-          },
-        );
-      },
-    ),
-    _Mission(
-      icon: LucideIcons.scanLine,
-      title: 'mission_measure_title'.tr(),
-      subtitle: measured
-          ? 'mission_done'.tr()
-          : 'mission_measure_subtitle'.tr(),
-      completed: measured,
-      onGo: measured
+  _Mission _mission(
+    BuildContext context,
+    MissionPlanItem item, {
+    required DateTime today,
+    required bool done,
+  }) {
+    final id = item.id;
+    final isCheck = id == MissionCatalog.footCheck;
+    final title = MissionCatalog.titleKey(id).tr();
+    return _Mission(
+      icon: _missionIcons[id] ?? LucideIcons.circle,
+      title: title,
+      subtitle:
+          item.reason ??
+          (done
+              ? 'mission_done'.tr()
+              : (isCheck
+                    ? 'mission_measure_subtitle'.tr()
+                    : 'mission_game_subtitle'.tr())),
+      completed: done,
+      onGo: done
           ? null
           : () {
               final router = GoRouter.of(context);
               Navigator.of(context).pop();
-              router.push('/foot-check');
+              if (isCheck) {
+                router.push('/foot-check');
+              } else {
+                router.push(
+                  '/game-webview',
+                  extra: {
+                    'url':
+                        '${Constants.gameUrl}${MissionCatalog.gamePath(id, today)}',
+                    'title': title,
+                  },
+                );
+              }
             },
-    ),
-  ];
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final measured =
-        ref.watch(lastFootCheckProvider)?.isOnDay(DateTime.now()) ?? false;
-    final missions = _missions(context, measured: measured);
+    final plan = ref.watch(todayMissionPlanProvider).value;
+    final footCheck = ref.watch(lastFootCheckProvider);
+    final activity = ref.watch(gameActivityProvider);
+    final today = clock.now();
+    final missions = [
+      for (final item in plan?.items ?? const <MissionPlanItem>[])
+        _mission(
+          context,
+          item,
+          today: today,
+          done: MissionCatalog.isCompleted(
+            item.id,
+            today: today,
+            activity: activity,
+            lastFootCheck: footCheck,
+          ),
+        ),
+    ];
     final remaining = missions.where((m) => !m.completed).length;
 
     return SafeArea(
@@ -113,13 +156,19 @@ class DailyMissionsSheet extends ConsumerWidget {
                 style: context.textTheme.displaySmall,
               ),
               const SizedBox(height: AppSpacing.sm),
-              Text(
-                'daily_missions_subtitle'.tr(args: ['$remaining']),
-                style: context.textTheme.bodyLarge?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
+              if (plan != null)
+                Text(
+                  'daily_missions_subtitle'.tr(args: ['$remaining']),
+                  style: context.textTheme.bodyLarge?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
               const SizedBox(height: AppSpacing.xl),
+              if (plan == null)
+                const Padding(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               for (var i = 0; i < missions.length; i++) ...[
                 if (i > 0) const Divider(height: AppSpacing.xl),
                 _MissionRow(mission: missions[i]),

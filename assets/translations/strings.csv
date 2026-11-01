@@ -296,9 +296,6 @@ daily_missions_title,Daily missions,每日任務
 daily_missions_subtitle,{} left today,今天還有 {} 項
 mission_go,Go,去完成
 mission_done,Done,已完成
-mission_balance_title,Complete a balance training,完成一次平衡訓練
-mission_balance_subtitle,Play “Balance Penguin” to finish,玩「重心企鵝」即可達成
-mission_balance_game,Balance Penguin,重心企鵝
 mission_measure_title,Measure foot pressure once,量測一次足壓
 my_devices,My devices,我的裝置
 device_hero_caption,SilverSole Smart Insole · L / R,SilverSole 智慧鞋墊 · 左 / 右
@@ -700,3 +697,14 @@ mobility_change_doubleSupport_down,more time on both feet,雙腳同時著地的�
 mobility_pending,Comparisons start after 3 weeks with at least 3 worn days each · {} of 3 so far,每週至少穿 3 天、累積 3 週後開始跟自己比較，目前 {}／3 週
 mobility_pending_data,Not enough data to compare yet,資料還不夠，暫時無法比較
 mobility_disclaimer,This record is for health promotion and exercise participation and is not a medical diagnosis,本紀錄為健康促進與運動參與紀錄，非醫療診斷
+mission_play_walkgroup,Play a round of Group Walk,玩一局揪團健走
+mission_play_bike,Play a round of Chu Bike,玩一局粗哥腳踏車
+mission_play_canoe,Play a round of Chu Canoe,玩一局粗哥獨木舟
+mission_play_fish,Play a round of Chu Fish Catch,玩一局粗哥接魚
+mission_play_ski,Play a round of Chu Ski,玩一局粗哥滑雪
+mission_play_hop,Play a round of Chu Hop,玩一局粗哥跑跑
+mission_play_rhythm,Play a round of Rhythm Steps,玩一局節奏踩踩
+mission_play_quiz,Play a round of Foot Quiz,玩一局足底知識王
+mission_play_pool,Play a round of Pool,玩一局撞球
+mission_play_laojie,Play one stage of Step into Old Street,踩進老街玩一關
+mission_game_subtitle,Finish one round and it counts,玩完一局就算完成
