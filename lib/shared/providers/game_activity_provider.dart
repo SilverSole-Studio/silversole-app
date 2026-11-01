@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
@@ -47,7 +48,7 @@ Future<Map<String, Object>> recordGameActivity(
   WidgetRef ref,
   List<dynamic> args,
 ) async {
-  final activity = GameActivity.tryParse(args.firstOrNull, DateTime.now());
+  final activity = GameActivity.tryParse(args.firstOrNull, clock.now());
   if (activity == null) return const {'ok': false};
   await ref.read(gameActivityProvider.notifier).record(activity);
   return const {'ok': true};

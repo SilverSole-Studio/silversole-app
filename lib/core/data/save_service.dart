@@ -14,7 +14,8 @@ enum LocalSavableKey {
   firmwareDevMode('firmware_dev_mode'),
   lastFootCheck('last_foot_check'),
   gaitHistory('gait_history'),
-  gameActivity('game_activity');
+  gameActivity('game_activity'),
+  dailyMissionPlan('daily_mission_plan');
 
   const LocalSavableKey(this.value);
 
