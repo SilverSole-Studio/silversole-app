@@ -71,27 +71,33 @@ class _HomePageState extends ConsumerState<HomePage> {
       isMascot ? const AnalyticsPageT2() : const AnalyticsPage(),
       const PersonPage(),
     ];
+    // In a game (not the town hub) the bar goes away so a stray tap mid-game
+    // does not switch tabs; the games have their own way back to town.
+    final hideBar =
+        pages[_page] is PlazaTabPage && ref.watch(plazaInGameProvider);
     return Scaffold(
-      bottomNavigationBar: appNavigationBar(
-        selectedIndex: _page,
-        onDestinationSelected: (index) => setState(() => _page = index),
-        icons: const [
-          Icons.home,
-          LucideIcons.map,
-          // LucideIcons.monitorSmartphone,
-          LucideIcons.gamepad2,
-          Icons.analytics,
-          Icons.settings,
-        ],
-        labels: const [
-          'home',
-          'map',
-          // 'devices',
-          'game',
-          'analytics',
-          'settings',
-        ],
-      ),
+      bottomNavigationBar: hideBar
+          ? null
+          : appNavigationBar(
+              selectedIndex: _page,
+              onDestinationSelected: (index) => setState(() => _page = index),
+              icons: const [
+                Icons.home,
+                LucideIcons.map,
+                // LucideIcons.monitorSmartphone,
+                LucideIcons.gamepad2,
+                Icons.analytics,
+                Icons.settings,
+              ],
+              labels: const [
+                'home',
+                'map',
+                // 'devices',
+                'game',
+                'analytics',
+                'settings',
+              ],
+            ),
       // One tab in the tree at a time. IndexedStack kept every tab mounted,
       // which left the map's Android platform view laid out off-screen;
       // swapping page types under it on a theme switch corrupted the render

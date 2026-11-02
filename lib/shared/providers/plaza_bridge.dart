@@ -95,6 +95,26 @@ abstract final class PlazaBridge {
     return pageUrl.origin == originOf(gameUrl);
   }
 
+  /// The town hub pages (`game/world/`, and `game/plaza/` which forwards to
+  /// it). Everything else on the games' site is a game or a shop.
+  static const hubPaths = ['game/world/', 'game/plaza/'];
+
+  /// Whether [pageUrl] is a game rather than the town hub, so the app can
+  /// hide its bottom navigation bar while it is up (user 2026-11-02: hide it
+  /// in games so a stray tap does not switch tabs). Pages off the games'
+  /// site never count, so the bar is always there to leave them.
+  static bool isInGame(Uri? pageUrl, String gameUrl) {
+    if (!isGameOrigin(pageUrl, gameUrl)) return false;
+    final base = Uri.parse(gameUrl).path;
+    var path = pageUrl!.path;
+    if (!path.startsWith(base)) return false;
+    path = path.substring(base.length);
+    if (!path.startsWith('game/')) return false;
+    path = path.replaceFirst(RegExp(r'index\.html$'), '');
+    if (!path.endsWith('/')) path = '$path/';
+    return path != 'game/' && !hubPaths.contains(path);
+  }
+
   /// JavaScript that publishes [info] as `window.silversoleApp` and fires the
   /// [infoEvent] event with it as `detail`.
   static String publishScript(Map<String, Object> info) =>
