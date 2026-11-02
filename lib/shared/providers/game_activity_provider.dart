@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
+import 'package:silversole/shared/providers/connected_sole_provider.dart';
+import 'package:silversole/shared/providers/diamonds_provider.dart';
 
 /// The game rounds of the last few days, kept on the phone: what the games
 /// report through `gameActivity` (see `PlazaBridge.gameActivity`).
@@ -61,6 +65,15 @@ Future<Map<String, Object>> recordGameActivity(
 ) async {
   final activity = GameActivity.tryParse(args.firstOrNull, clock.now());
   if (activity == null) return const {'ok': false};
+  final repeat = ref.read(gameActivityProvider).isRepeat(activity);
   final saved = await ref.read(gameActivityProvider.notifier).record(activity);
+  // Diamonds: only a round played with a sole connected counts as insole
+  // exercise (a page that reports twice for one round counts once). The
+  // seconds are the game's own word; the server caps what that can earn.
+  if (saved && !repeat && ref.read(connectedSolesProvider).isNotEmpty) {
+    unawaited(
+      ref.read(diamondsProvider.notifier).addExerciseSeconds(activity.seconds),
+    );
+  }
   return {'ok': saved};
 }

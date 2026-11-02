@@ -16,7 +16,13 @@ window.silversoleApp = {
     id: "uuid-of-supabase-user", // Supabase auth 的 user id
     username: "ricky951102"      // 登入 email 的 @ 前面那段；沒有 email 時是 ""
   },
-  systemFontScale: 1.0           // 手機「字體大小」設定的倍率（1.0＝預設，1.3、1.5、2.0…）
+  systemFontScale: 1.0,          // 手機「字體大小」設定的倍率（1.0＝預設，1.3、1.5、2.0…）
+  subscription: { active: true },// 訂閱中嗎：以伺服器為準（見下面「訂閱與鑽石」）
+  diamonds: {                    // 鑽石（2026-11-02）；還沒問到伺服器、沒登入時整個不存在
+    balance: 120,                // 現有鑽石
+    month: 40,                   // 這個月（台灣時間）已經賺到的
+    cap: 300                     // 每月上限
+  }
 };
 ```
 
@@ -105,3 +111,13 @@ window.flutter_inappwebview.callHandler("gameActivity", { slug: "fish", stage: "
 - 不看回傳值也可以（fire-and-forget）。App 只擋格式，不認得的 slug 照記。
 - 一樣只有遊戲自己的網站（`isGameOrigin`）呼叫得到。**廣場分頁與每日任務開的遊戲頁（`GameWebViewPage`）都有接這個 handler**，所以從哪裡進的遊戲都記得到。
 - 清單與開法見總倉庫 `02_產品/鞋墊_SilverSole/_遊戲slug清單_2026-11-01.md`。
+
+## 訂閱與鑽石（2026-11-02）
+
+鑽石只給訂閱中的人，只靠「穿鞋墊運動」賺，只能換實物（金幣照舊只換遊戲內的東西）。數字與設計：總倉庫 `02_產品/鞋墊_SilverSole/_鑽石設計_2026-11-02.md`。帳在伺服器（`supabase/migrations/20261102120000_diamonds.sql`），手機只記「今天動了幾分鐘」。
+
+- **`silversoleApp.subscription.active`**：伺服器上這個帳號的 `subscriptions` 那一列 `active_until >= 今天` 才是 `true`。還沒接金流，由管理者手動開通，做法見 `docs/diamonds-subscription-admin.md`。debug 版與開發者模式的「假裝已訂閱」開關也會讓它變 `true`（只改畫面，伺服器不認）。
+- **`silversoleApp.diamonds`**：`{balance, month, cap}`。**沒有這個欄位＝不在 App 裡、沒登入、或還沒問到伺服器**，遊戲不要顯示餘額（不要當成 0）。數字變了（賺到、重新整理）App 會重送一次 `silversoleapp` 事件。
+- **怎麼賺**：只有遊戲分頁與每日任務開的遊戲頁回報 `gameActivity`、而且當下**鞋墊連線中**的秒數，才累計成「今天的運動分鐘」。累計滿 15 分鐘，App 向伺服器要當天的 10 鑽石；一天一次、每月最多 300、沒訂閱不給。失敗（沒網路、被限流）下次回報或回到廣場時會再試。
+- **遊戲這邊不用做任何事**就會賺到：照舊在結算時呼叫 `gameActivity`。遊戲不能自己改餘額，也沒有扣鑽石的通道；兌換實物還沒開放（伺服器 `diamond_redeem` 目前一律回 `not_open`），兌換站的實物分頁在訂閱中要顯示「即將開放」。
+- 回報的分鐘是手機說的，伺服器沒有原始鞋墊資料，所以最壞情況是有人假報、當月領滿 300 鑽石（約 NT$30）。

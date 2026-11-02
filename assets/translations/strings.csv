@@ -724,8 +724,12 @@ subscription_plan_name,SilverSole Member,銀足會員
 subscription_price,NT${} / month,每月 {} 元
 subscription_active,Subscribed,已訂閱
 subscription_perks_title,What you get,訂閱可以
-subscription_perk_real_goods,Exchange game coins for real goods at the redeem shop,在兌換站用遊戲金幣換實體獎品
+subscription_perk_real_goods,Exchange diamonds for real goods at the redeem shop,在兌換站用鑽石換實體獎品
 subscription_perk_more,More member content later,之後的會員內容
 subscription_coming_soon,Coming soon,即將開放
-subscription_notes,Renews monthly and can be cancelled anytime. Game coins are earned only by playing and cannot be bought.,每月自動續訂，隨時可以取消。遊戲金幣只能玩遊戲賺，不能用錢買。
+subscription_notes,Renews monthly and can be cancelled anytime. Game coins are earned only by playing and diamonds only by moving with the insole; neither can be bought.,每月自動續訂，隨時可以取消。遊戲金幣只能玩遊戲賺，鑽石只能穿鞋墊運動賺，都不能用錢買。
 subscription_test_switch,Test: pretend subscribed,測試用：假裝已訂閱
+diamonds,Diamonds,鑽石
+diamonds_month,This month {} / {},本月 {}／{}
+diamonds_how,Wear the insole and move for 15 minutes a day: +10,每天穿鞋墊動 15 分鐘＋10
+diamonds_kept,Diamonds are kept for 3 months after you cancel.,取消訂閱後鑽石保留 3 個月

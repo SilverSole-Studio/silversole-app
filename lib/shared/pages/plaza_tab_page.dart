@@ -10,6 +10,7 @@ import 'package:silversole/core/game_save/game_save_repository.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/diamonds_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
@@ -77,7 +78,11 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     super.initState();
     // The tab always opens on the town hub: show the bar again.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.read(plazaInGameProvider.notifier).set(false);
+      if (!mounted) return;
+      ref.read(plazaInGameProvider.notifier).set(false);
+      // Fresh diamond balance for the redeem shop (and a retry of today's
+      // payout if an earlier try did not get through).
+      ref.read(diamondsProvider.notifier).refresh();
     });
   }
 
@@ -103,6 +108,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       accountEmail: user?.email,
       systemFontScale: _systemFontScale,
       subscribed: ref.read(subscriptionActiveProvider),
+      diamonds: ref.read(diamondsProvider).balance,
     );
   }
 
@@ -217,6 +223,10 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     // Sign in / out while the tab is up: tell the page who it is now.
     ref.listen(authUserProvider, (_, _) => _publishAppInfo());
     ref.listen(subscriptionActiveProvider, (_, _) => _publishAppInfo());
+    ref.listen(
+      diamondsProvider.select((s) => s.balance),
+      (_, _) => _publishAppInfo(),
+    );
 
     return PopScope(
       canPop: !_canGoBack,

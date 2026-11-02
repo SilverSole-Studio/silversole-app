@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/diamonds/diamond_repository.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
@@ -21,6 +22,29 @@ void main() {
       expect(
         PlazaBridge.info(friends: false, friendRequests: 0)['subscription'],
         {'active': false},
+      );
+    });
+
+    test('passes the diamonds only once the server has answered', () {
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+        ).containsKey('diamonds'),
+        isFalse,
+      );
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+          diamonds: const DiamondBalance(
+            balance: 120,
+            month: 40,
+            cap: 300,
+            subscribed: true,
+          ),
+        )['diamonds'],
+        {'balance': 120, 'month': 40, 'cap': 300},
       );
     });
 
