@@ -38,6 +38,22 @@ class PlazaTabPage extends ConsumerStatefulWidget {
   ConsumerState<PlazaTabPage> createState() => _PlazaTabPageState();
 }
 
+/// Whether the games tab is showing a game rather than the town hub
+/// ([PlazaBridge.isInGame]). [HomePage] hides its bottom navigation bar
+/// while it is true, so a stray tap mid-game does not switch tabs.
+class PlazaInGameNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool inGame) {
+    if (state != inGame) state = inGame;
+  }
+}
+
+final plazaInGameProvider = NotifierProvider<PlazaInGameNotifier, bool>(
+  PlazaInGameNotifier.new,
+);
+
 class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     with GameSoleForwarding {
   InAppWebViewController? _controller;
@@ -55,6 +71,22 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
 
   @override
   InAppWebViewController? get soleForwardTarget => _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // The tab always opens on the town hub: show the bar again.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(plazaInGameProvider.notifier).set(false);
+    });
+  }
+
+  void _syncInGame(Uri? url) {
+    if (!mounted) return;
+    ref
+        .read(plazaInGameProvider.notifier)
+        .set(PlazaBridge.isInGame(url, Constants.gameUrl));
+  }
 
   Future<void> _syncBack() async {
     final can = await _controller?.canGoBack() ?? false;
@@ -221,8 +253,10 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                   _publishAppInfo();
                   _syncBack();
                 },
-                onUpdateVisitedHistory: (controller, url, isReload) =>
-                    _syncBack(),
+                onUpdateVisitedHistory: (controller, url, isReload) {
+                  _syncBack();
+                  _syncInGame(url);
+                },
                 onProgressChanged: (controller, progress) {
                   if (!mounted) return;
                   setState(() => _progress = progress / 100);

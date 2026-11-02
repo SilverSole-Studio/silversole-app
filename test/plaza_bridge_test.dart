@@ -11,7 +11,11 @@ void main() {
   group('PlazaBridge.info', () {
     test('passes the subscription flag (no billing yet, test switch only)', () {
       expect(
-        PlazaBridge.info(friends: false, friendRequests: 0, subscribed: true)['subscription'],
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+          subscribed: true,
+        )['subscription'],
         {'active': true},
       );
       expect(
@@ -202,5 +206,34 @@ void main() {
       js,
       startsWith(r'if(location.origin==="https://x.com\"};alert(1);//"){'),
     );
+  });
+
+  group('isInGame (hide the bottom bar in games)', () {
+    const base = 'https://games.example.com/';
+    bool g(String u) => PlazaBridge.isInGame(Uri.parse(u), base);
+
+    test('the town hub is not a game', () {
+      expect(g('https://games.example.com/game/world/'), isFalse);
+      expect(g('https://games.example.com/game/world/index.html'), isFalse);
+      expect(g('https://games.example.com/game/world'), isFalse);
+      expect(g('https://games.example.com/game/plaza/'), isFalse);
+    });
+
+    test('games and shops are', () {
+      expect(g('https://games.example.com/game/racer/'), isTrue);
+      expect(
+        g('https://games.example.com/game/laojie/garden/?theme=xinbei'),
+        isTrue,
+      );
+      expect(g('https://games.example.com/game/home/'), isTrue);
+      expect(g('https://games.example.com/game/redeem/index.html'), isTrue);
+    });
+
+    test('other sites and odd urls never are', () {
+      expect(g('https://evil.example.com/game/racer/'), isFalse);
+      expect(g('https://games.example.com/'), isFalse);
+      expect(g('https://games.example.com/game/'), isFalse);
+      expect(PlazaBridge.isInGame(null, base), isFalse);
+    });
   });
 }
