@@ -18,7 +18,8 @@ enum LocalSavableKey {
   dailyMissionPlan('daily_mission_plan'),
   aiMissionsConsent('ai_missions_consent'),
   aiMissionsFailedDay('ai_missions_failed_day'),
-  fakeSubscription('fake_subscription');
+  fakeSubscription('fake_subscription'),
+  diamondExercise('diamond_exercise');
 
   const LocalSavableKey(this.value);
 

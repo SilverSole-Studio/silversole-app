@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:silversole/core/diamonds/diamond_repository.dart';
+
 /// The contract between the H5 「粗哥廣場」 and the app, used by
 /// `PlazaTabPage`. The page side is documented in `docs/plaza-bridge.md`.
 ///
@@ -56,6 +58,10 @@ abstract final class PlazaBridge {
   /// (`ricky951102@gmail.com` → `ricky951102`). It is empty when there is no
   /// email. It is only a name to match on, not proof of who the user is.
   ///
+  /// [diamonds] is the server's last answer about the account's diamonds
+  /// (`balance`, earned this `month`, the month's `cap`); left out until the
+  /// app has one.
+  ///
   /// [systemFontScale] is the phone's font-size setting (1.0 = default; the
   /// app itself caps its own text, the web games can use this to switch on
   /// their large-text mode).
@@ -66,6 +72,7 @@ abstract final class PlazaBridge {
     String? accountEmail,
     double systemFontScale = 1.0,
     bool subscribed = false,
+    DiamondBalance? diamonds,
   }) => {
     'features': {'friends': friends},
     'friendRequests': friends ? friendRequests : 0,
@@ -74,6 +81,13 @@ abstract final class PlazaBridge {
     'systemFontScale': systemFontScale,
     // 2026-11-01：訂閱（還沒接金流，測試開關）；遊戲兌換站的實物分頁看這個
     'subscription': {'active': subscribed},
+    // 2026-11-02：鑽石（伺服器帳本）；還沒問到伺服器、或沒登入時整個不存在
+    if (diamonds != null)
+      'diamonds': {
+        'balance': diamonds.balance,
+        'month': diamonds.month,
+        'cap': diamonds.cap,
+      },
   };
 
   /// The part of [email] before the first `@`, or '' when there is none.
