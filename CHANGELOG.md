@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.12.0
+
+更新內容:
+
+- 首頁的每日任務每天排 3 個，會依你最近做了什麼安排：太久沒做足壓健檢就排健檢，其他排最近沒玩的遊戲；按「去完成」直接開到那裡。
+- 個人頁多了「訂閱」：每月 149 元，訂閱後可以在遊戲兌換站換實物（目前還不能在 App 裡購買）。
+- 訂閱的人每天穿鞋墊運動滿 15 分鐘，可以得到 10 顆鑽石，一個月最多 300 顆；鑽石之後用來換實物，在訂閱頁看得到餘額。
+- 玩遊戲時下方的分頁列會收起來，不會誤觸；回到小鎮再出現。
+
+Updates:
+
+- The daily missions on the home screen now pick 3 tasks a day from what you have done lately: a foot check if you have not done one for a while, otherwise games you have not played recently. "Go" opens the right place.
+- The profile page has a new Subscription page: NT$149 a month, which unlocks real goods in the game's exchange shop (it cannot be bought in the app yet).
+- Subscribers earn 10 diamonds a day for 15 minutes of exercise wearing the insoles, up to 300 a month; diamonds will be used for real goods, and the balance shows on the Subscription page.
+- The tab bar hides while you play a game so it cannot be tapped by mistake, and comes back in the town.
+
 ## v1.11.0
 
 更新內容:
