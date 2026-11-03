@@ -1,5 +1,31 @@
 # Changelog
 
+## v1.13.0
+
+更新內容:
+
+- 全新介面，可以選 5 種主題：預設的「粗哥手繪小鎮」、「極簡科技・白」、「極簡科技・黑」免費使用；「大數字儀表板」「紙本手帳」訂閱後可以選。在「我的 → 切換主題」更換。
+- 原本的深色模式開關改成主題：想要深色就選「極簡科技・黑」。
+- 下方分頁改名為「今天、地圖、遊戲、報告、我的」，圖示更好認。
+- 跌倒守護移到地圖頁；首頁更精簡，只放今天要看的東西。
+- 新增文字大小設定（標準／大），遊戲裡的字也會跟著變。
+- 象棋可以跟好友線上對戰：邀請好友，或輸入房號加入。
+- 可以到好友的農場逛逛、幫他澆水，兩個人都會得到經驗；交誼廳裡有好友等級排行。
+- 輸入好友碼改用手機鍵盤，也可以直接貼上。
+- 在遊戲分頁裡，下方分頁列會整個收起來；要回 App 其他頁面，從遊戲選單點「回 App」或按返回鍵。
+
+Updates:
+
+- A new look with 5 themes: the default "Cuge's Hand-drawn Town", "Minimal Tech White" and "Minimal Tech Black" are free; "Big Numbers Dashboard" and "Paper Journal" are for subscribers. Change it in Me → Theme.
+- The dark mode switch is now a theme: pick "Minimal Tech Black" for a dark screen.
+- The bottom tabs are now Today, Map, Games, Report and Me, with clearer icons.
+- Fall guard moved to the Map page; the home screen shows only what matters today.
+- New text size setting (Standard / Large), which the games follow too.
+- Play Chinese chess online with a friend: invite a friend or join with a room number.
+- Visit a friend's farm and water their crops — you both earn experience; the hall shows a friends' level ranking.
+- Friend codes are typed with the phone keyboard and can be pasted.
+- In the Games tab the bottom tab bar hides completely; tap "Back to app" in the game menu or press Back to return.
+
 ## v1.12.0
 
 更新內容:
