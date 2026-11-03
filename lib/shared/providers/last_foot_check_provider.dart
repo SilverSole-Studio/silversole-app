@@ -8,13 +8,26 @@ import 'package:silversole/core/utils/foot_load_balance.dart';
 /// The result of the last one-minute foot check the wearer finished on real
 /// sole data, kept on the phone so the home screen can show it.
 ///
-/// There is no number to keep: a check ends on a band ([FootCheckRating]), see
-/// its doc for why.
+/// The home screen only needs the band ([FootCheckRating]), see its doc for
+/// why there is no score. The two load shares the band came from are kept as
+/// well so the shared activity record can show them.
 class FootCheckRecord {
-  const FootCheckRecord({required this.rating, required this.takenAt});
+  const FootCheckRecord({
+    required this.rating,
+    required this.takenAt,
+    this.foreRatio,
+    this.medialRatio,
+  });
 
   final FootCheckRating rating;
   final DateTime takenAt;
+
+  /// Forefoot share of the load, 0 → 1, as the check measured it. Null for a
+  /// record written before the shares were kept: it has only its band.
+  final double? foreRatio;
+
+  /// Inner share of the forefoot load, 0 → 1; null like [foreRatio].
+  final double? medialRatio;
 
   /// The record [report] leaves behind when it ends at [at], or null when it
   /// has nothing of the wearer's to keep: too little data to judge, or a
@@ -22,7 +35,12 @@ class FootCheckRecord {
   static FootCheckRecord? fromReport(FootCheckReport report, DateTime at) {
     final balance = report.balance;
     if (balance == null || report.fromSample) return null;
-    return FootCheckRecord(rating: balance.rating, takenAt: at);
+    return FootCheckRecord(
+      rating: balance.rating,
+      takenAt: at,
+      foreRatio: balance.foreRatio,
+      medialRatio: balance.medialRatio,
+    );
   }
 
   /// Whether the check was taken on [day]'s local calendar date.
@@ -34,6 +52,10 @@ class FootCheckRecord {
   String encode() => jsonEncode({
     'rating': rating.name,
     'taken_at': takenAt.millisecondsSinceEpoch,
+    if (foreRatio != null && medialRatio != null) ...{
+      'fore_ratio': foreRatio,
+      'medial_ratio': medialRatio,
+    },
   });
 
   /// Null for anything that is not a record this app wrote — better no result
@@ -46,23 +68,37 @@ class FootCheckRecord {
       final rating = FootCheckRating.values.asNameMap()[json['rating']];
       final takenAt = json['taken_at'];
       if (rating == null || takenAt is! int) return null;
+      // The shares are optional and kept only as a pair: one without the
+      // other, or either outside 0 → 1, is dropped and the band still stands.
+      final fore = _ratio(json['fore_ratio']);
+      final medial = _ratio(json['medial_ratio']);
+      final both = fore != null && medial != null;
       return FootCheckRecord(
         rating: rating,
         takenAt: DateTime.fromMillisecondsSinceEpoch(takenAt),
+        foreRatio: both ? fore : null,
+        medialRatio: both ? medial : null,
       );
     } on FormatException {
       return null;
     }
   }
 
+  static double? _ratio(Object? value) =>
+      value is num && value.isFinite && value >= 0 && value <= 1
+      ? value.toDouble()
+      : null;
+
   @override
   bool operator ==(Object other) =>
       other is FootCheckRecord &&
       other.rating == rating &&
-      other.takenAt == takenAt;
+      other.takenAt == takenAt &&
+      other.foreRatio == foreRatio &&
+      other.medialRatio == medialRatio;
 
   @override
-  int get hashCode => Object.hash(rating, takenAt);
+  int get hashCode => Object.hash(rating, takenAt, foreRatio, medialRatio);
 }
 
 /// The last finished foot check, or null when there has never been one.

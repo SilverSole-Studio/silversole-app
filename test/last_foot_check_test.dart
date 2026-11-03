@@ -44,7 +44,7 @@ void main() {
   group('FootCheckRecord.fromReport', () {
     const balanced = FootLoadBalance(foreRatio: 0.40, medialRatio: 0.50);
 
-    test('keeps the band of a check measured on a sole', () {
+    test('keeps the band and shares of a check measured on a sole', () {
       final record = FootCheckRecord.fromReport(
         const FootCheckReport(
           balance: balanced,
@@ -55,12 +55,20 @@ void main() {
       );
       expect(
         record,
-        FootCheckRecord(rating: balanced.rating, takenAt: takenAt),
+        FootCheckRecord(
+          rating: balanced.rating,
+          takenAt: takenAt,
+          foreRatio: 0.40,
+          medialRatio: 0.50,
+        ),
       );
     });
 
     test('keeps nothing when there was too little data', () {
-      expect(FootCheckRecord.fromReport(FootCheckReport.empty, takenAt), isNull);
+      expect(
+        FootCheckRecord.fromReport(FootCheckReport.empty, takenAt),
+        isNull,
+      );
     });
 
     test('keeps nothing computed from a sample clip', () {
