@@ -26,6 +26,7 @@ class SafeZoneMapView extends StatefulWidget {
     this.markerIcon,
     this.outlinedControls = false,
     this.zoneColor,
+    this.checkLocationPermission = Geolocator.checkPermission,
   });
 
   /// Where the device was last seen.
@@ -48,6 +49,10 @@ class SafeZoneMapView extends StatefulWidget {
   /// Ring stroke/fill color; defaults to the theme's primary.
   final Color? zoneColor;
 
+  /// Reads the location permission without asking for it. Injectable for
+  /// tests; the map only asks when the locate button is tapped.
+  final Future<LocationPermission> Function() checkLocationPermission;
+
   @override
   State<SafeZoneMapView> createState() => _SafeZoneMapViewState();
 }
@@ -56,11 +61,26 @@ class _SafeZoneMapViewState extends State<SafeZoneMapView> {
   GoogleMapController? _controller;
   String? _darkStyle;
 
+  /// Whether the map draws the wearer's own position (its blue dot). Only
+  /// once location is allowed: the plugin draws nothing without permission.
+  bool _showMyLocation = false;
+
   @override
   void initState() {
     super.initState();
     _loadDarkStyle();
+    _readLocationPermission();
   }
+
+  Future<void> _readLocationPermission() async {
+    final permission = await widget.checkLocationPermission();
+    if (!mounted) return;
+    setState(() => _showMyLocation = _allowsLocation(permission));
+  }
+
+  static bool _allowsLocation(LocationPermission permission) =>
+      permission == LocationPermission.whileInUse ||
+      permission == LocationPermission.always;
 
   Future<void> _loadDarkStyle() async {
     final style = await rootBundle.loadString(
@@ -95,6 +115,7 @@ class _SafeZoneMapViewState extends State<SafeZoneMapView> {
         permission == LocationPermission.deniedForever) {
       return;
     }
+    if (mounted && !_showMyLocation) setState(() => _showMyLocation = true);
 
     final LocationSettings settings;
     if (Platform.isAndroid) {
@@ -122,6 +143,7 @@ class _SafeZoneMapViewState extends State<SafeZoneMapView> {
         GoogleMap(
           style: isDark ? _darkStyle : null,
           zoomControlsEnabled: false,
+          myLocationEnabled: _showMyLocation,
           myLocationButtonEnabled: false,
           initialCameraPosition: CameraPosition(
             target: widget.center,
