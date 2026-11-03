@@ -61,7 +61,7 @@ class BadgeWallT2 extends StatelessWidget {
               height: 20,
               decoration: BoxDecoration(
                 color: context.mascot.gold,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: AppRadius.pillR,
                 border: Border.all(color: context.mascot.line, width: 1.5),
               ),
             ),

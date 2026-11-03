@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
@@ -115,7 +116,7 @@ class _SectionHeader extends StatelessWidget {
           height: 20,
           decoration: BoxDecoration(
             color: context.mascot.gold,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: AppRadius.pillR,
             border: Border.all(color: context.mascot.line, width: 1.5),
           ),
         ),

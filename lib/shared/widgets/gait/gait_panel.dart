@@ -384,7 +384,7 @@ class _PhasePill extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: AppRadius.pillR,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(

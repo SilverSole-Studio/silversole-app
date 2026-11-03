@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
@@ -199,7 +200,7 @@ class _DeviceRowTile extends ConsumerWidget {
                         message: 'foot_side_tap_to_redo'.tr(),
                         child: InkWell(
                           onTap: () => unawaited(_clearFootSide(ref)),
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: AppRadius.pillR,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
@@ -207,7 +208,7 @@ class _DeviceRowTile extends ConsumerWidget {
                             ),
                             decoration: BoxDecoration(
                               color: context.colorScheme.secondaryContainer,
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius: AppRadius.pillR,
                             ),
                             child: Text(
                               side.labelKey.tr(),

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/models/mobility_card.dart';
@@ -251,7 +252,7 @@ class _GroupLabel extends StatelessWidget {
             height: 20,
             decoration: BoxDecoration(
               color: context.mascot.gold,
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: AppRadius.pillR,
               border: Border.all(color: context.mascot.line, width: 1.5),
             ),
           ),

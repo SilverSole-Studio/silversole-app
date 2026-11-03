@@ -1,8 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
@@ -45,7 +45,7 @@ class GamePageT2 extends StatelessWidget {
                     height: 20,
                     decoration: BoxDecoration(
                       color: context.mascot.gold,
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: AppRadius.pillR,
                       border: Border.all(color: context.mascot.line, width: 1.5),
                     ),
                   ),
@@ -123,7 +123,7 @@ class _MissionRow extends StatelessWidget {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.controlR,
           child: Image.asset(icon, height: 32, width: 32, fit: BoxFit.cover),
         ),
         const SizedBox(width: 10),
@@ -271,7 +271,7 @@ class _GameTile extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: context.mascot.card,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: AppRadius.pillR,
                     border: Border.all(color: context.mascot.safe, width: 2),
                   ),
                   child: Text(

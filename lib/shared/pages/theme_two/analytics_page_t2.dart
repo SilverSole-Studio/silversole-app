@@ -4,8 +4,8 @@ import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
@@ -118,7 +118,7 @@ class _Segmented extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: context.mascot.card,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: AppRadius.pillR,
         border: Border.all(
           color: context.mascot.line,
           width: AppPaletteT2.outlineWidth,
@@ -136,7 +136,7 @@ class _Segmented extends StatelessWidget {
                   decoration: i == selected
                       ? BoxDecoration(
                           color: context.mascot.gold,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: AppRadius.pillR,
                           border: Border.all(color: context.mascot.line, width: 2),
                         )
                       : null,
