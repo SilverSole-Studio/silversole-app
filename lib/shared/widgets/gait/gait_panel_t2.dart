@@ -188,13 +188,15 @@ class _SpeedChartCard extends StatelessWidget {
                         GaitChartBand(
                           fromX: band.from,
                           toX: band.to,
-                          color: _phaseColor(context, 
+                          color: _phaseColor(
+                            context,
                             band.phase,
                           ).withValues(alpha: 0.16),
                         ),
                     ],
                     dotColorAt: snapshot.hasPhaseTimeline
-                        ? (index) => _phaseColor(context, snapshot.phaseAt(index))
+                        ? (index) =>
+                              _phaseColor(context, snapshot.phaseAt(index))
                         : null,
                     reference: reference == null
                         ? null
@@ -564,7 +566,10 @@ class _AdviceCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: context.mascot.gold,
                       shape: BoxShape.circle,
-                      border: Border.all(color: context.mascot.line, width: 1.2),
+                      border: Border.all(
+                        color: context.mascot.line,
+                        width: 1.2,
+                      ),
                     ),
                   ),
                 ),

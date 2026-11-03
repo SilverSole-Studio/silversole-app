@@ -5,6 +5,8 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/widgets/app_card.dart';
+import 'package:silversole/shared/widgets/app_progress_bar.dart';
 
 /// The report a one-minute foot check ends on.
 ///
@@ -35,20 +37,29 @@ class FootCheckResultPage extends StatelessWidget {
           'foot_check_result_title'.tr(),
           style: context.textTheme.titleLarge,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('foot_check_finish'.tr()),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-        ],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.base),
-          child: balance == null
-              ? const _NotEnoughData()
-              : _Findings(balance: balance, report: report),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: balance == null
+                      ? const _NotEnoughData()
+                      : _Findings(balance: balance, report: report),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.base),
+              // The one way out: a full-width primary button, not a small
+              // text link in the corner.
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('foot_check_finish'.tr()),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -68,6 +79,24 @@ class _Findings extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // The mascot congratulates; the classic theme goes straight to the
+        // result.
+        if (context.isMascot) ...[
+          Center(
+            child: Image.asset(
+              'assets/mascot-assets/applaud.webp',
+              height: 120,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'foot_check_done_cheer'.tr(),
+            textAlign: TextAlign.center,
+            style: context.textTheme.titleLarge,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
         // A sample clip fed this check: say so, since the band describes the
         // sample and is not kept as the wearer's result.
         if (report.fromSample) ...[
@@ -116,25 +145,21 @@ class _Findings extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xxl),
         // One finding per axis, in the order the bars above them appear.
-        Card(
-          elevation: 0,
-          color: context.colorScheme.surfaceContainerHighest,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.base),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: AppSpacing.md,
-              children: [
-                Text(
-                  balance.foreAft.summaryKey.tr(),
-                  style: context.textTheme.bodyLarge,
-                ),
-                Text(
-                  balance.side.summaryKey.tr(),
-                  style: context.textTheme.bodyLarge,
-                ),
-              ],
-            ),
+        AppCard(
+          tint: true,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: AppSpacing.md,
+            children: [
+              Text(
+                balance.foreAft.summaryKey.tr(),
+                style: context.textTheme.bodyLarge,
+              ),
+              Text(
+                balance.side.summaryKey.tr(),
+                style: context.textTheme.bodyLarge,
+              ),
+            ],
           ),
         ),
       ],
@@ -175,16 +200,9 @@ class _GradeSegments extends StatelessWidget {
           segment++
         )
           Expanded(
-            child: SizedBox(
-              height: 14,
-              child: LinearProgressIndicator(
-                value: segment <= level ? 1 : 0,
-                year2023: false, // ignore: deprecated_member_use
-                borderRadius: AppRadius.subR,
-                stopIndicatorRadius: 0,
-                trackGap: 0,
-                color: context.tokens.success,
-              ),
+            child: AppProgressBar(
+              value: segment <= level ? 1 : 0,
+              color: context.tokens.success,
             ),
           ),
       ],
@@ -221,19 +239,7 @@ class _SplitBar extends StatelessWidget {
             style: context.textTheme.titleSmall,
           ),
         ),
-        Expanded(
-          flex: 4,
-          child: SizedBox(
-            height: 12,
-            child: LinearProgressIndicator(
-              value: leftRatio,
-              year2023: false, // ignore: deprecated_member_use
-              borderRadius: AppRadius.subR,
-              stopIndicatorRadius: 0,
-              trackGap: 0,
-            ),
-          ),
-        ),
+        Expanded(flex: 4, child: AppProgressBar(value: leftRatio, height: 12)),
         Expanded(
           flex: 3,
           child: Text(

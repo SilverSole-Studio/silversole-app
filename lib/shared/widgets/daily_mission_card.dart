@@ -17,9 +17,7 @@ class DailyMissionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     final shape = Theme.of(context).cardTheme.shape;
-    final side = shape is RoundedRectangleBorder
-        ? shape.side
-        : BorderSide.none;
+    final side = shape is RoundedRectangleBorder ? shape.side : BorderSide.none;
 
     return AppCard(
       tint: true,

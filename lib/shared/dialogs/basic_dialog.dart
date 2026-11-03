@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 
 enum ConfirmType { primary, delete }
 
@@ -58,7 +59,7 @@ Future<void> showContentDialog(
           child: Text(
             confirmText ?? 'confirm'.tr(),
             style: TextStyle(
-              color: confirmType == ConfirmType.primary ? cs.primary : cs.error,
+              color: confirmType == ConfirmType.primary ? context.accent : cs.error,
             ),
           ),
         ),
@@ -101,7 +102,7 @@ Future<void> showConfirmLeaveDialog(
           child: Text(
             confirmText ?? 'confirm'.tr(),
             style: TextStyle(
-              color: confirmType == ConfirmType.primary ? cs.primary : cs.error,
+              color: confirmType == ConfirmType.primary ? context.accent : cs.error,
             ),
           ),
         ),

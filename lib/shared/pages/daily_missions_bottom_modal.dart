@@ -255,7 +255,7 @@ class _DailyMissionsSheetState extends ConsumerState<DailyMissionsSheet> {
                   contentPadding: EdgeInsets.zero,
                   secondary: Icon(
                     LucideIcons.sparkles,
-                    color: context.colorScheme.primary,
+                    color: context.accent,
                   ),
                   title: Text('ai_missions_toggle'.tr()),
                   value: consent == AiMissionsConsent.yes,
@@ -326,7 +326,7 @@ class _AiBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = context.colorScheme.primary;
+    final color = context.accent;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -366,7 +366,7 @@ class _MissionRow extends StatelessWidget {
             child: Icon(
               mission.icon,
               size: 32,
-              color: context.colorScheme.primary,
+              color: context.accent,
             ),
           ),
         ),

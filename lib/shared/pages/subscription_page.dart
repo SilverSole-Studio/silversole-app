@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/theme/app_spacing.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/core/diamonds/diamond_repository.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
@@ -55,25 +55,40 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
         padding: const EdgeInsets.all(AppSpacing.base),
         children: [
           SectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: AppSpacing.sm,
+            child: Row(
               children: [
-                Text(
-                  'subscription_plan_name'.tr(),
-                  style: context.textTheme.titleLarge,
-                ),
-                Text(
-                  'subscription_price'.tr(args: ['$kSubscriptionMonthlyPrice']),
-                  style: context.textTheme.headlineMedium?.copyWith(
-                    color: context.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: AppSpacing.sm,
+                    children: [
+                      Text(
+                        'subscription_plan_name'.tr(),
+                        style: context.textTheme.titleLarge,
+                      ),
+                      Text(
+                        'subscription_price'.tr(
+                          args: ['$kSubscriptionMonthlyPrice'],
+                        ),
+                        style: context.textTheme.headlineMedium?.copyWith(
+                          color: context.accent,
+                        ),
+                      ),
+                      if (active)
+                        Chip(
+                          avatar: const Icon(LucideIcons.badgeCheck, size: 18),
+                          label: Text('subscription_active'.tr()),
+                        ),
+                    ],
                   ),
                 ),
-                if (active)
-                  Chip(
-                    avatar: const Icon(LucideIcons.badgeCheck, size: 18),
-                    label: Text('subscription_active'.tr()),
+                // The mascot theme brings its mascot; the classic theme stays
+                // text-only.
+                if (context.isMascot)
+                  Image.asset(
+                    'assets/mascot-assets/happy.webp',
+                    height: 88,
+                    fit: BoxFit.contain,
                   ),
               ],
             ),
@@ -90,7 +105,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                 for (final (key, icon) in perks)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(icon, color: context.colorScheme.primary),
+                    leading: Icon(icon, color: context.accent),
                     title: Text(key.tr()),
                   ),
               ],
@@ -101,7 +116,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
             // No billing yet.
             onPressed: null,
             style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
+              minimumSize: const Size.fromHeight(kPrimaryButtonHeight),
             ),
             child: Text(
               active
@@ -149,13 +164,12 @@ class _DiamondCard extends StatelessWidget {
           Row(
             spacing: AppSpacing.sm,
             children: [
-              Icon(LucideIcons.gem, color: context.colorScheme.primary),
+              Icon(LucideIcons.gem, color: context.accent),
               Text(
                 '${balance.balance}',
                 key: const Key('diamond_balance'),
                 style: context.textTheme.headlineMedium?.copyWith(
-                  color: context.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
+                  color: context.accent,
                 ),
               ),
             ],

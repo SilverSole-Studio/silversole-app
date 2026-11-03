@@ -70,7 +70,7 @@ class _GaitTopicSheet extends StatelessWidget {
                 _Aside(
                   label: 'gait_help_evidence_label'.tr(),
                   text: topic.evidenceKey.tr(),
-                  accent: context.colorScheme.primary,
+                  accent: context.accent,
                 ),
             ],
           ),

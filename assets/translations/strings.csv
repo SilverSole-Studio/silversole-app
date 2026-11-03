@@ -108,7 +108,7 @@ mission_cta,See today's missions,查看今日任務
 device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_session_title,One-minute foot check,一分鐘足壓檢測
-foot_check_collecting,Collecting…,正在收集資料…
+foot_check_collecting,Collecting data…,正在收集資料…
 foot_check_complete,Collection complete,採集完成
 foot_check_quit,End early,提前結束
 foot_check_finish,Done,完成
@@ -744,3 +744,5 @@ nav_mine,Me,我的
 add_device_cta,Pair new insoles,配對新鞋墊
 my_insoles,My insoles,我的鞋墊
 identity_tap_to_change,Tap to change,點一下可以更換
+foot_check_done_cheer,"All done, nice work!",做完了，辛苦了！
+auth_tagline,"Foot pressure checks, a little movement, and progress you can see",足壓健檢、動一動、看見進步
