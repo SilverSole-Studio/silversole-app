@@ -5,6 +5,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
+import 'package:silversole/shared/widgets/theme_two/town_kit.dart';
 import 'package:silversole/shared/widgets/app_card.dart';
 import 'package:silversole/shared/widgets/app_progress_bar.dart';
 
@@ -123,9 +124,12 @@ class _Findings extends StatelessWidget {
             ),
             Text(
               rating.labelKey.tr(),
-              style: context.textTheme.titleLarge.bold?.copyWith(
-                color: context.tokens.success,
-              ),
+              // Look A draws the verdict as its big outlined figure.
+              style: context.isMascot
+                  ? townHeroStyle(context, 40)
+                  : context.textTheme.titleLarge.bold?.copyWith(
+                      color: context.tokens.success,
+                    ),
             ),
           ],
         ),

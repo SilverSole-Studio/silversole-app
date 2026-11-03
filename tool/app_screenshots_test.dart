@@ -34,6 +34,12 @@ import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/pages/analytics_page.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
+import 'package:silversole/shared/pages/firmware_update_page.dart';
+import 'package:silversole/shared/pages/foot_check_session_page.dart';
+import 'package:silversole/shared/pages/sign_up_page.dart';
+import 'package:silversole/shared/pages/theme_picker_page.dart';
+import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
+import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/home_page.dart';
@@ -212,7 +218,8 @@ Widget _home(_Variant v) => switch (v.variant) {
 };
 
 final _shots = <_Shot>[
-  _Shot('01_today', (v) => _tab(0, _home(v)), height: 1700),
+  _Shot('01_today', (v) => _tab(0, _home(v))),
+  _Shot('01b_today_full', (v) => _tab(0, _home(v)), height: 1700),
   _Shot(
     '02_map',
     (v) => _tab(
@@ -239,6 +246,14 @@ final _shots = <_Shot>[
   ),
   _Shot('06_sign_in', (v) => const SignInPage()),
   _Shot('07_subscription', (v) => const SubscriptionPage()),
+  _Shot('09_sign_up', (v) => const SignUpPage()),
+  _Shot('10_check_session', (v) => const FootCheckSessionPage()),
+  _Shot('11_firmware', (v) => const FirmwareUpdatePage(source: null)),
+  _Shot('12_themes', (v) => const ThemePickerPage()),
+  _Shot(
+    '13_devices',
+    (v) => v.mascot ? const DevicesPageT2() : const SizedBox.shrink(),
+  ),
 ];
 
 GoRouter _single(Widget page) => GoRouter(
@@ -294,6 +309,10 @@ Future<void> _pump(WidgetTester tester, _Variant v, GoRouter router) async {
           friendsRepositoryProvider.overrideWithValue(repo),
           authUserProvider.overrideWith(_SignedIn.new),
           lastFootCheckProvider.overrideWith(_LastCheck.new),
+          firmwareCheckProvider.overrideWith(
+            (ref) async =>
+                const FirmwareCheck(FirmwareCheckStatus.notConnected),
+          ),
           settingsProvider.overrideWith(() => _Settings(v.variant)),
         ],
         child: EasyLocalization(

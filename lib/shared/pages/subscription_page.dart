@@ -42,6 +42,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     final devTools = ref.watch(devToolsVisibleProvider);
     final perks = [
       ('subscription_perk_real_goods', LucideIcons.gift),
+      ('subscription_perk_themes', LucideIcons.palette),
       ('subscription_perk_more', LucideIcons.sparkles),
     ];
     return Scaffold(
