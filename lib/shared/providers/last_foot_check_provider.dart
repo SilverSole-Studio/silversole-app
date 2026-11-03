@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
+import 'package:silversole/core/utils/pressure_shares.dart';
 
 /// The result of the last one-minute foot check the wearer finished on real
 /// sole data, kept on the phone so the home screen can show it.
@@ -26,7 +27,9 @@ class FootCheckRecord {
   /// record written before the shares were kept: it has only its band.
   final double? foreRatio;
 
-  /// Inner share of the forefoot load, 0 → 1; null like [foreRatio].
+  /// Inner share of the forefoot load, 0 → 1. Null like [foreRatio] for an old
+  /// record, and also when the forefoot carried too little load for a split to
+  /// mean anything (see [PressureShares.minForeFraction]).
   final double? medialRatio;
 
   /// The record [report] leaves behind when it ends at [at], or null when it
@@ -39,7 +42,11 @@ class FootCheckRecord {
       rating: balance.rating,
       takenAt: at,
       foreRatio: balance.foreRatio,
-      medialRatio: balance.medialRatio,
+      // The tally falls back to an even split when the forefoot carried
+      // nothing; that is not a measurement, so it is not kept.
+      medialRatio: balance.foreRatio < PressureShares.minForeFraction
+          ? null
+          : balance.medialRatio,
     );
   }
 
@@ -52,10 +59,8 @@ class FootCheckRecord {
   String encode() => jsonEncode({
     'rating': rating.name,
     'taken_at': takenAt.millisecondsSinceEpoch,
-    if (foreRatio != null && medialRatio != null) ...{
-      'fore_ratio': foreRatio,
-      'medial_ratio': medialRatio,
-    },
+    if (foreRatio != null) 'fore_ratio': foreRatio,
+    if (medialRatio != null) 'medial_ratio': medialRatio,
   });
 
   /// Null for anything that is not a record this app wrote — better no result
@@ -68,16 +73,14 @@ class FootCheckRecord {
       final rating = FootCheckRating.values.asNameMap()[json['rating']];
       final takenAt = json['taken_at'];
       if (rating == null || takenAt is! int) return null;
-      // The shares are optional and kept only as a pair: one without the
-      // other, or either outside 0 → 1, is dropped and the band still stands.
+      // The shares are optional; one outside 0 → 1 is dropped and the band
+      // still stands. An inner share without a forefoot share is meaningless.
       final fore = _ratio(json['fore_ratio']);
-      final medial = _ratio(json['medial_ratio']);
-      final both = fore != null && medial != null;
       return FootCheckRecord(
         rating: rating,
         takenAt: DateTime.fromMillisecondsSinceEpoch(takenAt),
-        foreRatio: both ? fore : null,
-        medialRatio: both ? medial : null,
+        foreRatio: fore,
+        medialRatio: fore == null ? null : _ratio(json['medial_ratio']),
       );
     } on FormatException {
       return null;

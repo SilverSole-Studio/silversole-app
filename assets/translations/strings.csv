@@ -773,3 +773,5 @@ report_nickname_label,Name on the record (optional),紀錄上的稱呼（選填�
 report_nickname_hint,Left empty the record has no name,不填的話，紀錄上就不會有名字
 report_pick_sections,What to include,要放進紀錄的內容
 report_preview,Preview,預覽
+report_foot_result,Foot check result,健檢結果
+report_foot_no_medial,Too little forefoot load for an inner and outer split,前腳掌受力太少，沒有內外比例

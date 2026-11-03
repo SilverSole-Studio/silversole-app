@@ -78,8 +78,8 @@ void main() {
       for (final bad in [
         '"fore_ratio":1.5,"medial_ratio":0.5',
         '"fore_ratio":"x","medial_ratio":0.5',
-        '"fore_ratio":0.4',
         '"fore_ratio":-0.1,"medial_ratio":0.5',
+        '"medial_ratio":0.5',
       ]) {
         final record = FootCheckRecord.tryDecode(
           '{"rating":"good","taken_at":$at,$bad}',
@@ -89,6 +89,21 @@ void main() {
         expect(record.foreRatio, isNull, reason: bad);
         expect(record.medialRatio, isNull, reason: bad);
       }
+    });
+
+    test('a forefoot share without an inner share is kept as it is', () {
+      final record = FootCheckRecord(
+        rating: FootCheckRating.good,
+        takenAt: takenAt,
+        foreRatio: 0.02,
+      );
+      expect(FootCheckRecord.tryDecode(record.encode()), record);
+      final bad = FootCheckRecord.tryDecode(
+        '{"rating":"good","taken_at":${takenAt.millisecondsSinceEpoch},'
+        '"fore_ratio":0.3,"medial_ratio":7}',
+      );
+      expect(bad!.foreRatio, 0.3);
+      expect(bad.medialRatio, isNull);
     });
 
     test('fromReport carries the measured shares', () {
@@ -104,8 +119,9 @@ void main() {
       expect(record.medialRatio, 0.6);
     });
 
-    test('fromReport of a heel-only check keeps the check\'s own medial', () {
-      // No forefoot load: the tally reports an even split, and so do we.
+    test('fromReport of a heel-only check keeps no inner share', () {
+      // No forefoot load: the tally falls back to an even split, which is not
+      // a measurement.
       final record = FootCheckRecord.fromReport(
         const FootCheckReport(
           balance: FootLoadBalance(
@@ -118,8 +134,25 @@ void main() {
         takenAt,
       );
       expect(record!.foreRatio, 0);
-      expect(record.medialRatio, FootLoadBalance.medialTarget);
+      expect(record.medialRatio, isNull);
     });
+
+    test(
+      'fromReport: the inner share needs 5% of the load on the forefoot',
+      () {
+        FootCheckRecord at(double fore) => FootCheckRecord.fromReport(
+          FootCheckReport(
+            balance: FootLoadBalance(foreRatio: fore, medialRatio: 0.7),
+            samples: 300,
+            collected: const Duration(seconds: 60),
+          ),
+          takenAt,
+        )!;
+        expect(at(0.049).medialRatio, isNull);
+        expect(at(0.049).foreRatio, 0.049);
+        expect(at(0.05).medialRatio, 0.7);
+      },
+    );
   });
 
   group('buildActivityReport', () {
@@ -328,6 +361,20 @@ void main() {
         );
       },
     );
+
+    test('a foot check with no inner share says so', () {
+      final check = _build(
+        footCheck: FootCheckRecord(
+          rating: FootCheckRating.good,
+          takenAt: _today,
+          foreRatio: 0.02,
+        ),
+      ).footCheck!;
+      expect(check.hasRatios, isTrue);
+      expect(check.hasMedial, isFalse);
+      expect(check.lacksMedial, isTrue);
+      expect(check.medialPercent, isNull);
+    });
 
     test('sections come back in layout order', () {
       final report = _build(

@@ -11,6 +11,7 @@ import 'package:silversole/core/gait/mobility_grade.dart';
 import 'package:silversole/core/missions/game_activity_store.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_check_rating.dart';
+import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/models/mobility_card.dart';
 import 'package:silversole/shared/pages/activity_report_page.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
@@ -206,7 +207,10 @@ void main() {
 
     expect(_inCard(find.text('Foot pressure check')), findsOneWidget);
     expect(_inCard(find.text('Game exercise')), findsOneWidget);
+    expect(_inCard(find.text('Foot check result')), findsOneWidget);
+    expect(_inCard(find.text('Overall')), findsNothing);
     expect(_inCard(find.text('Very good')), findsOneWidget);
+    expect(find.byKey(ActivityReportCard.noMedialKey), findsNothing);
     expect(_inCard(find.text('Forefoot 38%')), findsOneWidget);
     expect(_inCard(find.text('45% Lateral')), findsOneWidget);
     expect(_inCard(find.text('Chu Fish Catch')), findsOneWidget);
@@ -222,6 +226,74 @@ void main() {
           .widget<FilledButton>(find.byKey(ActivityReportPage.shareButtonKey))
           .onPressed,
       isNotNull,
+    );
+  });
+
+  testWidgets('a heel-only check shows one line instead of the inner split', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      check: FootCheckRecord.fromReport(
+        const FootCheckReport(
+          balance: FootLoadBalance(
+            foreRatio: 0,
+            medialRatio: FootLoadBalance.medialTarget,
+          ),
+          samples: 300,
+          collected: Duration(seconds: 60),
+        ),
+        DateTime.now(),
+      ),
+    );
+
+    expect(_inCard(find.text('Forefoot 0%')), findsOneWidget);
+    expect(_inCard(find.textContaining('Medial')), findsNothing);
+    expect(
+      _inCard(
+        find.text('Too little forefoot load for an inner and outer split'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('mobility letters share one neutral fill whatever the grade', (
+    tester,
+  ) async {
+    Future<Set<Color?>> fills(MobilityGrade main, MobilityGrade row) async {
+      await _pump(
+        tester,
+        realGait: true,
+        history: _history(),
+        mobility: MobilityGraded(
+          weekStart: '2026-11-02',
+          isCurrentWeek: true,
+          grade: main,
+          changes: const [],
+          rows: [
+            MobilityMetricRow(
+              metric: MobilityMetric.cadence,
+              grade: row,
+              trend: const [],
+            ),
+          ],
+        ),
+      );
+      return {
+        for (final box in tester.widgetList<Container>(
+          find.byKey(ActivityReportCard.gradeBoxKey),
+        ))
+          (box.decoration as BoxDecoration).color,
+      };
+    }
+
+    final mixed = await fills(MobilityGrade.a, MobilityGrade.e);
+    expect(mixed, hasLength(1));
+    expect(_inCard(find.text('A')), findsOneWidget);
+    expect(_inCard(find.text('E')), findsOneWidget);
+    expect(
+      mixed.single,
+      appTheme(Brightness.light).colorScheme.surfaceContainerHighest,
     );
   });
 

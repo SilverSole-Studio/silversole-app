@@ -33,9 +33,18 @@ class FootCheckSection {
   final double? foreRatio;
 
   /// Inner share of the forefoot load, 0 → 1; its outer share is the rest.
+  /// Null when the forefoot carried too little load to split.
   final double? medialRatio;
 
-  bool get hasRatios => foreRatio != null && medialRatio != null;
+  /// Whether the front/back split was kept.
+  bool get hasRatios => foreRatio != null;
+
+  /// Whether the inner/outer split was kept.
+  bool get hasMedial => medialRatio != null;
+
+  /// A front/back split but no inner/outer one: the forefoot carried too
+  /// little load.
+  bool get lacksMedial => hasRatios && !hasMedial;
 
   /// Whole percent of the forefoot share; [rearPercent] is the rest so the two
   /// always add up to 100.

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:silversole/core/gait/mobility_grade.dart';
 import 'package:silversole/core/report/activity_report.dart';
 import 'package:silversole/core/theme/theme.dart';
-import 'package:silversole/shared/widgets/gait/mobility_card_view.dart';
 
 /// Light theme the record is always drawn in: it is a picture that gets
 /// printed or read in a chat, so it does not follow the app's dark mode or
@@ -36,6 +35,13 @@ class ActivityReportCard extends StatelessWidget {
 
   /// Marks the nickname line, which exists only when a name was typed.
   static const nicknameKey = Key('report-nickname');
+
+  /// Marks every grade letter square, for tests.
+  static const gradeBoxKey = Key('report-grade-box');
+
+  /// Marks the line that stands in for the inner/outer split when the
+  /// forefoot carried too little load.
+  static const noMedialKey = Key('report-no-medial');
 
   final ActivityReport report;
 
@@ -228,10 +234,7 @@ class _FootCheckBlock extends StatelessWidget {
           style: const TextStyle(color: _muted, fontSize: 12),
         ),
         const SizedBox(height: AppSpacing.xs),
-        _LabelValue(
-          'foot_check_result_grade'.tr(),
-          section.rating.labelKey.tr(),
-        ),
+        _LabelValue('report_foot_result'.tr(), section.rating.labelKey.tr()),
         if (section.hasRatios) ...[
           const SizedBox(height: AppSpacing.sm),
           _SplitRow(
@@ -240,11 +243,18 @@ class _FootCheckBlock extends StatelessWidget {
             leftPercent: section.forePercent!,
           ),
           const SizedBox(height: AppSpacing.sm),
-          _SplitRow(
-            leftLabel: 'foot_check_medial'.tr(),
-            rightLabel: 'foot_check_lateral'.tr(),
-            leftPercent: section.medialPercent!,
-          ),
+          if (section.hasMedial)
+            _SplitRow(
+              leftLabel: 'foot_check_medial'.tr(),
+              rightLabel: 'foot_check_lateral'.tr(),
+              leftPercent: section.medialPercent!,
+            )
+          else
+            Text(
+              'report_foot_no_medial'.tr(),
+              key: ActivityReportCard.noMedialKey,
+              style: const TextStyle(color: _muted, fontSize: 12),
+            ),
         ],
       ],
     );
@@ -514,8 +524,7 @@ class _MobilityBlock extends StatelessWidget {
   }
 }
 
-/// A rounded square in the grade's color with its letter in it, the same
-/// look as on the mobility card.
+/// A rounded square with the grade's letter in it.
 class _GradeBox extends StatelessWidget {
   const _GradeBox({required this.grade, required this.size});
 
@@ -524,8 +533,12 @@ class _GradeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fill = mobilityGradeColor(context, grade);
+    // One neutral fill for every grade: the letter says which, and the record
+    // makes no judgement by colour.
+    final scheme = Theme.of(context).colorScheme;
+    final fill = scheme.surfaceContainerHighest;
     return Container(
+      key: ActivityReportCard.gradeBoxKey,
       width: size,
       height: size,
       alignment: Alignment.center,
@@ -536,7 +549,7 @@ class _GradeBox extends StatelessWidget {
       child: Text(
         grade.name.toUpperCase(),
         style: TextStyle(
-          color: mobilityLetterColor(fill),
+          color: scheme.onSurface,
           fontSize: size * 0.55,
           fontWeight: FontWeight.w800,
           height: 1,
