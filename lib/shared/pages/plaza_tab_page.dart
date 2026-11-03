@@ -14,7 +14,9 @@ import 'package:silversole/shared/providers/diamonds_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
 import 'package:silversole/shared/providers/game_sole_forwarding.dart';
+import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 
 /// Games tab: the H5 「粗哥廣場」 fills the whole tab instead of a card list.
@@ -24,6 +26,11 @@ import 'package:silversole/shared/providers/subscription_provider.dart';
 /// the web history first and only leaves the tab when there is nothing to go
 /// back to. Sole telemetry is forwarded by [GameSoleForwarding], as in
 /// [GameWebViewPage].
+///
+/// The tab never shows the bottom bar ([HomePage] hides it for this tab). The
+/// way out is the town menu's 「回 App」 ([PlazaBridge.exitPlaza]) or the back
+/// button in the town ([PlazaBridge.backAction]); in a game the back button
+/// returns to the town as before.
 ///
 /// The plaza also talks to the app through [PlazaBridge]: it learns whether to
 /// show the friends building (and its red dot), and asks the app to open the
@@ -39,26 +46,14 @@ class PlazaTabPage extends ConsumerStatefulWidget {
   ConsumerState<PlazaTabPage> createState() => _PlazaTabPageState();
 }
 
-/// Whether the games tab is showing a game rather than the town hub
-/// ([PlazaBridge.isInGame]). [HomePage] hides its bottom navigation bar
-/// while it is true, so a stray tap mid-game does not switch tabs.
-class PlazaInGameNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  void set(bool inGame) {
-    if (state != inGame) state = inGame;
-  }
-}
-
-final plazaInGameProvider = NotifierProvider<PlazaInGameNotifier, bool>(
-  PlazaInGameNotifier.new,
-);
-
 class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     with GameSoleForwarding {
   InAppWebViewController? _controller;
   bool _canGoBack = false;
+
+  /// The page showing is the town hub ([PlazaBridge.isHub]); the tab always
+  /// opens on it.
+  bool _onHub = true;
 
   /// The friends screen opened from the plaza is still on top: another tap
   /// on the building (or a page calling twice) does not stack a second one.
@@ -76,21 +71,27 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   @override
   void initState() {
     super.initState();
-    // The tab always opens on the town hub: show the bar again.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(plazaInGameProvider.notifier).set(false);
       // Fresh diamond balance for the redeem shop (and a retry of today's
       // payout if an earlier try did not get through).
       ref.read(diamondsProvider.notifier).refresh();
     });
   }
 
-  void _syncInGame(Uri? url) {
-    if (!mounted) return;
-    ref
-        .read(plazaInGameProvider.notifier)
-        .set(PlazaBridge.isInGame(url, Constants.gameUrl));
+  void _syncOnHub(Uri? url) {
+    _onHub = PlazaBridge.isHub(url, Constants.gameUrl);
+  }
+
+  /// The system back button: back through the web history in a game (or on
+  /// another site), otherwise out of the games tab to the home tab.
+  void _onBack() {
+    switch (PlazaBridge.backAction(onHub: _onHub, canGoBack: _canGoBack)) {
+      case PlazaBackAction.webBack:
+        _controller?.goBack();
+      case PlazaBackAction.leaveTab:
+        ref.read(homeTabProvider.notifier).goHome();
+    }
   }
 
   Future<void> _syncBack() async {
@@ -107,6 +108,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       accountId: user?.uuid,
       accountEmail: user?.email,
       systemFontScale: _systemFontScale,
+      textSize: ref.read(settingsProvider).textSize,
       subscribed: ref.read(subscriptionActiveProvider),
       diamonds: ref.read(diamondsProvider).balance,
     );
@@ -173,6 +175,13 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     return true;
   }
 
+  /// 「回 App」: back to the home tab, where the bar is.
+  bool _exitPlaza() {
+    if (!mounted) return false;
+    ref.read(homeTabProvider.notifier).goHome();
+    return true;
+  }
+
   void _registerBridge(InAppWebViewController controller) {
     controller.addJavaScriptHandler(
       handlerName: PlazaBridge.appInfo,
@@ -186,6 +195,13 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       callback: (_) async {
         if (!await _onGamePage(controller)) return false;
         return _openFriends();
+      },
+    );
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.exitPlaza,
+      callback: (_) async {
+        if (!await _onGamePage(controller)) return false;
+        return _exitPlaza();
       },
     );
     // Cloud save: only the games' own site may read or write the account's save.
@@ -223,15 +239,22 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     // Sign in / out while the tab is up: tell the page who it is now.
     ref.listen(authUserProvider, (_, _) => _publishAppInfo());
     ref.listen(subscriptionActiveProvider, (_, _) => _publishAppInfo());
+    // The settings page's 文字大小 changed: the games follow it.
+    ref.listen(
+      settingsProvider.select((s) => s.textSize),
+      (_, _) => _publishAppInfo(),
+    );
     ref.listen(
       diamondsProvider.select((s) => s.balance),
       (_, _) => _publishAppInfo(),
     );
 
     return PopScope(
-      canPop: !_canGoBack,
+      // Always handled here: from the town the back button goes to the home
+      // tab, it never closes the app from this tab.
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _controller?.goBack();
+        if (!didPop) _onBack();
       },
       child: Scaffold(
         body: SafeArea(
@@ -265,7 +288,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                 },
                 onUpdateVisitedHistory: (controller, url, isReload) {
                   _syncBack();
-                  _syncInGame(url);
+                  _syncOnHub(url);
                 },
                 onProgressChanged: (controller, progress) {
                   if (!mounted) return;

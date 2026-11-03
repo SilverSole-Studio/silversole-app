@@ -12,8 +12,9 @@ import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 
 enum CodeMode { friend, org }
 
-/// `/friends/code` — type an 8-digit friend code or org code on a big keypad.
-/// The lookup runs as soon as the eighth digit is in (spec §3.2, §3.3).
+/// `/friends/code` — type or paste an 8-digit friend code or org code with the
+/// system number keyboard. The lookup runs as soon as the eighth digit is in
+/// (spec §3.2, §3.3).
 class EnterCodePage extends ConsumerStatefulWidget {
   const EnterCodePage({super.key, required this.mode});
 
@@ -24,27 +25,27 @@ class EnterCodePage extends ConsumerStatefulWidget {
 }
 
 class _EnterCodePageState extends ConsumerState<EnterCodePage> {
-  String _digits = '';
+  final _controller = TextEditingController();
   String? _error;
   bool _busy = false;
 
   bool get _isOrg => widget.mode == CodeMode.org;
 
-  void _type(String d) {
-    if (_busy || _digits.length >= kCodeLength) return;
-    setState(() {
-      _digits += d;
-      _error = null;
-    });
-    if (_digits.length == kCodeLength) _lookup();
+  String get _digits => _controller.text;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
-  void _backspace() {
-    if (_busy || _digits.isEmpty) return;
-    setState(() {
-      _digits = _digits.substring(0, _digits.length - 1);
-      _error = null;
-    });
+  void _onChanged(String _) {
+    setState(() => _error = null);
+    if (_digits.length == kCodeLength && !_busy) {
+      // The system keyboard would cover the sheet the lookup opens.
+      FocusScope.of(context).unfocus();
+      _lookup();
+    }
   }
 
   Future<void> _lookup() async {
@@ -102,7 +103,20 @@ class _EnterCodePageState extends ConsumerState<EnterCodePage> {
                 center: true,
               ),
               const SizedBox(height: AppSpacing.lg),
-              CodeDigits(digits: _digits),
+              TextField(
+                controller: _controller,
+                autofocus: true,
+                readOnly: _busy,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: const [CodeInputFormatter()],
+                onChanged: _onChanged,
+                textAlign: TextAlign.center,
+                style: context.textTheme.headlineMedium?.copyWith(
+                  letterSpacing: 4,
+                ),
+                decoration: const InputDecoration(hintText: '0000 0000'),
+              ),
               const SizedBox(height: AppSpacing.md),
               SizedBox(
                 height: 56,
@@ -118,8 +132,6 @@ class _EnterCodePageState extends ConsumerState<EnterCodePage> {
                       )
                     : null,
               ),
-              const Spacer(),
-              CodeKeypad(onDigit: _type, onBackspace: _backspace),
             ],
           ),
         ),

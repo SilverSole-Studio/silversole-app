@@ -8,6 +8,7 @@ enum LocalSavableKey {
   deviceId('device_id'),
   identity('identity'),
   darkMode('dark_mode'),
+  textSize('text_size'),
   themeVariant('theme_variant'),
   transmissionMethod('transmission_method'),
   pairedDevices('paired_devices'),

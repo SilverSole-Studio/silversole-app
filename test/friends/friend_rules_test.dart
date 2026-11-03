@@ -172,4 +172,23 @@ void main() {
       expect(avatarImageType(const []), isNull);
     });
   });
+
+  group('sanitizeCodeInput (typed or pasted friend code)', () {
+    test('keeps digits only', () {
+      expect(sanitizeCodeInput('38152704'), '38152704');
+      expect(sanitizeCodeInput('3815 2704'), '38152704');
+      expect(sanitizeCodeInput(' 3815-2704\n'), '38152704');
+      expect(sanitizeCodeInput('我的好友碼：3815 2704，快加我'), '38152704');
+      expect(sanitizeCodeInput('abc'), '');
+    });
+
+    test('turns full-width digits into ordinary ones', () {
+      expect(sanitizeCodeInput('３８１５　２７０４'), '38152704');
+    });
+
+    test('stops at the code length', () {
+      expect(sanitizeCodeInput('3815270499'), '38152704');
+      expect(sanitizeCodeInput('3815 2704 99'), '38152704');
+    });
+  });
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/app.dart';
 import 'package:silversole/core/error/result.dart';
@@ -331,100 +332,21 @@ Future<bool> confirmFriendAction(
   return ok ?? false;
 }
 
-/// The eight code digits as two groups of four boxes (`3815 2704`).
-class CodeDigits extends StatelessWidget {
-  const CodeDigits({super.key, required this.digits});
-
-  final String digits;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget box(int i) {
-      final filled = i < digits.length;
-      return Container(
-        width: 34,
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: i == digits.length
-                ? context.colorScheme.primary
-                : context.colorScheme.outline,
-            width: i == digits.length ? 3 : 1.5,
-          ),
-        ),
-        child: Text(
-          filled ? digits[i] : '',
-          style: context.textTheme.headlineMedium,
-        ),
-      );
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      spacing: 4,
-      children: [
-        for (var i = 0; i < 4; i++) box(i),
-        const SizedBox(width: AppSpacing.md),
-        for (var i = 4; i < kCodeLength; i++) box(i),
-      ],
-    );
-  }
-}
-
-/// Big digit keypad (each key at least 64px), used instead of the system
-/// keyboard for friend and org codes.
-class CodeKeypad extends StatelessWidget {
-  const CodeKeypad({
-    super.key,
-    required this.onDigit,
-    required this.onBackspace,
-  });
-
-  final ValueChanged<String> onDigit;
-  final VoidCallback onBackspace;
+/// Keeps only the digits of what is typed or pasted ([sanitizeCodeInput]), at
+/// most [kCodeLength] of them.
+class CodeInputFormatter extends TextInputFormatter {
+  const CodeInputFormatter();
 
   @override
-  Widget build(BuildContext context) {
-    Widget key(String label, VoidCallback onTap, {IconData? icon}) {
-      return Expanded(
-        child: SizedBox(
-          height: 68,
-          child: OutlinedButton(
-            onPressed: onTap,
-            child: icon != null
-                ? Icon(icon, size: 30, semanticLabel: label)
-                : Text(label, style: context.textTheme.headlineMedium),
-          ),
-        ),
-      );
-    }
-
-    Widget row(List<String> digits) => Row(
-      spacing: AppSpacing.sm,
-      children: [for (final d in digits) key(d, () => onDigit(d))],
-    );
-
-    return Column(
-      spacing: AppSpacing.sm,
-      children: [
-        row(['1', '2', '3']),
-        row(['4', '5', '6']),
-        row(['7', '8', '9']),
-        Row(
-          spacing: AppSpacing.sm,
-          children: [
-            const Expanded(child: SizedBox()),
-            key('0', () => onDigit('0')),
-            key(
-              'friends_backspace'.tr(),
-              onBackspace,
-              icon: Icons.backspace_outlined,
-            ),
-          ],
-        ),
-      ],
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final clean = sanitizeCodeInput(newValue.text);
+    if (clean == newValue.text) return newValue;
+    return TextEditingValue(
+      text: clean,
+      selection: TextSelection.collapsed(offset: clean.length),
     );
   }
 }

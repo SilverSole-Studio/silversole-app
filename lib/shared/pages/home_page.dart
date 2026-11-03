@@ -13,6 +13,7 @@ import 'package:silversole/shared/pages/plaza_tab_page.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
+import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
@@ -27,8 +28,6 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  int _page = 0;
-
   @override
   void initState() {
     super.initState();
@@ -71,16 +70,17 @@ class _HomePageState extends ConsumerState<HomePage> {
       isMascot ? const AnalyticsPageT2() : const AnalyticsPage(),
       const PersonPage(),
     ];
-    // In a game (not the town hub) the bar goes away so a stray tap mid-game
-    // does not switch tabs; the games have their own way back to town.
-    final hideBar =
-        pages[_page] is PlazaTabPage && ref.watch(plazaInGameProvider);
+    final page = ref.watch(homeTabProvider);
+    // The games tab (town and games alike) has no bar, so a stray tap does not
+    // switch tabs; the town menu's 「回 App」 and the back button in the town
+    // come back through [homeTabProvider].
+    final hideBar = pages[page] is PlazaTabPage;
     return Scaffold(
       bottomNavigationBar: hideBar
           ? null
           : appNavigationBar(
-              selectedIndex: _page,
-              onDestinationSelected: (index) => setState(() => _page = index),
+              selectedIndex: page,
+              onDestinationSelected: ref.read(homeTabProvider.notifier).select,
               icons: const [
                 Icons.home,
                 LucideIcons.map,
@@ -105,7 +105,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       // then removeRenderObjectChild asserting on a stale child). Per-tab
       // scroll position is not preserved as a result — page content is
       // rebuilt from the same providers, so nothing is lost but the offset.
-      body: pages[_page],
+      body: pages[page],
     );
   }
 }
