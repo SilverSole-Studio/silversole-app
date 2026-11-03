@@ -7,6 +7,7 @@ import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
 import 'package:silversole/shared/providers/device_location_provider.dart';
+import 'package:silversole/shared/widgets/fall_guard_card.dart';
 import 'package:silversole/shared/widgets/safe_zone_map_view.dart';
 
 /// Fallback camera target when the device has never reported a position.
@@ -48,6 +49,8 @@ class MapPage extends ConsumerWidget {
                   ),
                 ),
               ),
+              // Fall detection lives here, not on the home page.
+              const FallGuardCard(),
             ],
           ),
         ),

@@ -8,6 +8,7 @@ import 'package:silversole/shared/models/device_location_model.dart';
 import 'package:silversole/shared/pages/map_page.dart'
     show kMapFallbackCenter;
 import 'package:silversole/shared/providers/device_location_provider.dart';
+import 'package:silversole/shared/widgets/fall_guard_card.dart';
 import 'package:silversole/shared/widgets/safe_zone_map_view.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
@@ -77,6 +78,8 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
                   ),
                 ),
               ),
+              // Fall detection lives here, not on the home page.
+              const FallGuardCard(),
             ],
           ),
         ),
