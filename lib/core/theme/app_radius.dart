@@ -21,8 +21,9 @@ abstract final class AppRadius {
   static const double sub = control;
 
   static const BorderRadius cardR = BorderRadius.all(Radius.circular(card));
-  static const BorderRadius controlR =
-      BorderRadius.all(Radius.circular(control));
+  static const BorderRadius controlR = BorderRadius.all(
+    Radius.circular(control),
+  );
   static const BorderRadius pillR = BorderRadius.all(Radius.circular(pill));
 
   static const BorderRadius bannerR = controlR;
@@ -30,10 +31,12 @@ abstract final class AppRadius {
   static const BorderRadius fieldR = controlR;
   static const BorderRadius subR = controlR;
 
-  static const RoundedRectangleBorder cardShape =
-      RoundedRectangleBorder(borderRadius: cardR);
-  static const RoundedRectangleBorder controlShape =
-      RoundedRectangleBorder(borderRadius: controlR);
+  static const RoundedRectangleBorder cardShape = RoundedRectangleBorder(
+    borderRadius: cardR,
+  );
+  static const RoundedRectangleBorder controlShape = RoundedRectangleBorder(
+    borderRadius: controlR,
+  );
   static const RoundedRectangleBorder bannerShape = controlShape;
   static const RoundedRectangleBorder fabShape = controlShape;
 

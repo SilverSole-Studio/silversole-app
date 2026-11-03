@@ -47,12 +47,18 @@ void main() {
 
   group('PlazaBridge.storeArgs', () {
     test('takes {rev, data}', () {
-      expect(PlazaBridge.storeArgs([
-        {'rev': 2, 'data': '{}'},
-      ]), (rev: 2, data: '{}'));
-      expect(PlazaBridge.storeArgs([
-        {'rev': 2.0, 'data': '{}'},
-      ])?.rev, 2);
+      expect(
+        PlazaBridge.storeArgs([
+          {'rev': 2, 'data': '{}'},
+        ]),
+        (rev: 2, data: '{}'),
+      );
+      expect(
+        PlazaBridge.storeArgs([
+          {'rev': 2.0, 'data': '{}'},
+        ])?.rev,
+        2,
+      );
     });
 
     test('anything else is refused', () {

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/theme/theme.dart';
-import 'package:silversole/core/utils/foot_check_rating.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/models/app_settings.dart';
@@ -162,7 +161,7 @@ void main() {
       expect(find.textContaining('123e4567'), findsNothing, reason: name);
       expect(find.text('傳輸者'), findsNothing, reason: name);
       expect(find.text('觀察者'), findsNothing, reason: name);
-      expect(find.text('我的鞋墊'), findsWidgets, reason: name);
+      expect(find.text('我的鞋墊'), findsOneWidget, reason: name);
       expect(find.text('grandma.wang@example.com'), findsOneWidget);
 
       // Friends: the hub is a nested route.

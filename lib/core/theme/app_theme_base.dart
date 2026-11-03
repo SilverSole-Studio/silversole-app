@@ -19,6 +19,7 @@ class AppSkin {
     required this.navColor,
     required this.navIndicatorColor,
     required this.navSelectedColor,
+    required this.navSelectedLabelColor,
     required this.navUnselectedColor,
     required this.extensions,
     this.cardElevation = 0,
@@ -60,6 +61,10 @@ class AppSkin {
   final Color navIndicatorColor;
   final BorderSide navIndicatorSide;
   final Color navSelectedColor;
+
+  /// The selected tab's label color. The label sits under the indicator (not
+  /// on it), so it can differ from the icon, which sits on the indicator.
+  final Color navSelectedLabelColor;
   final Color navUnselectedColor;
 
   final Color? chipSelectedColor;
@@ -224,7 +229,7 @@ ThemeData buildAppThemeData(AppSkin skin) {
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => textTheme.labelMedium?.copyWith(
           color: states.contains(WidgetState.selected)
-              ? skin.navSelectedColor
+              ? skin.navSelectedLabelColor
               : skin.navUnselectedColor,
         ),
       ),

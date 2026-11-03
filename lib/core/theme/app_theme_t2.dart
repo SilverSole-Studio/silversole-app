@@ -57,8 +57,10 @@ ThemeData appThemeT2(Brightness brightness) {
       navColor: c.card,
       navIndicatorColor: c.gold,
       navIndicatorSide: outline,
-      // Selected = ink on gold; unselected = muted ink on the card.
+      // Selected: the icon is dark on the gold indicator, the label is ink on
+      // the bar; unselected = muted ink.
       navSelectedColor: c.onGold,
+      navSelectedLabelColor: c.ink,
       navUnselectedColor: c.inkMuted,
       chipSelectedColor: c.gold,
       chipSide: outline,

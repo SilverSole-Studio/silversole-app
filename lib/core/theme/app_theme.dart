@@ -77,6 +77,7 @@ ThemeData appTheme(Brightness brightness) {
       navColor: scheme.surface,
       navIndicatorColor: scheme.primary.withValues(alpha: 0.14),
       navSelectedColor: scheme.primary,
+      navSelectedLabelColor: scheme.primary,
       navUnselectedColor: scheme.onSurfaceVariant,
       chipSelectedColor: scheme.inverseSurface,
     ),

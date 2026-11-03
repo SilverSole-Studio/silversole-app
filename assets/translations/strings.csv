@@ -3,7 +3,7 @@ home,Home,主頁
 welcome_back,Welcome back,歡迎回來
 toggle,Toggle,切換
 last_connected,Last connected: {},上次連線：{}
-person,Person,個人
+person,Me,我的
 account,Account,帳號
 not_signed_in,Not signed in,尚未登入
 sign_in,Sign In,登入
@@ -742,7 +742,7 @@ nav_game,Games,遊戲
 nav_report,Report,報告
 nav_mine,Me,我的
 add_device_cta,Pair new insoles,配對新鞋墊
-my_insoles,My insoles,我的鞋墊
+my_insoles,Insoles,鞋墊
 identity_tap_to_change,Tap to change,點一下可以更換
-foot_check_done_cheer,"All done, nice work!",做完了，辛苦了！
-auth_tagline,"Foot pressure checks, a little movement, and progress you can see",足壓健檢、動一動、看見進步
+foot_check_done_cheer,Nice work! All done.,做完了，辛苦了！
+auth_tagline,Foot pressure checks and gentle movement for steady progress,足壓健檢、動一動、看見進步
