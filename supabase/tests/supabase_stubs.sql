@@ -104,3 +104,45 @@ create policy "Enable users to view their own data only"
 create policy "Enable insert for users based on user_id"
   on public.user_devices for insert to authenticated
   with check ((select auth.uid()) = user_id);
+
+-- ---------------------------------------------------------------------------
+-- realtime（聯機 20261103120000_mp_rooms.sql 用）：messages 表、topic()、send() 的最小替身
+--
+-- 正式庫的 realtime.messages 本來就開了 RLS、也有 send()；這裡的 send() 只是把訊息
+-- 記進 messages，測試才看得到「房間有人動了」有沒有被推出去。topic() 讀
+-- realtime.topic 這個設定，測試用 set_config 模擬「這個人訂閱了哪個頻道」。
+-- 一樣只給本機測試用，不能套到正式庫。
+-- ---------------------------------------------------------------------------
+
+create schema realtime;
+grant usage on schema realtime to anon, authenticated, service_role;
+
+create table realtime.messages (
+  id uuid primary key default gen_random_uuid(),
+  topic text not null,
+  extension text not null,
+  event text,
+  payload jsonb,
+  private boolean default false,
+  inserted_at timestamptz not null default now()
+);
+alter table realtime.messages enable row level security;
+grant select, insert on realtime.messages to authenticated;
+
+create function realtime.topic()
+returns text
+language sql
+stable
+as $$
+  select nullif(current_setting('realtime.topic', true), '')
+$$;
+
+create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+returns void
+language plpgsql
+as $$
+begin
+  insert into realtime.messages (topic, extension, event, payload, private)
+  values (topic, 'broadcast', event, payload, private);
+end
+$$;

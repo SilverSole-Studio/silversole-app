@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/game_save/game_save_repository.dart';
+import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -219,6 +220,15 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
         final a = PlazaBridge.storeArgs(args);
         if (a == null) return const {'ok': false, 'reason': 'bad_data'};
         return ref.read(gameSaveRepositoryProvider).store(a.rev, a.data);
+      },
+    );
+    // Online play: the signed-in user's Supabase connection, same origin rule
+    // as `openFriends`; null for any other page or when nobody is signed in.
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.mpSession,
+      callback: (_) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        return ref.read(mpSessionServiceProvider).session();
       },
     );
     // A finished round, for the daily missions: same origin rule as the save.

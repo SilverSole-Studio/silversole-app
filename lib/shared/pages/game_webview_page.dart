@@ -4,6 +4,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/game_path.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -110,6 +111,18 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
               callback: (args) {
                 // TODO: persist the score (Supabase). For now just log it.
                 debugPrint('[Game] gameScore: $args');
+              },
+            );
+            // Online play, same rule as the plaza tab: only the games' own site.
+            controller.addJavaScriptHandler(
+              handlerName: PlazaBridge.mpSession,
+              callback: (_) async {
+                final onGameSite = PlazaBridge.isGameOrigin(
+                  await controller.getUrl(),
+                  Constants.gameUrl,
+                );
+                if (!onGameSite || !mounted) return null;
+                return ref.read(mpSessionServiceProvider).session();
               },
             );
             // A finished round, for the daily missions (a mission opens its

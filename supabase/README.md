@@ -20,6 +20,7 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 | `tests/devices_rls_test.mjs` | 11 個案例：只讀自己的裝置、不能直接綁定、heartbeat（service role）照常更新、anon 讀不到；另有一個在「不套這支」的版本證明洞存在。stubs 末段重建了正式庫原本的兩張表與寬鬆政策。`npm run test:devices` |
 | `migrations/20261101130000_daily_mission_plans.sql` | 每日任務 AI 版的表 `daily_mission_plans`（一人一天一列：`status` pending／done／failed、`payload`＝Claude 寫好的文字）。開 RLS、不給任何政策、收回 anon 與 authenticated 的權限，只有 service role 讀寫。**還沒套用**，要先問 user |
 | `functions/daily-missions/` | Edge Function，用 Claude Haiku 5.5 為每日任務寫一句鼓勵話與每個任務的理由。`logic.ts`（純函式，不 import 任何東西：欄位驗證、prompt、輸出驗證、既有列的判斷）、`index.ts`（Deno，只做驗身分、讀列／搶位／接手、呼叫 Claude）、`logic.test.ts`（`npm run test:missions`）、`tests/daily_missions_db_test.mjs`（`npm run test:missions-db`）。**還沒部署**，App 端用開關 `AI_MISSIONS` 關著 |
+| `migrations/20261103120000_mp_rooms.sql` | 遊戲聯機底層（2026-11-03）：`mp_rooms`（兩人讀得到、不開放直接寫）、`mp_limits`（每人限流＋猜房號鎖定）、`mp_declines`（拒絕邀請的冷卻）；RPC `mp_create_room`／`mp_join_room`／`mp_invite`／`mp_my_invites`／`mp_accept_invite`／`mp_submit_move`／`mp_leave`；`realtime.messages` 的 RLS（只有房間兩人進得了 `room:<id>`）。要先套好好友那兩支。測試：`npm run test:mp`（PGlite，每個案例在交易裡跑完 rollback）、`npm run test:mp-concurrency`（真 PostgreSQL，多連線同時打）。**還沒套用到任何專案**，要先問 user。設計：總倉庫 `02_產品/鞋墊_SilverSole/_聯機設計_2026-11-03.md` |
 | `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
 | `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 
