@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
@@ -120,7 +120,8 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
                   selected: {_scale},
                   onSelectionChanged: (s) => setState(() => _scale = s.first),
                 ),
-                if (kDebugMode) const GaitRawRecordButton(),
+                if (ref.watch(devToolsVisibleProvider))
+                  const GaitRawRecordButton(),
                 GaitAnalysisPanel(
                   snapshot: ref.watch(gaitViewSnapshotProvider(_scale)),
                   mobility: ref.watch(mobilityCardProvider),

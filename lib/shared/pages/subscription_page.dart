@@ -1,13 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/core/diamonds/diamond_repository.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -40,9 +39,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     final active = ref.watch(subscriptionActiveProvider);
     final diamonds = ref.watch(diamondsProvider.select((s) => s.balance));
     final fake = ref.watch(fakeSubscriptionProvider);
-    final devMode = ref.watch(
-      settingsProvider.select((s) => s.firmwareDevMode),
-    );
+    final devTools = ref.watch(devToolsVisibleProvider);
     final perks = [
       ('subscription_perk_real_goods', LucideIcons.gift),
       ('subscription_perk_more', LucideIcons.sparkles),
@@ -131,7 +128,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (kDebugMode || devMode) ...[
+          if (devTools) ...[
             const SizedBox(height: AppSpacing.xxl),
             SwitchListTile(
               key: const Key('fake_subscription_switch'),

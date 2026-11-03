@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
@@ -80,7 +80,7 @@ class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
                       setState(() => _scale = GaitScale.values[i]),
                 ),
                 const SizedBox(height: 14),
-                if (kDebugMode) ...[
+                if (ref.watch(devToolsVisibleProvider)) ...[
                   const GaitRawRecordButton(),
                   const SizedBox(height: 14),
                 ],
@@ -137,7 +137,10 @@ class _Segmented extends StatelessWidget {
                       ? BoxDecoration(
                           color: context.mascot.gold,
                           borderRadius: AppRadius.pillR,
-                          border: Border.all(color: context.mascot.line, width: 2),
+                          border: Border.all(
+                            color: context.mascot.line,
+                            width: 2,
+                          ),
                         )
                       : null,
                   child: Text(
