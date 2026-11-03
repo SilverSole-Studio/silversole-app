@@ -5,6 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -50,6 +52,14 @@ class _AnalyticsPageState extends ConsumerState<AnalyticsPage> {
           'analytics_title'.tr(),
           style: context.textTheme.titleLarge,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.share2),
+            tooltip: 'report_share_tooltip'.tr(),
+            onPressed: () => context.push('/activity-report'),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -736,3 +736,42 @@ diamonds,Diamonds,鑽石
 diamonds_month,This month {} / {},本月 {}／{}
 diamonds_how,Wear the insole and move for 15 minutes a day: +10,每天穿鞋墊動 15 分鐘＋10
 diamonds_kept,Diamonds are kept for 3 months after you cancel.,取消訂閱後鑽石保留 3 個月
+report_title,Daily activity record,日常活動紀錄
+report_period,Last 7 days ({} - {}),最近 7 天（{}－{}）
+report_made_on,Made on {},產生日期：{}
+report_nickname_line,Name: {},稱呼：{}
+report_section_foot_check,Foot pressure check,足壓健檢
+report_section_games,Game exercise,遊戲運動
+report_section_gait,Walking,走路步態
+report_foot_last_check,Last check: {},最近一次：{}
+report_games_summary,Active on {} days with {} minutes in total,有運動 {} 天，合計 {} 分鐘
+report_times,{} times,{} 次
+report_game_walkgroup,Group Walk,揪團健走
+report_game_bike,Chu Bike,粗哥腳踏車
+report_game_canoe,Chu Canoe,粗哥獨木舟
+report_game_fish,Chu Fish Catch,粗哥接魚
+report_game_ski,Chu Ski,粗哥滑雪
+report_game_hop,Chu Hop,粗哥跑跑
+report_game_rhythm,Rhythm Steps,節奏踩踩
+report_game_quiz,Foot Quiz,足底知識王
+report_game_pool,Pool,撞球
+report_game_laojie,Step into Old Street,踩進老街
+report_game_other,Other games,其他遊戲
+report_gait_steps,Steps each day,每天走路步數
+report_gait_cadence_value,{} steps per minute,{} 步／分鐘
+report_gait_minutes_value,{} minutes,{} 分鐘
+report_footer,This record is for health promotion and exercise participation and is not a medical diagnosis. Data comes from the SilverSole insole and app and is for reference only.,本紀錄為健康促進與運動參與紀錄，非醫療診斷。數據由 SilverSole 鞋墊與 App 記錄，僅供參考。
+report_app_name,SilverSole,SilverSole
+report_page_title,Share activity record,分享活動紀錄
+report_share,Share,分享
+report_share_tooltip,Share record,分享紀錄
+report_share_failed,Could not share. Please try again.,沒辦法分享，請再試一次。
+report_empty_title,Nothing to share yet,還沒有可以分享的紀錄
+report_empty_body,Take a foot check or play a game and your record shows up here.,做一次足壓健檢或玩一局遊戲，紀錄就會出現在這裡。
+report_privacy_note,The record is made on your phone and is not uploaded. You choose who receives it when you share.,紀錄在你的手機上產生，不會上傳。要傳給誰，分享時由你決定。
+report_nickname_label,Name on the record (optional),紀錄上的稱呼（選填）
+report_nickname_hint,Left empty the record has no name,不填的話，紀錄上就不會有名字
+report_pick_sections,What to include,要放進紀錄的內容
+report_preview,Preview,預覽
+report_foot_result,Foot check result,健檢結果
+report_foot_no_medial,Too little forefoot load for an inner and outer split,前腳掌受力太少，沒有內外比例
