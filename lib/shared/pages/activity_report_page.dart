@@ -88,8 +88,12 @@ class _ActivityReportPageState extends ConsumerState<ActivityReportPage> {
           _boundaryKey.currentContext!.findRenderObject()
               as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: _imagePixelRatio);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      image.dispose();
+      final ByteData? data;
+      try {
+        data = await image.toByteData(format: ui.ImageByteFormat.png);
+      } finally {
+        image.dispose();
+      }
       if (data == null) throw StateError('no image data');
       final d = report.generatedOn;
       final fileName =

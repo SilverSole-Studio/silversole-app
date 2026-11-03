@@ -58,11 +58,12 @@ Future<void> _pump(
   bool realGait = false,
   MobilityCard? mobility,
   Locale? locale,
+  Size logicalSize = const Size(400, 3000),
   List<_Shared>? shared,
   Future<void> Function(Uint8List, String)? share,
 }) async {
   // Tall enough that the whole page is on screen without scrolling.
-  tester.view.physicalSize = const Size(1200, 9000);
+  tester.view.physicalSize = logicalSize * 3;
   tester.view.devicePixelRatio = 3.0;
   addTearDown(tester.view.reset);
 
@@ -418,6 +419,30 @@ void main() {
       shared.single.name,
       matches(RegExp(r'^activity_record_\d{8}\.png$')),
     );
+  });
+
+  testWidgets('on a narrow phone the picture is still 1080 px wide', (
+    tester,
+  ) async {
+    final shared = <_Shared>[];
+    await _pump(
+      tester,
+      check: _check(),
+      games: _games(),
+      shared: shared,
+      logicalSize: const Size(390, 844),
+    );
+
+    await tester.ensureVisible(find.byKey(ActivityReportPage.shareButtonKey));
+    await tester.tap(find.byKey(ActivityReportPage.shareButtonKey));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 300)),
+    );
+    await tester.pump();
+
+    expect(shared, hasLength(1));
+    final png = shared.single.png;
+    expect(ByteData.sublistView(png, 16, 20).getUint32(0), 1080);
   });
 
   testWidgets('a share that fails says so and Share works again', (

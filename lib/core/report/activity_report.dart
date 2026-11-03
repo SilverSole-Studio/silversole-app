@@ -273,7 +273,13 @@ GaitSection? _gait(List<DateTime> days, Map<String, DailyGait> history) {
     for (final d in withSteps)
       if (finiteOrNull(d.cadence) case final c?) c,
   ];
-  final walkingMs = withSteps.fold(0, (n, d) => n + d.walkingMs);
+  // Minutes are averaged over the days that actually have walking time, so a
+  // day with steps but no timed walking does not pull the average down.
+  final walked = [
+    for (final d in withSteps)
+      if (d.walkingMs > 0) d.walkingMs,
+  ];
+  final walkingMs = walked.fold(0, (n, ms) => n + ms);
   return GaitSection(
     days: bars,
     averageCadence: cadences.isEmpty
@@ -281,6 +287,6 @@ GaitSection? _gait(List<DateTime> days, Map<String, DailyGait> history) {
         : cadences.reduce((a, b) => a + b) / cadences.length,
     averageWalkingMinutes: walkingMs <= 0
         ? null
-        : (walkingMs / withSteps.length / 60000).round(),
+        : (walkingMs / walked.length / 60000).round(),
   );
 }

@@ -314,6 +314,26 @@ void main() {
       expect(gait.averageWalkingMinutes, 8);
     });
 
+    test(
+      'gait: walking minutes skip a day with steps but no timed walking',
+      () {
+        final report = _build(
+          gaitHistory: {
+            '2026-11-04': _walk(
+              DateTime(2026, 11, 4),
+              steps: 600,
+              walkingMs: 600000,
+            ),
+            '2026-11-03': _walk(DateTime(2026, 11, 3), steps: 50, walkingMs: 0),
+          },
+        );
+        final gait = report.gait!;
+        // 10 minutes over the one day with walking time, not 5 over two.
+        expect(gait.averageWalkingMinutes, 10);
+        expect(gait.days.where((d) => d.steps > 0), hasLength(2));
+      },
+    );
+
     test('mobility: pending card gives no section', () {
       final report = _build(
         mobility: const MobilityPending(weeksSoFar: 1, weeksNeeded: 3),
