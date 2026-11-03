@@ -19,7 +19,8 @@ Widget appNavigationBar({
       // Hairline divider above the bar (drawn over the bar's background so it
       // reads as a top outline), matching the card borders.
       // Look A draws its own hand-made icons and a thick brown top edge.
-      final isA = Theme.of(context).extension<AppLook>()?.variant ==
+      final isA =
+          Theme.of(context).extension<AppLook>()?.variant ==
           AppThemeVariant.mascot;
       return DecoratedBox(
         position: DecorationPosition.foreground,

@@ -185,9 +185,7 @@ class FootCheckCardT2 extends ConsumerWidget {
                                   Padding(
                                     padding: const EdgeInsets.only(right: 4),
                                     child: TownIcon(
-                                      i <= last.rating.level
-                                          ? 'star'
-                                          : 'starO',
+                                      i <= last.rating.level ? 'star' : 'starO',
                                       size: 30,
                                     ),
                                   ),
@@ -305,10 +303,7 @@ class _InsoleStall extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           if (!status.paired)
-            Text(
-              'device_tap_to_pair'.tr(),
-              style: context.textTheme.titleLarge,
-            )
+            Text('device_tap_to_pair'.tr(), style: context.textTheme.titleLarge)
           else ...[
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,

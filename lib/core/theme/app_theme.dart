@@ -67,9 +67,7 @@ ThemeData appTheme(Brightness brightness) {
       scaffoldColor: isLight ? AppPalette.pageLight : scheme.surface,
       extensions: <ThemeExtension<dynamic>>[
         AppTokens.of(brightness),
-        AppLook(
-          isLight ? AppThemeVariant.techLight : AppThemeVariant.techDark,
-        ),
+        AppLook(isLight ? AppThemeVariant.techLight : AppThemeVariant.techDark),
       ],
       cardColor: isLight ? Colors.white : scheme.surfaceContainerLow,
       cardSide: cardHairline,

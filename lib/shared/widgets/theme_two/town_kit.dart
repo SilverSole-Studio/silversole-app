@@ -122,11 +122,8 @@ class TownDot extends StatelessWidget {
 
 /// A big number with the mascot-yellow drop shadow, for the one hero figure of
 /// a card. Drawn in the look's number face.
-TextStyle townHeroStyle(BuildContext context, double size) =>
-    context.look
-        .number(size, color: context.mascot.ink)
-        .copyWith(
-          shadows: [
-            Shadow(color: context.mascot.gold, offset: const Offset(4, 4)),
-          ],
-        );
+TextStyle townHeroStyle(BuildContext context, double size) => context.look
+    .number(size, color: context.mascot.ink)
+    .copyWith(
+      shadows: [Shadow(color: context.mascot.gold, offset: const Offset(4, 4))],
+    );

@@ -10,6 +10,8 @@ import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/plaza_tab_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
@@ -93,9 +95,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     final pages = [
       switch (variant) {
         AppThemeVariant.mascot => const HomeBodyT2(),
-        AppThemeVariant.techLight || AppThemeVariant.techDark => const HomeBody(),
-        AppThemeVariant.dashboard => const HomeBody(),
-        AppThemeVariant.journal => const HomeBody(),
+        AppThemeVariant.techLight ||
+        AppThemeVariant.techDark => const HomeBody(),
+        AppThemeVariant.dashboard => const HomeBodyB(),
+        AppThemeVariant.journal => const HomeBodyC(),
       },
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),

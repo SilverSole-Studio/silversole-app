@@ -15,7 +15,10 @@ import 'package:silversole/core/theme/app_typography.dart';
 /// Light only: dark is a different look.
 ThemeData appThemeT2() {
   const c = MascotColors.light;
-  const outline = BorderSide(color: AppPaletteT2.ink, width: AppPaletteT2.outlineWidth);
+  const outline = BorderSide(
+    color: AppPaletteT2.ink,
+    width: AppPaletteT2.outlineWidth,
+  );
 
   final scheme =
       ColorScheme.fromSeed(

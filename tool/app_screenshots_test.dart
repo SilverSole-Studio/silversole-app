@@ -41,6 +41,8 @@ import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/subscription_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
@@ -92,16 +94,17 @@ class _Variant {
   bool get mascot => variant == AppThemeVariant.mascot;
 }
 
-final _variants = <_Variant>[
-  const _Variant('mascot', AppThemeVariant.mascot),
-  const _Variant('tech-light', AppThemeVariant.techLight),
-  const _Variant('tech-dark', AppThemeVariant.techDark),
-  const _Variant('dashboard', AppThemeVariant.dashboard),
-  const _Variant('journal', AppThemeVariant.journal),
-].where((v) {
-  final only = Platform.environment['SHOTS'];
-  return only == null || only.split(',').contains(v.name);
-}).toList();
+final _variants =
+    <_Variant>[
+      const _Variant('mascot', AppThemeVariant.mascot),
+      const _Variant('tech-light', AppThemeVariant.techLight),
+      const _Variant('tech-dark', AppThemeVariant.techDark),
+      const _Variant('dashboard', AppThemeVariant.dashboard),
+      const _Variant('journal', AppThemeVariant.journal),
+    ].where((v) {
+      final only = Platform.environment['SHOTS'];
+      return only == null || only.split(',').contains(v.name);
+    }).toList();
 
 ThemeData _withCjk(ThemeData t) {
   TextTheme fix(TextTheme tt) => tt.apply(fontFamilyFallback: const [_cjk]);
@@ -201,12 +204,15 @@ class _Shot {
   final double height;
 }
 
+Widget _home(_Variant v) => switch (v.variant) {
+  AppThemeVariant.mascot => const HomeBodyT2(),
+  AppThemeVariant.dashboard => const HomeBodyB(),
+  AppThemeVariant.journal => const HomeBodyC(),
+  _ => const HomeBody(),
+};
+
 final _shots = <_Shot>[
-  _Shot(
-    '01_today',
-    (v) => _tab(0, v.mascot ? const HomeBodyT2() : const HomeBody()),
-    height: 1700,
-  ),
+  _Shot('01_today', (v) => _tab(0, _home(v)), height: 1700),
   _Shot(
     '02_map',
     (v) => _tab(
@@ -288,11 +294,7 @@ Future<void> _pump(WidgetTester tester, _Variant v, GoRouter router) async {
           friendsRepositoryProvider.overrideWithValue(repo),
           authUserProvider.overrideWith(_SignedIn.new),
           lastFootCheckProvider.overrideWith(_LastCheck.new),
-          settingsProvider.overrideWith(
-            () => _Settings(
-              v.variant,
-            ),
-          ),
+          settingsProvider.overrideWith(() => _Settings(v.variant)),
         ],
         child: EasyLocalization(
           supportedLocales: const [Locale('en'), Locale('zh', 'TW')],

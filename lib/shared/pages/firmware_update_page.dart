@@ -166,11 +166,7 @@ class _Confirm extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: AppSpacing.sm,
                 children: [
-                  Icon(
-                    Icons.check,
-                    size: 18,
-                    color: context.accent,
-                  ),
+                  Icon(Icons.check, size: 18, color: context.accent),
                   Expanded(
                     child: Text(tip.tr(), style: context.textTheme.bodyMedium),
                   ),

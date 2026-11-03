@@ -195,10 +195,7 @@ class ThemeThumb extends StatelessWidget {
   Widget _bar(Color c, {double h = 6, double? w, double r = 3}) => Container(
     width: w,
     height: h,
-    decoration: BoxDecoration(
-      color: c,
-      borderRadius: BorderRadius.circular(r),
-    ),
+    decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(r)),
   );
 
   Widget _screen() {

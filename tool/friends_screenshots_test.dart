@@ -29,7 +29,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/app.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
-import 'package:silversole/core/theme/app_theme_t2.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';

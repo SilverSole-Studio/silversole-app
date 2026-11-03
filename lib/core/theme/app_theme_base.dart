@@ -145,37 +145,38 @@ ThemeData buildAppThemeData(AppSkin skin) {
 
     // Primary: solid, full-height, at most one per page.
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        // A hand-drawn button paints its own fill (see filledDecoration).
-        backgroundColor: skin.filledDecoration == null
-            ? scheme.primary
-            : Colors.transparent,
-        disabledBackgroundColor: skin.filledDecoration == null
-            ? null
-            : Colors.transparent,
-        foregroundColor: scheme.onPrimary,
-        minimumSize: const Size(0, kPrimaryButtonHeight),
-        padding: buttonPadding,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.controlR,
-          side: skin.filledSide,
-        ),
-        textStyle: textTheme.labelLarge,
-      ).copyWith(
-        backgroundBuilder: skin.filledDecoration == null
-            ? null
-            : (context, states, child) {
-                final pressed = states.contains(WidgetState.pressed);
-                return Transform.translate(
-                  offset: Offset(0, pressed ? 4 : 0),
-                  child: DecoratedBox(
-                    decoration: skin.filledDecoration!(states),
-                    child: child,
-                  ),
-                );
-              },
-      ),
+      style:
+          FilledButton.styleFrom(
+            // A hand-drawn button paints its own fill (see filledDecoration).
+            backgroundColor: skin.filledDecoration == null
+                ? scheme.primary
+                : Colors.transparent,
+            disabledBackgroundColor: skin.filledDecoration == null
+                ? null
+                : Colors.transparent,
+            foregroundColor: scheme.onPrimary,
+            minimumSize: const Size(0, kPrimaryButtonHeight),
+            padding: buttonPadding,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.controlR,
+              side: skin.filledSide,
+            ),
+            textStyle: textTheme.labelLarge,
+          ).copyWith(
+            backgroundBuilder: skin.filledDecoration == null
+                ? null
+                : (context, states, child) {
+                    final pressed = states.contains(WidgetState.pressed);
+                    return Transform.translate(
+                      offset: Offset(0, pressed ? 4 : 0),
+                      child: DecoratedBox(
+                        decoration: skin.filledDecoration!(states),
+                        child: child,
+                      ),
+                    );
+                  },
+          ),
     ),
     // Secondary: outlined. Elevated buttons map onto the same look so the app
     // has one secondary button, not two.
