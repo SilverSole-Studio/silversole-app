@@ -64,8 +64,8 @@ void main() {
   final variants = <String, ThemeData Function()>{
     'classic light': () => appTheme(Brightness.light),
     'classic dark': () => appTheme(Brightness.dark),
-    'mascot light': () => appThemeT2(Brightness.light),
-    'mascot dark': () => appThemeT2(Brightness.dark),
+    'mascot light': () => appThemeT2(),
+    'mascot dark': () => appThemeT2(),
   };
 
   testWidgets('every page builds in classic and mascot, light and dark', (

@@ -97,8 +97,8 @@ void main() {
     final themes = {
       'classic': appTheme(Brightness.light),
       'classic dark': appTheme(Brightness.dark),
-      'mascot': appThemeT2(Brightness.light),
-      'mascot dark': appThemeT2(Brightness.dark),
+      'mascot': appThemeT2(),
+      'mascot dark': appThemeT2(),
     };
 
     for (final MapEntry(key: name, value: t) in themes.entries) {
@@ -167,7 +167,7 @@ void main() {
     }
 
     // The map page's card counts falls reported since the app opened.
-    theme.value = appThemeT2(Brightness.light);
+    theme.value = appThemeT2();
     await show(MapPageT2(mapBuilder: (center, show) => const SizedBox()));
     container.read(fallCountSinceOpenProvider);
     container

@@ -34,8 +34,9 @@ abstract final class AppTypography {
   /// Scripts it doesn't cover (Chinese) fall back to the system font.
   static const String fontFamily = 'Google Sans';
 
-  /// Latin family of the mascot theme (ships with the mascot art pack).
-  static const String mascotFontFamily = 'DM Sans';
+  /// Look A's family: Chiron GoRound TC (OFL), a round Traditional-Chinese
+  /// face; bundled as a subset, anything outside it falls back to the system.
+  static const String mascotFontFamily = 'Chiron GoRound TC';
 
   static FontWeight _fw(int wght) {
     if (wght >= 800) return FontWeight.w800;

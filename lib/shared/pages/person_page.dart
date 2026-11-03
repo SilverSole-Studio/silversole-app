@@ -11,7 +11,9 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
 import 'package:silversole/shared/widgets/app_card.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
@@ -93,7 +95,8 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final user = ref.watch(authUserProvider);
     final settings = ref.watch(settingsProvider);
     final isSignedIn = user != null;
-    final isMascot = settings.themeVariant == AppThemeVariant.mascot;
+    final variant = ref.watch(themeVariantProvider);
+    final isMascot = variant == AppThemeVariant.mascot;
     final subscribed = ref.watch(subscriptionActiveProvider);
     final scheme = context.colorScheme;
     final notifier = ref.read(settingsProvider.notifier);
@@ -213,18 +216,6 @@ class _PersonPageState extends ConsumerState<PersonPage> {
             SettingsGroup(
               title: 'general'.tr(),
               children: [
-                // Visible switches / choices, so the current state can be seen
-                // without reading a subtitle.
-                SettingsRow(
-                  icon: LucideIcons.moon,
-                  title: 'dark_mode'.tr(),
-                  subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
-                  onTap: () => notifier.setDarkMode(!settings.darkMode),
-                  trailing: Switch(
-                    value: settings.darkMode,
-                    onChanged: notifier.setDarkMode,
-                  ),
-                ),
                 _ChoiceCard<AppTextSize>(
                   icon: LucideIcons.type,
                   title: 'text_size'.tr(),
@@ -235,15 +226,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                     AppTextSize.large: 'text_size_large'.tr(),
                   },
                 ),
-                _ChoiceCard<AppThemeVariant>(
+                // Light or dark comes with the look; there is no separate
+                // dark-mode switch.
+                SettingsRow(
                   icon: LucideIcons.palette,
                   title: 'switch_theme'.tr(),
-                  value: settings.themeVariant,
-                  onChanged: notifier.setThemeVariant,
-                  options: {
-                    AppThemeVariant.mascot: 'theme_mascot'.tr(),
-                    AppThemeVariant.classic: 'theme_classic'.tr(),
-                  },
+                  subtitle: themeNameKey(variant).tr(),
+                  showChevron: true,
+                  onTap: () => context.push('/themes'),
                 ),
                 SettingsRow(
                   icon: LucideIcons.shieldCheck,

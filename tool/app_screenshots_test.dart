@@ -90,8 +90,8 @@ class _Variant {
 final _variants = <_Variant>[
   _Variant('classic', () => appTheme(Brightness.light), mascot: false),
   _Variant('classic-dark', () => appTheme(Brightness.dark), mascot: false),
-  _Variant('mascot', () => appThemeT2(Brightness.light), mascot: true),
-  _Variant('mascot-dark', () => appThemeT2(Brightness.dark), mascot: true),
+  _Variant('mascot', () => appThemeT2(), mascot: true),
+  _Variant('mascot-dark', () => appThemeT2(), mascot: true),
 ];
 
 ThemeData _withCjk(ThemeData t) {

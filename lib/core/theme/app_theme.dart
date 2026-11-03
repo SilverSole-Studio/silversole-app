@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/app_look.dart';
 import 'package:silversole/core/theme/app_palette.dart';
+import 'package:silversole/core/theme/app_theme_variant.dart';
 import 'package:silversole/core/theme/app_theme_base.dart';
 import 'package:silversole/core/theme/app_tokens.dart';
 import 'package:silversole/core/theme/app_typography.dart';
@@ -63,7 +65,12 @@ ThemeData appTheme(Brightness brightness) {
       // Page body is a soft light gray in light mode (AppPalette.pageLight)
       // so pure-white cards float above it; dark keeps the deep body.
       scaffoldColor: isLight ? AppPalette.pageLight : scheme.surface,
-      extensions: <ThemeExtension<dynamic>>[AppTokens.of(brightness)],
+      extensions: <ThemeExtension<dynamic>>[
+        AppTokens.of(brightness),
+        AppLook(
+          isLight ? AppThemeVariant.techLight : AppThemeVariant.techDark,
+        ),
+      ],
       cardColor: isLight ? Colors.white : scheme.surfaceContainerLow,
       cardSide: cardHairline,
       cardElevation: isLight ? 0.5 : 0,

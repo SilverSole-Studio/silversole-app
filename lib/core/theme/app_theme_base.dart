@@ -36,6 +36,8 @@ class AppSkin {
     this.progressTrackColor,
     this.progressMinHeight,
     this.inputFill,
+    this.filledDecoration,
+    this.navHeight,
   });
 
   final ColorScheme scheme;
@@ -74,6 +76,13 @@ class AppSkin {
   final Color? progressTrackColor;
   final double? progressMinHeight;
   final Color? inputFill;
+
+  /// Draws the primary button by hand (a hard shadow, say), given the button's
+  /// current states. Null = the usual filled Material button.
+  final BoxDecoration Function(Set<WidgetState> states)? filledDecoration;
+
+  /// Bottom navigation height; null = [kNavBarHeight].
+  final double? navHeight;
 
   final List<ThemeExtension<dynamic>> extensions;
 }
@@ -137,7 +146,13 @@ ThemeData buildAppThemeData(AppSkin skin) {
     // Primary: solid, full-height, at most one per page.
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: scheme.primary,
+        // A hand-drawn button paints its own fill (see filledDecoration).
+        backgroundColor: skin.filledDecoration == null
+            ? scheme.primary
+            : Colors.transparent,
+        disabledBackgroundColor: skin.filledDecoration == null
+            ? null
+            : Colors.transparent,
         foregroundColor: scheme.onPrimary,
         minimumSize: const Size(0, kPrimaryButtonHeight),
         padding: buttonPadding,
@@ -147,6 +162,19 @@ ThemeData buildAppThemeData(AppSkin skin) {
           side: skin.filledSide,
         ),
         textStyle: textTheme.labelLarge,
+      ).copyWith(
+        backgroundBuilder: skin.filledDecoration == null
+            ? null
+            : (context, states, child) {
+                final pressed = states.contains(WidgetState.pressed);
+                return Transform.translate(
+                  offset: Offset(0, pressed ? 4 : 0),
+                  child: DecoratedBox(
+                    decoration: skin.filledDecoration!(states),
+                    child: child,
+                  ),
+                );
+              },
       ),
     ),
     // Secondary: outlined. Elevated buttons map onto the same look so the app
@@ -208,7 +236,7 @@ ThemeData buildAppThemeData(AppSkin skin) {
     // Bottom navigation: icon + label (14sp, never smaller), and a visible
     // selected state: a filled indicator, not just a color change.
     navigationBarTheme: NavigationBarThemeData(
-      height: kNavBarHeight,
+      height: skin.navHeight ?? kNavBarHeight,
       backgroundColor: skin.navColor,
       surfaceTintColor: Colors.transparent,
       elevation: 0,

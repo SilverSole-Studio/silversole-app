@@ -8,6 +8,7 @@ import 'package:silversole/shared/pages/foot_side_calibration_modal.dart';
 import 'package:silversole/shared/providers/ble_foreground_controller.dart';
 import 'package:silversole/shared/providers/gait_providers.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/dismiss_keyboard_on_tap_outside.dart';
 import 'package:silversole/shared/widgets/fall_demo_overlay.dart';
 
@@ -20,8 +21,8 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final router = ref.watch(routerProvider);
-    final darkMode = settings.darkMode;
-    final isMascot = settings.themeVariant == AppThemeVariant.mascot;
+    // Light or dark comes with the look; there is no separate switch.
+    final variant = ref.watch(themeVariantProvider);
 
     ref.watch(bleForegroundControlProvider);
     // Both run for the whole app session: gait totals and the fall count
@@ -35,14 +36,8 @@ class App extends ConsumerWidget {
       localizationsDelegates: context.localizationDelegates,
       locale: context.locale,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      theme: isMascot
-          ? appThemeT2(Brightness.light)
-          : appTheme(Brightness.light),
-      darkTheme: isMascot
-          ? appThemeT2(Brightness.dark)
-          : appTheme(Brightness.dark),
-      // Both themes have a dark variant; the 深色模式 setting reaches both.
-      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: appThemeFor(variant),
+      themeMode: ThemeMode.light,
       routerConfig: router,
       // Both wrap every page in either theme. The fall panel is outermost on
       // purpose: it is a latching alarm and nothing, including the

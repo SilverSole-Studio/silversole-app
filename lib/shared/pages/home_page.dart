@@ -14,7 +14,7 @@ import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
 import 'package:silversole/shared/providers/home_tab_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
 
@@ -79,10 +79,15 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     // Each theme owns its own home implementation; the rest of the tabs are
     // shared until they get a mascot version too.
-    final isMascot =
-        ref.watch(settingsProvider).themeVariant == AppThemeVariant.mascot;
+    final variant = ref.watch(themeVariantProvider);
+    final isMascot = variant == AppThemeVariant.mascot;
     final pages = [
-      isMascot ? const HomeBodyT2() : const HomeBody(),
+      switch (variant) {
+        AppThemeVariant.mascot => const HomeBodyT2(),
+        AppThemeVariant.techLight || AppThemeVariant.techDark => const HomeBody(),
+        AppThemeVariant.dashboard => const HomeBody(),
+        AppThemeVariant.journal => const HomeBody(),
+      },
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),
       // 遊戲分頁直接開 H5 粗哥廣場（取代卡片清單）

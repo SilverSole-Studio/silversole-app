@@ -86,10 +86,22 @@ off,Off,關
 general,General,一般
 search_device,Search device,搜尋裝置
 current_devices,Current devices,目前裝置
-dark_mode,Dark Mode,深色模式
 switch_theme,Switch Theme,切換主題
-theme_classic,Classic,經典
-theme_mascot,Mascot,插畫
+theme_mascot,Mascot Town,粗哥手繪小鎮
+theme_tech_light,Minimal Tech · Light,極簡科技・白
+theme_tech_dark,Minimal Tech · Dark,極簡科技・黑
+theme_dashboard,Big-number Dashboard,大數字儀表板
+theme_journal,Paper Journal,紙本手帳
+theme_mascot_hint,The default. Sky and grass,預設，藍天綠地粗描邊
+theme_tech_light_hint,Clean and bright,乾淨明亮
+theme_tech_dark_hint,Clean and dark,乾淨深色
+theme_dashboard_hint,Numbers first,數字放最大
+theme_journal_hint,Sticky notes and handwriting,便利貼和手寫字
+theme_picker_title,Choose a theme,選主題
+theme_locked,Subscribers only,訂閱後可用
+theme_in_use,In use,使用中
+theme_subscribers_section,For subscribers,訂閱會員專屬
+theme_free_section,Free,免費
 text_size,Text Size,文字大小
 text_size_normal,Standard,標準
 text_size_large,Large,大

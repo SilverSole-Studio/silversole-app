@@ -1,70 +1,82 @@
 import 'package:flutter/material.dart';
 
-/// Raw colors for the illustrated "mascot" theme (theme two).
+/// Raw colors for look A, 粗哥手繪小鎮風 (the mascot theme, the default).
 ///
-/// Deliberately separate from `AppPalette` so the classic theme's carefully
-/// tuned grayscale-neutral model stays untouched. Where the classic theme
-/// keeps neutrals grayscale and lets one accent seed drive everything, this
-/// one is the opposite: a warm cream canvas, a gold brand color used as a
-/// large fill, and a near-black outline drawn on every card.
+/// Taken from the design mock (首頁風格打樣/a.html), which is itself the game's
+/// own town: a sky-blue top, grass underfoot, cream-paper cards drawn with a
+/// thick brown outline and a hard offset shadow, and the mascot's yellow
+/// (#FCBD3C) as the one action color. Text is the same brown as the outline.
 abstract final class AppPaletteT2 {
   // ── Canvas & surfaces ──────────────────────────────────────────────────
-  /// Page body — warm cream.
-  static const Color canvas = Color(0xFFF7F1E0);
+  /// Page body — the town's grass.
+  static const Color canvas = Color(0xFF9CCC6B);
 
-  /// Cards that are not gold-filled.
-  static const Color card = Color(0xFFFFFFFF);
+  /// Lighter grass: hills, the far side of a gradient.
+  static const Color grassLight = Color(0xFFB6DC8B);
 
-  /// Slightly warmer card used for secondary blocks (e.g. the mission card).
-  static const Color cardWarm = Color(0xFFFDF6E6);
+  /// The sky behind the greeting.
+  static const Color sky = Color(0xFFA9DDF2);
+
+  /// Cards: cream paper.
+  static const Color card = Color(0xFFFFF6DC);
+
+  /// A warmer paper for a second kind of card (today's exercise, tinted).
+  static const Color cardWarm = Color(0xFFFFF0C0);
+
+  /// Notice-board wood (the missions board).
+  static const Color wood = Color(0xFFDFAE6C);
 
   // ── Brand ──────────────────────────────────────────────────────────────
-  /// Gold — the hero fill (device card, primary buttons, selected nav pill).
-  static const Color gold = Color(0xFFF5C84A);
+  /// The mascot's yellow — primary buttons, the selected tab, hero numerals'
+  /// shadow.
+  static const Color gold = Color(0xFFFCBD3C);
 
-  /// Deeper gold for pressed/emphasis states.
-  static const Color goldDeep = Color(0xFFE9B62E);
+  /// Brighter yellow for small icon fills (the sun, the play disc).
+  static const Color goldBright = Color(0xFFFFD23F);
+
+  /// Pressed / deeper yellow.
+  static const Color goldDeep = Color(0xFFE9A23B);
 
   // ── Ink (text + the signature outline) ─────────────────────────────────
   /// Primary text and the outline stroke drawn around cards.
-  static const Color ink = Color(0xFF2B2621);
+  static const Color ink = Color(0xFF3B3325);
 
-  /// Secondary text.
-  static const Color inkMuted = Color(0xFF6B6154);
+  /// Secondary text on paper.
+  static const Color inkMuted = Color(0xFF6B5E45);
 
   /// Progress fill for a stale value, e.g. a remembered (not live) battery
   /// level: a pale warm gray that reads as "previous" against the white track.
-  static const Color inkFaint = Color(0xFFE2DDD5);
+  static const Color inkFaint = Color(0xFFD9D2BE);
 
   // ── Functional ─────────────────────────────────────────────────────────
   /// Positive / safe status (progress fill, "安全" badge).
-  static const Color safe = Color(0xFF3E9E52);
+  static const Color safe = Color(0xFF4FAE45);
 
   /// Tinted fill behind [safe] text, e.g. the "已是最新" firmware pill.
-  static const Color safeSoft = Color(0xFFE3F3E6);
+  static const Color safeSoft = Color(0xFFBFE6A2);
 
   /// Warning / streak flame.
   static const Color flame = Color(0xFFF2622E);
 
-  /// Negative status.
-  static const Color danger = Color(0xFFD8453B);
+  /// Negative status — the awning's brick red.
+  static const Color danger = Color(0xFFE5533D);
 
   // ── Shape ──────────────────────────────────────────────────────────────
-  /// Stroke width of the outline that defines this theme's card look.
-  static const double outlineWidth = 2.5;
+  /// Stroke width of the outline that defines this look's card.
+  static const double outlineWidth = 3;
 
-  /// Card corner radius.
-  static const double cardRadius = 24;
+  /// Card corner radius (the mock's 22).
+  static const double cardRadius = 22;
+
+  /// How far the hard shadow drops under a card.
+  static const double shadowDrop = 5;
 }
 
-/// The mascot theme's colors as a [ThemeExtension], so they can change with
-/// the brightness. [AppPaletteT2] keeps the light values as constants (the
-/// theme builder and tests use them); widgets read `context.mascot` so the
-/// dark mode toggle reaches them too.
+/// Look A's colors as a [ThemeExtension]; widgets read `context.mascot`.
 ///
 ///  * [ink] is text; [line] is the outline stroke drawn around cards (the same
-///    color in light, a dimmer cream in dark so thick outlines do not glare).
-///  * [onGold] is text/icon on a [gold] fill: dark in both modes.
+///    brown).
+///  * [onGold] is text/icon on a [gold] fill.
 @immutable
 class MascotColors extends ThemeExtension<MascotColors> {
   const MascotColors({
@@ -82,6 +94,10 @@ class MascotColors extends ThemeExtension<MascotColors> {
     required this.safeSoft,
     required this.flame,
     required this.danger,
+    required this.sky,
+    required this.wood,
+    required this.goldBright,
+    required this.grassLight,
   });
 
   final Color canvas;
@@ -98,6 +114,10 @@ class MascotColors extends ThemeExtension<MascotColors> {
   final Color safeSoft;
   final Color flame;
   final Color danger;
+  final Color sky;
+  final Color wood;
+  final Color goldBright;
+  final Color grassLight;
 
   static const MascotColors light = MascotColors(
     canvas: AppPaletteT2.canvas,
@@ -114,28 +134,14 @@ class MascotColors extends ThemeExtension<MascotColors> {
     safeSoft: AppPaletteT2.safeSoft,
     flame: AppPaletteT2.flame,
     danger: AppPaletteT2.danger,
+    sky: AppPaletteT2.sky,
+    wood: AppPaletteT2.wood,
+    goldBright: AppPaletteT2.goldBright,
+    grassLight: AppPaletteT2.grassLight,
   );
 
-  /// Warm dark: the cream canvas inverted into a dark brown, gold unchanged.
-  static const MascotColors dark = MascotColors(
-    canvas: Color(0xFF1C1814),
-    card: Color(0xFF2B2621),
-    cardWarm: Color(0xFF352E25),
-    gold: AppPaletteT2.gold,
-    goldDeep: AppPaletteT2.goldDeep,
-    onGold: AppPaletteT2.ink,
-    ink: Color(0xFFF7F1E0),
-    inkMuted: Color(0xFFC2B8A6),
-    inkFaint: Color(0xFF4A4238),
-    line: Color(0xFF6E6354),
-    safe: Color(0xFF5CC070),
-    safeSoft: Color(0xFF223D29),
-    flame: Color(0xFFF2622E),
-    danger: Color(0xFFE5645A),
-  );
-
-  static MascotColors of(Brightness brightness) =>
-      brightness == Brightness.dark ? dark : light;
+  /// There is only a light version: dark is a different look (極簡科技・黑).
+  static MascotColors of(Brightness brightness) => light;
 
   @override
   MascotColors copyWith({
@@ -153,6 +159,10 @@ class MascotColors extends ThemeExtension<MascotColors> {
     Color? safeSoft,
     Color? flame,
     Color? danger,
+    Color? sky,
+    Color? wood,
+    Color? goldBright,
+    Color? grassLight,
   }) => MascotColors(
     canvas: canvas ?? this.canvas,
     card: card ?? this.card,
@@ -168,6 +178,10 @@ class MascotColors extends ThemeExtension<MascotColors> {
     safeSoft: safeSoft ?? this.safeSoft,
     flame: flame ?? this.flame,
     danger: danger ?? this.danger,
+    sky: sky ?? this.sky,
+    wood: wood ?? this.wood,
+    goldBright: goldBright ?? this.goldBright,
+    grassLight: grassLight ?? this.grassLight,
   );
 
   @override
@@ -189,6 +203,10 @@ class MascotColors extends ThemeExtension<MascotColors> {
       safeSoft: l(safeSoft, other.safeSoft),
       flame: l(flame, other.flame),
       danger: l(danger, other.danger),
+      sky: l(sky, other.sky),
+      wood: l(wood, other.wood),
+      goldBright: l(goldBright, other.goldBright),
+      grassLight: l(grassLight, other.grassLight),
     );
   }
 }
