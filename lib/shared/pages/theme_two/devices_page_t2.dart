@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/error/error_logger.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -192,7 +191,7 @@ class _DeviceRowTile extends ConsumerWidget {
                       Text(
                         '••••$shortId',
                         style: context.textTheme.bodyMedium?.copyWith(
-                          color: AppPaletteT2.inkMuted,
+                          color: context.mascot.inkMuted,
                         ),
                       ),
                     if (row.device.footSide case final side?)
@@ -237,7 +236,7 @@ class _DeviceRowTile extends ConsumerWidget {
             child: MascotProgressBar(
               value: battery.fraction,
               height: 18,
-              fill: battery.isLive ? AppPaletteT2.safe : AppPaletteT2.inkFaint,
+              fill: battery.isLive ? context.mascot.safe : context.mascot.inkFaint,
             ),
           ),
           const SizedBox(width: 8),
@@ -249,7 +248,7 @@ class _DeviceRowTile extends ConsumerWidget {
               style: battery.isLive
                   ? context.textTheme.titleMedium
                   : context.textTheme.titleMedium?.copyWith(
-                      color: AppPaletteT2.inkMuted,
+                      color: context.mascot.inkMuted,
                     ),
             ),
           ),
@@ -297,7 +296,7 @@ class _FirmwareCard extends ConsumerWidget {
                             Text(
                               'firmware_beta'.tr(),
                               style: context.textTheme.labelLarge?.copyWith(
-                                color: AppPaletteT2.flame,
+                                color: context.mascot.flame,
                               ),
                             ),
                         ],
@@ -350,13 +349,13 @@ class _FirmwareStatus extends ConsumerWidget {
       ),
     );
     Widget alert(String label) =>
-        pill(AppPaletteT2.cardWarm, AppPaletteT2.danger, label);
+        pill(context.mascot.cardWarm, context.mascot.danger, label);
     final version = check.manifest?.version ?? '';
     return switch (firmwareCardAction(check)) {
       FirmwareCardAction.none => const SizedBox.shrink(),
       FirmwareCardAction.upToDate => pill(
-        AppPaletteT2.safeSoft,
-        AppPaletteT2.safe,
+        context.mascot.safeSoft,
+        context.mascot.safe,
         'firmware_up_to_date'.tr(),
       ),
       FirmwareCardAction.update => FilledButton(
@@ -409,10 +408,10 @@ class _PairButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.add_circle_outline,
             size: 26,
-            color: AppPaletteT2.ink,
+            color: context.mascot.ink,
           ),
           const SizedBox(width: 10),
           Text('device_pair_new'.tr(), style: context.textTheme.titleLarge),
@@ -449,16 +448,16 @@ class _ClearAllButton extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
+          Icon(
             Icons.delete_outline,
             size: 26,
-            color: AppPaletteT2.danger,
+            color: context.mascot.danger,
           ),
           const SizedBox(width: 10),
           Text(
             'clear_all_devices'.tr(),
             style: context.textTheme.titleLarge?.copyWith(
-              color: AppPaletteT2.danger,
+              color: context.mascot.danger,
             ),
           ),
         ],

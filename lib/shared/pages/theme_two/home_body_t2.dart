@@ -125,7 +125,7 @@ class _DailyMissionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MascotCard(
-      color: AppPaletteT2.cardWarm,
+      color: context.mascot.cardWarm,
       onTap: () => showDailyMissionsBottomSheet(context),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -136,17 +136,17 @@ class _DailyMissionCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: AppPaletteT2.gold,
+              color: context.mascot.gold,
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppPaletteT2.ink,
+                color: context.mascot.line,
                 width: AppPaletteT2.outlineWidth,
               ),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.play_arrow_rounded,
               size: 32,
-              color: AppPaletteT2.ink,
+              color: context.mascot.onGold,
             ),
           ),
           const SizedBox(width: 10),
@@ -226,8 +226,8 @@ class _DeviceCard extends ConsumerWidget {
                 height: 14,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: online ? AppPaletteT2.safe : AppPaletteT2.inkMuted,
-                  border: Border.all(color: AppPaletteT2.ink, width: 2),
+                  color: online ? context.mascot.safe : context.mascot.inkMuted,
+                  border: Border.all(color: context.mascot.line, width: 2),
                 ),
               ),
             ],
@@ -240,7 +240,7 @@ class _DeviceCard extends ConsumerWidget {
                 ? 'device_synced'.tr()
                 : 'offline'.tr(),
             style: context.textTheme.bodyMedium?.copyWith(
-              color: AppPaletteT2.ink,
+              color: context.mascot.ink,
             ),
           ),
           // An empty gray bar says nothing before a sole is paired.
@@ -253,8 +253,8 @@ class _DeviceCard extends ConsumerWidget {
                     value: battery.fraction,
                     height: 20,
                     fill: battery.isLive
-                        ? AppPaletteT2.safe
-                        : AppPaletteT2.inkFaint,
+                        ? context.mascot.safe
+                        : context.mascot.inkFaint,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -263,7 +263,7 @@ class _DeviceCard extends ConsumerWidget {
                   style: battery.isLive
                       ? context.textTheme.headlineMedium
                       : context.textTheme.headlineMedium?.copyWith(
-                          color: AppPaletteT2.inkMuted,
+                          color: context.mascot.inkMuted,
                         ),
                 ),
               ],
@@ -307,7 +307,7 @@ class FootCheckCardT2 extends ConsumerWidget {
                           ? context.textTheme.titleLarge
                           : context.textTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: AppPaletteT2.ink,
+                              color: context.mascot.ink,
                             ),
                     ),
                     const SizedBox(height: 8),
@@ -369,7 +369,7 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
     return MascotCard(
       child: Row(
         children: [
-          const Icon(Icons.shield_outlined, size: 32, color: AppPaletteT2.ink),
+          Icon(Icons.shield_outlined, size: 32, color: context.mascot.ink),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -394,14 +394,14 @@ class _FallGuardCardState extends ConsumerState<_FallGuardCard> {
           ),
           const SizedBox(width: 8),
           MascotPill(
-            color: safe ? AppPaletteT2.card : AppPaletteT2.danger,
+            color: safe ? context.mascot.card : context.mascot.danger,
             child: Text(
               // "Watching", not "safe": the guard cannot promise safety.
               safe
                   ? 'fall_guard_watching'.tr()
                   : 'fall_guard_events'.tr(args: ['$_eventCount']),
               style: context.textTheme.labelLarge?.copyWith(
-                color: safe ? AppPaletteT2.safe : AppPaletteT2.card,
+                color: safe ? context.mascot.safe : context.mascot.card,
               ),
             ),
           ),

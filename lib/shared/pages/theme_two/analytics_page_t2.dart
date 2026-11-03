@@ -117,10 +117,10 @@ class _Segmented extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: AppPaletteT2.card,
+        color: context.mascot.card,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: AppPaletteT2.ink,
+          color: context.mascot.line,
           width: AppPaletteT2.outlineWidth,
         ),
       ),
@@ -135,9 +135,9 @@ class _Segmented extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: i == selected
                       ? BoxDecoration(
-                          color: AppPaletteT2.gold,
+                          color: context.mascot.gold,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppPaletteT2.ink, width: 2),
+                          border: Border.all(color: context.mascot.line, width: 2),
                         )
                       : null,
                   child: Text(
@@ -147,8 +147,8 @@ class _Segmented extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.titleMedium?.copyWith(
                       color: i == selected
-                          ? AppPaletteT2.ink
-                          : AppPaletteT2.inkMuted,
+                          ? context.mascot.onGold
+                          : context.mascot.inkMuted,
                     ),
                   ),
                 ),

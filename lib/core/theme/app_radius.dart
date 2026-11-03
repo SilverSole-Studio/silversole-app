@@ -1,29 +1,42 @@
 import 'package:flutter/material.dart';
 
-/// Corner-radius scale + ready-made shapes, per DESIGN.md §4.
+/// Corner-radius scale: exactly three radii, shared by both themes.
 ///
-/// Prefer the pre-built [BorderRadius]/shape getters over
-/// `BorderRadius.circular(20)` literals.
+///  * [card] — every card, dialog, bottom sheet and large block.
+///  * [control] — buttons, inputs, tiles, nav indicator and other small blocks.
+///  * [pill] — tags, chips, progress capsules.
+///
+/// The older names ([banner], [fab], [field], [sub]) are kept as aliases of
+/// [control] so existing call sites keep compiling; new code uses the three
+/// names above.
 abstract final class AppRadius {
-  static const double card = 20;
-  static const double banner = 16;
-  static const double fab = 18;
-  static const double field = 12;
-  static const double sub = 8;
+  static const double card = 24;
+  static const double control = 16;
+  static const double pill = 999;
+
+  // Aliases of [control] (the pre-token scale had eight different radii).
+  static const double banner = control;
+  static const double fab = control;
+  static const double field = control;
+  static const double sub = control;
 
   static const BorderRadius cardR = BorderRadius.all(Radius.circular(card));
-  static const BorderRadius bannerR = BorderRadius.all(Radius.circular(banner));
-  static const BorderRadius fabR = BorderRadius.all(Radius.circular(fab));
-  static const BorderRadius fieldR = BorderRadius.all(Radius.circular(field));
-  static const BorderRadius subR = BorderRadius.all(Radius.circular(sub));
+  static const BorderRadius controlR =
+      BorderRadius.all(Radius.circular(control));
+  static const BorderRadius pillR = BorderRadius.all(Radius.circular(pill));
+
+  static const BorderRadius bannerR = controlR;
+  static const BorderRadius fabR = controlR;
+  static const BorderRadius fieldR = controlR;
+  static const BorderRadius subR = controlR;
 
   static const RoundedRectangleBorder cardShape =
       RoundedRectangleBorder(borderRadius: cardR);
-  static const RoundedRectangleBorder bannerShape =
-      RoundedRectangleBorder(borderRadius: bannerR);
-  static const RoundedRectangleBorder fabShape =
-      RoundedRectangleBorder(borderRadius: fabR);
+  static const RoundedRectangleBorder controlShape =
+      RoundedRectangleBorder(borderRadius: controlR);
+  static const RoundedRectangleBorder bannerShape = controlShape;
+  static const RoundedRectangleBorder fabShape = controlShape;
 
-  /// Fully-rounded pill (chips, CTAs).
+  /// Fully-rounded pill (tags, chips).
   static const StadiumBorder pillShape = StadiumBorder();
 }

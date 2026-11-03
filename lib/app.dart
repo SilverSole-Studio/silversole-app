@@ -41,11 +41,8 @@ class App extends ConsumerWidget {
       darkTheme: isMascot
           ? appThemeT2(Brightness.dark)
           : appTheme(Brightness.dark),
-      // The mascot design is light-only for now, so pin it to light rather
-      // than render a half-designed dark screen.
-      themeMode: isMascot
-          ? ThemeMode.light
-          : (darkMode ? ThemeMode.dark : ThemeMode.light),
+      // Both themes have a dark variant; the 深色模式 setting reaches both.
+      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
       // Both wrap every page in either theme. The fall panel is outermost on
       // purpose: it is a latching alarm and nothing, including the

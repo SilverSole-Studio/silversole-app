@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/theme/app_tokens.dart';
 
 extension TextStyleExtension on TextStyle? {
@@ -16,6 +17,12 @@ extension ContextThemeX on BuildContext {
   TextTheme get textTheme => Theme.of(this).textTheme;
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
   AppTokens get tokens => Theme.of(this).extension<AppTokens>()!;
+
+  /// The mascot theme's colors for the current brightness. Falls back to the
+  /// light set when the classic theme is active (e.g. a mascot widget under a
+  /// classic test harness).
+  MascotColors get mascot =>
+      Theme.of(this).extension<MascotColors>() ?? MascotColors.light;
 }
 
 extension ListExtension<T> on List<T> {

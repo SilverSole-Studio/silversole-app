@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:silversole/core/error/error_logger.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/widgets/count_up_text.dart';
@@ -57,11 +56,16 @@ class _BalanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MascotCard(
-      color: AppPaletteT2.gold,
+      color: context.mascot.gold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('your_coins'.tr(), style: context.textTheme.bodyLarge),
+          Text(
+            'your_coins'.tr(),
+            style: context.textTheme.bodyLarge?.copyWith(
+              color: context.mascot.onGold,
+            ),
+          ),
           const SizedBox(height: 6),
           Row(
             children: [
@@ -71,7 +75,7 @@ class _BalanceCard extends StatelessWidget {
                 value: MockShop.coins,
                 style: context.textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppPaletteT2.ink,
+                  color: context.mascot.onGold,
                 ),
               ),
             ],
@@ -85,7 +89,7 @@ class _BalanceCard extends StatelessWidget {
               ],
             ),
             style: context.textTheme.bodyMedium?.copyWith(
-              color: AppPaletteT2.ink,
+              color: context.mascot.onGold,
             ),
           ),
         ],
@@ -110,9 +114,9 @@ class _SectionHeader extends StatelessWidget {
           width: 6,
           height: 20,
           decoration: BoxDecoration(
-            color: AppPaletteT2.gold,
+            color: context.mascot.gold,
             borderRadius: BorderRadius.circular(3),
-            border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+            border: Border.all(color: context.mascot.line, width: 1.5),
           ),
         ),
         const SizedBox(width: 8),
@@ -170,13 +174,18 @@ class _PricePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MascotPill(
-      color: AppPaletteT2.gold,
+      color: context.mascot.gold,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(ShopPageT2.coinArt, height: 18),
           const SizedBox(width: 6),
-          Text('$price', style: context.textTheme.titleMedium),
+          Text(
+            '$price',
+            style: context.textTheme.titleMedium?.copyWith(
+              color: context.mascot.onGold,
+            ),
+          ),
         ],
       ),
     );

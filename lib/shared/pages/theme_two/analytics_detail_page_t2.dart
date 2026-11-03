@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/record_session_mixin.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
@@ -82,7 +81,7 @@ class _AnalyticsDetailPageT2State extends ConsumerState<AnalyticsDetailPageT2>
                     child: _ActionButton(
                       icon: Icons.play_arrow_rounded,
                       label: 'start_record'.tr(),
-                      color: AppPaletteT2.gold,
+                      color: context.mascot.gold,
                       onTap: isRecordingNow ? null : startRecord,
                     ),
                   ),
@@ -91,7 +90,7 @@ class _AnalyticsDetailPageT2State extends ConsumerState<AnalyticsDetailPageT2>
                     child: _ActionButton(
                       icon: Icons.stop_rounded,
                       label: 'stop_record'.tr(),
-                      color: AppPaletteT2.card,
+                      color: context.mascot.card,
                       onTap: stopRecord,
                     ),
                   ),
@@ -129,8 +128,13 @@ class _ChannelPill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: MascotPill(
-        color: selected ? AppPaletteT2.gold : AppPaletteT2.card,
-        child: Text(label, style: context.textTheme.labelLarge),
+        color: selected ? context.mascot.gold : context.mascot.card,
+        child: Text(
+          label,
+          style: context.textTheme.labelLarge?.copyWith(
+            color: selected ? context.mascot.onGold : context.mascot.ink,
+          ),
+        ),
       ),
     );
   }
@@ -156,7 +160,11 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onTap != null;
-    final ink = enabled ? AppPaletteT2.ink : AppPaletteT2.inkMuted;
+    // Text on the gold fill stays dark in both modes; on a card it follows ink.
+    final onFill = color == context.mascot.gold
+        ? context.mascot.onGold
+        : context.mascot.ink;
+    final ink = enabled ? onFill : context.mascot.inkMuted;
 
     return Opacity(
       opacity: enabled ? 1 : 0.45,
@@ -200,7 +208,7 @@ class _RecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MascotCard(
-      color: AppPaletteT2.cardWarm,
+      color: context.mascot.cardWarm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -219,7 +227,7 @@ class _RecordCard extends StatelessWidget {
             _ActionButton(
               icon: Icons.download_rounded,
               label: 'export'.tr(),
-              color: AppPaletteT2.gold,
+              color: context.mascot.gold,
               onTap: recordList.isEmpty ? null : onExport,
             ),
           ],

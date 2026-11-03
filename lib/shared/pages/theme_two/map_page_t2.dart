@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
@@ -74,7 +73,7 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
                     showDevice: location != null,
                     markerIcon: _mascotMarker,
                     outlinedControls: true,
-                    zoneColor: AppPaletteT2.safe,
+                    zoneColor: context.mascot.safe,
                   ),
                 ),
               ),

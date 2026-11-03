@@ -44,9 +44,9 @@ class GamePageT2 extends StatelessWidget {
                     width: 6,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppPaletteT2.gold,
+                      color: context.mascot.gold,
                       borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+                      border: Border.all(color: context.mascot.line, width: 1.5),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -245,10 +245,10 @@ class _GameTile extends StatelessWidget {
             ),
           ),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: AppPaletteT2.ink,
+                  color: context.mascot.line,
                   width: AppPaletteT2.outlineWidth,
                 ),
               ),
@@ -270,14 +270,14 @@ class _GameTile extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppPaletteT2.card,
+                    color: context.mascot.card,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppPaletteT2.safe, width: 2),
+                    border: Border.all(color: context.mascot.safe, width: 2),
                   ),
                   child: Text(
                     'game_go'.tr(),
                     style: context.textTheme.labelLarge?.copyWith(
-                      color: AppPaletteT2.safe,
+                      color: context.mascot.safe,
                     ),
                   ),
                 ),
