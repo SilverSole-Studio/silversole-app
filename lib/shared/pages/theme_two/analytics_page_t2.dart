@@ -5,6 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
@@ -51,9 +53,25 @@ class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'analytics_title'.tr(),
-                style: context.textTheme.headlineLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'analytics_title'.tr(),
+                      style: context.textTheme.headlineLarge,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.share2),
+                    tooltip: 'report_share_tooltip'.tr(),
+                    color: AppPaletteT2.ink,
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppPaletteT2.card,
+                      side: const BorderSide(color: AppPaletteT2.ink, width: 2),
+                    ),
+                    onPressed: () => context.push('/activity-report'),
+                  ),
+                ],
               ),
               const SizedBox(height: 14),
               _Segmented(
