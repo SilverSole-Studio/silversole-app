@@ -1,10 +1,22 @@
+import 'dart:ui' show PlatformDispatcher;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/models/user_identity.dart';
+
+/// The phone's font-size setting right now (1.0 = default). A provider so
+/// tests can pretend the phone is set to a large font.
+final systemFontScaleReaderProvider = Provider<double Function()>(
+  (ref) =>
+      () =>
+          (PlatformDispatcher.instance.scaleFontSize(14) / 14 * 100).round() /
+          100,
+);
 
 class SettingsNotifier extends Notifier<AppSettings> {
   @override
@@ -14,6 +26,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
   }
 
   Future<void> _load() async {
+    // Read before the first await, while the provider is surely alive.
+    final systemFontScale = ref.read(systemFontScaleReaderProvider)();
     var identity = await loadLocalValue(LocalSavableKey.identity);
     if (identity == null) {
       identity = UserIdentity.transmitter.value;
@@ -28,6 +42,16 @@ class SettingsNotifier extends Notifier<AppSettings> {
     };
     if (darkModeRaw == null) {
       await saveLocalValue(LocalSavableKey.darkMode, 'true');
+    }
+    // Nothing stored = first launch: a phone already set to a large font
+    // starts on 「大」, anyone else on 「標準」; stored after that, so the
+    // user's own choice wins from then on.
+    var textSize = AppTextSize.fromWireName(
+      await loadLocalValue(LocalSavableKey.textSize),
+    );
+    if (textSize == null) {
+      textSize = initialTextSizeFor(systemFontScale);
+      await saveLocalValue(LocalSavableKey.textSize, textSize.wireName);
     }
     // Defaults to classic; only an explicit opt-in switches the whole app to
     // the mascot design.
@@ -49,6 +73,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
       identity: identity,
       deviceId: deviceId,
       darkMode: darkMode,
+      textSize: textSize,
       themeVariant: themeVariant,
       transmissionMethod: transmissionMethod,
       pairedDevicesList: pairedDevicesList,
@@ -74,6 +99,11 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setDarkMode(bool value) async {
     await saveLocalValue(LocalSavableKey.darkMode, value ? 'true' : 'false');
     state = state.copyWith(darkMode: value);
+  }
+
+  Future<void> setTextSize(AppTextSize value) async {
+    await saveLocalValue(LocalSavableKey.textSize, value.wireName);
+    state = state.copyWith(textSize: value);
   }
 
   Future<void> setTransmissionMethod(TransmissionMethod method) async {

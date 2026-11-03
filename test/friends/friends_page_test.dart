@@ -124,18 +124,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('朋友（5／100）'), findsOneWidget);
 
-    // Add 李伯伯 by typing his code on the keypad.
+    // Add 李伯伯 by pasting his code (as read out, with a space in it) into the
+    // code field: only the digits are kept and the lookup starts by itself.
     await tester.tap(find.text('輸入好友碼'));
     await tester.pumpAndSettle();
     expectReadableText(tester);
     expectBigButtons(tester);
-    // The "now friends" snack bar would sit over the bottom keypad row.
     App.scaffoldMessengerKey.currentState!.removeCurrentSnackBar();
     await tester.pumpAndSettle();
-    for (final d in FakeFriendsRepository.demoFriendCode.split('')) {
-      await tester.tap(find.widgetWithText(OutlinedButton, d));
-      await tester.pump();
-    }
+    expect(find.byType(TextField), findsOneWidget);
+    final code = FakeFriendsRepository.demoFriendCode;
+    await tester.enterText(
+      find.byType(TextField),
+      ' ${code.substring(0, 4)} - ${code.substring(4)} ',
+    );
     await tester.pumpAndSettle();
     expect(find.text('李伯伯'), findsOneWidget);
     await tester.tap(find.text('加他當朋友'));

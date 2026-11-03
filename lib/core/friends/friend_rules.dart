@@ -298,6 +298,25 @@ String friendErrorKey(
 bool isWellFormedCode(String code) =>
     code.length == kCodeLength && RegExp(r'^[1-9]\d{7}$').hasMatch(code);
 
+/// What is left of typed or pasted text once it is a code: only the digits,
+/// at most [kCodeLength] of them. Spaces, dashes and letters (`3815 2704`,
+/// `3815-2704`, a whole sentence around the code) are dropped, and full-width
+/// digits (`３８１５`) become ordinary ones.
+String sanitizeCodeInput(String text) {
+  final out = StringBuffer();
+  for (final unit in text.runes) {
+    if (unit >= 0x30 && unit <= 0x39) {
+      out.writeCharCode(unit);
+    } else if (unit >= 0xFF10 && unit <= 0xFF19) {
+      out.writeCharCode(unit - 0xFF10 + 0x30);
+    }
+  }
+  final digits = out.toString();
+  return digits.length > kCodeLength
+      ? digits.substring(0, kCodeLength)
+      : digits;
+}
+
 /// `38152704` → `3815 2704`, the way it is read out over the phone.
 String formatCode(String code) {
   if (code.length <= 4) return code;

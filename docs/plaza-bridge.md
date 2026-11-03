@@ -2,7 +2,7 @@
 
 App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `<gameUrl>game/plaza/`。廣場網頁跟 App 之間只走這份文件寫的通道；App 端的格式定義在 `lib/shared/providers/plaza_bridge.dart`。
 
-**只服務遊戲自己的網站。**下面的通道（`window.silversoleApp`、`appInfo`、`openFriends`）和相機權限，只給跟 `gameUrl` 同一個 origin（協定、網域、port 都一樣）的頁面；正式版就是 `https://h5.silversole.dongyu.company`。廣場如果在同一個 WebView 裡連到別的網站，那個頁面讀不到 `window.silversoleApp`，呼叫 `appInfo` 拿到 `null`、`openFriends` 拿到 `false`，要相機也會被拒絕。相機以外的權限（麥克風、定位等）一律拒絕。
+**只服務遊戲自己的網站。**下面的通道（`window.silversoleApp`、`appInfo`、`openFriends`、`exitPlaza`）和相機權限，只給跟 `gameUrl` 同一個 origin（協定、網域、port 都一樣）的頁面；正式版就是 `https://h5.silversole.dongyu.company`。廣場如果在同一個 WebView 裡連到別的網站，那個頁面讀不到 `window.silversoleApp`，呼叫 `appInfo` 拿到 `null`、`openFriends` 與 `exitPlaza` 拿到 `false`，要相機也會被拒絕。相機以外的權限（麥克風、定位等）一律拒絕。
 
 ## App → 網頁：現在能顯示什麼
 
@@ -17,6 +17,7 @@ window.silversoleApp = {
     username: "ricky951102"      // 登入 email 的 @ 前面那段；沒有 email 時是 ""
   },
   systemFontScale: 1.0,          // 手機「字體大小」設定的倍率（1.0＝預設，1.3、1.5、2.0…）
+  textSize: "normal",            // App 設定頁的「文字大小」："normal"（標準）或 "large"（大）
   subscription: { active: true },// 訂閱中嗎：以伺服器為準（見下面「訂閱與鑽石」）
   diamonds: {                    // 鑽石（2026-11-02）；還沒問到伺服器、沒登入時整個不存在
     balance: 120,                // 現有鑽石
@@ -28,7 +29,9 @@ window.silversoleApp = {
 
 `account.username`：App 沒有獨立的「帳號名稱」欄位（登入是 email／Google），所以取 email 的 `@` 前面（`ricky951102@gmail.com` → `ricky951102`）。好友的暱稱是使用者自己取的，不拿來當帳號。登入或登出時 App 會重新送一次 `silversoleapp` 事件。注意 username 只是拿來比對的名字，不同網域的 email 可以有相同的前綴，不能當作身分證明。
 
-**`systemFontScale`**：長輩常把手機字體調到最大。App 自己的字最多放大到 1.3 倍，WebView 的 `textZoom` 固定 100（不會被系統再放大一次），所以網頁字不會跟著系統放大。要讓網頁自己跟著變大，就看這個欄位：大於等於 1.15 時自動開大字模式（使用者手動切換的設定優先）。
+**`systemFontScale`**：長輩常把手機字體調到最大。App 自己的字最多放大到 1.3 倍，WebView 的 `textZoom` 固定 100（不會被系統再放大一次），所以網頁字不會跟著系統放大。要讓網頁自己跟著變大，就看這個欄位：大於等於 1.15 時自動開大字模式（使用者手動切換的設定優先）。**這是沒有 `textSize` 時的舊辦法**，見下一段。
+
+**`textSize`（2026-11-03）**：App 設定頁多了「文字大小：標準／大」，網頁的大字模式跟它走：`"large"`＝開、`"normal"`＝關，不再看 `systemFontScale`，網頁自己的大字開關也要藏起來（兩邊設定會打架）。第一次啟動時 App 會看手機字體倍率，大於等於 1.15 就先設成「大」，之後以使用者在設定頁選的為準。使用者改了設定，App 會馬上重送一次 `silversoleapp` 事件，網頁收到就套用。沒有這個欄位（舊版 App、瀏覽器直接開）時，網頁維持原本的作法：自己的開關加 `systemFontScale`。
 
 並在 `window` 上觸發 `silversoleapp` 事件（`event.detail` 就是上面這個物件）。
 
@@ -43,6 +46,18 @@ window.flutter_inappwebview.callHandler('openFriends')  // 回傳 true；好友�
 ```
 
 App 會蓋上好友頁；使用者按返回就回到廣場，App 會重新送一次 `silversoleapp` 事件更新紅點。好友頁還開著的時候再呼叫一次，不會疊第二層，一樣回傳 `true`。
+
+## 網頁 → App：回 App（2026-11-03）
+
+遊戲分頁（小鎮大廳與所有遊戲）**一律不顯示 App 下方的導覽列**，避免玩的時候誤觸換頁。網頁要離開時走這個通道：
+
+```js
+window.flutter_inappwebview.callHandler('exitPlaza')  // 回傳 true；不是遊戲自己的網站回傳 false
+```
+
+App 會切回首頁分頁，導覽列就出現了。小鎮選單的「回 App」就是呼叫它（只在 App 裡、`flutter_inappwebview` 存在時才顯示）。
+
+手機返回鍵：在小鎮大廳按，App 切回首頁分頁（不會直接關掉 App）；在遊戲裡按，維持原本的作法，退回上一頁（小鎮）；離開遊戲網站的頁面也是退回上一頁，沒有上一頁就切回首頁分頁。
 
 ## 網頁端參考寫法
 
@@ -64,6 +79,19 @@ window.addEventListener("flutterInAppWebViewPlatformReady", function () {
     if (info) { window.silversoleApp = info; requestRedraw(); }
   });
 });
+
+// 大字模式：App 有 textSize 就跟它走，沒有才看 systemFontScale
+function largeText(userChoice) {
+  var info = appInfo();
+  if (info && info.textSize) return info.textSize === "large";
+  return userChoice || (info && info.systemFontScale >= 1.15);
+}
+
+// 小鎮選單的「回 App」
+function exitPlaza() {
+  if (!window.flutter_inappwebview) return;
+  window.flutter_inappwebview.callHandler("exitPlaza");
+}
 
 // 點到好友建築
 function openFriends() {

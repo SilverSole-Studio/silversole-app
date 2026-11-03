@@ -5,11 +5,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/diamonds/diamond_repository.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
 
 void main() {
   group('PlazaBridge.info', () {
+    test('passes the app text size (normal unless told otherwise)', () {
+      expect(
+        PlazaBridge.info(friends: false, friendRequests: 0)['textSize'],
+        'normal',
+      );
+      expect(
+        PlazaBridge.info(
+          friends: false,
+          friendRequests: 0,
+          textSize: AppTextSize.large,
+        )['textSize'],
+        'large',
+      );
+    });
+
     test('passes the subscription flag (no billing yet, test switch only)', () {
       expect(
         PlazaBridge.info(
@@ -53,6 +69,7 @@ void main() {
         'features': {'friends': true},
         'friendRequests': 2,
         'systemFontScale': 1.0,
+        'textSize': 'normal',
         'subscription': {'active': false},
       });
     });
@@ -73,6 +90,7 @@ void main() {
         'features': {'friends': false},
         'friendRequests': 0,
         'systemFontScale': 1.0,
+        'textSize': 'normal',
         'subscription': {'active': false},
       });
     });
@@ -258,6 +276,53 @@ void main() {
       expect(g('https://games.example.com/'), isFalse);
       expect(g('https://games.example.com/game/'), isFalse);
       expect(PlazaBridge.isInGame(null, base), isFalse);
+    });
+  });
+
+  group('exitPlaza and the back button', () {
+    const base = 'https://games.example.com/';
+    bool hub(String u) => PlazaBridge.isHub(Uri.parse(u), base);
+    bool origin(String u) => PlazaBridge.isGameOrigin(Uri.parse(u), base);
+
+    test('the handler name is the one the town menu calls', () {
+      expect(PlazaBridge.exitPlaza, 'exitPlaza');
+    });
+
+    test('the town hub is the hub, games and other sites are not', () {
+      expect(hub('https://games.example.com/game/world/'), isTrue);
+      expect(hub('https://games.example.com/game/plaza/'), isTrue);
+      expect(hub('https://games.example.com/game/racer/'), isFalse);
+      expect(hub('https://evil.example.com/game/world/'), isFalse);
+      expect(PlazaBridge.isHub(null, base), isFalse);
+    });
+
+    test('exitPlaza is only answered to pages of the games site', () {
+      // The handler runs the same origin check as openFriends.
+      expect(origin('https://games.example.com/game/world/'), isTrue);
+      expect(origin('https://evil.example.com/game/world/'), isFalse);
+      expect(origin('http://games.example.com/game/world/'), isFalse);
+    });
+
+    test('back in the town leaves for the home tab, even with history', () {
+      expect(
+        PlazaBridge.backAction(onHub: true, canGoBack: false),
+        PlazaBackAction.leaveTab,
+      );
+      expect(
+        PlazaBridge.backAction(onHub: true, canGoBack: true),
+        PlazaBackAction.leaveTab,
+      );
+    });
+
+    test('back in a game (or elsewhere) walks the history first', () {
+      expect(
+        PlazaBridge.backAction(onHub: false, canGoBack: true),
+        PlazaBackAction.webBack,
+      );
+      expect(
+        PlazaBridge.backAction(onHub: false, canGoBack: false),
+        PlazaBackAction.leaveTab,
+      );
     });
   });
 }

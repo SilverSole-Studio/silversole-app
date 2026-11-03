@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:silversole/core/theme/app_theme_variant.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/foot_side.dart';
 
@@ -15,6 +16,10 @@ abstract class AppSettings with _$AppSettings {
     String? identity,
     String? deviceId,
     @Default(true) bool darkMode,
+
+    // 設定頁「文字大小」。預設標準；第一次啟動時手機字體已經很大則自動設成大
+    // （見 initialTextSizeFor），之後以使用者選的為準。
+    @Default(AppTextSize.normal) AppTextSize textSize,
     @Default(AppThemeVariant.mascot) AppThemeVariant themeVariant,
     @Default(TransmissionMethod.bluetooth)
     TransmissionMethod transmissionMethod,

@@ -34,7 +34,6 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
-import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 
 const _outDir = 'docs/screenshots/friends';
 const _viewSize = Size(412, 915);
@@ -185,15 +184,9 @@ Future<void> _shot(WidgetTester tester, _Variant v, String name) async {
 }
 
 Future<void> _tapDigits(WidgetTester tester, String digits) async {
-  for (final d in digits.split('')) {
-    await tester.tap(
-      find.descendant(
-        of: find.byType(CodeKeypad),
-        matching: find.widgetWithText(OutlinedButton, d),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 50));
-  }
+  // The code page takes the system number keyboard; type into its field.
+  await tester.enterText(find.byType(TextField), digits);
+  await tester.pump(const Duration(milliseconds: 50));
 }
 
 void main() {
@@ -283,10 +276,7 @@ void main() {
           await _tapDigits(tester, '2236');
           await _shot(tester, v, '05_enter_code');
 
-          await _tapDigits(
-            tester,
-            FakeFriendsRepository.demoFriendCode.substring(4),
-          );
+          await _tapDigits(tester, FakeFriendsRepository.demoFriendCode);
           await _settle(tester);
           await _shot(tester, v, '06_add_friend_sheet');
         }

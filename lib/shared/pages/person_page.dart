@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/auth/auth_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
@@ -104,6 +105,16 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setDarkMode(!darkMode.darkMode);
   }
 
+  /// 文字大小只有「標準」「大」兩種，點一下就切換。
+  Future<void> switchTextSize() async {
+    final current = ref.read(settingsProvider).textSize;
+    await ref
+        .read(settingsProvider.notifier)
+        .setTextSize(
+          current == AppTextSize.large ? AppTextSize.normal : AppTextSize.large,
+        );
+  }
+
   IconData getTransmissionIcon(TransmissionMethod method) {
     return switch (method) {
       TransmissionMethod.bluetooth => LucideIcons.bluetooth,
@@ -187,6 +198,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
         icon: LucideIcons.moon,
         onClick: switchDarkMode,
+      ),
+      ListTileData.normal(
+        title: 'text_size'.tr(),
+        subtitle: settings.textSize == AppTextSize.large
+            ? 'text_size_large'.tr()
+            : 'text_size_normal'.tr(),
+        icon: LucideIcons.type,
+        onClick: switchTextSize,
       ),
       ListTileData.normal(
         title: 'switch_theme'.tr(),

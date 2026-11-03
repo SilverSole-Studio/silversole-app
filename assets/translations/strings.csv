@@ -90,6 +90,9 @@ dark_mode,Dark Mode,深色模式
 switch_theme,Switch Theme,切換主題
 theme_classic,Classic,經典
 theme_mascot,Mascot,插畫
+text_size,Text Size,文字大小
+text_size_normal,Standard,標準
+text_size_large,Large,大
 greeting_morning,Good morning,早安
 greeting_afternoon,Good afternoon,午安
 greeting_evening,Good evening,晚安

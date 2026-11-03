@@ -52,8 +52,9 @@ class App extends ConsumerWidget {
       // calibration question, may cover it or steal its dismiss button.
       // Remove it together with FallDemoOverlay.
       //
-      // The system font scale is capped (see [kMaxAppTextScale]) outside of
-      // all of them, so the overlays are capped too.
+      // The system font scale is capped (see [kMaxAppTextScale]) and scaled
+      // by the settings' 文字大小 outside of all of them, so the overlays
+      // follow too.
       builder: (context, child) => applySystemFontScale(
         context,
         DismissKeyboardOnTapOutside(
@@ -63,6 +64,7 @@ class App extends ConsumerWidget {
             ),
           ),
         ),
+        textSize: settings.textSize,
       ),
     );
   }
