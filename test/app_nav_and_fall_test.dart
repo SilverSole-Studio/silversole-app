@@ -13,6 +13,8 @@ import 'package:silversole/shared/models/fall_detect_event_model.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/home_page.dart';
 import 'package:silversole/shared/pages/map_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -34,6 +36,13 @@ GoRouter _single(Widget page) => GoRouter(
 /// The five tabs are 今天／地圖／遊戲／報告／我的 with one icon family and
 /// labels that stay readable at the default 「標準」 text size; fall detection
 /// lives on the map tab and no longer on the home page.
+Widget _homeFor(AppThemeVariant v) => switch (v) {
+  AppThemeVariant.mascot => const HomeBodyT2(),
+  AppThemeVariant.dashboard => const HomeBodyB(),
+  AppThemeVariant.journal => const HomeBodyC(),
+  _ => const HomeBody(),
+};
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -95,10 +104,7 @@ void main() {
     }
 
     final themes = {
-      'classic': appTheme(Brightness.light),
-      'classic dark': appTheme(Brightness.dark),
-      'mascot': appThemeT2(),
-      'mascot dark': appThemeT2(),
+      for (final v in AppThemeVariant.values) v.name: appThemeFor(v),
     };
 
     for (final MapEntry(key: name, value: t) in themes.entries) {
@@ -145,7 +151,8 @@ void main() {
       }
 
       // ── Fall card: map tab yes, home tab no. ────────────────────────────
-      final mascot = name.startsWith('mascot');
+      final mascot = name == AppThemeVariant.mascot.name;
+      final home = _homeFor(AppThemeVariant.values.byName(name));
       await show(
         mascot
             ? MapPageT2(
@@ -159,7 +166,7 @@ void main() {
       expect(find.text('跌倒守護運作中'), findsOneWidget, reason: name);
       expect(find.text('開啟 App 以來未偵測到跌倒'), findsOneWidget);
 
-      await show(mascot ? const HomeBodyT2() : const HomeBody());
+      await show(home);
       expect(find.byType(FallGuardCard), findsNothing, reason: name);
       expect(find.text('跌倒守護運作中'), findsNothing, reason: name);
       // Nor the old classic "safety events" card.
