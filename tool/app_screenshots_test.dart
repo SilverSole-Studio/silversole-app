@@ -252,7 +252,7 @@ final _shots = <_Shot>[
   _Shot('12_themes', (v) => const ThemePickerPage()),
   _Shot(
     '13_devices',
-    (v) => v.mascot ? const DevicesPageT2() : const SizedBox.shrink(),
+    (v) => v.mascot ? const DevicesPageT2() : const Scaffold(),
   ),
 ];
 
