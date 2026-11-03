@@ -1,5 +1,4 @@
-// Renders the main app pages in both themes, light and dark, to PNG with real
-// fonts. Not part of the test suite (it lives in tool/, which `flutter test`
+// Renders the main app pages in all five looks to PNG with real fonts. Not part of the test suite (it lives in tool/, which `flutter test`
 // does not pick up by default); run it by hand:
 //
 //   python -I tool/make_cjk_fonts.py      (once; needs fontTools)
@@ -8,7 +7,8 @@
 //
 // Output: build/app_refresh_shots/<variant>_<NN>_<page>.png
 //
-// Variants: classic, classic-dark, mascot, mascot-dark. The map tab shows a
+// Variants: mascot (A), tech-light, tech-dark, dashboard (B), journal (C). Set
+// SHOTS=mascot,journal to render only some. The map tab shows a
 // plain placeholder where Google Maps would be (a platform view cannot be
 // rendered in a test).
 import 'dart:io';
@@ -51,7 +51,11 @@ import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 
 const _outDir = 'build/app_refresh_shots';
-const _viewSize = Size(412, 915);
+const _viewWidth = 412.0;
+
+/// The page height of the shot being taken; a long page sets a taller one.
+double _viewHeight = 915;
+Size get _viewSize => Size(_viewWidth, _viewHeight);
 const _dpr = 2.0;
 const _statusBar = 28.0;
 
@@ -81,18 +85,23 @@ Future<void> _loadFamily(String family, List<String> paths) async {
 const _cjk = 'HarnessCJK';
 
 class _Variant {
-  const _Variant(this.name, this.theme, {required this.mascot});
+  const _Variant(this.name, this.variant);
   final String name;
-  final ThemeData Function() theme;
-  final bool mascot;
+  final AppThemeVariant variant;
+  ThemeData theme() => appThemeFor(variant);
+  bool get mascot => variant == AppThemeVariant.mascot;
 }
 
 final _variants = <_Variant>[
-  _Variant('classic', () => appTheme(Brightness.light), mascot: false),
-  _Variant('classic-dark', () => appTheme(Brightness.dark), mascot: false),
-  _Variant('mascot', () => appThemeT2(), mascot: true),
-  _Variant('mascot-dark', () => appThemeT2(), mascot: true),
-];
+  const _Variant('mascot', AppThemeVariant.mascot),
+  const _Variant('tech-light', AppThemeVariant.techLight),
+  const _Variant('tech-dark', AppThemeVariant.techDark),
+  const _Variant('dashboard', AppThemeVariant.dashboard),
+  const _Variant('journal', AppThemeVariant.journal),
+].where((v) {
+  final only = Platform.environment['SHOTS'];
+  return only == null || only.split(',').contains(v.name);
+}).toList();
 
 ThemeData _withCjk(ThemeData t) {
   TextTheme fix(TextTheme tt) => tt.apply(fontFamilyFallback: const [_cjk]);
@@ -179,19 +188,24 @@ Widget _tab(int index, Widget page) => Scaffold(
     onDestinationSelected: (_) {},
     icons: kHomeNavIcons,
     labels: kHomeNavLabels,
+    townIcons: kHomeNavTownIcons,
   ),
 );
 
 class _Shot {
-  const _Shot(this.name, this.build);
+  const _Shot(this.name, this.build, {this.height = 915});
   final String name;
   final Widget Function(_Variant v) build;
+
+  /// A long page is shot taller than a phone so the whole page shows.
+  final double height;
 }
 
 final _shots = <_Shot>[
   _Shot(
     '01_today',
     (v) => _tab(0, v.mascot ? const HomeBodyT2() : const HomeBody()),
+    height: 1700,
   ),
   _Shot(
     '02_map',
@@ -235,6 +249,9 @@ Future<void> _settle(WidgetTester tester) async {
         'assets/mascot-assets/happy.webp',
         'assets/mascot-assets/applaud.webp',
         'assets/mascot-assets/checking.webp',
+        'assets/mascot-assets/insole.webp',
+        'assets/mascot-assets/icons/dev_foot.webp',
+        'assets/mascot-assets/cards/card_hop.webp',
         'assets/images/silversole_app_logo.png',
         'assets/images/silversole_full.png',
       ]) {
@@ -273,7 +290,7 @@ Future<void> _pump(WidgetTester tester, _Variant v, GoRouter router) async {
           lastFootCheckProvider.overrideWith(_LastCheck.new),
           settingsProvider.overrideWith(
             () => _Settings(
-              v.mascot ? AppThemeVariant.mascot : AppThemeVariant.classic,
+              v.variant,
             ),
           ),
         ],
@@ -347,10 +364,17 @@ void main() {
     await _loadFamily('Google Sans', [
       'assets/fonts/GoogleSans-VariableFont.ttf',
     ]);
-    await _loadFamily('DM Sans', [
-      'assets/mascot-assets/fonts/DMSans-Regular.ttf',
-      'assets/mascot-assets/fonts/DMSans-Medium.ttf',
-      'assets/mascot-assets/fonts/DMSans-Bold.ttf',
+    await _loadFamily('Chiron GoRound TC', [
+      'assets/fonts/ChironGoRoundTC-Medium.ttf',
+      'assets/fonts/ChironGoRoundTC-Bold.ttf',
+      'assets/fonts/ChironGoRoundTC-Black.ttf',
+    ]);
+    await _loadFamily('LXGW WenKai TC', [
+      'assets/fonts/LXGWWenKaiTC-Regular.ttf',
+      'assets/fonts/LXGWWenKaiTC-Bold.ttf',
+    ]);
+    await _loadFamily('Big Shoulders Display', [
+      'assets/fonts/BigShouldersDisplay-Black.ttf',
     ]);
     // Static weights cut by tool/make_cjk_fonts.py; the raw variable font
     // would render everything in its default Thin weight.
@@ -377,11 +401,13 @@ void main() {
         addTearDown(tester.view.reset);
 
         for (final shot in _shots) {
+          _viewHeight = shot.height;
           await _pump(tester, v, _single(shot.build(v)));
           await _shot(tester, v, shot.name);
         }
 
         // Friends hub: a nested route, not a single page.
+        _viewHeight = 915;
         await _pump(
           tester,
           v,

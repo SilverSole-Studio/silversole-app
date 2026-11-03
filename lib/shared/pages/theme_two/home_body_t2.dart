@@ -2,69 +2,73 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/utils/battery_level.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
-import 'package:silversole/shared/models/ble_paired_device_model.dart';
-import 'package:silversole/shared/models/live_telemetry_state.dart';
+import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/home_data_providers.dart';
+import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
-import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
-import 'package:silversole/shared/widgets/daily_mission_card.dart';
-import 'package:silversole/shared/widgets/foot_health_check_card.dart';
+import 'package:silversole/shared/widgets/app_card.dart';
+import 'package:silversole/shared/widgets/foot_health_check_card.dart'
+    show lastFootCheckDate;
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
+import 'package:silversole/shared/widgets/theme_two/town_kit.dart';
+import 'package:silversole/shared/widgets/town_icon.dart';
 
-/// Home screen for the illustrated "mascot" theme.
+/// 今天 in look A, 粗哥手繪小鎮風 — the design mock 首頁風格打樣/a.html.
 ///
-/// Deliberately a separate implementation from [HomeBody] rather than a
-/// restyle: the two designs group their content differently. Both read the
-/// same providers, so there is one source of truth for the data.
+/// The town: sky and grass, the foot check as a shop with an awning (the one big
+/// thing to do), two small stalls (the insole, today's exercise), a notice board
+/// with today's missions, and the gate to the games. Every figure is a real one
+/// from the phone or the sole — the mock's "86 分" has no source (a check ends on
+/// a band, never a score), so the band is what gets the big type.
 ///
-/// Fall detection is not here: it lives on the map tab.
-///
-/// Every figure shown is real or absent: the mockup's step count, streak and
-/// family contacts have no source in the app, so they are not drawn, and the
-/// foot check shows the last real result or an empty state. The mockup's
-/// weather strip is intentionally absent too — there is no weather source and
-/// none is planned.
-///
-/// The raw IMU trace is not on this screen: twelve channel names mean nothing
-/// to a wearer. It stays one tap away on the analytics detail page.
+/// Fall detection is not here: it lives on the map tab. The raw IMU trace is not
+/// here either: it stays one tap away on the analytics detail page.
 class HomeBodyT2 extends ConsumerWidget {
   const HomeBodyT2({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final device = ref.watch(settingsProvider).preferredDevice;
-
+    final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 14,
-            children: [
-              const _GreetingHeader(),
-              // The one thing to do today comes first; mission and device
-              // are one-line follow-ups.
-              const FootCheckCardT2(),
-              const DailyMissionCard(),
-              _DeviceCard(device: device),
-            ],
-          ),
+      body: SingleChildScrollView(
+        child: Stack(
+          children: [
+            const Positioned(top: 0, left: 0, right: 0, child: TownSky()),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, top + 8, 16, 28),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Greeting(),
+                  SizedBox(height: 14),
+                  FootCheckCardT2(),
+                  SizedBox(height: 20),
+                  _Stalls(),
+                  SizedBox(height: 28),
+                  _SectionTitle(icon: 'target', textKey: 'today_mission'),
+                  SizedBox(height: 12),
+                  _MissionBoard(),
+                  SizedBox(height: 28),
+                  _SectionTitle(icon: 'flag', textKey: 'home_town_title'),
+                  SizedBox(height: 12),
+                  _TownGate(),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ── 1. Greeting ───────────────────────────────────────────────────────────
+// ── Greeting ──────────────────────────────────────────────────────────────
 
-class _GreetingHeader extends ConsumerWidget {
-  const _GreetingHeader();
+class _Greeting extends ConsumerWidget {
+  const _Greeting();
 
   /// Time-of-day greeting — derived from the clock, so it is real data.
   String _greetingKey(int hour) {
@@ -82,144 +86,33 @@ class _GreetingHeader extends ConsumerWidget {
     // name until a real profile name exists.
     final name = user?.email.split('@').first ?? 'silversole'.tr();
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${DateFormat.MMMd(locale).format(now)} · '
-                '${DateFormat.E(locale).format(now)}',
-                style: context.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${_greetingKey(now.hour).tr()}，$name',
-                style: context.textTheme.headlineLarge,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+        MascotPill(
+          child: Text(
+            '${DateFormat.MMMd(locale).format(now)}　'
+            '${DateFormat.E(locale).format(now)}',
+            style: context.textTheme.titleSmall?.copyWith(height: 1.1),
           ),
         ),
-        const SizedBox(width: 8),
-        Image.asset(
-          'assets/mascot-assets/applaud.webp',
-          height: 88,
-          fit: BoxFit.contain,
+        const SizedBox(height: 8),
+        // Leave the sun its corner.
+        Padding(
+          padding: const EdgeInsets.only(right: 64),
+          child: Text(
+            '${_greetingKey(now.hour).tr()}，$name',
+            style: context.textTheme.headlineLarge?.copyWith(fontSize: 34),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
   }
 }
 
-// ── 3. Device ─────────────────────────────────────────────────────────────
-
-class _DeviceCard extends ConsumerWidget {
-  const _DeviceCard({required this.device});
-
-  final BlePairedDevice? device;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Value unused on purpose: checkDeviceOnline compares against the clock,
-    // and nothing rebuilds when a sole goes silent. Watching this provider is
-    // what re-runs build when its timer fires.
-    ref.watch(deviceOnlineProvider);
-    // This card is titled with [device]'s name, so it must report [device]'s
-    // own link — not `deviceOnlineProvider`, which is true while *any* foot is
-    // streaming, nor the primary sole's window.
-    final telemetry = device == null
-        ? const LiveTelemetryState()
-        : ref.watch(liveTelemetryProvider(device!.identityKey));
-    final online = ref
-        .watch(telemetryFacadeProvider)
-        .checkDeviceOnline(telemetry.updatedAt);
-    final recent = telemetry.recentImu;
-    // Live while online; otherwise the level remembered for this sole, grayed
-    // out. A sole never connected shows an empty gray bar.
-    final battery = BatteryDisplay.resolve(
-      live: online && recent.isNotEmpty ? recent.last.batteryPercent : null,
-      lastKnown: device?.lastBatteryPercent,
-    );
-    final name = device?.name ?? 'not_binding'.tr();
-
-    // Plain white, not gold: gold is the colour of the buttons, and this card
-    // is status, not the thing to press first.
-    return MascotCard(
-      onTap: () => context.push('/my-devices'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$name ${'device_product_name'.tr()}',
-                  style: context.textTheme.headlineMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: online ? context.mascot.safe : context.mascot.inkMuted,
-                  border: Border.all(color: context.mascot.line, width: 2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            device == null
-                ? 'device_tap_to_pair'.tr()
-                : online
-                ? 'device_synced'.tr()
-                : 'offline'.tr(),
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: context.mascot.ink,
-            ),
-          ),
-          // An empty gray bar says nothing before a sole is paired.
-          if (device != null) ...[
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: MascotProgressBar(
-                    value: battery.fraction,
-                    height: 20,
-                    fill: battery.isLive
-                        ? context.mascot.safe
-                        : context.mascot.inkFaint,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  battery.label,
-                  style: battery.isLive
-                      ? context.textTheme.headlineMedium
-                      : context.textTheme.headlineMedium?.copyWith(
-                          color: context.mascot.inkMuted,
-                        ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ── 4. Foot pressure check ────────────────────────────────────────────────
+// ── The shop: the foot check ──────────────────────────────────────────────
 
 /// The last foot check the wearer finished: its band and when. With none on
 /// record it says so — no number — and the button starts one.
@@ -229,56 +122,518 @@ class FootCheckCardT2 extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final last = ref.watch(lastFootCheckProvider);
+    final c = context.mascot;
 
-    return MascotCard(
+    return AppCard(
+      weight: CardWeight.hero,
+      padding: EdgeInsets.zero,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('foot_check_title'.tr(), style: context.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Column(
+          const Awning(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      last == null
-                          ? 'foot_check_none_yet'.tr()
-                          : last.rating.labelKey.tr(),
-                      style: last == null
-                          ? context.textTheme.titleLarge
-                          : context.textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: context.mascot.ink,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 3,
                             ),
+                            decoration: BoxDecoration(
+                              color: c.ink,
+                              borderRadius: AppRadius.pillR,
+                            ),
+                            child: Text(
+                              'foot_check_station'.tr(),
+                              style: context.textTheme.labelMedium?.copyWith(
+                                color: c.card,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'foot_check_title'.tr(),
+                            style: context.textTheme.headlineMedium?.copyWith(
+                              fontSize: 22,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          // The one hero figure: the band, in big type.
+                          Text(
+                            last == null
+                                ? 'foot_check_none_yet'.tr()
+                                : last.rating.labelKey.tr(),
+                            style: townHeroStyle(
+                              context,
+                              last == null ? 30 : 60,
+                            ).copyWith(height: 1.1),
+                          ),
+                          if (last != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                for (var i = 1; i <= 3; i++)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4),
+                                    child: TownIcon(
+                                      i <= last.rating.level
+                                          ? 'star'
+                                          : 'starO',
+                                      size: 30,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      last == null
-                          ? 'foot_check_none_yet_hint'.tr()
-                          : 'foot_health_check_last'.tr(
-                              args: [lastFootCheckDate(context, last)],
-                            ),
-                      style: context.textTheme.bodyMedium,
+                    // The mascot invites a check (or reads the result).
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 14),
+                      child: Transform.rotate(
+                        angle: 0.05,
+                        child: Image.asset(
+                          'assets/mascot-assets/checking.webp',
+                          height: 132,
+                        ),
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  last == null
+                      ? 'foot_check_none_yet_hint'.tr()
+                      : 'foot_health_check_last'.tr(
+                          args: [lastFootCheckDate(context, last)],
+                        ),
+                  style: context.textTheme.bodyLarge,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => context.push('/foot-check'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(64),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const TownIcon('go', size: 32),
+                        const SizedBox(width: 10),
+                        Text(
+                          'start_check'.tr(),
+                          style: context.textTheme.headlineMedium?.copyWith(
+                            fontSize: 26,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Two stalls: the insole, today's exercise ──────────────────────────────
+
+class _Stalls extends StatelessWidget {
+  const _Stalls();
+
+  @override
+  Widget build(BuildContext context) {
+    return const IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(flex: 100, child: _InsoleStall()),
+          SizedBox(width: 14),
+          Expanded(flex: 108, child: _ExerciseStall()),
+        ],
+      ),
+    );
+  }
+}
+
+class _InsoleStall extends ConsumerWidget {
+  const _InsoleStall();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(soleStatusProvider);
+    final c = context.mascot;
+    final hasLevel = status.battery.percent != null;
+
+    return AppCard(
+      onTap: () => context.push('/my-devices'),
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'home_insole_title'.tr(),
+                  style: context.textTheme.titleMedium,
+                ),
               ),
-              // The mascot invites a first check; once there is a result
-              // the result is the picture.
-              if (last == null)
-                Image.asset('assets/mascot-assets/checking.webp', height: 86),
+              Image.asset(
+                'assets/mascot-assets/icons/dev_foot.webp',
+                width: 52,
+              ),
             ],
           ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push('/foot-check'),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text('start_check_now'.tr()),
+          const SizedBox(height: 4),
+          if (!status.paired)
+            Text(
+              'device_tap_to_pair'.tr(),
+              style: context.textTheme.titleLarge,
+            )
+          else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  hasLevel ? '${status.battery.percent}' : '-',
+                  style: context.look.number(46, color: c.ink),
+                ),
+                Text('%', style: context.look.number(20, color: c.ink)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            MascotProgressBar(
+              value: status.battery.fraction,
+              height: 20,
+              fill: status.battery.isLive ? c.safe : c.inkFaint,
+            ),
+          ],
+          const Spacer(),
+          const SizedBox(height: 8),
+          if (status.paired)
+            Row(
+              children: [
+                TownDot(on: status.online),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    status.online ? 'device_synced'.tr() : 'offline'.tr(),
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExerciseStall extends ConsumerWidget {
+  const _ExerciseStall();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(exerciseTodayProvider);
+    final c = context.mascot;
+
+    return AppCard(
+      tint: true,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('today_exercise'.tr(), style: context.textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${today.minutes}',
+                style: context.look.number(46, color: c.ink),
+              ),
+              const SizedBox(width: 2),
+              Flexible(
+                child: Text(
+                  'exercise_goal_unit'.tr(args: ['${today.goal}']),
+                  style: context.look.number(20, color: c.ink),
+                  maxLines: 1,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          MascotProgressBar(value: today.fraction, height: 20, fill: c.gold),
+          const Spacer(),
+          const SizedBox(height: 8),
+          Text(
+            today.reached
+                ? 'exercise_reached'.tr()
+                : 'exercise_remaining'.tr(args: ['${today.remaining}']),
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Notice board: today's missions ────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.icon, required this.textKey});
+
+  final String icon;
+  final String textKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Row(
+        children: [
+          TownIcon(icon, size: 28),
+          const SizedBox(width: 8),
+          Text(
+            textKey.tr(),
+            style: context.textTheme.headlineMedium?.copyWith(fontSize: 22),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionBoard extends ConsumerWidget {
+  const _MissionBoard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lines = ref.watch(todayMissionLinesProvider);
+    final c = context.mascot;
+    final done = lines?.where((m) => m.done).length ?? 0;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => showDailyMissionsBottomSheet(context),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 26, 14, 8),
+        decoration: BoxDecoration(
+          color: c.wood,
+          borderRadius: BorderRadius.circular(AppPaletteT2.cardRadius),
+          border: Border.all(color: c.line, width: AppPaletteT2.outlineWidth),
+          boxShadow: [
+            BoxShadow(
+              color: c.line,
+              offset: const Offset(0, AppPaletteT2.shadowDrop),
+            ),
+          ],
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // The two pins.
+            Positioned(top: -18, left: -2, child: _Pin(color: c.card)),
+            Positioned(top: -18, right: -2, child: _Pin(color: c.card)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+                  child: Text(
+                    lines == null
+                        ? 'missions_loading'.tr()
+                        : 'missions_done_count'.tr(
+                            args: ['$done', '${lines.length}'],
+                          ),
+                    style: context.textTheme.titleMedium,
+                  ),
+                ),
+                for (var i = 0; i < (lines?.length ?? 0); i++)
+                  _Note(line: lines![i], index: i),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Pin extends StatelessWidget {
+  const _Pin({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        border: Border.all(color: context.mascot.line, width: 2.5),
+      ),
+    );
+  }
+}
+
+class _Note extends StatelessWidget {
+  const _Note({required this.line, required this.index});
+
+  final MissionLine line;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mascot;
+    // Notes hang a little crooked, like paper pinned by hand.
+    const tilts = [-0.014, 0.012, -0.007];
+    return Transform.rotate(
+      angle: tilts[index % tilts.length],
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: c.card,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: c.line, width: AppPaletteT2.outlineWidth),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: line.done ? c.gold : Colors.white,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: c.line, width: 3),
+              ),
+              child: line.done
+                  ? const Center(child: TownIcon('check', size: 22))
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                line.titleKey.tr(),
+                style: context.textTheme.titleLarge?.copyWith(
+                  fontSize: 18,
+                  decoration: line.done ? TextDecoration.lineThrough : null,
+                  decorationThickness: 3,
+                  color: line.done ? c.inkMuted : c.ink,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── The gate to the games ─────────────────────────────────────────────────
+
+class _TownGate extends ConsumerWidget {
+  const _TownGate();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.mascot;
+    return AppCard(
+      color: c.gold,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // An arched doorway with a picture of the town in it.
+          Container(
+            width: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(60),
+                topRight: Radius.circular(60),
+                bottomLeft: Radius.circular(14),
+                bottomRight: Radius.circular(14),
+              ),
+              border: Border.all(color: c.line, width: 3),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: AspectRatio(
+              aspectRatio: 984 / 1200,
+              child: Image.asset(
+                'assets/mascot-assets/cards/card_hop.webp',
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'home_town_headline'.tr(),
+                  style: context.textTheme.displaySmall?.copyWith(fontSize: 30),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'home_town_hint'.tr(),
+                  style: context.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => ref
+                        .read(homeTabProvider.notifier)
+                        .select(HomeTabNotifier.games),
+                    child: Text(
+                      'home_town_go'.tr(),
+                      style: context.textTheme.headlineMedium?.copyWith(
+                        fontSize: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

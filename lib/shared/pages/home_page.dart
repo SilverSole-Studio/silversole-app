@@ -29,6 +29,15 @@ const List<IconData> kHomeNavIcons = [
   LucideIcons.circleUser,
 ];
 
+/// The same five tabs in look A's hand-drawn icons (names of `TownIcon`).
+const List<String> kHomeNavTownIcons = [
+  'sun',
+  'map',
+  'ball',
+  'clipboard',
+  'person',
+];
+
 /// Translation keys of [kHomeNavIcons]' labels.
 const List<String> kHomeNavLabels = [
   'nav_today',
@@ -107,6 +116,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               selectedIndex: page,
               onDestinationSelected: ref.read(homeTabProvider.notifier).select,
               icons: kHomeNavIcons,
+              townIcons: kHomeNavTownIcons,
               labels: kHomeNavLabels,
             ),
       // One tab in the tree at a time. IndexedStack kept every tab mounted,
