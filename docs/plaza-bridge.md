@@ -2,7 +2,7 @@
 
 App 的遊戲分頁（`lib/shared/pages/plaza_tab_page.dart`）用 WebView 開 `<gameUrl>game/plaza/`。廣場網頁跟 App 之間只走這份文件寫的通道；App 端的格式定義在 `lib/shared/providers/plaza_bridge.dart`。
 
-**只服務遊戲自己的網站。**下面的通道（`window.silversoleApp`、`appInfo`、`openFriends`、`exitPlaza`）和相機權限，只給跟 `gameUrl` 同一個 origin（協定、網域、port 都一樣）的頁面；正式版就是 `https://h5.silversole.dongyu.company`。廣場如果在同一個 WebView 裡連到別的網站，那個頁面讀不到 `window.silversoleApp`，呼叫 `appInfo` 拿到 `null`、`openFriends` 與 `exitPlaza` 拿到 `false`，要相機也會被拒絕。相機以外的權限（麥克風、定位等）一律拒絕。
+**只服務遊戲自己的網站。**下面的通道（`window.silversoleApp`、`appInfo`、`openFriends`、`exitPlaza`、`mpSession`）和相機權限，只給跟 `gameUrl` 同一個 origin（協定、網域、port 都一樣）的頁面；正式版就是 `https://h5.silversole.dongyu.company`。廣場如果在同一個 WebView 裡連到別的網站，那個頁面讀不到 `window.silversoleApp`，呼叫 `appInfo` 拿到 `null`、`openFriends` 與 `exitPlaza` 拿到 `false`、`mpSession` 拿到 `null`，要相機也會被拒絕。相機以外的權限（麥克風、定位等）一律拒絕。
 
 ## App → 網頁：現在能顯示什麼
 
@@ -124,6 +124,22 @@ const w = await window.flutter_inappwebview.callHandler("gameSaveStore", { rev: 
 ```
 
 一樣只有遊戲自己的網站（`isGameOrigin`）呼叫得到。遊戲端怎麼打包、什麼時候存、換帳號怎麼辦，見總倉庫 `02_產品/鞋墊_SilverSole/_遊戲雲端存檔_介面_2026-10-31.md`。
+
+## 聯機對戰（2026-11-03）
+
+所有遊戲要能跟好友一起玩。App 只多這一個通道，**之後每款遊戲接聯機都不用再改 App、不用重新發版**：
+
+```js
+const s = await window.flutter_inappwebview.callHandler("mpSession");
+// { url: "https://xxxx.supabase.co", anonKey: "...", accessToken: "<目前登入者的 JWT>", expiresAt: 1790000000000 }
+// 沒登入、App 沒設定後端、或不是遊戲自己的網站：null
+```
+
+- `expiresAt` 是**毫秒**（跟 `Date.now()` 直接比）。App 在剩不到 2 分鐘時會先換一張新的再給；換不到又還沒過期就給舊的；過期了就回 `null`。網頁在剩不到 1 分鐘時再問一次，並用新 token 更新 supabase-js（`supabase.realtime.setAuth(token)`，重建 client 也可以）。
+- 拿到之後網頁自己用 supabase-js 連：`createClient(url, anonKey, { global: { headers: { Authorization: "Bearer " + accessToken } } })`；開房、加入、邀請、送一步都是 RPC（`mp_create_room`、`mp_join_room`、`mp_invite`、`mp_my_invites`、`mp_accept_invite`、`mp_submit_move`、`mp_leave`，見 `supabase/migrations/20261103120000_mp_rooms.sql`），即時通知走私人頻道 `room:<房間 id>`（對方上線、有人走了一步）與 `user:<自己的 id>`（有人邀請）。好友名單用既有的 `get_friends` RPC。
+- **這個 token 是使用者本人的登入憑證**：拿到的頁面可以用這個人的身分打他所有的 RPC。所以只給遊戲自己的網站（`isGameOrigin`），App 不存它、不記 log；遊戲網站上不能放任何第三方的 script。
+- 資料庫那支 migration **還沒套用**之前，RPC 會回「找不到函式」；網頁要把這個當成「沒有聯機」，不出現「線上對戰」按鈕，不能報錯。
+- 廣場分頁與每日任務開的遊戲頁（`GameWebViewPage`）都有接。
 
 ## 遊戲紀錄（每日任務用，2026-11-01）
 

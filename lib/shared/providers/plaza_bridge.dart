@@ -28,6 +28,11 @@ import 'package:silversole/core/utils/system_font_scale.dart';
 /// resolves to `{ok: true}`, or `{ok: false}` for a report of the wrong shape
 /// (see `GameActivity.tryParse`).
 ///
+/// Online play: `callHandler('mpSession')` resolves to `{url, anonKey,
+/// accessToken, expiresAt}` for the signed-in user (`expiresAt` in
+/// milliseconds), or null when nobody is signed in (see `MpSessionService`).
+/// The page then talks to Supabase itself; rooms and moves are RPCs.
+///
 /// Only the games' own site is served ([isGameOrigin]): the plaza links out
 /// to other pages in the same web view, and none of them may read the app's
 /// state, open app screens or get the camera.
@@ -41,6 +46,7 @@ abstract final class PlazaBridge {
   static const String gameSaveLoad = 'gameSaveLoad';
   static const String gameSaveStore = 'gameSaveStore';
   static const String gameActivity = 'gameActivity';
+  static const String mpSession = 'mpSession';
 
   /// The `{rev, data}` the page passes to [gameSaveStore], or null when it is
   /// not that shape (the call then answers `bad_data` without a round trip).
