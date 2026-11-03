@@ -201,14 +201,14 @@ class _MapCardState extends ConsumerState<MapCard> {
           ),
           // Always offered: the tap asks for location permission on demand.
           Positioned(
-              right: 4,
-              top: 4,
-              child: FloatingActionButton.small(
-                heroTag: 'fab_map_card',
-                onPressed: controlMapWithPhonePosition,
-                child: const Icon(LucideIcons.locateFixed),
-              ),
+            right: 4,
+            top: 4,
+            child: FloatingActionButton.small(
+              heroTag: 'fab_map_card',
+              onPressed: controlMapWithPhonePosition,
+              child: const Icon(LucideIcons.locateFixed),
             ),
+          ),
         ],
       ),
     );

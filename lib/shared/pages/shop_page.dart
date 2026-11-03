@@ -6,7 +6,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/shop_view_data.dart';
 import 'package:silversole/shared/pages/theme_two/shop_page_t2.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/count_up_text.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -17,7 +17,7 @@ class ShopRoute extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final variant = ref.watch(settingsProvider.select((s) => s.themeVariant));
+    final variant = ref.watch(themeVariantProvider);
     return variant == AppThemeVariant.mascot
         ? const ShopPageT2()
         : const ShopPage();

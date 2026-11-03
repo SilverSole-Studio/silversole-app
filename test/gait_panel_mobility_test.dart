@@ -62,7 +62,7 @@ void main() {
                             mobility: ref.watch(mobilityCardProvider),
                           ),
                           Theme(
-                            data: appThemeT2(Brightness.light),
+                            data: appThemeT2(),
                             child: GaitAnalysisPanelT2(
                               snapshot: ref.watch(
                                 gaitViewSnapshotProvider(GaitScale.week),

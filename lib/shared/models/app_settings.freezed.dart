@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- String? get identity; String? get deviceId; bool get darkMode; AppTextSize get textSize; AppThemeVariant get themeVariant; TransmissionMethod get transmissionMethod; List<BlePairedDevice> get pairedDevicesList;/// Hidden developer mode (seven taps on the firmware title): reads the
+ String? get identity; String? get deviceId; AppTextSize get textSize; AppThemeVariant get themeVariant; TransmissionMethod get transmissionMethod; List<BlePairedDevice> get pairedDevicesList;/// Hidden developer mode (seven taps on the firmware title): reads the
 /// beta firmware channel and allows a warned downgrade.
  bool get firmwareDevMode;
 /// Create a copy of AppSettings
@@ -27,16 +27,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.identity, identity) || other.identity == identity)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.textSize, textSize) || other.textSize == textSize)&&(identical(other.themeVariant, themeVariant) || other.themeVariant == themeVariant)&&(identical(other.transmissionMethod, transmissionMethod) || other.transmissionMethod == transmissionMethod)&&const DeepCollectionEquality().equals(other.pairedDevicesList, pairedDevicesList)&&(identical(other.firmwareDevMode, firmwareDevMode) || other.firmwareDevMode == firmwareDevMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.identity, identity) || other.identity == identity)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.textSize, textSize) || other.textSize == textSize)&&(identical(other.themeVariant, themeVariant) || other.themeVariant == themeVariant)&&(identical(other.transmissionMethod, transmissionMethod) || other.transmissionMethod == transmissionMethod)&&const DeepCollectionEquality().equals(other.pairedDevicesList, pairedDevicesList)&&(identical(other.firmwareDevMode, firmwareDevMode) || other.firmwareDevMode == firmwareDevMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,identity,deviceId,darkMode,textSize,themeVariant,transmissionMethod,const DeepCollectionEquality().hash(pairedDevicesList),firmwareDevMode);
+int get hashCode => Object.hash(runtimeType,identity,deviceId,textSize,themeVariant,transmissionMethod,const DeepCollectionEquality().hash(pairedDevicesList),firmwareDevMode);
 
 @override
 String toString() {
-  return 'AppSettings(identity: $identity, deviceId: $deviceId, darkMode: $darkMode, textSize: $textSize, themeVariant: $themeVariant, transmissionMethod: $transmissionMethod, pairedDevicesList: $pairedDevicesList, firmwareDevMode: $firmwareDevMode)';
+  return 'AppSettings(identity: $identity, deviceId: $deviceId, textSize: $textSize, themeVariant: $themeVariant, transmissionMethod: $transmissionMethod, pairedDevicesList: $pairedDevicesList, firmwareDevMode: $firmwareDevMode)';
 }
 
 
@@ -47,7 +47,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- String? identity, String? deviceId, bool darkMode, AppTextSize textSize, AppThemeVariant themeVariant, TransmissionMethod transmissionMethod, List<BlePairedDevice> pairedDevicesList, bool firmwareDevMode
+ String? identity, String? deviceId, AppTextSize textSize, AppThemeVariant themeVariant, TransmissionMethod transmissionMethod, List<BlePairedDevice> pairedDevicesList, bool firmwareDevMode
 });
 
 
@@ -64,12 +64,11 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? identity = freezed,Object? deviceId = freezed,Object? darkMode = null,Object? textSize = null,Object? themeVariant = null,Object? transmissionMethod = null,Object? pairedDevicesList = null,Object? firmwareDevMode = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? identity = freezed,Object? deviceId = freezed,Object? textSize = null,Object? themeVariant = null,Object? transmissionMethod = null,Object? pairedDevicesList = null,Object? firmwareDevMode = null,}) {
   return _then(_self.copyWith(
 identity: freezed == identity ? _self.identity : identity // ignore: cast_nullable_to_non_nullable
 as String?,deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
-as String?,darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
-as bool,textSize: null == textSize ? _self.textSize : textSize // ignore: cast_nullable_to_non_nullable
+as String?,textSize: null == textSize ? _self.textSize : textSize // ignore: cast_nullable_to_non_nullable
 as AppTextSize,themeVariant: null == themeVariant ? _self.themeVariant : themeVariant // ignore: cast_nullable_to_non_nullable
 as AppThemeVariant,transmissionMethod: null == transmissionMethod ? _self.transmissionMethod : transmissionMethod // ignore: cast_nullable_to_non_nullable
 as TransmissionMethod,pairedDevicesList: null == pairedDevicesList ? _self.pairedDevicesList : pairedDevicesList // ignore: cast_nullable_to_non_nullable
@@ -159,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? identity,  String? deviceId,  bool darkMode,  AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? identity,  String? deviceId,   AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
+return $default(_that.identity,_that.deviceId,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
   return orElse();
 
 }
@@ -180,10 +179,10 @@ return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? identity,  String? deviceId,  bool darkMode,  AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? identity,  String? deviceId,   AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings():
-return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
+return $default(_that.identity,_that.deviceId,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +199,10 @@ return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? identity,  String? deviceId,  bool darkMode,  AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? identity,  String? deviceId,   AppTextSize textSize,  AppThemeVariant themeVariant,  TransmissionMethod transmissionMethod,  List<BlePairedDevice> pairedDevicesList,  bool firmwareDevMode)?  $default,) {final _that = this;
 switch (_that) {
 case _AppSettings() when $default != null:
-return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
+return $default(_that.identity,_that.deviceId,_that.textSize,_that.themeVariant,_that.transmissionMethod,_that.pairedDevicesList,_that.firmwareDevMode);case _:
   return null;
 
 }
@@ -215,12 +214,11 @@ return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_tha
 
 
 class _AppSettings extends AppSettings {
-  const _AppSettings({this.identity, this.deviceId, this.darkMode = false, this.textSize = AppTextSize.normal, this.themeVariant = AppThemeVariant.mascot, this.transmissionMethod = TransmissionMethod.bluetooth, final  List<BlePairedDevice> pairedDevicesList = const <BlePairedDevice>[], this.firmwareDevMode = false}): _pairedDevicesList = pairedDevicesList,super._();
+  const _AppSettings({this.identity, this.deviceId, this.textSize = AppTextSize.normal, this.themeVariant = AppThemeVariant.mascot, this.transmissionMethod = TransmissionMethod.bluetooth, final  List<BlePairedDevice> pairedDevicesList = const <BlePairedDevice>[], this.firmwareDevMode = false}): _pairedDevicesList = pairedDevicesList,super._();
   
 
 @override final  String? identity;
 @override final  String? deviceId;
-@override@JsonKey() final  bool darkMode;
 @override@JsonKey() final  AppTextSize textSize;
 @override@JsonKey() final  AppThemeVariant themeVariant;
 @override@JsonKey() final  TransmissionMethod transmissionMethod;
@@ -245,16 +243,16 @@ _$AppSettingsCopyWith<_AppSettings> get copyWith => __$AppSettingsCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.identity, identity) || other.identity == identity)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.darkMode, darkMode) || other.darkMode == darkMode)&&(identical(other.textSize, textSize) || other.textSize == textSize)&&(identical(other.themeVariant, themeVariant) || other.themeVariant == themeVariant)&&(identical(other.transmissionMethod, transmissionMethod) || other.transmissionMethod == transmissionMethod)&&const DeepCollectionEquality().equals(other._pairedDevicesList, _pairedDevicesList)&&(identical(other.firmwareDevMode, firmwareDevMode) || other.firmwareDevMode == firmwareDevMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppSettings&&(identical(other.identity, identity) || other.identity == identity)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.textSize, textSize) || other.textSize == textSize)&&(identical(other.themeVariant, themeVariant) || other.themeVariant == themeVariant)&&(identical(other.transmissionMethod, transmissionMethod) || other.transmissionMethod == transmissionMethod)&&const DeepCollectionEquality().equals(other._pairedDevicesList, _pairedDevicesList)&&(identical(other.firmwareDevMode, firmwareDevMode) || other.firmwareDevMode == firmwareDevMode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,identity,deviceId,darkMode,textSize,themeVariant,transmissionMethod,const DeepCollectionEquality().hash(_pairedDevicesList),firmwareDevMode);
+int get hashCode => Object.hash(runtimeType,identity,deviceId,textSize,themeVariant,transmissionMethod,const DeepCollectionEquality().hash(_pairedDevicesList),firmwareDevMode);
 
 @override
 String toString() {
-  return 'AppSettings(identity: $identity, deviceId: $deviceId, darkMode: $darkMode, textSize: $textSize, themeVariant: $themeVariant, transmissionMethod: $transmissionMethod, pairedDevicesList: $pairedDevicesList, firmwareDevMode: $firmwareDevMode)';
+  return 'AppSettings(identity: $identity, deviceId: $deviceId, textSize: $textSize, themeVariant: $themeVariant, transmissionMethod: $transmissionMethod, pairedDevicesList: $pairedDevicesList, firmwareDevMode: $firmwareDevMode)';
 }
 
 
@@ -265,7 +263,7 @@ abstract mixin class _$AppSettingsCopyWith<$Res> implements $AppSettingsCopyWith
   factory _$AppSettingsCopyWith(_AppSettings value, $Res Function(_AppSettings) _then) = __$AppSettingsCopyWithImpl;
 @override @useResult
 $Res call({
- String? identity, String? deviceId, bool darkMode, AppTextSize textSize, AppThemeVariant themeVariant, TransmissionMethod transmissionMethod, List<BlePairedDevice> pairedDevicesList, bool firmwareDevMode
+ String? identity, String? deviceId, AppTextSize textSize, AppThemeVariant themeVariant, TransmissionMethod transmissionMethod, List<BlePairedDevice> pairedDevicesList, bool firmwareDevMode
 });
 
 
@@ -282,12 +280,11 @@ class __$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? identity = freezed,Object? deviceId = freezed,Object? darkMode = null,Object? textSize = null,Object? themeVariant = null,Object? transmissionMethod = null,Object? pairedDevicesList = null,Object? firmwareDevMode = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? identity = freezed,Object? deviceId = freezed,Object? textSize = null,Object? themeVariant = null,Object? transmissionMethod = null,Object? pairedDevicesList = null,Object? firmwareDevMode = null,}) {
   return _then(_AppSettings(
 identity: freezed == identity ? _self.identity : identity // ignore: cast_nullable_to_non_nullable
 as String?,deviceId: freezed == deviceId ? _self.deviceId : deviceId // ignore: cast_nullable_to_non_nullable
-as String?,darkMode: null == darkMode ? _self.darkMode : darkMode // ignore: cast_nullable_to_non_nullable
-as bool,textSize: null == textSize ? _self.textSize : textSize // ignore: cast_nullable_to_non_nullable
+as String?,textSize: null == textSize ? _self.textSize : textSize // ignore: cast_nullable_to_non_nullable
 as AppTextSize,themeVariant: null == themeVariant ? _self.themeVariant : themeVariant // ignore: cast_nullable_to_non_nullable
 as AppThemeVariant,transmissionMethod: null == transmissionMethod ? _self.transmissionMethod : transmissionMethod // ignore: cast_nullable_to_non_nullable
 as TransmissionMethod,pairedDevicesList: null == pairedDevicesList ? _self._pairedDevicesList : pairedDevicesList // ignore: cast_nullable_to_non_nullable

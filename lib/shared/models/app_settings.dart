@@ -15,7 +15,6 @@ abstract class AppSettings with _$AppSettings {
   const factory AppSettings({
     String? identity,
     String? deviceId,
-    @Default(false) bool darkMode,
 
     // 設定頁「文字大小」。預設標準；第一次啟動時手機字體已經很大則自動設成大
     // （見 initialTextSizeFor），之後以使用者選的為準。

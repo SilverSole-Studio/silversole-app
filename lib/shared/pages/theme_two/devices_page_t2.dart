@@ -237,7 +237,9 @@ class _DeviceRowTile extends ConsumerWidget {
             child: MascotProgressBar(
               value: battery.fraction,
               height: 18,
-              fill: battery.isLive ? context.mascot.safe : context.mascot.inkFaint,
+              fill: battery.isLive
+                  ? context.mascot.safe
+                  : context.mascot.inkFaint,
             ),
           ),
           const SizedBox(width: 8),
@@ -409,11 +411,7 @@ class _PairButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_circle_outline,
-            size: 26,
-            color: context.mascot.ink,
-          ),
+          Icon(Icons.add_circle_outline, size: 26, color: context.mascot.ink),
           const SizedBox(width: 10),
           Text('device_pair_new'.tr(), style: context.textTheme.titleLarge),
         ],
@@ -449,11 +447,7 @@ class _ClearAllButton extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.delete_outline,
-            size: 26,
-            color: context.mascot.danger,
-          ),
+          Icon(Icons.delete_outline, size: 26, color: context.mascot.danger),
           const SizedBox(width: 10),
           Text(
             'clear_all_devices'.tr(),

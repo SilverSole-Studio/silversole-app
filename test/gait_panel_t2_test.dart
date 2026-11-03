@@ -30,7 +30,7 @@ void main() {
             locale: context.locale,
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
-            theme: appThemeT2(Brightness.light),
+            theme: appThemeT2(),
             home: Scaffold(
               body: SingleChildScrollView(
                 child: ValueListenableBuilder(

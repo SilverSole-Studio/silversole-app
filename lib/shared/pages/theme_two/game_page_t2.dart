@@ -46,7 +46,10 @@ class GamePageT2 extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: context.mascot.gold,
                       borderRadius: AppRadius.pillR,
-                      border: Border.all(color: context.mascot.line, width: 1.5),
+                      border: Border.all(
+                        color: context.mascot.line,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

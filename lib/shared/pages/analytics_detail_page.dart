@@ -6,7 +6,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/record_session_mixin.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_detail_page_t2.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/chart/chart_section.dart';
 import 'package:silversole/shared/widgets/chart/imu_chart_section.dart';
@@ -19,7 +19,7 @@ class AnalyticsDetailRoute extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final variant = ref.watch(settingsProvider.select((s) => s.themeVariant));
+    final variant = ref.watch(themeVariantProvider);
     return variant == AppThemeVariant.mascot
         ? const AnalyticsDetailPageT2()
         : const AnalyticsDetailPage();

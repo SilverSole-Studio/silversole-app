@@ -19,6 +19,8 @@ import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/pages/subscription_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
 import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
@@ -61,16 +63,11 @@ GoRouter _single(Widget page) => GoRouter(
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  final variants = <String, ThemeData Function()>{
-    'classic light': () => appTheme(Brightness.light),
-    'classic dark': () => appTheme(Brightness.dark),
-    'mascot light': () => appThemeT2(Brightness.light),
-    'mascot dark': () => appThemeT2(Brightness.dark),
+  final variants = <AppThemeVariant, ThemeData Function()>{
+    for (final v in AppThemeVariant.values) v: () => appThemeFor(v),
   };
 
-  testWidgets('every page builds in classic and mascot, light and dark', (
-    tester,
-  ) async {
+  testWidgets('every page builds in all five looks', (tester) async {
     await EasyLocalization.ensureInitialized();
     tester.view
       ..physicalSize = const Size(412, 915)
@@ -139,14 +136,20 @@ void main() {
       collected: const Duration(seconds: 60),
     );
 
-    for (final MapEntry(key: name, value: makeTheme) in variants.entries) {
+    for (final MapEntry(key: variant, value: makeTheme) in variants.entries) {
+      final name = variant.name;
       theme.value = makeTheme();
       await tester.pumpAndSettle();
-      final mascot = name.startsWith('mascot');
+      final mascot = variant == AppThemeVariant.mascot;
 
       await show('$name sign in', const SignInPage());
       await show('$name sign up', const SignUpPage());
-      await show('$name home', mascot ? const HomeBodyT2() : const HomeBody());
+      await show('$name home', switch (variant) {
+        AppThemeVariant.mascot => const HomeBodyT2(),
+        AppThemeVariant.dashboard => const HomeBodyB(),
+        AppThemeVariant.journal => const HomeBodyC(),
+        _ => const HomeBody(),
+      });
       // The classic devices page owns a debug-only fake sole whose provider
       // asserts when the scope is torn down, so only the mascot one is built.
       if (mascot) await show('$name devices', const DevicesPageT2());
@@ -162,6 +165,9 @@ void main() {
       expect(find.text('傳輸者'), findsNothing, reason: name);
       expect(find.text('觀察者'), findsNothing, reason: name);
       expect(find.text('我的鞋墊'), findsOneWidget, reason: name);
+      // Light or dark comes with the look: no dark-mode switch any more.
+      expect(find.text('深色模式'), findsNothing, reason: name);
+      expect(find.text('切換主題'), findsOneWidget, reason: name);
       expect(find.text('grandma.wang@example.com'), findsOneWidget);
 
       // Friends: the hub is a nested route.
