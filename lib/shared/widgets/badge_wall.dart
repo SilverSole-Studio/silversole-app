@@ -60,9 +60,9 @@ class BadgeWallT2 extends StatelessWidget {
               width: 6,
               height: 20,
               decoration: BoxDecoration(
-                color: AppPaletteT2.gold,
-                borderRadius: BorderRadius.circular(3),
-                border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+                color: context.mascot.gold,
+                borderRadius: AppRadius.pillR,
+                border: Border.all(color: context.mascot.line, width: 1.5),
               ),
             ),
             const SizedBox(width: 8),
@@ -122,7 +122,7 @@ class BadgeTile extends StatelessWidget {
                 Icon(
                   Icons.lock,
                   size: 22,
-                  color: lockColor ?? AppPaletteT2.ink,
+                  color: lockColor ?? context.mascot.ink,
                 ),
               ],
             ),

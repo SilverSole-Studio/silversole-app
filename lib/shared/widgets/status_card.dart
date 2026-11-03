@@ -379,7 +379,7 @@ Widget _statusDisplayBody(
                       value: battery.fraction,
                       minHeight: 14,
                       // Rounds each segment's ends (incl. the gap-facing ones).
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: AppRadius.pillR,
                       stopIndicatorRadius: 0,
                       trackGap: 4,
                       backgroundColor: cs.surfaceContainerHighest,

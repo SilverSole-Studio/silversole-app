@@ -217,7 +217,7 @@ class _PresetGrid extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: p == selected
-                        ? context.colorScheme.primary
+                        ? context.accent
                         : Colors.transparent,
                     width: 4,
                   ),

@@ -7,7 +7,11 @@ import 'package:silversole/shared/models/foot_side.dart';
 enum LocalSavableKey {
   deviceId('device_id'),
   identity('identity'),
-  darkMode('dark_mode'),
+  // Key bumped to _v2 on 2026-11: the old 'dark_mode' was written as 'true' for
+  // everyone on first launch (an accident of the classic theme), and the
+  // mascot theme ignored it. Now dark is only ever an explicit choice, and
+  // both themes honor it.
+  darkMode('dark_mode_v2'),
   textSize('text_size'),
   themeVariant('theme_variant'),
   transmissionMethod('transmission_method'),

@@ -244,7 +244,6 @@ class _DeviceConnectBottomModalState
                           raw: getNearbyDevices(
                             ref.watch(settingsProvider).pairedDevicesList,
                           ),
-                          themeColor: context.colorScheme.surface,
                         ),
                       ),
                     ),

@@ -215,7 +215,7 @@ return $default(_that.identity,_that.deviceId,_that.darkMode,_that.textSize,_tha
 
 
 class _AppSettings extends AppSettings {
-  const _AppSettings({this.identity, this.deviceId, this.darkMode = true, this.textSize = AppTextSize.normal, this.themeVariant = AppThemeVariant.mascot, this.transmissionMethod = TransmissionMethod.bluetooth, final  List<BlePairedDevice> pairedDevicesList = const <BlePairedDevice>[], this.firmwareDevMode = false}): _pairedDevicesList = pairedDevicesList,super._();
+  const _AppSettings({this.identity, this.deviceId, this.darkMode = false, this.textSize = AppTextSize.normal, this.themeVariant = AppThemeVariant.mascot, this.transmissionMethod = TransmissionMethod.bluetooth, final  List<BlePairedDevice> pairedDevicesList = const <BlePairedDevice>[], this.firmwareDevMode = false}): _pairedDevicesList = pairedDevicesList,super._();
   
 
 @override final  String? identity;

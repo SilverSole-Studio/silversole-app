@@ -72,7 +72,7 @@ void main() {
       final result = await h.service.deleteAccount();
       expect(result, isA<Error<void>>());
       expect((result as Error<void>).error, isA<AccountDeletionUnconfirmed>());
-    expect(_message(result), contains('delete_account_unconfirmed'));
+      expect(_message(result), contains('delete_account_unconfirmed'));
       expect(
         h.signOuts,
         1,

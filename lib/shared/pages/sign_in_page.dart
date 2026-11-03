@@ -12,6 +12,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/auth_model.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/widgets/apple_sign_in_button.dart';
+import 'package:silversole/shared/widgets/auth_header.dart';
 import 'package:silversole/shared/widgets/privacy_policy_link.dart';
 
 import '../../core/utils/field_validator.dart';
@@ -101,9 +102,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            48,
-            48,
-            48,
+            24,
+            32,
+            24,
             MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: AutofillGroup(
@@ -116,23 +117,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 spacing: 16,
                 children: [
-                  SizedBox(
-                    height: 250,
-                    child: Center(
-                      // Shrinks rather than wraps: at a 1.3 system text
-                      // scale on a narrow iPhone the name split as
-                      // "SilverSol / e".
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'silversole'.tr(),
-                          maxLines: 1,
-                          style: context.textTheme.displayLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16, bottom: 16),
+                    child: AuthHeader(),
                   ),
                   TextFormField(
                     keyboardType: TextInputType.emailAddress,

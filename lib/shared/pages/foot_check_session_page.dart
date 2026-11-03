@@ -10,6 +10,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
+import 'package:silversole/shared/widgets/app_progress_bar.dart';
 import 'package:silversole/shared/widgets/foot_pressure_heatmap.dart';
 import 'package:silversole/shared/widgets/pressure_demo_scope.dart';
 
@@ -217,19 +218,12 @@ class _SessionHeader extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          LinearProgressIndicator(
-            value: progress,
-            minHeight: 14,
-            year2023: false, // ignore: deprecated_member_use
-            borderRadius: AppRadius.subR,
-            stopIndicatorRadius: 0,
-            trackGap: 4,
-          ),
+          AppProgressBar(value: progress),
           const SizedBox(height: AppSpacing.md),
           Text(
             'foot_check_collecting'.tr(),
             style: context.textTheme.titleMedium?.copyWith(
-              color: context.colorScheme.primary,
+              color: context.accent,
             ),
           ),
           if (waiting) ...[

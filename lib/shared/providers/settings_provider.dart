@@ -38,11 +38,9 @@ class SettingsNotifier extends Notifier<AppSettings> {
     final darkMode = switch (darkModeRaw) {
       'true' => true,
       'false' => false,
-      _ => true,
+      // Nothing stored: light. Dark is only ever an explicit choice.
+      _ => false,
     };
-    if (darkModeRaw == null) {
-      await saveLocalValue(LocalSavableKey.darkMode, 'true');
-    }
     // Nothing stored = first launch: a phone already set to a large font
     // starts on 「大」, anyone else on 「標準」; stored after that, so the
     // user's own choice wins from then on.
@@ -53,8 +51,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
       textSize = initialTextSizeFor(systemFontScale);
       await saveLocalValue(LocalSavableKey.textSize, textSize.wireName);
     }
-    // Defaults to classic; only an explicit opt-in switches the whole app to
-    // the mascot design.
+    // Defaults to the mascot design; only an explicit choice switches the app to
+    // the classic design.
     final themeVariant = AppThemeVariant.fromName(
       await loadLocalValue(LocalSavableKey.themeVariant),
     );

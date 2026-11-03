@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/pressure_shares.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
@@ -80,7 +80,7 @@ class _AnalyticsPageT2State extends ConsumerState<AnalyticsPageT2> {
                       setState(() => _scale = GaitScale.values[i]),
                 ),
                 const SizedBox(height: 14),
-                if (kDebugMode) ...[
+                if (ref.watch(devToolsVisibleProvider)) ...[
                   const GaitRawRecordButton(),
                   const SizedBox(height: 14),
                 ],
@@ -117,10 +117,10 @@ class _Segmented extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
-        color: AppPaletteT2.card,
-        borderRadius: BorderRadius.circular(999),
+        color: context.mascot.card,
+        borderRadius: AppRadius.pillR,
         border: Border.all(
-          color: AppPaletteT2.ink,
+          color: context.mascot.line,
           width: AppPaletteT2.outlineWidth,
         ),
       ),
@@ -135,9 +135,12 @@ class _Segmented extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: i == selected
                       ? BoxDecoration(
-                          color: AppPaletteT2.gold,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppPaletteT2.ink, width: 2),
+                          color: context.mascot.gold,
+                          borderRadius: AppRadius.pillR,
+                          border: Border.all(
+                            color: context.mascot.line,
+                            width: 2,
+                          ),
                         )
                       : null,
                   child: Text(
@@ -147,8 +150,8 @@ class _Segmented extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.titleMedium?.copyWith(
                       color: i == selected
-                          ? AppPaletteT2.ink
-                          : AppPaletteT2.inkMuted,
+                          ? context.mascot.onGold
+                          : context.mascot.inkMuted,
                     ),
                   ),
                 ),

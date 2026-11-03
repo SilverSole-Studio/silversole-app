@@ -1,13 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:silversole/core/theme/app_spacing.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/core/diamonds/diamond_repository.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
@@ -40,9 +39,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
     final active = ref.watch(subscriptionActiveProvider);
     final diamonds = ref.watch(diamondsProvider.select((s) => s.balance));
     final fake = ref.watch(fakeSubscriptionProvider);
-    final devMode = ref.watch(
-      settingsProvider.select((s) => s.firmwareDevMode),
-    );
+    final devTools = ref.watch(devToolsVisibleProvider);
     final perks = [
       ('subscription_perk_real_goods', LucideIcons.gift),
       ('subscription_perk_more', LucideIcons.sparkles),
@@ -55,25 +52,40 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
         padding: const EdgeInsets.all(AppSpacing.base),
         children: [
           SectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: AppSpacing.sm,
+            child: Row(
               children: [
-                Text(
-                  'subscription_plan_name'.tr(),
-                  style: context.textTheme.titleLarge,
-                ),
-                Text(
-                  'subscription_price'.tr(args: ['$kSubscriptionMonthlyPrice']),
-                  style: context.textTheme.headlineMedium?.copyWith(
-                    color: context.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: AppSpacing.sm,
+                    children: [
+                      Text(
+                        'subscription_plan_name'.tr(),
+                        style: context.textTheme.titleLarge,
+                      ),
+                      Text(
+                        'subscription_price'.tr(
+                          args: ['$kSubscriptionMonthlyPrice'],
+                        ),
+                        style: context.textTheme.headlineMedium?.copyWith(
+                          color: context.accent,
+                        ),
+                      ),
+                      if (active)
+                        Chip(
+                          avatar: const Icon(LucideIcons.badgeCheck, size: 18),
+                          label: Text('subscription_active'.tr()),
+                        ),
+                    ],
                   ),
                 ),
-                if (active)
-                  Chip(
-                    avatar: const Icon(LucideIcons.badgeCheck, size: 18),
-                    label: Text('subscription_active'.tr()),
+                // The mascot theme brings its mascot; the classic theme stays
+                // text-only.
+                if (context.isMascot)
+                  Image.asset(
+                    'assets/mascot-assets/happy.webp',
+                    height: 88,
+                    fit: BoxFit.contain,
                   ),
               ],
             ),
@@ -90,7 +102,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                 for (final (key, icon) in perks)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(icon, color: context.colorScheme.primary),
+                    leading: Icon(icon, color: context.accent),
                     title: Text(key.tr()),
                   ),
               ],
@@ -101,7 +113,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
             // No billing yet.
             onPressed: null,
             style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
+              minimumSize: const Size.fromHeight(kPrimaryButtonHeight),
             ),
             child: Text(
               active
@@ -116,7 +128,7 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
               color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-          if (kDebugMode || devMode) ...[
+          if (devTools) ...[
             const SizedBox(height: AppSpacing.xxl),
             SwitchListTile(
               key: const Key('fake_subscription_switch'),
@@ -149,13 +161,12 @@ class _DiamondCard extends StatelessWidget {
           Row(
             spacing: AppSpacing.sm,
             children: [
-              Icon(LucideIcons.gem, color: context.colorScheme.primary),
+              Icon(LucideIcons.gem, color: context.accent),
               Text(
                 '${balance.balance}',
                 key: const Key('diamond_balance'),
                 style: context.textTheme.headlineMedium?.copyWith(
-                  color: context.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
+                  color: context.accent,
                 ),
               ),
             ],

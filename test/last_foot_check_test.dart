@@ -60,7 +60,10 @@ void main() {
     });
 
     test('keeps nothing when there was too little data', () {
-      expect(FootCheckRecord.fromReport(FootCheckReport.empty, takenAt), isNull);
+      expect(
+        FootCheckRecord.fromReport(FootCheckReport.empty, takenAt),
+        isNull,
+      );
     });
 
     test('keeps nothing computed from a sample clip', () {

@@ -3,7 +3,7 @@ home,Home,主頁
 welcome_back,Welcome back,歡迎回來
 toggle,Toggle,切換
 last_connected,Last connected: {},上次連線：{}
-person,Person,個人
+person,Me,我的
 account,Account,帳號
 not_signed_in,Not signed in,尚未登入
 sign_in,Sign In,登入
@@ -46,11 +46,11 @@ get_data_success,Data loaded,資料載入完成
 rls_denied,Permission denied,權限不足
 binding_failed,Binding failed,綁定失敗
 device_not_found,Device not found,裝置不存在
-identity,Identity,身份
-switch_identity,Switch Identity,切換身份
-change_identity_check_content,Are you sure you want to switch to {} identity?,您確定要切換成 「{}」 身份嗎？
-transmitter,Transmitter,傳輸者
-observer,Observer,觀察者
+identity,How I use it,使用方式
+switch_identity,Change how I use it,換使用方式
+change_identity_check_content,Change to “{}”?,要改成「{}」嗎？
+transmitter,My insoles,我的鞋墊
+observer,Family care,家人關心
 offline,Offline,離線
 online,Online,連線中
 done,Done,完成
@@ -108,7 +108,7 @@ mission_cta,See today's missions,查看今日任務
 device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_session_title,One-minute foot check,一分鐘足壓檢測
-foot_check_collecting,Collecting data…,正在採集數據…
+foot_check_collecting,Collecting data…,正在收集資料…
 foot_check_complete,Collection complete,採集完成
 foot_check_quit,End early,提前結束
 foot_check_finish,Done,完成
@@ -202,7 +202,7 @@ set_primary_device_title,Set as Primary Device,設為主要裝置
 set_primary_device_content,Set {deviceName} as your primary device? The app will prioritize this device on Home and attempt to connect to it first.,要將「{deviceName}」設為主要裝置嗎？設為主要裝置後，首頁會優先顯示此裝置並優先嘗試連線。
 set_primary_device_success,Primary device updated,已設為主要裝置
 no_primary_device_title,No primary device available,目前沒有可用的主要裝置
-no_primary_device_body,Go to “Devices” to add a device then enable any device to get started.,前往「裝置」新增裝置後，啟用任一裝置即可開始使用。
+no_primary_device_body,Tap “Pair new insoles” to get started.,按下方的「配對新鞋墊」就能開始。
 rename,Rename,重新命名
 rename_this_device,Rename this device,重新命名此裝置
 delete,Delete,刪除
@@ -736,3 +736,13 @@ diamonds,Diamonds,鑽石
 diamonds_month,This month {} / {},本月 {}／{}
 diamonds_how,Wear the insole and move for 15 minutes a day: +10,每天穿鞋墊動 15 分鐘＋10
 diamonds_kept,Diamonds are kept for 3 months after you cancel.,取消訂閱後鑽石保留 3 個月
+nav_today,Today,今天
+nav_map,Map,地圖
+nav_game,Games,遊戲
+nav_report,Report,報告
+nav_mine,Me,我的
+add_device_cta,Pair new insoles,配對新鞋墊
+my_insoles,Insoles,鞋墊
+identity_tap_to_change,Tap to change,點一下可以更換
+foot_check_done_cheer,Nice work! All done.,做完了，辛苦了！
+auth_tagline,Foot pressure checks and gentle movement for steady progress,足壓健檢、動一動、看見進步

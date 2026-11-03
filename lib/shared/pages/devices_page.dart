@@ -443,7 +443,7 @@ class _DeviceRowTile extends StatelessWidget {
             year2023: false, // ignore: deprecated_member_use
             value: battery.fraction,
             minHeight: 10,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: AppRadius.pillR,
             stopIndicatorRadius: 0,
             trackGap: 4,
             backgroundColor: context.colorScheme.surfaceContainerHighest,

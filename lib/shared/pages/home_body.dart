@@ -6,14 +6,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
-import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
 import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/daily_mission_card.dart';
 import 'package:silversole/shared/widgets/device_carousel.dart';
 import 'package:silversole/shared/widgets/foot_health_check_card.dart';
 import 'package:silversole/shared/widgets/home_device_status_section.dart';
 import 'package:silversole/shared/widgets/recent_data_chart_card.dart';
-import 'package:silversole/shared/widgets/warning_card.dart';
 
 class HomeBody extends ConsumerStatefulWidget {
   const HomeBody({super.key});
@@ -66,8 +65,11 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
         const DeviceCarousel(),
         HomeDeviceStatusSection(device: device),
         const FootHealthCheckCard(),
-        WarningCard(key: ValueKey(device.identityKey)),
-        RecentDataChartCard(),
+        const DailyMissionCard(),
+        // The raw IMU traces (twelve channel names) are an engineering view:
+        // only with developer mode on (seven taps on the firmware title).
+        if (ref.watch(settingsProvider).firmwareDevMode) RecentDataChartCard(),
+        // Fall detection moved to the map tab.
       ],
     );
   }
@@ -78,21 +80,16 @@ class _HomeBodyState extends ConsumerState<HomeBody> {
     final preferredDevice = settings.preferredDevice;
 
     return Scaffold(
-      // With no primary device the FAB becomes an "add device" action that
-      // opens the BLE pairing modal; otherwise it's the "Mission" placeholder.
+      // Only when there is no sole yet: a labelled "pair new insoles" button.
+      // (Today's missions are a card on the page, not an unlabelled button.)
       floatingActionButton: preferredDevice == null
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               heroTag: 'fab_home_add_device',
               onPressed: () => showDeviceConnectBottomModal(context),
-              tooltip: 'add_device'.tr(),
-              child: const Icon(LucideIcons.plus),
+              icon: const Icon(LucideIcons.plus),
+              label: Text('add_device_cta'.tr()),
             )
-          : FloatingActionButton(
-              heroTag: 'fab_home_mission',
-              onPressed: () => showDailyMissionsBottomSheet(context),
-              tooltip: 'mission'.tr(),
-              child: const Icon(LucideIcons.target),
-            ),
+          : null,
       body: Stack(
         children: [
           // Regional hero gradient: tints the top ~25–45% of the screen and

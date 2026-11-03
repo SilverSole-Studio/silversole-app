@@ -2,20 +2,23 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
-import 'package:silversole/shared/pages/map_page.dart'
-    show kMapFallbackCenter;
+import 'package:silversole/shared/pages/map_page.dart' show kMapFallbackCenter;
 import 'package:silversole/shared/providers/device_location_provider.dart';
+import 'package:silversole/shared/widgets/fall_guard_card.dart';
 import 'package:silversole/shared/widgets/safe_zone_map_view.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Map tab, mascot theme. Same data as [MapPage] — and, like it, no safe zone
 /// until that feature exists — only the framing, copy and art differ.
 class MapPageT2 extends ConsumerStatefulWidget {
-  const MapPageT2({super.key});
+  const MapPageT2({super.key, this.mapBuilder});
+
+  /// Replaces the Google map (tests: a platform view cannot be built there).
+  @visibleForTesting
+  final Widget Function(LatLng center, bool showDevice)? mapBuilder;
 
   @override
   ConsumerState<MapPageT2> createState() => _MapPageT2State();
@@ -27,7 +30,7 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
   @override
   void initState() {
     super.initState();
-    _loadMarker();
+    if (widget.mapBuilder == null) _loadMarker();
   }
 
   /// The mascot doubles as the map pin here. Loaded once; until it resolves
@@ -69,15 +72,22 @@ class _MapPageT2State extends ConsumerState<MapPageT2> {
                 padding: EdgeInsets.zero,
                 child: SizedBox(
                   height: 380,
-                  child: SafeZoneMapView(
-                    center: _center(location),
-                    showDevice: location != null,
-                    markerIcon: _mascotMarker,
-                    outlinedControls: true,
-                    zoneColor: AppPaletteT2.safe,
-                  ),
+                  child:
+                      widget.mapBuilder?.call(
+                        _center(location),
+                        location != null,
+                      ) ??
+                      SafeZoneMapView(
+                        center: _center(location),
+                        showDevice: location != null,
+                        markerIcon: _mascotMarker,
+                        outlinedControls: true,
+                        zoneColor: context.mascot.safe,
+                      ),
                 ),
               ),
+              // Fall detection lives here, not on the home page.
+              const FallGuardCard(),
             ],
           ),
         ),

@@ -134,7 +134,7 @@ class _MyQrPageState extends ConsumerState<MyQrPage> {
         padding: const EdgeInsets.all(AppSpacing.base),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(AppRadius.card),
+          borderRadius: AppRadius.cardR,
           border: Border.all(color: context.colorScheme.outline),
         ),
         child: token == null
@@ -382,7 +382,7 @@ class _ScanQrPageState extends ConsumerState<ScanQrPage> {
                   horizontal: AppSpacing.base,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  borderRadius: AppRadius.cardR,
                   child: MobileScanner(
                     controller: _controller,
                     onDetect: _onDetect,

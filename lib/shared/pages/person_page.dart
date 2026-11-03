@@ -13,12 +13,12 @@ import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
+import 'package:silversole/shared/widgets/app_card.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
 import 'package:silversole/shared/widgets/privacy_policy_link.dart';
-import 'package:silversole/shared/widgets/status_card.dart';
+import 'package:silversole/shared/widgets/settings_row.dart';
 
 import '../../core/error/result.dart';
-import '../models/app_settings.dart';
 import '../providers/auth_provider.dart';
 
 class PersonPage extends ConsumerStatefulWidget {
@@ -88,140 +88,16 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     ref.read(settingsProvider.notifier).setIdentity(nextIdentity(old));
   }
 
-  /// Two variants only, so tapping toggles between them.
-  Future<void> switchThemeVariant() async {
-    final current = ref.read(settingsProvider).themeVariant;
-    await ref
-        .read(settingsProvider.notifier)
-        .setThemeVariant(
-          current == AppThemeVariant.mascot
-              ? AppThemeVariant.classic
-              : AppThemeVariant.mascot,
-        );
-  }
-
-  Future<void> switchDarkMode() async {
-    final darkMode = ref.read(settingsProvider);
-    ref.read(settingsProvider.notifier).setDarkMode(!darkMode.darkMode);
-  }
-
-  /// 文字大小只有「標準」「大」兩種，點一下就切換。
-  Future<void> switchTextSize() async {
-    final current = ref.read(settingsProvider).textSize;
-    await ref
-        .read(settingsProvider.notifier)
-        .setTextSize(
-          current == AppTextSize.large ? AppTextSize.normal : AppTextSize.large,
-        );
-  }
-
-  IconData getTransmissionIcon(TransmissionMethod method) {
-    return switch (method) {
-      TransmissionMethod.bluetooth => LucideIcons.bluetooth,
-      TransmissionMethod.wifi => LucideIcons.wifi,
-    };
-  }
-
-  String getTransmissionTitle(TransmissionMethod method) {
-    return switch (method) {
-      TransmissionMethod.bluetooth => 'bluetooth'.tr(),
-      TransmissionMethod.wifi => 'wifi'.tr(),
-    };
-  }
-
-  Future<void> setTransmissionMethod(TransmissionMethod method) async {
-    ref.read(settingsProvider.notifier).setTransmissionMethod(method);
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authUserProvider);
     final settings = ref.watch(settingsProvider);
-    final email = user?.email ?? 'not_signed_in'.tr();
-    final uuid = user?.uuid ?? '-';
     final isSignedIn = user != null;
-    // The mascot theme wants its settings rows as white outlined buttons;
-    // the classic theme keeps the grouped, borderless slab.
     final isMascot = settings.themeVariant == AppThemeVariant.mascot;
-    final listFill = isMascot ? AppPaletteT2.card : null;
-    final listSide = isMascot
-        ? const BorderSide(
-            color: AppPaletteT2.ink,
-            width: AppPaletteT2.outlineWidth,
-          )
-        : null;
-
     final subscribed = ref.watch(subscriptionActiveProvider);
-    final accountSettingList = [
-      // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
-      ListTileData.normal(
-        title: 'subscription'.tr(),
-        subtitle: subscribed
-            ? 'subscription_active'.tr()
-            : 'subscription_price'.tr(args: ['$kSubscriptionMonthlyPrice']),
-        icon: LucideIcons.crown,
-        onClick: () => context.push('/subscription'),
-        trailing: true,
-      ),
-      ListTileData.normal(
-        title: 'sign_in'.tr(),
-        icon: LucideIcons.logIn,
-        onClick: goToLogin,
-        enable: !isSignedIn,
-      ),
-      ListTileData.normal(
-        title: 'sign_out'.tr(),
-        icon: LucideIcons.logOut,
-        onClick: signOut,
-        enable: isSignedIn,
-      ),
-    ];
-
-    final silverSoleSettingList = [
-      ListTileData.normal(
-        title: 'identity'.tr(),
-        subtitle: settings.identity?.tr(),
-        icon: LucideIcons.userPlus,
-        onClick: () => switchIdentity(settings.identity),
-        needCheck: true,
-        checkTitle: 'switch_identity'.tr(),
-        checkContent: 'change_identity_check_content'.tr(
-          args: [nextIdentity(settings.identity).tr()],
-        ),
-        trailing: true,
-      ),
-    ];
-
-    final generalSettingList = [
-      ListTileData.normal(
-        title: 'dark_mode'.tr(),
-        subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
-        icon: LucideIcons.moon,
-        onClick: switchDarkMode,
-      ),
-      ListTileData.normal(
-        title: 'text_size'.tr(),
-        subtitle: settings.textSize == AppTextSize.large
-            ? 'text_size_large'.tr()
-            : 'text_size_normal'.tr(),
-        icon: LucideIcons.type,
-        onClick: switchTextSize,
-      ),
-      ListTileData.normal(
-        title: 'switch_theme'.tr(),
-        subtitle: settings.themeVariant == AppThemeVariant.mascot
-            ? 'theme_mascot'.tr()
-            : 'theme_classic'.tr(),
-        icon: LucideIcons.palette,
-        onClick: switchThemeVariant,
-      ),
-      ListTileData.normal(
-        title: 'privacy_policy'.tr(),
-        icon: LucideIcons.shieldCheck,
-        onClick: () => openPrivacyPolicy(context),
-        trailing: true,
-      ),
-    ];
+    final scheme = context.colorScheme;
+    final notifier = ref.read(settingsProvider.notifier);
+    final myDevice = settings.preferredDevice;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -229,74 +105,218 @@ class _PersonPageState extends ConsumerState<PersonPage> {
         title: Text('person'.tr(), style: context.textTheme.titleLarge),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.base),
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 36,
-            children: [
-              SizedBox(
-                width: double.infinity,
-                child: statusCard(
-                  context,
-                  title: email,
-                  model: 'Basic',
-                  id: uuid,
-                  icon: LucideIcons.user,
-                  addition: false,
-                ),
-              ),
-              SizedBox(
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: listSide == null ? 4 : 10,
-                  children: [
-                    buildMaterialList(
-                      context,
-                      title: 'account'.tr(),
-                      raw: accountSettingList,
-                      themeColor: listFill,
-                      side: listSide,
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.base,
+          AppSpacing.sm,
+          AppSpacing.base,
+          AppSpacing.xxl,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: AppSpacing.xl,
+          children: [
+            // Who is signed in: just the name the person knows (the email).
+            // No account id, no plan code.
+            AppCard(
+              tint: true,
+              child: Row(
+                children: [
+                  isMascot
+                      ? Image.asset(
+                          'assets/mascot-assets/happy.webp',
+                          height: 72,
+                          fit: BoxFit.contain,
+                        )
+                      : Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: scheme.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            LucideIcons.user,
+                            size: 28,
+                            color: scheme.primary,
+                          ),
+                        ),
+                  const SizedBox(width: AppSpacing.base),
+                  Expanded(
+                    child: Text(
+                      user?.email ?? 'not_signed_in'.tr(),
+                      style: context.textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    // Below sign out, and only for a signed-in account.
-                    if (isSignedIn)
-                      DeleteAccountTile(
-                        busy: _deleting,
-                        onConfirmed: deleteAccount,
-                        fill: listFill,
-                        side: listSide,
-                      ),
-                  ],
-                ),
-              ),
-              if (isSignedIn) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: buildMaterialList(
-                    context,
-                    title: 'device'.tr(),
-                    raw: silverSoleSettingList,
-                    themeColor: listFill,
-                    side: listSide,
                   ),
+                ],
+              ),
+            ),
+            SettingsGroup(
+              title: 'my_insoles'.tr(),
+              children: [
+                SettingsRow(
+                  icon: LucideIcons.footprints,
+                  title: 'my_devices'.tr(),
+                  subtitle: myDevice?.name ?? 'not_binding'.tr(),
+                  showChevron: true,
+                  onTap: () => context.push('/my-devices'),
                 ),
               ],
-              SizedBox(
-                width: double.infinity,
-                child: buildMaterialList(
-                  context,
-                  title: 'general'.tr(),
-                  raw: generalSettingList,
-                  themeColor: listFill,
-                  side: listSide,
+            ),
+            // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
+            SettingsGroup(
+              title: 'account'.tr(),
+              children: [
+                SettingsRow(
+                  icon: LucideIcons.crown,
+                  title: 'subscription'.tr(),
+                  subtitle: subscribed
+                      ? 'subscription_active'.tr()
+                      : 'subscription_price'.tr(
+                          args: ['$kSubscriptionMonthlyPrice'],
+                        ),
+                  showChevron: true,
+                  onTap: () => context.push('/subscription'),
                 ),
+                if (!isSignedIn)
+                  SettingsRow(
+                    icon: LucideIcons.logIn,
+                    title: 'sign_in'.tr(),
+                    showChevron: true,
+                    onTap: goToLogin,
+                  ),
+              ],
+            ),
+            if (isSignedIn)
+              // Plain words for the two ways to use the app; the stored value
+              // stays 'transmitter' / 'observer'.
+              buildMaterialList(
+                context,
+                title: 'identity'.tr(),
+                raw: [
+                  ListTileData.normal(
+                    title: (settings.identity ?? UserIdentity.transmitter.value)
+                        .tr(),
+                    subtitle: 'identity_tap_to_change'.tr(),
+                    icon: LucideIcons.userPlus,
+                    onClick: () => switchIdentity(settings.identity),
+                    needCheck: true,
+                    checkTitle: 'switch_identity'.tr(),
+                    checkContent: 'change_identity_check_content'.tr(
+                      args: [nextIdentity(settings.identity).tr()],
+                    ),
+                    trailing: true,
+                  ),
+                ],
               ),
+            SettingsGroup(
+              title: 'general'.tr(),
+              children: [
+                // Visible switches / choices, so the current state can be seen
+                // without reading a subtitle.
+                SettingsRow(
+                  icon: LucideIcons.moon,
+                  title: 'dark_mode'.tr(),
+                  subtitle: settings.darkMode ? 'on'.tr() : 'off'.tr(),
+                  onTap: () => notifier.setDarkMode(!settings.darkMode),
+                  trailing: Switch(
+                    value: settings.darkMode,
+                    onChanged: notifier.setDarkMode,
+                  ),
+                ),
+                _ChoiceCard<AppTextSize>(
+                  icon: LucideIcons.type,
+                  title: 'text_size'.tr(),
+                  value: settings.textSize,
+                  onChanged: notifier.setTextSize,
+                  options: {
+                    AppTextSize.normal: 'text_size_normal'.tr(),
+                    AppTextSize.large: 'text_size_large'.tr(),
+                  },
+                ),
+                _ChoiceCard<AppThemeVariant>(
+                  icon: LucideIcons.palette,
+                  title: 'switch_theme'.tr(),
+                  value: settings.themeVariant,
+                  onChanged: notifier.setThemeVariant,
+                  options: {
+                    AppThemeVariant.mascot: 'theme_mascot'.tr(),
+                    AppThemeVariant.classic: 'theme_classic'.tr(),
+                  },
+                ),
+                SettingsRow(
+                  icon: LucideIcons.shieldCheck,
+                  title: 'privacy_policy'.tr(),
+                  showChevron: true,
+                  onTap: () => openPrivacyPolicy(context),
+                ),
+              ],
+            ),
+            // Sign out and delete account sit at the very bottom, apart from
+            // everyday settings.
+            if (isSignedIn)
+              SettingsGroup(
+                children: [
+                  SettingsRow(
+                    icon: LucideIcons.logOut,
+                    title: 'sign_out'.tr(),
+                    onTap: signOut,
+                  ),
+                  DeleteAccountTile(
+                    busy: _deleting,
+                    onConfirmed: deleteAccount,
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A settings card whose value is one of a few choices, shown as a segmented
+/// control so the current choice is visible.
+class _ChoiceCard<T> extends StatelessWidget {
+  const _ChoiceCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final T value;
+  final Map<T, String> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 24, color: context.colorScheme.onSurface),
+              const SizedBox(width: AppSpacing.md),
+              Text(title, style: context.textTheme.titleMedium),
             ],
           ),
-        ),
+          const SizedBox(height: AppSpacing.md),
+          SegmentedButton<T>(
+            showSelectedIcon: false,
+            segments: [
+              for (final entry in options.entries)
+                ButtonSegment<T>(value: entry.key, label: Text(entry.value)),
+            ],
+            selected: {value},
+            onSelectionChanged: (picked) => onChanged(picked.first),
+          ),
+        ],
       ),
     );
   }

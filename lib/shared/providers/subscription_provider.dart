@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
 
 /// Monthly price shown on the subscription page (NT\$).
 const kSubscriptionMonthlyPrice = 149;
@@ -58,8 +57,6 @@ final serverSubscribedProvider = Provider<bool>(
 /// StoreKit is wired up, the store should write the same row.
 final subscriptionActiveProvider = Provider<bool>((ref) {
   if (ref.watch(serverSubscribedProvider)) return true;
-  final devOk =
-      kDebugMode ||
-      ref.watch(settingsProvider.select((s) => s.firmwareDevMode));
-  return devOk && ref.watch(fakeSubscriptionProvider);
+  return ref.watch(devToolsVisibleProvider) &&
+      ref.watch(fakeSubscriptionProvider);
 });

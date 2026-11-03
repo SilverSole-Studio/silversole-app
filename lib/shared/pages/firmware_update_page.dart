@@ -169,7 +169,7 @@ class _Confirm extends StatelessWidget {
                   Icon(
                     Icons.check,
                     size: 18,
-                    color: context.colorScheme.primary,
+                    color: context.accent,
                   ),
                   Expanded(
                     child: Text(tip.tr(), style: context.textTheme.bodyMedium),

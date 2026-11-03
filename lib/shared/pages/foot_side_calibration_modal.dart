@@ -308,7 +308,7 @@ class _SolePressureRow extends StatelessWidget {
           year2023: false, // ignore: deprecated_member_use
           value: value,
           minHeight: 10,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: AppRadius.pillR,
           stopIndicatorRadius: 0,
           trackGap: 4,
           backgroundColor: context.colorScheme.surfaceContainerHighest,
