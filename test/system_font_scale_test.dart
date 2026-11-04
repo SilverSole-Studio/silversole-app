@@ -9,6 +9,7 @@ import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
+import 'package:silversole/shared/pages/friends/nickname_setup_page.dart';
 import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
@@ -151,6 +152,7 @@ void main() {
 
       await show('$at sign in', const SignInPage());
       await show('$at sign up', const SignUpPage());
+      await show('$at name step', const NicknameSetupPage());
       await show('$at settings', const PersonPage());
       await show('$at home without a device', const HomeBody());
       await show(
@@ -185,9 +187,9 @@ void main() {
       expect(tester.takeException(), isNull, reason: '$at name step');
 
       // Only the first visit asks for a name (it is remembered after).
-      if (find.text('先取一個稱呼').evaluate().isNotEmpty) {
+      if (find.text('就用這個').evaluate().isNotEmpty) {
         await tester.enterText(find.byType(TextField), '王阿姨');
-        final done = find.text('好了，去加朋友');
+        final done = find.text('就用這個');
         await tester.scrollUntilVisible(
           done,
           200,

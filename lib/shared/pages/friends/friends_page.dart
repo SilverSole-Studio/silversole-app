@@ -9,14 +9,16 @@ import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
-import 'package:silversole/shared/pages/friends/profile_page.dart';
+import 'package:silversole/shared/pages/friends/nickname_setup_page.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 
 /// `/friends` — the friends hub opened from the games-hub card.
 ///
-/// First visit (no nickname yet) shows the profile setup instead. After that:
-/// the three ways to add someone, pending requests, orgs, and the friend
+/// The nickname is picked right after the first sign-in (`NicknameGate`), so
+/// by the time anyone gets here they have one. Someone who still has none (the
+/// gate could not reach the server) is asked for it here instead of the hub.
+/// The hub holds: the three ways to add someone, pending requests, orgs, and the friend
 /// list. Nothing on this page shows health data (spec §6).
 ///
 /// Every other friends screen is pushed on top of this one, so it is the
@@ -64,9 +66,8 @@ class _FriendsPageState extends ConsumerState<FriendsPage> {
       body: SafeArea(
         child: FriendAsync(
           value: profile,
-          builder: (me) => me.needsSetup
-              ? const ProfileEditor(firstRun: true)
-              : _FriendsHub(me: me),
+          builder: (me) =>
+              me.needsSetup ? const NicknameSetupView() : _FriendsHub(me: me),
         ),
       ),
     );

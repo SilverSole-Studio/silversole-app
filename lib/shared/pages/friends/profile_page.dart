@@ -22,17 +22,16 @@ class ProfilePage extends StatelessWidget {
           style: context.textTheme.titleLarge,
         ),
       ),
-      body: const SafeArea(child: ProfileEditor(firstRun: false)),
+      body: const SafeArea(child: ProfileEditor()),
     );
   }
 }
 
-/// Nickname, avatar and org-list visibility. On the first visit to the
-/// friends page it is shown in place of the hub (spec §2.1).
+/// Nickname, avatar, photo and org-list visibility. The first nickname is
+/// not asked for here: it is picked right after the first sign-in, on
+/// `NicknameSetupPage`.
 class ProfileEditor extends ConsumerStatefulWidget {
-  const ProfileEditor({super.key, required this.firstRun});
-
-  final bool firstRun;
+  const ProfileEditor({super.key});
 
   @override
   ConsumerState<ProfileEditor> createState() => _ProfileEditorState();
@@ -71,12 +70,12 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
       () => ref
           .read(friendsRepositoryProvider)
           .updateProfile(nickname: _name.text, avatarPreset: _preset),
-      successText: widget.firstRun ? null : 'friends_profile_saved'.tr(),
+      successText: 'friends_profile_saved'.tr(),
       scope: FriendErrorScope.avatar,
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    if (saved != null && !widget.firstRun) Navigator.of(context).maybePop();
+    if (saved != null) Navigator.of(context).maybePop();
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
@@ -108,14 +107,6 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
         return ListView(
           padding: const EdgeInsets.all(AppSpacing.base),
           children: [
-            if (widget.firstRun) ...[
-              Text(
-                'friends_setup_title'.tr(),
-                style: context.textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              FriendText('friends_setup_intro'.tr()),
-            ],
             FriendSectionTitle('friends_nickname_label'.tr()),
             TextField(
               controller: _name,
@@ -137,49 +128,45 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
             ),
             FriendText('friends_nickname_note'.tr()),
             FriendSectionTitle('friends_avatar_label'.tr()),
-            _PresetGrid(
+            AvatarPresetGrid(
               selected: _preset,
               onPick: (p) => setState(() => _preset = p),
             ),
-            if (!widget.firstRun) ...[
-              FriendSectionTitle('friends_photo_label'.tr()),
-              if (me.photoPath != null)
-                Center(
-                  child: FriendAvatar(
-                    preset: me.avatarPreset,
-                    photoPath: me.photoPath,
-                    size: 120,
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.sm),
-              FriendText('friends_photo_note'.tr()),
-              const SizedBox(height: AppSpacing.md),
-              _PhotoButtons(
-                me: me,
-                onPick: _pickPhoto,
-                onClear: () => runFriendAction(
-                  ref,
-                  ref.read(friendsRepositoryProvider).clearAvatarPhoto,
+            FriendSectionTitle('friends_photo_label'.tr()),
+            if (me.photoPath != null)
+              Center(
+                child: FriendAvatar(
+                  preset: me.avatarPreset,
+                  photoPath: me.photoPath,
+                  size: 120,
                 ),
               ),
-              FriendSectionTitle('friends_org_visibility_title'.tr()),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: FriendText('friends_org_visibility'.tr()),
-                value: me.showInOrgList,
-                onChanged: (v) => runFriendAction(
-                  ref,
-                  () => ref
-                      .read(friendsRepositoryProvider)
-                      .updateProfile(showInOrgList: v),
-                ),
+            const SizedBox(height: AppSpacing.sm),
+            FriendText('friends_photo_note'.tr()),
+            const SizedBox(height: AppSpacing.md),
+            _PhotoButtons(
+              me: me,
+              onPick: _pickPhoto,
+              onClear: () => runFriendAction(
+                ref,
+                ref.read(friendsRepositoryProvider).clearAvatarPhoto,
               ),
-            ],
+            ),
+            FriendSectionTitle('friends_org_visibility_title'.tr()),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: FriendText('friends_org_visibility'.tr()),
+              value: me.showInOrgList,
+              onChanged: (v) => runFriendAction(
+                ref,
+                () => ref
+                    .read(friendsRepositoryProvider)
+                    .updateProfile(showInOrgList: v),
+              ),
+            ),
             const SizedBox(height: AppSpacing.xl),
             FriendButton(
-              label: widget.firstRun
-                  ? 'friends_setup_done'.tr()
-                  : 'friends_save'.tr(),
+              label: 'friends_save'.tr(),
               onPressed: _saving ? null : _save,
             ),
           ],
@@ -189,8 +176,13 @@ class _ProfileEditorState extends ConsumerState<ProfileEditor> {
   }
 }
 
-class _PresetGrid extends StatelessWidget {
-  const _PresetGrid({required this.selected, required this.onPick});
+/// The twelve preset mascot avatars in a grid; the picked one has a ring.
+class AvatarPresetGrid extends StatelessWidget {
+  const AvatarPresetGrid({
+    super.key,
+    required this.selected,
+    required this.onPick,
+  });
 
   final int selected;
   final ValueChanged<int> onPick;
