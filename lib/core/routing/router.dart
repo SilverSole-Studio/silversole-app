@@ -9,6 +9,7 @@ import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
+import 'package:silversole/shared/pages/friends/nickname_setup_page.dart';
 import 'package:silversole/shared/pages/firmware_update_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
@@ -28,7 +29,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, _) => HomePage(title: 'Silver Sole'),
+        // A signed-in user with no nickname picks one before the app opens.
+        builder: (_, _) => NicknameGate(child: HomePage(title: 'Silver Sole')),
       ),
       GoRoute(path: '/sign-in', builder: (_, _) => SignInPage()),
       GoRoute(path: '/sign-up', builder: (_, _) => SignUpPage()),

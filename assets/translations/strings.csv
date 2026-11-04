@@ -507,9 +507,11 @@ friends_title,Friends,朋友
 friends_card_count,{} friends,{} 位朋友
 friends_card_requests,{} want to add you,{} 人想加你
 friends_card_open,Add friends,加朋友
-friends_setup_title,First pick a name,先取一個稱呼
 friends_setup_intro,Friends will see this name and picture. Only people you know can add you.,朋友會看到這個名字和頭像。只有認識的人加得到你。
-friends_setup_done,Done - now add friends,好了，去加朋友
+nickname_setup_title,Pick a name,取個名字
+nickname_setup_hint,"Tap the dice for another name, or type your own.",按骰子換一個名字，也可以自己打。
+nickname_setup_reroll,Roll for another name,換一個名字
+nickname_setup_done,Use this name,就用這個
 friends_profile_title,My name and picture,我的名字與頭像
 friends_nickname_label,What should friends call you?,朋友怎麼叫你？
 friends_nickname_hint,e.g. Auntie Wang,例：王阿姨

@@ -10,6 +10,7 @@ import 'package:silversole/app.dart';
 import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/friends/friend_models.dart';
+import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
@@ -95,12 +96,19 @@ void main() {
     );
     await settleTranslations(tester);
 
-    // First visit: pick a name before anything else.
-    expect(find.text('先取一個稱呼'), findsOneWidget);
+    // No name yet (the sign-in gate was skipped): the friends page asks for
+    // one instead of showing the hub, with a suggestion already filled in.
+    expect(find.text('就用這個'), findsOneWidget);
+    expect(
+      validateNickname(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      ),
+      isNull,
+    );
     expectReadableText(tester);
     expectBigButtons(tester);
     await tester.enterText(find.byType(TextField), '王阿姨');
-    await tester.tap(find.text('好了，去加朋友'));
+    await tester.tap(find.text('就用這個'));
     await tester.pumpAndSettle();
 
     // The hub: four friends, two people waiting on me.
