@@ -14,6 +14,8 @@
     "test:friend-farm-concurrency": "node --test --test-concurrency=1 friend_farm_concurrency_test.mjs",
     "test:mp": "node --test --test-concurrency=1 mp_rooms_test.mjs",
     "test:mp-presence": "node --test --test-concurrency=1 mp_presence_test.mjs",
+    "test:mp-queue": "node --test --test-concurrency=1 mp_queue_test.mjs",
+    "test:mp-queue-concurrency": "node --test --test-concurrency=1 mp_queue_concurrency_test.mjs",
     "test:mp-concurrency": "node --test --test-concurrency=1 mp_concurrency_test.mjs",
     "test:missions": "node --test ../functions/daily-missions/logic.test.ts",
     "test:missions-db": "node --test --test-concurrency=1 daily_missions_db_test.mjs"
