@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.13.1
+
+更新內容:
+
+- 第一次登入時先取個名字：已經幫你想好一個，按骰子可以換，也可以自己打，再挑一個頭像就能開始。
+- 「訂閱」先收起來，等可以在 App 裡購買時再開放；「大數字儀表板」「紙本手帳」兩套主題也先不顯示。
+
+Updates:
+
+- Pick a name the first time you sign in: one is suggested for you, tap the dice for another or type your own, then choose an avatar.
+- Subscription is hidden until it can be bought in the app; the "Big Numbers Dashboard" and "Paper Journal" themes are hidden for now too.
+
 ## v1.13.0
 
 更新內容:
