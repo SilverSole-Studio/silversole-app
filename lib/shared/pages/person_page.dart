@@ -168,29 +168,32 @@ class _PersonPageState extends ConsumerState<PersonPage> {
               ],
             ),
             // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
-            SettingsGroup(
-              title: 'account'.tr(),
-              children: [
-                SettingsRow(
-                  icon: LucideIcons.crown,
-                  title: 'subscription'.tr(),
-                  subtitle: subscribed
-                      ? 'subscription_active'.tr()
-                      : 'subscription_price'.tr(
-                          args: ['$kSubscriptionMonthlyPrice'],
-                        ),
-                  showChevron: true,
-                  onTap: () => context.push('/subscription'),
-                ),
-                if (!isSignedIn)
-                  SettingsRow(
-                    icon: LucideIcons.logIn,
-                    title: 'sign_in'.tr(),
-                    showChevron: true,
-                    onTap: goToLogin,
-                  ),
-              ],
-            ),
+            // 金流接上前不顯示訂閱入口（kSubscriptionOffered）。
+            if (kSubscriptionOffered || !isSignedIn)
+              SettingsGroup(
+                title: 'account'.tr(),
+                children: [
+                  if (kSubscriptionOffered)
+                    SettingsRow(
+                      icon: LucideIcons.crown,
+                      title: 'subscription'.tr(),
+                      subtitle: subscribed
+                          ? 'subscription_active'.tr()
+                          : 'subscription_price'.tr(
+                              args: ['$kSubscriptionMonthlyPrice'],
+                            ),
+                      showChevron: true,
+                      onTap: () => context.push('/subscription'),
+                    ),
+                  if (!isSignedIn)
+                    SettingsRow(
+                      icon: LucideIcons.logIn,
+                      title: 'sign_in'.tr(),
+                      showChevron: true,
+                      onTap: goToLogin,
+                    ),
+                ],
+              ),
             if (isSignedIn)
               // Plain words for the two ways to use the app; the stored value
               // stays 'transmitter' / 'observer'.

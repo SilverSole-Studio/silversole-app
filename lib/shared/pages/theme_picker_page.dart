@@ -23,7 +23,9 @@ String _hintKey(AppThemeVariant v) => '${themeNameKey(v)}_hint';
 
 /// 設定 → 切換主題: the five looks, each with a small picture and a name. The
 /// three free ones switch at once; the two for subscribers show a lock and
-/// 「訂閱後可用」, and tapping one opens the subscription page.
+/// 「訂閱後可用」, and tapping one opens the subscription page. While the app
+/// does not offer the subscription ([kSubscriptionOffered]) that section is
+/// shown only to an account that already has one.
 class ThemePickerPage extends ConsumerWidget {
   const ThemePickerPage({super.key});
 
@@ -107,12 +109,14 @@ class ThemePickerPage extends ConsumerWidget {
             tile(v),
             const SizedBox(height: AppSpacing.md),
           ],
-          const SizedBox(height: AppSpacing.sm),
-          section('theme_subscribers_section'.tr()),
-          const SizedBox(height: AppSpacing.md),
-          for (final v in AppThemeVariant.values.where(
-            (v) => v.requiresSubscription,
-          )) ...[tile(v), const SizedBox(height: AppSpacing.md)],
+          if (kSubscriptionOffered || subscribed) ...[
+            const SizedBox(height: AppSpacing.sm),
+            section('theme_subscribers_section'.tr()),
+            const SizedBox(height: AppSpacing.md),
+            for (final v in AppThemeVariant.values.where(
+              (v) => v.requiresSubscription,
+            )) ...[tile(v), const SizedBox(height: AppSpacing.md)],
+          ],
         ],
       ),
     );

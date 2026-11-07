@@ -236,27 +236,49 @@ void main() {
 
     // One test, not four: easy_localization loads its strings once per test
     // binding, so a second testWidgets in this file would stay blank.
-    testWidgets('five looks; B and C locked until subscribed', (tester) async {
+    testWidgets('free looks switch at once; B and C follow the subscription', (
+      tester,
+    ) async {
+      const free = ['粗哥手繪小鎮', '極簡科技・白', '極簡科技・黑'];
+      const forSubscribers = ['大數字儀表板', '紙本手帳'];
       final (container, _) = await pump(tester, subscribed: false);
-      for (final name in ['粗哥手繪小鎮', '極簡科技・白', '極簡科技・黑', '大數字儀表板', '紙本手帳']) {
+      for (final name in free) {
         expect(find.text(name), findsOneWidget, reason: name);
       }
-      expect(find.byType(ThemeThumb), findsNWidgets(5));
-      expect(find.text('訂閱後可用'), findsNWidgets(2));
+      if (kSubscriptionOffered) {
+        for (final name in forSubscribers) {
+          expect(find.text(name), findsOneWidget, reason: name);
+        }
+        expect(find.byType(ThemeThumb), findsNWidgets(5));
+        expect(find.text('訂閱後可用'), findsNWidgets(2));
+      } else {
+        // Not sold yet: nothing on the page leads to the subscription.
+        for (final name in forSubscribers) {
+          expect(find.text(name), findsNothing, reason: name);
+        }
+        expect(find.byType(ThemeThumb), findsNWidgets(3));
+        expect(find.text('訂閱後可用'), findsNothing);
+      }
 
       // A free look switches at once.
       await tester.tap(find.text('極簡科技・黑'));
       await tester.pumpAndSettle();
       expect(container.read(themeVariantProvider), AppThemeVariant.techDark);
 
-      // A locked look opens the subscription page instead, and nothing changes.
-      await tester.tap(find.text('大數字儀表板'));
-      await tester.pumpAndSettle();
-      expect(find.text('subscription page'), findsOneWidget);
-      expect(container.read(themeVariantProvider), AppThemeVariant.techDark);
+      if (kSubscriptionOffered) {
+        // A locked look opens the subscription page instead, and nothing
+        // changes.
+        await tester.tap(find.text('大數字儀表板'));
+        await tester.pumpAndSettle();
+        expect(find.text('subscription page'), findsOneWidget);
+        expect(container.read(themeVariantProvider), AppThemeVariant.techDark);
+      }
 
-      // A subscriber sees no lock.
+      // A subscriber (an account opened by hand counts) sees all five, no lock.
       await pump(tester, subscribed: true);
+      for (final name in [...free, ...forSubscribers]) {
+        expect(find.text(name), findsOneWidget, reason: name);
+      }
       expect(find.text('訂閱後可用'), findsNothing);
     });
   });
