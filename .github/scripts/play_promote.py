@@ -21,7 +21,8 @@ GOOGLE_APPLICATION_CREDENTIALS, locally `gcloud auth application-default
 login` as an account with Play access.
 
 Environment: PACKAGE_NAME, and optionally FROM_TRACK (default alpha) and
-GITHUB_OUTPUT (gets rc_tag=...).
+GITHUB_OUTPUT (gets rc_tag=... and version_code=..., the rc's version code,
+which is also the build number of its TestFlight build).
 """
 
 import os
@@ -106,6 +107,8 @@ def main(argv: list[str]) -> int:
     if output := os.environ.get("GITHUB_OUTPUT"):
         with open(output, "a", encoding="utf-8") as f:
             f.write(f"rc_tag={rc_tag}\n")
+            # The iOS build of the same rc run carries this number (asc_submit.py).
+            f.write(f"version_code={max(int(c) for c in candidate['versionCodes'])}\n")
 
     if mode == "find":
         play.call("DELETE", f"/{edit_id}")
