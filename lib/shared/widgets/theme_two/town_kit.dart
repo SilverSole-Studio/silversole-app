@@ -68,7 +68,6 @@ class _AwningPainter extends CustomPainter {
     const stroke = AppPaletteT2.outlineWidth;
     final count = (size.width / 44).round().clamp(4, 12);
     final w = size.width / count;
-    final top = stroke;
     final flat = size.height * 0.5;
     final fill = Paint()..style = PaintingStyle.fill;
     final line = Paint()
@@ -76,11 +75,14 @@ class _AwningPainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeJoin = StrokeJoin.round
       ..color = ink;
+    // The card around it clips to its rounded corners and draws the outline
+    // on top, so only the dividers and scallops are drawn here.
+    canvas.save();
     for (var i = 0; i < count; i++) {
       final x = i * w;
       final path = Path()
-        ..moveTo(x, top)
-        ..lineTo(x + w, top)
+        ..moveTo(x, 0)
+        ..lineTo(x + w, 0)
         ..lineTo(x + w, flat)
         ..arcToPoint(
           Offset(x, flat),
@@ -90,8 +92,19 @@ class _AwningPainter extends CustomPainter {
         ..close();
       fill.color = i.isEven ? red : paper;
       canvas.drawPath(path, fill);
-      canvas.drawPath(path, line);
+      // Divider on the stripe's left (the card's border is the outer edge)
+      // and the scallop under it.
+      if (i > 0) canvas.drawLine(Offset(x, 0), Offset(x, flat), line);
+      final scallop = Path()
+        ..moveTo(x + w, flat)
+        ..arcToPoint(
+          Offset(x, flat),
+          radius: Radius.elliptical(w / 2, size.height - flat - stroke),
+          clockwise: true,
+        );
+      canvas.drawPath(scallop, line);
     }
+    canvas.restore();
   }
 
   @override

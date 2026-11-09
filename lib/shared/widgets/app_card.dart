@@ -166,23 +166,28 @@ class _Drawn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(radius);
-    final inner = BorderRadius.circular(
-      border == null ? radius : radius - border!.top.width,
-    );
+    // The outline is painted over the content (foregroundDecoration) and the
+    // content is clipped to the card's outer shape: clipped to a smaller inner
+    // radius, a filled child (the shop awning) spilled over the outline at the
+    // rounded corners.
     return DecoratedBox(
+      position: DecorationPosition.background,
       decoration: BoxDecoration(
         color: fill,
         borderRadius: r,
-        border: border,
         boxShadow: shadows,
       ),
-      child: ClipRRect(
-        borderRadius: inner,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            child: Padding(padding: padding, child: child),
+      child: DecoratedBox(
+        position: DecorationPosition.foreground,
+        decoration: BoxDecoration(borderRadius: r, border: border),
+        child: ClipRRect(
+          borderRadius: r,
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(padding: padding, child: child),
+            ),
           ),
         ),
       ),
