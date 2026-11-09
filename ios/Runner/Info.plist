@@ -36,6 +36,17 @@
 				<string>com.googleusercontent.apps.350967143148-lg2v3gi0satl9uqpmfo77nc84rnb8ett</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.dongyutech.silversole</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- The website's 「用銀足 App 打開」 button: silversole://dongyu.company/f/?t=... -->
+				<string>silversole</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>

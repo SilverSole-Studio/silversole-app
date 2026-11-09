@@ -36,6 +36,14 @@ const kRemovedNicknamePlaceholder = '銀足朋友';
 
 const kCodeLength = 8;
 
+/// A share link works this long; one person has one at a time. The server
+/// enforces both (`friend_share_links`), these are for the text in the app.
+const kShareLinkTtl = Duration(days: 7);
+
+/// How many requests one person can receive through links in a day. Enforced
+/// by the server; changing a link does not reset it.
+const kShareLinkInboxLimit = 10;
+
 /// Every way a friends call can fail. The UI shows `friends_err_<name>.tr()`
 /// and never the raw code (spec §8.3).
 enum FriendError {
@@ -63,6 +71,13 @@ enum FriendError {
 
   /// Too many calls in a short time; try again in a moment.
   rateLimited,
+
+  /// The share link was switched off by its owner or is older than 7 days.
+  linkExpired,
+
+  /// The person already got [kShareLinkInboxLimit] requests through links
+  /// today.
+  linkLimit,
 
   /// The photo did not reach storage for a reason other than the upload
   /// rules (network, size, file type).
@@ -242,6 +257,9 @@ enum FriendErrorScope {
 
   /// Uploading a photo.
   photo,
+
+  /// Opening or sending through someone's share link.
+  link,
 }
 
 /// Translation key for [code] as seen while doing [scope].
@@ -259,6 +277,9 @@ String friendErrorKey(
     'friends_err_notFound_report',
   (FriendError.notFound, FriendErrorScope.avatar) =>
     'friends_err_notFound_avatar',
+  // A link that is not known, is your own, or belongs to someone who blocked
+  // you reads like one that stopped working: no more can be said.
+  (FriendError.notFound, FriendErrorScope.link) => 'friends_err_linkExpired',
   // set_avatar_photo answers not_found when the file never landed.
   (FriendError.notFound, FriendErrorScope.photo) => 'friends_err_uploadFailed',
   (FriendError.limitReached, FriendErrorScope.photo) =>
@@ -323,9 +344,46 @@ String formatCode(String code) {
   return '${code.substring(0, 4)} ${code.substring(4)}';
 }
 
+// ── Share links ────────────────────────────────────────────────────────
+//
+// `https://dongyu.company/f/?t=<token>`. The path, the parameter name and the
+// two files under dongyu.company/.well-known/ are fixed by the website
+// (Dongyu-Tech/dongyu.company-second, src/pages/f/index.astro): changing any of
+// them breaks links that were already sent. The Android intent filter and the
+// iOS Associated Domains entry must match [kShareLinkHost].
+
+const kShareLinkHost = 'dongyu.company';
+const kShareLinkPath = '/f/';
+const kShareLinkParam = 't';
+
+final _shareToken = RegExp(r'^[0-9a-f]{32}$');
+
+Uri shareLinkUri(String token) => Uri(
+  scheme: 'https',
+  host: kShareLinkHost,
+  path: kShareLinkPath,
+  queryParameters: {kShareLinkParam: token},
+);
+
+/// The token in [uri] if it is a share link — the `https` link, or the
+/// `silversole://dongyu.company/f/?t=…` form the website's 「用銀足 App 打開」
+/// button uses — else null. Also takes the token as a path segment
+/// (`/f/<token>`). Upper case is folded; anything that is not 32 hex digits
+/// is not a token.
+String? parseShareLinkToken(Uri uri) {
+  final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (segments.isEmpty || segments.first != 'f') return null;
+  final raw =
+      uri.queryParameters[kShareLinkParam] ??
+      (segments.length == 2 ? segments[1] : null);
+  if (raw == null) return null;
+  final token = raw.trim().toLowerCase();
+  return _shareToken.hasMatch(token) ? token : null;
+}
+
 // ── QR payloads ────────────────────────────────────────────────────────────
 //
-// Read only by the in-app scanner; there are no deep links. A person's QR
+// Read only by the in-app scanner (share links are separate, see above). A person's QR
 // carries a short-lived token, an org poster carries the org's join code.
 
 const _personQrPrefix = 'SSF1:';

@@ -64,6 +64,7 @@ Future<bool> showAddFriendSheet(
                     FriendSource.qr => FriendErrorScope.qr,
                     FriendSource.code => FriendErrorScope.code,
                     FriendSource.org => FriendErrorScope.orgMember,
+                    FriendSource.link => FriendErrorScope.link,
                   },
                 );
                 if (outcome == null) return;

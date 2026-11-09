@@ -814,3 +814,16 @@ home_town_hint,Walk a bit and play a round,走一走，玩一局
 home_town_go,Enter town,進小鎮
 home_insole_title,Insoles,鞋墊
 subscription_perk_themes,Two extra looks: Big-number Dashboard and Paper Journal,多兩套外觀：大數字儀表板、紙本手帳
+friends_share_link_btn,Send a link to a friend,傳連結給朋友
+friends_share_link_hint,The link works for 7 days.,連結 7 天內有效。
+friends_share_link_until,Link works until {},連結有效到 {}
+friends_share_link_off,Turn off link,停用連結
+friends_share_link_off_title,Turn off your link?,要停用連結嗎？
+friends_share_link_off_body,People with the old link can no longer add you. Requests already sent stay.,拿到舊連結的人就加不了你了。已經送出的邀請不受影響。
+friends_share_link_off_done,Link turned off,連結已停用
+friends_share_message,Add me as a friend on SilverSole: {},來銀足當朋友吧：{}
+friends_link_loading,Opening the link…,正在打開連結…
+friends_link_home,Back to home,回首頁
+friends_via_link,By link,傳連結加的
+friends_err_linkExpired,This link no longer works. Ask them to send a new one.,這個連結失效了，請對方重新傳一個。
+friends_err_linkLimit,They got too many requests today. Please try tomorrow.,對方今天收到的邀請太多了，明天再試。

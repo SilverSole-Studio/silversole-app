@@ -64,6 +64,7 @@ String _sourceText(FriendRequest r) => switch (r.source) {
   FriendSource.qr => 'friends_via_qr'.tr(),
   FriendSource.code => 'friends_via_code'.tr(),
   FriendSource.org => 'friends_via_org'.tr(args: [r.orgName ?? '']),
+  FriendSource.link => 'friends_via_link'.tr(),
 };
 
 class _IncomingCard extends ConsumerWidget {
