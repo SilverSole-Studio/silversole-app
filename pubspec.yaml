@@ -94,7 +94,10 @@ flutter_launcher_icons:
   # App Store Connect rejects an iOS icon with an alpha channel (ITMS-90717).
   remove_alpha_ios: true
   background_color_ios: "#ffffff"
-  image_path: "assets/images/silversole_app_logo.png"
+  image_path: "assets/app_icon/app_icon_cuge.png"
+  # Android 8+ adaptive icon: the plugin insets the foreground 16%, so the full art fills the visible mask.
+  adaptive_icon_background: "#feba48"
+  adaptive_icon_foreground: "assets/app_icon/app_icon_cuge.png"
   min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the
