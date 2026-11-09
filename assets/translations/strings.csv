@@ -3,7 +3,7 @@ home,Home,主頁
 welcome_back,Welcome back,歡迎回來
 toggle,Toggle,切換
 last_connected,Last connected: {},上次連線：{}
-person,Person,個人
+person,Me,我的
 account,Account,帳號
 not_signed_in,Not signed in,尚未登入
 sign_in,Sign In,登入
@@ -46,11 +46,11 @@ get_data_success,Data loaded,資料載入完成
 rls_denied,Permission denied,權限不足
 binding_failed,Binding failed,綁定失敗
 device_not_found,Device not found,裝置不存在
-identity,Identity,身份
-switch_identity,Switch Identity,切換身份
-change_identity_check_content,Are you sure you want to switch to {} identity?,您確定要切換成 「{}」 身份嗎？
-transmitter,Transmitter,傳輸者
-observer,Observer,觀察者
+identity,How I use it,使用方式
+switch_identity,Change how I use it,換使用方式
+change_identity_check_content,Change to “{}”?,要改成「{}」嗎？
+transmitter,My insoles,我的鞋墊
+observer,Family care,家人關心
 offline,Offline,離線
 online,Online,連線中
 done,Done,完成
@@ -86,10 +86,22 @@ off,Off,關
 general,General,一般
 search_device,Search device,搜尋裝置
 current_devices,Current devices,目前裝置
-dark_mode,Dark Mode,深色模式
 switch_theme,Switch Theme,切換主題
-theme_classic,Classic,經典
-theme_mascot,Mascot,插畫
+theme_mascot,Mascot Town,粗哥手繪小鎮
+theme_tech_light,Minimal Tech · Light,極簡科技・白
+theme_tech_dark,Minimal Tech · Dark,極簡科技・黑
+theme_dashboard,Big-number Dashboard,大數字儀表板
+theme_journal,Paper Journal,紙本手帳
+theme_mascot_hint,The default. Sky and grass,預設，藍天綠地粗描邊
+theme_tech_light_hint,Clean and bright,乾淨明亮
+theme_tech_dark_hint,Clean and dark,乾淨深色
+theme_dashboard_hint,Numbers first,數字放最大
+theme_journal_hint,Sticky notes and handwriting,便利貼和手寫字
+theme_picker_title,Choose a theme,選主題
+theme_locked,Subscribers only,訂閱後可用
+theme_in_use,In use,使用中
+theme_subscribers_section,For subscribers,訂閱會員專屬
+theme_free_section,Free,免費
 text_size,Text Size,文字大小
 text_size_normal,Standard,標準
 text_size_large,Large,大
@@ -108,7 +120,7 @@ mission_cta,See today's missions,查看今日任務
 device_synced,Connected · just synced,已連線 · 剛剛同步
 device_product_name,SilverSole Insole,銀足鞋墊
 foot_check_session_title,One-minute foot check,一分鐘足壓檢測
-foot_check_collecting,Collecting data…,正在採集數據…
+foot_check_collecting,Collecting data…,正在收集資料…
 foot_check_complete,Collection complete,採集完成
 foot_check_quit,End early,提前結束
 foot_check_finish,Done,完成
@@ -202,7 +214,7 @@ set_primary_device_title,Set as Primary Device,設為主要裝置
 set_primary_device_content,Set {deviceName} as your primary device? The app will prioritize this device on Home and attempt to connect to it first.,要將「{deviceName}」設為主要裝置嗎？設為主要裝置後，首頁會優先顯示此裝置並優先嘗試連線。
 set_primary_device_success,Primary device updated,已設為主要裝置
 no_primary_device_title,No primary device available,目前沒有可用的主要裝置
-no_primary_device_body,Go to “Devices” to add a device then enable any device to get started.,前往「裝置」新增裝置後，啟用任一裝置即可開始使用。
+no_primary_device_body,Tap “Pair new insoles” to get started.,按下方的「配對新鞋墊」就能開始。
 rename,Rename,重新命名
 rename_this_device,Rename this device,重新命名此裝置
 delete,Delete,刪除
@@ -495,9 +507,11 @@ friends_title,Friends,朋友
 friends_card_count,{} friends,{} 位朋友
 friends_card_requests,{} want to add you,{} 人想加你
 friends_card_open,Add friends,加朋友
-friends_setup_title,First pick a name,先取一個稱呼
 friends_setup_intro,Friends will see this name and picture. Only people you know can add you.,朋友會看到這個名字和頭像。只有認識的人加得到你。
-friends_setup_done,Done - now add friends,好了，去加朋友
+nickname_setup_title,Pick a name,取個名字
+nickname_setup_hint,"Tap the dice for another name, or type your own.",按骰子換一個名字，也可以自己打。
+nickname_setup_reroll,Roll for another name,換一個名字
+nickname_setup_done,Use this name,就用這個
 friends_profile_title,My name and picture,我的名字與頭像
 friends_nickname_label,What should friends call you?,朋友怎麼叫你？
 friends_nickname_hint,e.g. Auntie Wang,例：王阿姨
@@ -775,3 +789,27 @@ report_pick_sections,What to include,要放進紀錄的內容
 report_preview,Preview,預覽
 report_foot_result,Foot check result,健檢結果
 report_foot_no_medial,Too little forefoot load for an inner and outer split,前腳掌受力太少，沒有內外比例
+nav_today,Today,今天
+nav_map,Map,地圖
+nav_game,Games,遊戲
+nav_report,Report,報告
+nav_mine,Me,我的
+add_device_cta,Pair new insoles,配對新鞋墊
+my_insoles,Insoles,鞋墊
+identity_tap_to_change,Tap to change,點一下可以更換
+foot_check_done_cheer,Nice work! All done.,做完了，辛苦了！
+auth_tagline,Foot pressure checks and gentle movement for steady progress,足壓健檢、動一動、看見進步
+start_check,Start check,開始健檢
+foot_check_station,Check station,健檢站
+today_exercise,Exercise today,今日運動
+exercise_goal_unit,/ {} min,／{} 分
+exercise_remaining,{} more min to the goal,再 {} 分鐘達標
+exercise_reached,Goal reached today,今天達標了
+missions_done_count,Done {} / {},完成 {}／{}
+missions_loading,Getting today's missions,整理今天的任務
+home_town_title,Chu Town,粗哥小鎮
+home_town_headline,Go out and about,出門逛逛
+home_town_hint,Walk a bit and play a round,走一走，玩一局
+home_town_go,Enter town,進小鎮
+home_insole_title,Insoles,鞋墊
+subscription_perk_themes,Two extra looks: Big-number Dashboard and Paper Journal,多兩套外觀：大數字儀表板、紙本手帳

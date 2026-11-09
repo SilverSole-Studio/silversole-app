@@ -152,7 +152,7 @@ void main() {
           ),
         ],
       ),
-      appThemeT2(Brightness.light),
+      appThemeT2(),
     );
     await tester.pumpAndSettle();
     expect(find.text('Week of 11/2'), findsOneWidget);

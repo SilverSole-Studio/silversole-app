@@ -84,8 +84,12 @@ class FriendDetailPage extends ConsumerWidget {
                       style: TextButton.styleFrom(
                         minimumSize: const Size.fromHeight(kFriendButtonHeight),
                       ),
-                      onPressed: () =>
-                          reportFriendProfile(context, ref, p, ReportKind.photo),
+                      onPressed: () => reportFriendProfile(
+                        context,
+                        ref,
+                        p,
+                        ReportKind.photo,
+                      ),
                       child: Text(
                         'friends_report_photo'.tr(),
                         style: context.textTheme.titleLarge,
@@ -97,8 +101,12 @@ class FriendDetailPage extends ConsumerWidget {
                     style: TextButton.styleFrom(
                       minimumSize: const Size.fromHeight(kFriendButtonHeight),
                     ),
-                    onPressed: () =>
-                        reportFriendProfile(context, ref, p, ReportKind.nickname),
+                    onPressed: () => reportFriendProfile(
+                      context,
+                      ref,
+                      p,
+                      ReportKind.nickname,
+                    ),
                     child: Text(
                       'friends_report_name'.tr(),
                       style: context.textTheme.titleLarge,

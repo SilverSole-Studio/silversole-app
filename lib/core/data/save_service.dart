@@ -7,7 +7,11 @@ import 'package:silversole/shared/models/foot_side.dart';
 enum LocalSavableKey {
   deviceId('device_id'),
   identity('identity'),
-  darkMode('dark_mode'),
+  // The old 深色模式 switch (the _v2 key; the first one was written as 'true'
+  // for everyone by accident). The switch is gone — light or dark is part of the
+  // theme now — and this is only read once, to turn an old 經典 theme into 極簡科技
+  // 白 or 黑 (see AppThemeVariant.fromStored).
+  darkMode('dark_mode_v2'),
   textSize('text_size'),
   themeVariant('theme_variant'),
   transmissionMethod('transmission_method'),

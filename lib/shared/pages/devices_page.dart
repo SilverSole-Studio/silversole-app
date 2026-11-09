@@ -18,6 +18,7 @@ import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
 import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/device_online_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/live_telemetry_notifier.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_facade_provider.dart';
@@ -34,7 +35,7 @@ class DevicesRoute extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final variant = ref.watch(settingsProvider.select((s) => s.themeVariant));
+    final variant = ref.watch(themeVariantProvider);
     return variant == AppThemeVariant.mascot
         ? const DevicesPageT2()
         : const DevicesPage();
@@ -443,7 +444,7 @@ class _DeviceRowTile extends StatelessWidget {
             year2023: false, // ignore: deprecated_member_use
             value: battery.fraction,
             minHeight: 10,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: AppRadius.pillR,
             stopIndicatorRadius: 0,
             trackGap: 4,
             backgroundColor: context.colorScheme.surfaceContainerHighest,

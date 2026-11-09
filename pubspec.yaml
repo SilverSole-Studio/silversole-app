@@ -155,14 +155,41 @@ flutter:
     - family: Google Sans
       fonts:
         - asset: assets/fonts/GoogleSans-VariableFont.ttf
-    # Voice of the mascot theme; ships with the art pack.
-    - family: DM Sans
+    # Look A (粗哥手繪小鎮風): Chiron GoRound TC, subset (tool/make_theme_fonts.py).
+    - family: Chiron GoRound TC
       fonts:
-        - asset: assets/mascot-assets/fonts/DMSans-Regular.ttf
-        - asset: assets/mascot-assets/fonts/DMSans-Medium.ttf
+        - asset: assets/fonts/ChironGoRoundTC-Medium.ttf
+          weight: 400
+        - asset: assets/fonts/ChironGoRoundTC-Medium.ttf
           weight: 500
-        - asset: assets/mascot-assets/fonts/DMSans-Bold.ttf
+        - asset: assets/fonts/ChironGoRoundTC-Bold.ttf
+          weight: 600
+        - asset: assets/fonts/ChironGoRoundTC-Bold.ttf
           weight: 700
+        - asset: assets/fonts/ChironGoRoundTC-Black.ttf
+          weight: 800
+        - asset: assets/fonts/ChironGoRoundTC-Black.ttf
+          weight: 900
+    # Look C (紙本手帳風): LXGW WenKai TC, subset.
+    - family: LXGW WenKai TC
+      fonts:
+        - asset: assets/fonts/LXGWWenKaiTC-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LXGWWenKaiTC-Regular.ttf
+          weight: 500
+        - asset: assets/fonts/LXGWWenKaiTC-Bold.ttf
+          weight: 600
+        - asset: assets/fonts/LXGWWenKaiTC-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LXGWWenKaiTC-Bold.ttf
+          weight: 800
+        - asset: assets/fonts/LXGWWenKaiTC-Bold.ttf
+          weight: 900
+    # Look B (大數字儀表板): numerals only.
+    - family: Big Shoulders Display
+      fonts:
+        - asset: assets/fonts/BigShouldersDisplay-Black.ttf
+          weight: 900
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

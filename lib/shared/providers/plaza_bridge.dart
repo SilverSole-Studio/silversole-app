@@ -63,6 +63,20 @@ abstract final class PlazaBridge {
 
   static const String infoEvent = 'silversoleapp';
 
+  /// App → page: opens the town's own friends screen. A fixed string, never
+  /// built from user input.
+  static const String openFriendsScript =
+      'window.WorldOpenFriends && window.WorldOpenFriends()';
+
+  /// [plazaUrl] with `open=friends`, so the town opens its friends screen
+  /// after loading. Other query parameters are kept.
+  static String friendsUrl(String plazaUrl) {
+    final uri = Uri.parse(plazaUrl);
+    return uri
+        .replace(queryParameters: {...uri.queryParameters, 'open': 'friends'})
+        .toString();
+  }
+
   /// What the plaza needs to know: whether to show the friends building, the
   /// red-dot count on it (always 0 while friends are off), who is signed in,
   /// and the phone's font scale. `account` is left out when nobody is signed

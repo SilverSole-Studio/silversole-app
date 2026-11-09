@@ -111,9 +111,9 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
-            48,
+            24,
             0,
-            48,
+            24,
             MediaQuery.of(context).viewInsets.bottom + 24,
           ),
           child: AutofillGroup(
@@ -128,7 +128,7 @@ class _SignUpPageState extends ConsumerState<SignUpPage> {
                 spacing: 16,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 100, bottom: 32),
+                    padding: const EdgeInsets.only(top: 24, bottom: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 8,

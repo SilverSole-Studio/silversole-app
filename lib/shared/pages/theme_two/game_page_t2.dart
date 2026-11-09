@@ -1,12 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
+import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
 
 /// Games hub, mascot theme: today's mission, the village shortcuts, and the
@@ -44,9 +45,12 @@ class GamePageT2 extends StatelessWidget {
                     width: 6,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppPaletteT2.gold,
-                      borderRadius: BorderRadius.circular(3),
-                      border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+                      color: context.mascot.gold,
+                      borderRadius: AppRadius.pillR,
+                      border: Border.all(
+                        color: context.mascot.line,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -123,7 +127,7 @@ class _MissionRow extends StatelessWidget {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.controlR,
           child: Image.asset(icon, height: 32, width: 32, fit: BoxFit.cover),
         ),
         const SizedBox(width: 10),
@@ -155,7 +159,7 @@ class _VillageRow extends ConsumerWidget {
             title: 'friends_title'.tr(),
             subtitle: friendsCardSubtitle(ref),
             badge: ref.watch(incomingRequestCountProvider),
-            onTap: () => context.push('/friends'),
+            onTap: () => openTownFriends(ref),
           ),
         ),
       ],
@@ -245,10 +249,10 @@ class _GameTile extends StatelessWidget {
             ),
           ),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: AppPaletteT2.ink,
+                  color: context.mascot.line,
                   width: AppPaletteT2.outlineWidth,
                 ),
               ),
@@ -270,14 +274,14 @@ class _GameTile extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppPaletteT2.card,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppPaletteT2.safe, width: 2),
+                    color: context.mascot.card,
+                    borderRadius: AppRadius.pillR,
+                    border: Border.all(color: context.mascot.safe, width: 2),
                   ),
                   child: Text(
                     'game_go'.tr(),
                     style: context.textTheme.labelLarge?.copyWith(
-                      color: AppPaletteT2.safe,
+                      color: context.mascot.safe,
                     ),
                   ),
                 ),

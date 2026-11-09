@@ -7,6 +7,7 @@ import 'package:silversole/core/utils/relative_time.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/device_location_model.dart';
 import 'package:silversole/shared/providers/device_location_provider.dart';
+import 'package:silversole/shared/widgets/fall_guard_card.dart';
 import 'package:silversole/shared/widgets/safe_zone_map_view.dart';
 
 /// Fallback camera target when the device has never reported a position.
@@ -17,7 +18,11 @@ const kMapFallbackCenter = LatLng(25.0330, 121.5654);
 /// No safe zone: there is no safe-zone feature yet, so the page draws no ring,
 /// claims no "in the safe zone" status and offers no setup button.
 class MapPage extends ConsumerWidget {
-  const MapPage({super.key});
+  const MapPage({super.key, this.mapBuilder});
+
+  /// Replaces the Google map (tests: a platform view cannot be built there).
+  @visibleForTesting
+  final Widget Function(LatLng center, bool showDevice)? mapBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,12 +47,19 @@ class MapPage extends ConsumerWidget {
                 borderRadius: AppRadius.cardR,
                 child: SizedBox(
                   height: 380,
-                  child: SafeZoneMapView(
-                    center: _centerOf(location.value),
-                    showDevice: location.value != null,
-                  ),
+                  child:
+                      mapBuilder?.call(
+                        _centerOf(location.value),
+                        location.value != null,
+                      ) ??
+                      SafeZoneMapView(
+                        center: _centerOf(location.value),
+                        showDevice: location.value != null,
+                      ),
                 ),
               ),
+              // Fall detection lives here, not on the home page.
+              const FallGuardCard(),
             ],
           ),
         ),

@@ -8,6 +8,7 @@ import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/foot_side.dart';
 import 'package:silversole/shared/models/user_identity.dart';
+import 'package:silversole/shared/providers/subscription_provider.dart';
 
 /// The phone's font-size setting right now (1.0 = default). A provider so
 /// tests can pretend the phone is set to a large font.
@@ -34,15 +35,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
       await saveLocalValue(LocalSavableKey.identity, identity);
     }
     final deviceId = await loadLocalValue(LocalSavableKey.deviceId);
-    final darkModeRaw = await loadLocalValue(LocalSavableKey.darkMode);
-    final darkMode = switch (darkModeRaw) {
-      'true' => true,
-      'false' => false,
-      _ => true,
-    };
-    if (darkModeRaw == null) {
-      await saveLocalValue(LocalSavableKey.darkMode, 'true');
-    }
     // Nothing stored = first launch: a phone already set to a large font
     // starts on 「大」, anyone else on 「標準」; stored after that, so the
     // user's own choice wins from then on.
@@ -53,11 +45,17 @@ class SettingsNotifier extends Notifier<AppSettings> {
       textSize = initialTextSizeFor(systemFontScale);
       await saveLocalValue(LocalSavableKey.textSize, textSize.wireName);
     }
-    // Defaults to classic; only an explicit opt-in switches the whole app to
-    // the mascot design.
-    final themeVariant = AppThemeVariant.fromName(
-      await loadLocalValue(LocalSavableKey.themeVariant),
+    // Nothing stored = the mascot look (A). Older versions stored `classic`
+    // plus a separate dark-mode switch; those become 極簡科技 白／黑 once and
+    // the new name is written back, so the old switch is never read again.
+    final storedVariant = await loadLocalValue(LocalSavableKey.themeVariant);
+    final themeVariant = AppThemeVariant.fromStored(
+      storedVariant,
+      storedDarkMode: await loadLocalValue(LocalSavableKey.darkMode),
     );
+    if (storedVariant != null && storedVariant != themeVariant.wireName) {
+      await saveLocalValue(LocalSavableKey.themeVariant, themeVariant.wireName);
+    }
     final methodString = await loadLocalValue(
       LocalSavableKey.transmissionMethod,
     );
@@ -72,7 +70,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state = state.copyWith(
       identity: identity,
       deviceId: deviceId,
-      darkMode: darkMode,
       textSize: textSize,
       themeVariant: themeVariant,
       transmissionMethod: transmissionMethod,
@@ -81,9 +78,16 @@ class SettingsNotifier extends Notifier<AppSettings> {
     );
   }
 
-  Future<void> setThemeVariant(AppThemeVariant variant) async {
-    await saveLocalValue(LocalSavableKey.themeVariant, variant.name);
+  /// Switches the look. A look that needs a subscription is refused (returns
+  /// false, nothing stored) unless the account is subscribed; the three free
+  /// looks always work.
+  Future<bool> setThemeVariant(AppThemeVariant variant) async {
+    if (variant.requiresSubscription && !ref.read(subscriptionActiveProvider)) {
+      return false;
+    }
+    await saveLocalValue(LocalSavableKey.themeVariant, variant.wireName);
     state = state.copyWith(themeVariant: variant);
+    return true;
   }
 
   Future<void> setIdentity(String value) async {
@@ -94,11 +98,6 @@ class SettingsNotifier extends Notifier<AppSettings> {
   Future<void> setDeviceId(String value) async {
     await saveLocalValue(LocalSavableKey.deviceId, value);
     state = state.copyWith(deviceId: value);
-  }
-
-  Future<void> setDarkMode(bool value) async {
-    await saveLocalValue(LocalSavableKey.darkMode, value ? 'true' : 'false');
-    state = state.copyWith(darkMode: value);
   }
 
   Future<void> setTextSize(AppTextSize value) async {

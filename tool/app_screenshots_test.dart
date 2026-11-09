@@ -1,0 +1,447 @@
+// Renders the main app pages in all five looks to PNG with real fonts. Not part of the test suite (it lives in tool/, which `flutter test`
+// does not pick up by default); run it by hand:
+//
+//   python -I tool/make_cjk_fonts.py      (once; needs fontTools)
+//   flutter test tool/app_screenshots_test.dart
+//   python -I tool/app_overview.py        (tiles them into one overview PNG)
+//
+// Output: build/app_refresh_shots/<variant>_<NN>_<page>.png
+//
+// Variants: mascot (A), tech-light, tech-dark, dashboard (B), journal (C). Set
+// SHOTS=mascot,journal to render only some. The map tab shows a
+// plain placeholder where Google Maps would be (a platform view cannot be
+// rendered in a test).
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:easy_localization/easy_localization.dart';
+import 'package:easy_localization_loader/easy_localization_loader.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:silversole/core/friends/fake_friends_repository.dart';
+import 'package:silversole/core/theme/theme.dart';
+import 'package:silversole/core/utils/foot_check_rating.dart';
+import 'package:silversole/core/utils/foot_load_balance.dart';
+import 'package:silversole/core/utils/system_font_scale.dart';
+import 'package:silversole/shared/models/app_settings.dart';
+import 'package:silversole/shared/models/auth_model.dart';
+import 'package:silversole/shared/models/ble_paired_device_model.dart';
+import 'package:silversole/shared/pages/analytics_page.dart';
+import 'package:silversole/shared/pages/foot_check_result_page.dart';
+import 'package:silversole/shared/pages/firmware_update_page.dart';
+import 'package:silversole/shared/pages/foot_check_session_page.dart';
+import 'package:silversole/shared/pages/sign_up_page.dart';
+import 'package:silversole/shared/pages/theme_picker_page.dart';
+import 'package:silversole/shared/pages/theme_two/devices_page_t2.dart';
+import 'package:silversole/shared/providers/firmware_check_provider.dart';
+import 'package:silversole/shared/pages/friends/friends_routes.dart';
+import 'package:silversole/shared/pages/home_body.dart';
+import 'package:silversole/shared/pages/home_page.dart';
+import 'package:silversole/shared/pages/map_page.dart';
+import 'package:silversole/shared/pages/person_page.dart';
+import 'package:silversole/shared/pages/sign_in_page.dart';
+import 'package:silversole/shared/pages/subscription_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
+import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
+import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
+import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
+import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
+import 'package:silversole/shared/providers/last_foot_check_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/app_navigation_bar.dart';
+
+const _outDir = 'build/app_refresh_shots';
+const _viewWidth = 412.0;
+
+/// The page height of the shot being taken; a long page sets a taller one.
+double _viewHeight = 915;
+Size get _viewSize => Size(_viewWidth, _viewHeight);
+const _dpr = 2.0;
+const _statusBar = 28.0;
+
+/// easy_localization's own CSV loader reads through rootBundle, which never
+/// completes under the test's fake async clock. Parse the file up front.
+class _PreloadedCsvLoader extends AssetLoader {
+  _PreloadedCsvLoader(this.parser);
+  final CSVParser parser;
+
+  @override
+  Future<Map<String, dynamic>> load(String path, Locale locale) async =>
+      parser.getLanguageMap(locale.toString());
+}
+
+late CSVParser _csv;
+
+Future<void> _loadFamily(String family, List<String> paths) async {
+  final loader = FontLoader(family);
+  for (final p in paths) {
+    final f = File(p);
+    if (!f.existsSync()) throw StateError('font file missing: $p');
+    loader.addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
+  }
+  await loader.load();
+}
+
+const _cjk = 'HarnessCJK';
+
+class _Variant {
+  const _Variant(this.name, this.variant);
+  final String name;
+  final AppThemeVariant variant;
+  ThemeData theme() => appThemeFor(variant);
+  bool get mascot => variant == AppThemeVariant.mascot;
+}
+
+final _variants =
+    <_Variant>[
+      const _Variant('mascot', AppThemeVariant.mascot),
+      const _Variant('tech-light', AppThemeVariant.techLight),
+      const _Variant('tech-dark', AppThemeVariant.techDark),
+      const _Variant('dashboard', AppThemeVariant.dashboard),
+      const _Variant('journal', AppThemeVariant.journal),
+    ].where((v) {
+      final only = Platform.environment['SHOTS'];
+      return only == null || only.split(',').contains(v.name);
+    }).toList();
+
+ThemeData _withCjk(ThemeData t) {
+  TextTheme fix(TextTheme tt) => tt.apply(fontFamilyFallback: const [_cjk]);
+  // Button themes carry their own text style (built before this fallback
+  // existed), so each needs the fallback too or CJK labels render as boxes.
+  ButtonStyle? fixButton(ButtonStyle? style) => style?.copyWith(
+    textStyle: WidgetStatePropertyAll(
+      t.textTheme.labelLarge?.copyWith(fontFamilyFallback: const [_cjk]),
+    ),
+  );
+  return t.copyWith(
+    textTheme: fix(t.textTheme),
+    primaryTextTheme: fix(t.primaryTextTheme),
+    filledButtonTheme: FilledButtonThemeData(
+      style: fixButton(t.filledButtonTheme.style),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: fixButton(t.outlinedButtonTheme.style),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: fixButton(t.elevatedButtonTheme.style),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: fixButton(t.textButtonTheme.style),
+    ),
+    segmentedButtonTheme: SegmentedButtonThemeData(
+      style: fixButton(t.segmentedButtonTheme.style),
+    ),
+  );
+}
+
+class _SignedIn extends AuthUserNotifier {
+  @override
+  UserData? build() => const UserData(
+    email: 'grandma.wang@example.com',
+    uuid: '123e4567-e89b-12d3-a456-426614174000',
+  );
+}
+
+class _Settings extends SettingsNotifier {
+  _Settings(this.variant);
+  final AppThemeVariant variant;
+
+  @override
+  AppSettings build() => AppSettings(
+    themeVariant: variant,
+    pairedDevicesList: const [
+      BlePairedDevice(
+        remoteId: 'r',
+        name: 'SilverSole',
+        deviceId: '00000000000000BB',
+        isPreferred: true,
+        lastBatteryPercent: 77,
+      ),
+    ],
+  );
+}
+
+class _LastCheck extends LastFootCheckNotifier {
+  @override
+  FootCheckRecord? build() => FootCheckRecord(
+    rating: FootCheckRating.veryGood,
+    takenAt: DateTime.now(),
+  );
+}
+
+/// A stand-in for the Google map.
+Widget _fakeMap(BuildContext context) => ColoredBox(
+  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+  child: Center(
+    child: Icon(
+      LucideIcons.mapPin,
+      size: 48,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    ),
+  ),
+);
+
+/// A tab page with the bottom navigation under it.
+Widget _tab(int index, Widget page) => Scaffold(
+  body: page,
+  bottomNavigationBar: appNavigationBar(
+    selectedIndex: index,
+    onDestinationSelected: (_) {},
+    icons: kHomeNavIcons,
+    labels: kHomeNavLabels,
+    townIcons: kHomeNavTownIcons,
+  ),
+);
+
+class _Shot {
+  const _Shot(this.name, this.build, {this.height = 915});
+  final String name;
+  final Widget Function(_Variant v) build;
+
+  /// A long page is shot taller than a phone so the whole page shows.
+  final double height;
+}
+
+Widget _home(_Variant v) => switch (v.variant) {
+  AppThemeVariant.mascot => const HomeBodyT2(),
+  AppThemeVariant.dashboard => const HomeBodyB(),
+  AppThemeVariant.journal => const HomeBodyC(),
+  _ => const HomeBody(),
+};
+
+final _shots = <_Shot>[
+  _Shot('01_today', (v) => _tab(0, _home(v))),
+  _Shot('01b_today_full', (v) => _tab(0, _home(v)), height: 1700),
+  _Shot(
+    '02_map',
+    (v) => _tab(
+      1,
+      v.mascot
+          ? MapPageT2(mapBuilder: (c, s) => Builder(builder: _fakeMap))
+          : MapPage(mapBuilder: (c, s) => Builder(builder: _fakeMap)),
+    ),
+  ),
+  _Shot(
+    '03_report',
+    (v) => _tab(3, v.mascot ? const AnalyticsPageT2() : const AnalyticsPage()),
+  ),
+  _Shot('04_mine', (v) => _tab(4, const PersonPage())),
+  _Shot(
+    '05_check_result',
+    (v) => FootCheckResultPage(
+      report: FootCheckReport(
+        balance: const FootLoadBalance(foreRatio: 0.40, medialRatio: 0.50),
+        samples: 1234,
+        collected: const Duration(seconds: 60),
+      ),
+    ),
+  ),
+  _Shot('06_sign_in', (v) => const SignInPage()),
+  _Shot('07_subscription', (v) => const SubscriptionPage()),
+  _Shot('09_sign_up', (v) => const SignUpPage()),
+  _Shot('10_check_session', (v) => const FootCheckSessionPage()),
+  _Shot('11_firmware', (v) => const FirmwareUpdatePage(source: null)),
+  _Shot('12_themes', (v) => const ThemePickerPage()),
+  _Shot(
+    '13_devices',
+    (v) => v.mascot ? const DevicesPageT2() : const Scaffold(),
+  ),
+];
+
+GoRouter _single(Widget page) => GoRouter(
+  routes: [GoRoute(path: '/', builder: (_, _) => page)],
+);
+
+/// Lets timers, async providers and image decodes run. Decoding happens on
+/// real threads, so the fake clock alone is not enough.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 6; i++) {
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.runAsync(() async {
+      for (final asset in [
+        'assets/mascot-assets/happy.webp',
+        'assets/mascot-assets/applaud.webp',
+        'assets/mascot-assets/checking.webp',
+        'assets/mascot-assets/insole.webp',
+        'assets/mascot-assets/icons/dev_foot.webp',
+        'assets/mascot-assets/cards/card_hop.webp',
+        'assets/images/silversole_app_logo.png',
+        'assets/images/silversole_full.png',
+      ]) {
+        await precacheImage(
+          AssetImage(asset),
+          tester.element(find.byType(Scaffold).first),
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 60));
+    });
+  }
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+final _boundaryKey = GlobalKey();
+
+Future<void> _pump(WidgetTester tester, _Variant v, GoRouter router) async {
+  tester.view
+    ..physicalSize = _viewSize * _dpr
+    ..devicePixelRatio = _dpr
+    ..padding = const FakeViewPadding(top: _statusBar * _dpr)
+    ..viewPadding = const FakeViewPadding(top: _statusBar * _dpr);
+  final repo = FakeFriendsRepository.seeded(
+    latency: Duration.zero,
+    simulateQrScan: false,
+  );
+  await repo.updateProfile(nickname: '王阿姨', avatarPreset: 8);
+  await tester.pumpWidget(
+    RepaintBoundary(
+      key: _boundaryKey,
+      child: ProviderScope(
+        key: UniqueKey(),
+        overrides: [
+          friendsRepositoryProvider.overrideWithValue(repo),
+          authUserProvider.overrideWith(_SignedIn.new),
+          lastFootCheckProvider.overrideWith(_LastCheck.new),
+          firmwareCheckProvider.overrideWith(
+            (ref) async =>
+                const FirmwareCheck(FirmwareCheckStatus.notConnected),
+          ),
+          settingsProvider.overrideWith(() => _Settings(v.variant)),
+        ],
+        child: EasyLocalization(
+          supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
+          path: 'assets/translations/strings.csv',
+          assetLoader: _PreloadedCsvLoader(_csv),
+          fallbackLocale: const Locale('en'),
+          startLocale: const Locale('zh', 'TW'),
+          child: Builder(
+            builder: (context) => MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              locale: context.locale,
+              supportedLocales: context.supportedLocales,
+              localizationsDelegates: context.localizationDelegates,
+              theme: _withCjk(v.theme()),
+              // The default text size, so the shots show what people get.
+              builder: (context, child) => applySystemFontScale(
+                context,
+                child,
+                textSize: AppTextSize.normal,
+              ),
+              routerConfig: router,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await _settle(tester);
+}
+
+Future<void> _shot(WidgetTester tester, _Variant v, String name) async {
+  await _settle(tester);
+  final bytes = await tester.runAsync(() async {
+    final boundary =
+        _boundaryKey.currentContext!.findRenderObject()!
+            as RenderRepaintBoundary;
+    final image = await boundary.toImage(pixelRatio: _dpr);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data!.buffer.asUint8List();
+  });
+  final file = File('$_outDir/${v.name}_$name.png')
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(bytes!);
+  // ignore: avoid_print
+  print('wrote ${file.path} (${(bytes.length / 1024).round()} KB)');
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUpAll(() async {
+    // ignore: invalid_use_of_visible_for_testing_member
+    SharedPreferences.setMockInitialValues({});
+    await EasyLocalization.ensureInitialized();
+    _csv = CSVParser(
+      File('assets/translations/strings.csv').readAsStringSync(),
+    );
+
+    final flutterRoot =
+        Platform.environment['FLUTTER_ROOT'] ?? 'C:/Users/Admin/flutter';
+    final pubCache =
+        Platform.environment['PUB_CACHE'] ??
+        '${Platform.environment['LOCALAPPDATA']}/Pub/Cache';
+    final lucide = Directory('$pubCache/hosted/pub.dev')
+        .listSync()
+        .whereType<Directory>()
+        .firstWhere((d) => d.path.contains('lucide_icons_flutter-'));
+
+    await _loadFamily('Google Sans', [
+      'assets/fonts/GoogleSans-VariableFont.ttf',
+    ]);
+    await _loadFamily('Chiron GoRound TC', [
+      'assets/fonts/ChironGoRoundTC-Medium.ttf',
+      'assets/fonts/ChironGoRoundTC-Bold.ttf',
+      'assets/fonts/ChironGoRoundTC-Black.ttf',
+    ]);
+    await _loadFamily('LXGW WenKai TC', [
+      'assets/fonts/LXGWWenKaiTC-Regular.ttf',
+      'assets/fonts/LXGWWenKaiTC-Bold.ttf',
+    ]);
+    await _loadFamily('Big Shoulders Display', [
+      'assets/fonts/BigShouldersDisplay-Black.ttf',
+    ]);
+    // Static weights cut by tool/make_cjk_fonts.py; the raw variable font
+    // would render everything in its default Thin weight.
+    const staticDir = 'build/friends_screenshot_fonts';
+    await _loadFamily(
+      _cjk,
+      Directory(staticDir).existsSync()
+          ? [
+              for (final w in [400, 500, 700]) '$staticDir/NotoSansTC-$w.ttf',
+            ]
+          : ['C:/Windows/Fonts/NotoSansTC-VF.ttf'],
+    );
+    await _loadFamily('MaterialIcons', [
+      '$flutterRoot/bin/cache/artifacts/material_fonts/materialicons-regular.otf',
+    ]);
+    await _loadFamily('packages/lucide_icons_flutter/Lucide', [
+      '${lucide.path}/assets/lucide.ttf',
+    ]);
+  });
+
+  for (final v in _variants) {
+    group(v.name, () {
+      testWidgets('pages', (tester) async {
+        addTearDown(tester.view.reset);
+
+        for (final shot in _shots) {
+          _viewHeight = shot.height;
+          await _pump(tester, v, _single(shot.build(v)));
+          await _shot(tester, v, shot.name);
+        }
+
+        // Friends hub: a nested route, not a single page.
+        _viewHeight = 915;
+        await _pump(
+          tester,
+          v,
+          GoRouter(
+            initialLocation: '/friends',
+            routes: [friendsRoute(enabled: true)],
+          ),
+        );
+        await _shot(tester, v, '08_friends');
+
+        // Drop the tree so periodic timers are cancelled.
+        await tester.pumpWidget(const SizedBox());
+      });
+    });
+  }
+}

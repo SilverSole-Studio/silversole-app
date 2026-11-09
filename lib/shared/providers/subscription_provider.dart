@@ -1,11 +1,18 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/core/data/save_service.dart';
+import 'package:silversole/shared/providers/dev_tools_provider.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
 
 /// Monthly price shown on the subscription page (NT\$).
 const kSubscriptionMonthlyPrice = 149;
+
+/// Whether the app offers the subscription at all. Off until billing is wired
+/// up (user 2026-11-07): the person page's subscription row and the theme
+/// picker's subscriber section are hidden, so nothing leads to a plan that
+/// cannot be bought — App Store guideline 3.1.1 wants a digital subscription
+/// sold through in-app purchase, and 2.1 rejects a "coming soon" screen. An
+/// account an admin opened by hand still gets its subscriber looks.
+const kSubscriptionOffered = false;
 
 /// The test switch on the subscription page: "pretend subscribed". Stored on
 /// this phone only, and only honoured in debug builds and developer mode (see
@@ -58,8 +65,6 @@ final serverSubscribedProvider = Provider<bool>(
 /// StoreKit is wired up, the store should write the same row.
 final subscriptionActiveProvider = Provider<bool>((ref) {
   if (ref.watch(serverSubscribedProvider)) return true;
-  final devOk =
-      kDebugMode ||
-      ref.watch(settingsProvider.select((s) => s.firmwareDevMode));
-  return devOk && ref.watch(fakeSubscriptionProvider);
+  return ref.watch(devToolsVisibleProvider) &&
+      ref.watch(fakeSubscriptionProvider);
 });

@@ -10,6 +10,7 @@ import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
 import 'package:silversole/shared/pages/friends/friends_routes.dart';
+import 'package:silversole/shared/pages/friends/nickname_setup_page.dart';
 import 'package:silversole/shared/pages/firmware_update_page.dart';
 import 'package:silversole/shared/pages/game_webview_page.dart';
 import 'package:silversole/shared/pages/home_page.dart';
@@ -17,6 +18,7 @@ import 'package:silversole/shared/pages/shop_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/pages/subscription_page.dart';
+import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 
@@ -28,7 +30,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, _) => HomePage(title: 'Silver Sole'),
+        // A signed-in user with no nickname picks one before the app opens.
+        builder: (_, _) => NicknameGate(child: HomePage(title: 'Silver Sole')),
       ),
       GoRoute(path: '/sign-in', builder: (_, _) => SignInPage()),
       GoRoute(path: '/sign-up', builder: (_, _) => SignUpPage()),
@@ -61,6 +64,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => FirmwareUpdatePage(source: state.extra),
       ),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
+      GoRoute(path: '/themes', builder: (_, _) => const ThemePickerPage()),
       GoRoute(
         path: '/subscription',
         builder: (_, _) => const SubscriptionPage(),

@@ -6,7 +6,9 @@ import 'package:silversole/core/error/result.dart';
 import 'package:silversole/core/friends/fake_friends_repository.dart';
 import 'package:silversole/core/friends/friend_models.dart';
 import 'package:silversole/core/friends/friends_repository.dart';
+import 'package:silversole/core/friends/nickname_generator.dart';
 import 'package:silversole/core/friends/supabase_friends_repository.dart';
+import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Whether the friends feature is shown at all.
@@ -25,6 +27,9 @@ final friendsEnabledProvider = Provider<bool>(
 /// override this provider with their own fake.
 final friendsRepositoryProvider = Provider<FriendsRepository>((ref) {
   if (Constants.friendsOnSupabase) {
+    // Signing out and in as someone else must not show the last person's
+    // profile (and, with it, skip their successor's first-login name step).
+    ref.watch(authUserProvider);
     return SupabaseFriendsRepository(Supabase.instance.client);
   }
   final repo = FakeFriendsRepository.seeded();
@@ -44,6 +49,38 @@ Future<T> _unwrap<T>(Future<Result<T>> call) async {
 final myFriendProfileProvider = FutureProvider<MyProfile>(
   (ref) => _unwrap(ref.watch(friendsRepositoryProvider).getMyProfile()),
 );
+
+/// Source of the suggested names on the first-login name page. Tests
+/// override it with a seeded one.
+final nicknameGeneratorProvider = Provider<NicknameGenerator>(
+  (ref) => NicknameGenerator(),
+);
+
+/// How long the app waits for the profile before letting a signed-in user
+/// into the home page without the name step.
+const kNicknameGateTimeout = Duration(seconds: 8);
+
+/// True when a signed-in user has no nickname yet and must pick one before
+/// the app opens (first login, or an older account that never opened the
+/// friends page). Friends are shown only when [friendsEnabledProvider] is on,
+/// so nothing is asked while the backend that stores the name is not live.
+///
+/// Fails open: if the profile cannot be read (offline, slow, server error)
+/// the answer is false and the user is let in; the friends page asks for a
+/// name when they next open it. Nobody is locked out of the app by a failed
+/// friends call.
+final needsNicknameProvider = FutureProvider<bool>((ref) async {
+  if (!ref.watch(friendsEnabledProvider)) return false;
+  if (ref.watch(authUserProvider) == null) return false;
+  try {
+    final me = await ref
+        .watch(myFriendProfileProvider.future)
+        .timeout(kNicknameGateTimeout);
+    return me.needsSetup;
+  } catch (_) {
+    return false;
+  }
+});
 
 final friendsListProvider = FutureProvider<List<Friend>>(
   (ref) => _unwrap(ref.watch(friendsRepositoryProvider).getFriends()),

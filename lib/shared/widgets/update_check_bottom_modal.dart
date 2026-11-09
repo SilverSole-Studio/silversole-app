@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/shared/models/update_info_model.dart';
@@ -40,7 +41,6 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
   if (!context.mounted) return;
 
   final ts = Theme.of(context).textTheme;
-  final cs = Theme.of(context).colorScheme;
   const releasePath = Constants.latestReleaseUrl;
   final downloadPath =
       '${Constants.releaseDownloadUrl}/$latestVersion/$filename';
@@ -76,7 +76,7 @@ Future<void> showUpdateVersionDialog(BuildContext context) async {
                 child: Text(
                   // '發現新版本 $latestVersion',
                   'new_version'.tr(args: [latestVersion.toString()]),
-                  style: ts.headlineMedium?.copyWith(color: cs.primary),
+                  style: ts.headlineMedium?.copyWith(color: context.accent),
                 ),
               ),
 

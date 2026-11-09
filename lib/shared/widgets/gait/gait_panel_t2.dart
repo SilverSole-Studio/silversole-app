@@ -1,6 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:silversole/core/theme/app_palette_t2.dart';
+import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/gait_analysis_data.dart';
 import 'package:silversole/shared/models/mobility_card.dart';
@@ -62,8 +62,8 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
                 child: GaitStanceChart(
                   left: snapshot.stanceLeft,
                   right: snapshot.stanceRight,
-                  leftColor: AppPaletteT2.gold,
-                  rightColor: AppPaletteT2.flame,
+                  leftColor: context.mascot.gold,
+                  rightColor: context.mascot.flame,
                 ),
               ),
             ),
@@ -73,7 +73,7 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
               topic: GaitTopic.phase,
               child: GaitPhaseTimeline(
                 spans: snapshot.phaseSpans,
-                colorOf: _phaseColor,
+                colorOf: (phase) => _phaseColor(context, phase),
               ),
             ),
           if (snapshot.hasSmallMultiples)
@@ -81,7 +81,7 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
               title: snapshot.smallMultiplesTitleKey.tr(),
               child: GaitSmallMultiples(
                 lines: snapshot.smallMultiples,
-                colorOf: _toneColor,
+                colorOf: (tone) => _toneColor(context, tone),
               ),
             ),
         ],
@@ -103,17 +103,17 @@ class _SampleBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return MascotCard(
       key: GaitAnalysisPanelT2.sampleBannerKey,
-      color: AppPaletteT2.cardWarm,
+      color: context.mascot.cardWarm,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: AppPaletteT2.flame),
+          Icon(Icons.info_outline, color: context.mascot.flame),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'gait_sample_banner'.tr(),
               style: context.textTheme.titleSmall?.copyWith(
-                color: AppPaletteT2.ink,
+                color: context.mascot.ink,
               ),
             ),
           ),
@@ -135,7 +135,7 @@ class _PendingCard extends StatelessWidget {
       key: GaitAnalysisPanelT2.pendingKey,
       child: Row(
         children: [
-          const Icon(Icons.hourglass_bottom, color: AppPaletteT2.gold),
+          Icon(Icons.hourglass_bottom, color: context.mascot.gold),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -175,12 +175,12 @@ class _SpeedChartCard extends StatelessWidget {
                 ? GaitSpeedBars(
                     values: snapshot.series,
                     step: snapshot.seriesStep,
-                    color: AppPaletteT2.gold,
+                    color: context.mascot.gold,
                   )
                 : GaitTrendChart(
                     values: snapshot.series,
                     step: snapshot.seriesStep,
-                    color: AppPaletteT2.ink,
+                    color: context.mascot.ink,
                     openLast: true,
                     weekLabels: true,
                     showLeftAxis: snapshot.hasPhaseTimeline,
@@ -190,12 +190,14 @@ class _SpeedChartCard extends StatelessWidget {
                           fromX: band.from,
                           toX: band.to,
                           color: _phaseColor(
+                            context,
                             band.phase,
                           ).withValues(alpha: 0.16),
                         ),
                     ],
                     dotColorAt: snapshot.hasPhaseTimeline
-                        ? (index) => _phaseColor(snapshot.phaseAt(index))
+                        ? (index) =>
+                              _phaseColor(context, snapshot.phaseAt(index))
                         : null,
                     reference: reference == null
                         ? null
@@ -220,17 +222,17 @@ class _SpeedChartCard extends StatelessWidget {
   }
 }
 
-Color _toneColor(GaitTone tone) => switch (tone) {
-  GaitTone.neutral => AppPaletteT2.inkMuted,
-  GaitTone.good => AppPaletteT2.safe,
-  GaitTone.warn => AppPaletteT2.flame,
-  GaitTone.alert => AppPaletteT2.danger,
+Color _toneColor(BuildContext context, GaitTone tone) => switch (tone) {
+  GaitTone.neutral => context.mascot.inkMuted,
+  GaitTone.good => context.mascot.safe,
+  GaitTone.warn => context.mascot.flame,
+  GaitTone.alert => context.mascot.danger,
 };
 
-Color _phaseColor(GaitPhase phase) => switch (phase) {
-  GaitPhase.stable => AppPaletteT2.safe,
-  GaitPhase.declining => AppPaletteT2.flame,
-  GaitPhase.alert => AppPaletteT2.danger,
+Color _phaseColor(BuildContext context, GaitPhase phase) => switch (phase) {
+  GaitPhase.stable => context.mascot.safe,
+  GaitPhase.declining => context.mascot.flame,
+  GaitPhase.alert => context.mascot.danger,
 };
 
 /// This theme's section heading: the gold tab and a title.
@@ -249,9 +251,9 @@ class _GroupLabel extends StatelessWidget {
             width: 6,
             height: 20,
             decoration: BoxDecoration(
-              color: AppPaletteT2.gold,
-              borderRadius: BorderRadius.circular(3),
-              border: Border.all(color: AppPaletteT2.ink, width: 1.5),
+              color: context.mascot.gold,
+              borderRadius: AppRadius.pillR,
+              border: Border.all(color: context.mascot.line, width: 1.5),
             ),
           ),
           const SizedBox(width: 8),
@@ -305,7 +307,7 @@ class _Hero extends StatelessWidget {
     final threshold = snapshot.thresholdNoteKey;
 
     return MascotCard(
-      color: AppPaletteT2.cardWarm,
+      color: context.mascot.cardWarm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -313,11 +315,11 @@ class _Hero extends StatelessWidget {
             Row(
               children: [
                 MascotPill(
-                  color: _phaseColor(phase),
+                  color: _phaseColor(context, phase),
                   child: Text(
                     phase.labelKey.tr(),
                     style: context.textTheme.labelLarge?.copyWith(
-                      color: AppPaletteT2.card,
+                      color: context.mascot.card,
                     ),
                   ),
                 ),
@@ -349,7 +351,7 @@ class _Hero extends StatelessWidget {
                 snapshot.heroValue,
                 style: context.textTheme.displayMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppPaletteT2.ink,
+                  color: context.mascot.ink,
                 ),
               ),
               const SizedBox(width: 4),
@@ -369,7 +371,7 @@ class _Hero extends StatelessWidget {
                   Text(
                     '$delta ${snapshot.heroDeltaSuffixKey?.tr() ?? ''}',
                     style: context.textTheme.titleMedium.bold?.copyWith(
-                      color: _toneColor(snapshot.heroTone),
+                      color: _toneColor(context, snapshot.heroTone),
                     ),
                   ),
                 if (threshold != null)
@@ -396,7 +398,7 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tone = _toneColor(metric.tone);
+    final tone = _toneColor(context, metric.tone);
 
     return MascotCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -418,7 +420,7 @@ class _MetricTile extends StatelessWidget {
                     GaitTopicButton(topic: metric.topic),
                     if (metric.isAuxiliary)
                       MascotPill(
-                        color: AppPaletteT2.canvas,
+                        color: context.mascot.canvas,
                         child: Text(
                           'gait_aux'.tr(),
                           style: context.textTheme.labelMedium,
@@ -526,7 +528,7 @@ class _FallCard extends StatelessWidget {
                 '${snapshot.fallCount}',
                 style: context.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: AppPaletteT2.danger,
+                  color: context.mascot.danger,
                 ),
               ),
               const SizedBox(width: 2),
@@ -563,9 +565,12 @@ class _AdviceCard extends StatelessWidget {
                     width: 7,
                     height: 7,
                     decoration: BoxDecoration(
-                      color: AppPaletteT2.gold,
+                      color: context.mascot.gold,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppPaletteT2.ink, width: 1.2),
+                      border: Border.all(
+                        color: context.mascot.line,
+                        width: 1.2,
+                      ),
                     ),
                   ),
                 ),

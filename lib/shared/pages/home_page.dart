@@ -10,13 +10,44 @@ import 'package:silversole/shared/pages/home_body.dart';
 import 'package:silversole/shared/pages/map_page.dart';
 import 'package:silversole/shared/pages/person_page.dart';
 import 'package:silversole/shared/pages/plaza_tab_page.dart';
+import 'package:silversole/shared/pages/theme_b/home_body_b.dart';
+import 'package:silversole/shared/pages/theme_c/home_body_c.dart';
 import 'package:silversole/shared/pages/theme_two/analytics_page_t2.dart';
 import 'package:silversole/shared/pages/theme_two/home_body_t2.dart';
 import 'package:silversole/shared/pages/theme_two/map_page_t2.dart';
 import 'package:silversole/shared/providers/home_tab_provider.dart';
-import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/app_navigation_bar.dart';
 import 'package:silversole/shared/widgets/update_check_bottom_modal.dart';
+
+/// The five bottom-navigation tabs, in order: 今天／地圖／遊戲／報告／我的.
+/// One icon family (Lucide line icons) for all five; the selected tab is shown
+/// by the theme's filled indicator.
+const List<IconData> kHomeNavIcons = [
+  LucideIcons.calendarCheck,
+  LucideIcons.map,
+  LucideIcons.gamepad2,
+  LucideIcons.chartColumn,
+  LucideIcons.circleUser,
+];
+
+/// The same five tabs in look A's hand-drawn icons (names of `TownIcon`).
+const List<String> kHomeNavTownIcons = [
+  'sun',
+  'map',
+  'ball',
+  'clipboard',
+  'person',
+];
+
+/// Translation keys of [kHomeNavIcons]' labels.
+const List<String> kHomeNavLabels = [
+  'nav_today',
+  'nav_map',
+  'nav_game',
+  'nav_report',
+  'nav_mine',
+];
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, required this.title});
@@ -59,10 +90,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     // Each theme owns its own home implementation; the rest of the tabs are
     // shared until they get a mascot version too.
-    final isMascot =
-        ref.watch(settingsProvider).themeVariant == AppThemeVariant.mascot;
+    final variant = ref.watch(themeVariantProvider);
+    final isMascot = variant == AppThemeVariant.mascot;
     final pages = [
-      isMascot ? const HomeBodyT2() : const HomeBody(),
+      switch (variant) {
+        AppThemeVariant.mascot => const HomeBodyT2(),
+        AppThemeVariant.techLight ||
+        AppThemeVariant.techDark => const HomeBody(),
+        AppThemeVariant.dashboard => const HomeBodyB(),
+        AppThemeVariant.journal => const HomeBodyC(),
+      },
       isMascot ? const MapPageT2() : const MapPage(),
       // const DevicesPage(),
       // 遊戲分頁直接開 H5 粗哥廣場（取代卡片清單）
@@ -81,22 +118,9 @@ class _HomePageState extends ConsumerState<HomePage> {
           : appNavigationBar(
               selectedIndex: page,
               onDestinationSelected: ref.read(homeTabProvider.notifier).select,
-              icons: const [
-                Icons.home,
-                LucideIcons.map,
-                // LucideIcons.monitorSmartphone,
-                LucideIcons.gamepad2,
-                Icons.analytics,
-                Icons.settings,
-              ],
-              labels: const [
-                'home',
-                'map',
-                // 'devices',
-                'game',
-                'analytics',
-                'settings',
-              ],
+              icons: kHomeNavIcons,
+              townIcons: kHomeNavTownIcons,
+              labels: kHomeNavLabels,
             ),
       // One tab in the tree at a time. IndexedStack kept every tab mounted,
       // which left the map's Android platform view laid out off-screen;
