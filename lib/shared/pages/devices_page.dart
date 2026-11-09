@@ -380,17 +380,11 @@ class _DeviceRowTile extends StatelessWidget {
             children: [
               // Every sole is called "SilverSole"; the ID suffix tells them
               // apart.
-              Row(
+              Wrap(
                 spacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Flexible(
-                    child: Text(
-                      device.name,
-                      style: context.textTheme.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                  Text(device.name, style: context.textTheme.titleMedium),
                   if (device.shortId case final shortId?)
                     Text(
                       '••••$shortId',

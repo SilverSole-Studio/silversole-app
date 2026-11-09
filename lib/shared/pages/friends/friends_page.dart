@@ -199,15 +199,21 @@ class _AddButtons extends StatelessWidget {
       child: Card(
         child: InkWell(
           onTap: onTap,
-          child: SizedBox(
-            height: 120,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 120),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               spacing: AppSpacing.sm,
               children: [
-                Icon(icon, size: 40),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Icon(icon, size: 40),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: AppSpacing.sm,
+                  ),
                   child: Text(
                     label,
                     style: context.textTheme.titleLarge,
@@ -221,25 +227,28 @@ class _AddButtons extends StatelessWidget {
       ),
     );
 
-    return Row(
-      spacing: AppSpacing.sm,
-      children: [
-        tile(
-          Icons.qr_code_2,
-          'friends_my_qr'.tr(),
-          () => context.push('/friends/my-qr'),
-        ),
-        tile(
-          Icons.qr_code_scanner,
-          'friends_scan_qr'.tr(),
-          () => context.push('/friends/scan'),
-        ),
-        tile(
-          Icons.dialpad,
-          'friends_enter_code'.tr(),
-          () => context.push('/friends/code', extra: CodeMode.friend),
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppSpacing.sm,
+        children: [
+          tile(
+            Icons.qr_code_2,
+            'friends_my_qr'.tr(),
+            () => context.push('/friends/my-qr'),
+          ),
+          tile(
+            Icons.qr_code_scanner,
+            'friends_scan_qr'.tr(),
+            () => context.push('/friends/scan'),
+          ),
+          tile(
+            Icons.dialpad,
+            'friends_enter_code'.tr(),
+            () => context.push('/friends/code', extra: CodeMode.friend),
+          ),
+        ],
+      ),
     );
   }
 }

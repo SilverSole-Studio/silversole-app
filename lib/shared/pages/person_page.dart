@@ -148,7 +148,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                     child: Text(
                       user?.email ?? 'not_signed_in'.tr(),
                       style: context.textTheme.titleMedium,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
