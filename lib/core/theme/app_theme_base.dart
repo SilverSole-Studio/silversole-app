@@ -124,7 +124,7 @@ ThemeData buildAppThemeData(AppSkin skin) {
       foregroundColor: scheme.onSurface,
       elevation: 0,
       scrolledUnderElevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       titleTextStyle: textTheme.titleLarge,
     ),
 

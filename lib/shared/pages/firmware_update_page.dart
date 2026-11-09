@@ -12,6 +12,7 @@ import 'package:silversole/shared/models/connected_sole.dart';
 import 'package:silversole/shared/models/firmware_manifest.dart';
 import 'package:silversole/shared/models/ota_state.dart';
 import 'package:silversole/shared/providers/connected_sole_provider.dart';
+import 'package:silversole/shared/providers/firmware_check_provider.dart';
 import 'package:silversole/shared/providers/firmware_update_provider.dart';
 import 'package:silversole/shared/widgets/firmware_card_parts.dart';
 
@@ -71,6 +72,10 @@ class _FirmwareUpdatePageState extends ConsumerState<FirmwareUpdatePage> {
                 source: widget.source,
                 sole: ref.watch(connectedSoleProvider),
                 onStart: _start,
+                onRecheck: () {
+                  ref.invalidate(firmwareCheckProvider);
+                  context.pop();
+                },
               ),
               OtaPhase.downloading ||
               OtaPhase.transferring ||
@@ -99,11 +104,13 @@ class _Confirm extends StatelessWidget {
     required this.source,
     required this.sole,
     required this.onStart,
+    required this.onRecheck,
   });
 
   final Object? source;
   final ConnectedSole? sole;
   final VoidCallback onStart;
+  final VoidCallback onRecheck;
 
   static const _tips = [
     'ota_tip_foreground',
@@ -119,7 +126,22 @@ class _Confirm extends StatelessWidget {
       final FirmwareImage i => ('ota_local_file'.tr(), '', i.bin.length),
       _ => (null, '', 0),
     };
-    if (target == null) return Text('ota_nothing_to_install'.tr());
+    if (target == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppSpacing.base,
+        children: [
+          Text('ota_nothing_to_install'.tr()),
+          OutlinedButton(
+            onPressed: onRecheck,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(kPrimaryButtonHeight),
+            ),
+            child: Text('ota_recheck'.tr()),
+          ),
+        ],
+      );
+    }
     final sole = this.sole;
     final installed = sole?.firmwareVersion;
     final seconds = (size / otaBytesPerSecond).ceil();

@@ -10,7 +10,9 @@ import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/models/user_identity.dart';
+import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/providers/theme_variant_provider.dart';
@@ -101,6 +103,9 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final scheme = context.colorScheme;
     final notifier = ref.read(settingsProvider.notifier);
     final myDevice = settings.preferredDevice;
+    final profile = ref.watch(myFriendProfileProvider).value;
+    final nickname = profile?.nickname?.trim();
+    final hasNickname = nickname != null && nickname.isNotEmpty;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -118,35 +123,45 @@ class _PersonPageState extends ConsumerState<PersonPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: AppSpacing.xl,
           children: [
-            // Who is signed in: just the name the person knows (the email).
-            // No account id, no plan code.
+            // Who is signed in: the nickname and avatar from the friends
+            // profile; the email only when there is no nickname yet (it lives
+            // under the account settings). No account id, no plan code.
             AppCard(
               tint: true,
               child: Row(
                 children: [
-                  isMascot
-                      ? Image.asset(
-                          'assets/mascot-assets/happy.webp',
-                          height: 72,
-                          fit: BoxFit.contain,
-                        )
-                      : Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: scheme.primary.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
+                  if (profile != null && hasNickname)
+                    FriendAvatar(
+                      preset: profile.avatarPreset,
+                      photoPath: profile.photoPath,
+                      size: 64,
+                    )
+                  else
+                    isMascot
+                        ? Image.asset(
+                            'assets/mascot-assets/happy.webp',
+                            height: 72,
+                            fit: BoxFit.contain,
+                          )
+                        : Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: scheme.primary.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              LucideIcons.user,
+                              size: 28,
+                              color: scheme.primary,
+                            ),
                           ),
-                          child: Icon(
-                            LucideIcons.user,
-                            size: 28,
-                            color: scheme.primary,
-                          ),
-                        ),
                   const SizedBox(width: AppSpacing.base),
                   Expanded(
                     child: Text(
-                      user?.email ?? 'not_signed_in'.tr(),
+                      hasNickname
+                          ? nickname
+                          : (user?.email ?? 'not_signed_in'.tr()),
                       style: context.textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -169,10 +184,17 @@ class _PersonPageState extends ConsumerState<PersonPage> {
             ),
             // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
             // 金流接上前不顯示訂閱入口（kSubscriptionOffered）。
-            if (kSubscriptionOffered || !isSignedIn)
+            if (kSubscriptionOffered || !isSignedIn || hasNickname)
               SettingsGroup(
                 title: 'account'.tr(),
                 children: [
+                  // The email, once the card above shows the nickname.
+                  if (isSignedIn && hasNickname)
+                    SettingsRow(
+                      icon: LucideIcons.mail,
+                      title: 'email'.tr(),
+                      subtitle: user.email,
+                    ),
                   if (kSubscriptionOffered)
                     SettingsRow(
                       icon: LucideIcons.crown,
