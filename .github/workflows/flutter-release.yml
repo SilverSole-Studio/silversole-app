@@ -14,7 +14,8 @@ name: Flutter Release
 #
 # iOS: every rc (and a manual run with `testflight` ticked) also builds an IPA
 # and uploads it to TestFlight, with the same build number as Android's
-# version code. App Store submission stays a manual step in App Store Connect.
+# version code. v1.9.0 then submits that same TestFlight build (the rc Play
+# promoted) to App Store review, released as soon as Apple approves it.
 
 on:
   push:
@@ -399,6 +400,9 @@ jobs:
     needs: plan
     if: needs.plan.outputs.kind == 'final'
     runs-on: ubuntu-latest
+    outputs:
+      rc_tag: ${{ steps.find.outputs.rc_tag }}
+      version_code: ${{ steps.find.outputs.version_code }}
     env:
       VERSION_NAME: ${{ needs.plan.outputs.version_name }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -492,4 +496,54 @@ jobs:
             ${{ env.NOTES }}
 
             已送交 Google Play 審核，審核通過後即可在 Play 商店更新。
+          wait: true
+
+  # The App Store side of `promote`: the exact TestFlight build of the rc Play
+  # just promoted goes to App Review, and is released as soon as it passes.
+  appstore:
+    needs: [plan, promote]
+    if: needs.plan.outputs.kind == 'final'
+    runs-on: ubuntu-latest
+    env:
+      VERSION_NAME: ${{ needs.plan.outputs.version_name }}
+      BUILD_NUMBER: ${{ needs.promote.outputs.version_code }}
+      RC_TAG: ${{ needs.promote.outputs.rc_tag }}
+      BUNDLE_ID: com.dongyutech.silversole
+      ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install App Store Connect API client
+        run: pip install --quiet "pyjwt[crypto]" requests
+
+      - name: Write App Store Connect API key
+        env:
+          ASC_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s\n' "$ASC_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "ASC_KEY_PATH=$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
+
+      # Same CHANGELOG section the Play listing got.
+      - name: Write release notes
+        run: python3 .github/scripts/play_whatsnew.py CHANGELOG.md "v$VERSION_NAME" distribution/whatsnew
+
+      - name: Submit to App Store review
+        run: |
+          echo "submitting $VERSION_NAME build $BUILD_NUMBER (from $RC_TAG)"
+          python3 .github/scripts/asc_submit.py "$VERSION_NAME" "$BUILD_NUMBER" distribution/whatsnew
+
+      - name: Notify Discord
+        uses: tsickert/discord-webhook@v7.0.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: |
+            SilverSole iOS ${{ env.VERSION_NAME }} 已送交 App Store 審核，審核通過後自動上架。
           wait: true
