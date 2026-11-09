@@ -177,17 +177,11 @@ class _DeviceRowTile extends ConsumerWidget {
               children: [
                 // Every sole is called "SilverSole"; the ID suffix tells them
                 // apart.
-                Row(
+                Wrap(
                   spacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Flexible(
-                      child: Text(
-                        row.device.name,
-                        style: context.textTheme.titleMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                    Text(row.device.name, style: context.textTheme.titleMedium),
                     if (row.device.shortId case final shortId?)
                       Text(
                         '••••$shortId',

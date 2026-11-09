@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/friends/friend_rules.dart';
+import 'package:silversole/shared/pages/activity_report_page.dart';
 import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
 import 'package:silversole/shared/pages/devices_page.dart';
@@ -43,6 +44,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/analytics-detail',
         builder: (_, _) => const AnalyticsDetailRoute(),
+      ),
+      GoRoute(
+        path: '/activity-report',
+        builder: (_, _) => const ActivityReportPage(),
       ),
       GoRoute(
         path: '/foot-check',

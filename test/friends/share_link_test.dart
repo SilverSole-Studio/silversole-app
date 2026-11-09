@@ -260,8 +260,13 @@ void main() {
     });
 
     test('the next day it starts over', () async {
-      final repo = await named(world())
-        ..addLinkRequestsReceived('wang', kShareLinkInboxLimit);
+      // Build the fake inbox under the fixed clock too, so the requests are
+      // stamped on _t0 and not on the real day the test happens to run.
+      final repo = await withClock(
+        Clock.fixed(_t0),
+        () async => await named(world())
+          ..addLinkRequestsReceived('wang', kShareLinkInboxLimit),
+      );
       await withClock(Clock.fixed(_t0), () async {
         expect(
           err(await repo.sendFriendRequest(FriendSource.link, _wangToken)),

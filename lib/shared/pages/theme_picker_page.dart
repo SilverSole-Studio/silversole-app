@@ -63,7 +63,7 @@ class ThemePickerPage extends ConsumerWidget {
                     style: context.textTheme.bodyMedium?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
