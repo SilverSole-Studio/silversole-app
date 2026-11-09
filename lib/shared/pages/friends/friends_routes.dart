@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:silversole/core/friends/friend_models.dart';
+import 'package:silversole/core/friends/friend_rules.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/pages/friends/friends_page.dart';
 import 'package:silversole/shared/pages/friends/org_pages.dart';
@@ -7,6 +8,7 @@ import 'package:silversole/shared/pages/friends/person_pages.dart';
 import 'package:silversole/shared/pages/friends/profile_page.dart';
 import 'package:silversole/shared/pages/friends/qr_pages.dart';
 import 'package:silversole/shared/pages/friends/requests_page.dart';
+import 'package:silversole/shared/pages/friends/share_link_page.dart';
 
 /// `/friends` and its sub-pages, registered by the app router. While
 /// [enabled] is false (see `friendsEnabledProvider`) every friends address
@@ -35,5 +37,23 @@ GoRoute friendsRoute({required bool enabled}) => GoRoute(
       builder: (_, state) => FriendDetailPage(friend: state.extra! as Friend),
     ),
     GoRoute(path: 'blocked', builder: (_, _) => const BlockedPage()),
+  ],
+);
+
+/// `/f` — a friend's share link (`https://dongyu.company/f/?t=<token>`), which
+/// the platform hands to the router when the app is opened from one. Needs a
+/// signed-in user (the router's redirect holds the link through sign-in). With
+/// friends off it goes home like every other friends address. `/f/<token>` is
+/// read too; the website always writes `?t=`.
+GoRoute shareLinkRoute({required bool enabled}) => GoRoute(
+  path: '/f',
+  redirect: (_, _) => enabled ? null : '/',
+  builder: (_, state) => ShareLinkPage(token: parseShareLinkToken(state.uri)),
+  routes: [
+    GoRoute(
+      path: ':token',
+      builder: (_, state) =>
+          ShareLinkPage(token: parseShareLinkToken(state.uri)),
+    ),
   ],
 );

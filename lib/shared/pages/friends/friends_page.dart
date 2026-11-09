@@ -100,6 +100,8 @@ class _FriendsHub extends ConsumerWidget {
           _MeRow(me: me),
           const SizedBox(height: AppSpacing.base),
           const _AddButtons(),
+          const SizedBox(height: AppSpacing.sm),
+          const _ShareLinkCard(),
           const SizedBox(height: AppSpacing.base),
           _NavRow(
             icon: Icons.mail_outline,
@@ -239,6 +241,93 @@ class _AddButtons extends StatelessWidget {
           'friends_enter_code'.tr(),
           () => context.push('/friends/code', extra: CodeMode.friend),
         ),
+      ],
+    );
+  }
+}
+
+/// 「傳連結給朋友」: opens the phone's share sheet (LINE, Messenger, SMS…) with
+/// a link that works for 7 days. While one is on, shows until when and a way
+/// to turn it off.
+class _ShareLinkCard extends ConsumerWidget {
+  const _ShareLinkCard();
+
+  Future<void> _share(BuildContext context, WidgetRef ref) async {
+    final link = await runFriendAction(
+      ref,
+      ref.read(friendsRepositoryProvider).createShareLink,
+    );
+    if (link == null || !context.mounted) return;
+    // An iPad points its share sheet at a spot on screen.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box != null && box.hasSize
+        ? box.localToGlobal(Offset.zero) & box.size
+        : null;
+    try {
+      await ref.read(shareTextProvider)(
+        'friends_share_message'.tr(args: [shareLinkUri(link.token).toString()]),
+        origin,
+      );
+    } catch (e) {
+      debugPrint('[friends] share link: $e');
+    }
+  }
+
+  Future<void> _turnOff(BuildContext context, WidgetRef ref) async {
+    final ok = await confirmFriendAction(
+      context,
+      title: 'friends_share_link_off_title'.tr(),
+      body: 'friends_share_link_off_body'.tr(),
+      confirmLabel: 'friends_share_link_off'.tr(),
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    await runFriendStep(
+      ref,
+      ref.read(friendsRepositoryProvider).disableShareLink,
+      successText: 'friends_share_link_off_done'.tr(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final link = ref.watch(shareLinkProvider).value;
+    return Column(
+      spacing: AppSpacing.sm,
+      children: [
+        FriendButton(
+          label: 'friends_share_link_btn'.tr(),
+          icon: Icons.share,
+          secondary: true,
+          onPressed: () => _share(context, ref),
+        ),
+        if (link == null)
+          FriendText('friends_share_link_hint'.tr(), center: true)
+        else
+          Row(
+            children: [
+              Expanded(
+                child: FriendText(
+                  'friends_share_link_until'.tr(
+                    args: [
+                      '${link.expiresAt.toLocal().month}/'
+                          '${link.expiresAt.toLocal().day}',
+                    ],
+                  ),
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, kFriendButtonHeight),
+                ),
+                onPressed: () => _turnOff(context, ref),
+                child: Text(
+                  'friends_share_link_off'.tr(),
+                  style: context.textTheme.titleLarge,
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

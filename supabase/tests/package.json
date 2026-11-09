@@ -12,6 +12,8 @@
     "test:saves-concurrency": "node --test --test-concurrency=1 game_saves_concurrency_test.mjs",
     "test:friend-farm": "node --test --test-concurrency=1 friend_farm_test.mjs",
     "test:friend-farm-concurrency": "node --test --test-concurrency=1 friend_farm_concurrency_test.mjs",
+    "test:share-link": "node --test --test-concurrency=1 friend_share_link_test.mjs",
+    "test:share-link-concurrency": "node --test --test-concurrency=1 friend_share_link_concurrency_test.mjs",
     "test:mp": "node --test --test-concurrency=1 mp_rooms_test.mjs",
     "test:mp-presence": "node --test --test-concurrency=1 mp_presence_test.mjs",
     "test:mp-queue": "node --test --test-concurrency=1 mp_queue_test.mjs",

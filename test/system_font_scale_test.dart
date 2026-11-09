@@ -200,7 +200,16 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(tester.takeException(), isNull, reason: '$at hub');
+      // The hub is a long list now (the share-link row sits above the friend
+      // list): scroll to the friend list's title, then back up.
+      final hub = find.byType(Scrollable).first;
+      await tester.scrollUntilVisible(
+        find.textContaining('朋友（'),
+        200,
+        scrollable: hub,
+      );
       expect(find.textContaining('朋友（'), findsOneWidget, reason: '$at hub');
+      await tester.scrollUntilVisible(find.text('邀請'), -200, scrollable: hub);
 
       await tester.tap(find.text('邀請'));
       await tester.pumpAndSettle();
@@ -208,6 +217,11 @@ void main() {
       friends.pop();
       await tester.pumpAndSettle();
 
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(0);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('輸入好友碼'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: '$at keypad');

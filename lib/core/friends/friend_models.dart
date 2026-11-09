@@ -6,8 +6,9 @@
 /// so the garden can already branch on it once the family feature lands.
 enum FriendRelation { friend, family }
 
-/// Which of the three routes a friendship or request came through.
-enum FriendSource { qr, code, org }
+/// Which route a friendship or request came through. (The server also has
+/// `online`, from the plaza suggestions; the app reads it as [code].)
+enum FriendSource { qr, code, org, link }
 
 enum OrgKind { communityCenter, dayCare, other }
 
@@ -125,6 +126,24 @@ class QrToken {
 
   final String token;
   final DateTime expiresAt;
+}
+
+/// The signed-in user's own share link (`https://dongyu.company/f/?t=<token>`).
+class ShareLink {
+  const ShareLink({required this.token, required this.expiresAt});
+
+  final String token;
+  final DateTime expiresAt;
+}
+
+/// Who a share link belongs to, as a stranger who opened it may see them:
+/// nickname and preset avatar only. [alreadyFriends] lets the sheet say so
+/// instead of offering to add them again.
+class SharedProfile {
+  const SharedProfile({required this.profile, this.alreadyFriends = false});
+
+  final FriendProfile profile;
+  final bool alreadyFriends;
 }
 
 class OrgSummary {
