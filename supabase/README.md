@@ -23,6 +23,7 @@ App 端：`lib/core/friends/supabase_friends_repository.dart`（`friends_provide
 | `migrations/20261103120000_mp_rooms.sql` | 遊戲聯機底層（2026-11-03）：`mp_rooms`（兩人讀得到、不開放直接寫）、`mp_limits`（每人限流＋猜房號鎖定）、`mp_declines`（拒絕邀請的冷卻）；RPC `mp_create_room`／`mp_join_room`／`mp_invite`／`mp_my_invites`／`mp_accept_invite`／`mp_submit_move`／`mp_leave`；`realtime.messages` 的 RLS（只有房間兩人進得了 `room:<id>`）。要先套好好友那兩支。測試：`npm run test:mp`（PGlite，每個案例在交易裡跑完 rollback）、`npm run test:mp-concurrency`（真 PostgreSQL，多連線同時打）。**還沒套用到任何專案**，要先問 user。設計：總倉庫 `02_產品/鞋墊_SilverSole/_聯機設計_2026-11-03.md` |
 | `migrations/20261104180000_mp_presence.sql` | 好友在線上與拒絕通知（2026-11-04）：`mp_presence`（誰最近 90 秒內出現過，不開放直接讀寫）、RPC `mp_ping`（頁面開著每 60 秒打一次）、`mp_friends_online`（只回「是好友、沒封鎖、在線上」的人）；`mp_leave` 拒絕邀請時多推一個 `declined` 給房主（2 人房與多人房都推）；`mp_cleanup` 多刪一天沒動的在線紀錄。要先套好 mp_rooms、mp_seats。測試：`npm run test:mp-presence`（16 個案例）。**還沒套用到任何專案**，要先問 user |
 | `migrations/20261104120000_friend_farm.sql` | 好友農場（2026-11-04）：RPC `friend_farm`（只回對方農場畫面要的欄位：田、擺設、經驗、等級、稱號）、`friends_board`（好友＋我的等級排行）、`friend_water`（幫好友澆一塊乾田：每位好友每天 1 次、每人每天最多幫 5 位、最多被幫 5 次）、`friend_helps_claim`（被幫的人與幫人的人領記錄，由網頁套到自己的存檔）；表 `friend_helps`（記錄，也是每日次數的帳）、`friend_help_limits`（限流＋計數時鎖的那一列）。讀的是 `game_saves.data` 裡的 `silversole.farm`（存檔是本人寫的，每個欄位都檢查並夾住）。要先套好好友兩支與 `game_saves`。測試：`npm run test:friend-farm`（PGlite）、`npm run test:friend-farm-concurrency`（真 PostgreSQL）。**還沒套用到任何專案**，要先問 user。網頁端：laojie-world `games/world/friend_farm.js`（用既有的 `mpSession` 通道，App 不用改）。 |
+| `migrations/20261109120000_friend_share_link.sql` | 社群連結加好友（2026-11-09，issue #40）：表 `friend_share_links`（一人一列的連結：32 位十六進位 token、7 天有效、可停用）、`friend_link_inbox`（收件人每天透過連結收到幾封）；RPC `create_share_link`／`get_share_link`／`disable_share_link`／`preview_by_share_link`；`send_friend_request` 多來源 `link`（重寫自 friend_suggest 那版，保留 `online`）；`friend_requests.source`、`friendships.source` 多收 `link`。要先套好好友兩支與 `friend_suggest`。測試：`npm run test:share-link`（PGlite，22 個案例）、`npm run test:share-link-concurrency`（真 PostgreSQL，3 個並發案例）。**還沒套用到任何專案**，要先問 user。網址 `https://dongyu.company/f/?t=<token>`，官網落地頁在 Dongyu-Tech/dongyu.company-second PR #21 |
 | `tests/friends_rpc_test.mjs` | 60 個案例：Dart 假資料版的測試（`test/friends/fake_friends_repository_test.dart`）、規格 §10 的 RPC 與 RLS 測試，加上核查 8 點的攻擊情境（audit 1–8） |
 | `tests/friends_concurrency_test.mjs` | 並發攻擊：在本機開一個真的 PostgreSQL（`embedded-postgres`，MIT），用 60 條連線同時打。每個情境先在「只有第一支 migration」跑一次證明漏洞存在，再在兩支都套的版本跑一次 |
 
@@ -49,8 +50,9 @@ npm run test:concurrency   # 真 PostgreSQL，第一次會下載約 30 MB 的 Po
 | 6 | 20 封未回覆的鎖只鎖一對，並發寄 200 人全過 | `friends_lock_pair` 改成依 user_id 順序鎖兩個「人」，所有上限在鎖裡算 | 並發測試（修前 22/60、修後剛好 20） |
 | 7 | 暱稱可放零寬字、反向字、冒充系統名、自取「銀足朋友」 | NFKC 正規化＋逐字白名單；`friend_reserved_names` 保留名（銀足、官方、客服、管理員、系統、動域、admin、support、粗哥）；App 端同步檢查 | audit 7＋Dart 單元測試 |
 | 8 | 沒有每人全域限流 | `friend_rate_buckets` token bucket（容量 30、每秒回 0.5），`friends_me()`／`friends_uid()` 第一行扣，寫入類 RPC 多扣；同一人的呼叫排隊 | audit 8＋並發測試 |
+| 9 | 社群連結（2026-11-09）：每人每天最多收 10 封「透過連結」的邀請，換連結、取消、拒絕都不能洗掉；並發、開分身也一樣 | 計數存在獨立的 `friend_link_inbox`（算在收件人身上），在 `friends_lock_pair` 鎖「我＋收件人」之後用 upsert + `where received < 10` 原子增加；連結一人一列、token 覆蓋即作廢；陌生人預覽只回 `user_id`／暱稱／預設頭像；被冷卻的邀請照舊暫扣、不占名額；表開 RLS 且收回 anon／authenticated 權限；預覽與產生都先扣每人限流 | `friend_share_link_test.mjs` 22 案例＋並發 3 案例（30 人同時寄 → 恰好 10 封） |
 
-新的錯誤碼：`rate_limited`（太快了，等一下再試）、`send_limit`（今天的邀請送夠多了）。App 端 `FriendError.rateLimited`、`sendLimit`。
+新的錯誤碼：`rate_limited`（太快了，等一下再試）、`send_limit`（今天的邀請送夠多了）、`link_expired`（連結過期或被停用）、`link_limit`（對方今天透過連結收到的邀請滿 10 封）。App 端 `FriendError.rateLimited`、`sendLimit`、`linkExpired`、`linkLimit`。
 
 **還沒處理：**
 - 被惡意上傳後又沒登記的照片（資料夾上限 10 張以內）不會自己清，要另寫 Edge Function 用 Storage API 定期清（Postgres 刪不了 Storage 的檔）。

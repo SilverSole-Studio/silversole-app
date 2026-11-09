@@ -158,6 +158,28 @@ class SupabaseFriendsRepository implements FriendsRepository {
   );
 
   @override
+  Future<Result<ShareLink>> createShareLink() =>
+      _guard(() async => _shareLink(_map(await _rpc('create_share_link')))!);
+
+  @override
+  Future<Result<ShareLink?>> getShareLink() =>
+      _guard(() async => _shareLink(_map(await _rpc('get_share_link'))));
+
+  @override
+  Future<Result<void>> disableShareLink() =>
+      _guard(() => _rpc('disable_share_link'));
+
+  @override
+  Future<Result<SharedProfile>> previewByShareLink(String token) =>
+      _guard(() async {
+        final r = _map(await _rpc('preview_by_share_link', {'p_token': token}));
+        return SharedProfile(
+          profile: _profile(r),
+          alreadyFriends: r['already_friends'] == true,
+        );
+      });
+
+  @override
   Future<Result<SendRequestOutcome>> sendFriendRequest(
     FriendSource source,
     String ref,
@@ -281,6 +303,8 @@ class SupabaseFriendsRepository implements FriendsRepository {
     'upload_banned': FriendError.uploadBanned,
     'send_limit': FriendError.sendLimit,
     'rate_limited': FriendError.rateLimited,
+    'link_expired': FriendError.linkExpired,
+    'link_limit': FriendError.linkLimit,
   };
 
   /// Deletes the photos in the user's folder other than [keep] (the server
@@ -418,6 +442,15 @@ class SupabaseFriendsRepository implements FriendsRepository {
       _ => OrgKind.other,
     },
   );
+
+  /// A share link as the RPCs return it; null for `{"active": false}`.
+  static ShareLink? _shareLink(Map<String, dynamic> r) {
+    if (r['active'] == false) return null;
+    return ShareLink(
+      token: r['token'] as String,
+      expiresAt: _time(r['expires_at'])!,
+    );
+  }
 
   static FriendSource _source(Object? raw) => FriendSource.values.firstWhere(
     (s) => s.name == raw,

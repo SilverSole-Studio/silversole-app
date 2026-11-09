@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show Rect;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/error/result.dart';
@@ -9,6 +10,7 @@ import 'package:silversole/core/friends/friends_repository.dart';
 import 'package:silversole/core/friends/nickname_generator.dart';
 import 'package:silversole/core/friends/supabase_friends_repository.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Whether the friends feature is shown at all.
@@ -109,6 +111,43 @@ final blockedListProvider = FutureProvider<List<FriendProfile>>(
   (ref) => _unwrap(ref.watch(friendsRepositoryProvider).getBlocked()),
 );
 
+/// The signed-in user's share link as it stands now; null when there is none
+/// that still works. Drives the "turn off link" row on the friends page.
+final shareLinkProvider = FutureProvider<ShareLink?>(
+  (ref) => _unwrap(ref.watch(friendsRepositoryProvider).getShareLink()),
+);
+
+/// Opens the phone's share sheet with [text]. [origin] is where the sheet
+/// points to on an iPad. A provider so tests can see what would be shared.
+typedef ShareText = Future<void> Function(String text, Rect? origin);
+
+final shareTextProvider = Provider<ShareText>(
+  (ref) =>
+      (text, origin) => SharePlus.instance.share(
+        ShareParams(text: text, sharePositionOrigin: origin),
+      ),
+);
+
+/// A share link that was opened while nobody was signed in. The sign-in
+/// screen is shown first; once the user is in, the router takes the token
+/// from here and opens the link. Kept in memory only.
+class PendingShareLink {
+  String? _token;
+
+  void hold(String token) => _token = token;
+
+  /// The held token, once: a second call returns null.
+  String? take() {
+    final token = _token;
+    _token = null;
+    return token;
+  }
+}
+
+final pendingShareLinkProvider = Provider<PendingShareLink>(
+  (ref) => PendingShareLink(),
+);
+
 /// Re-reads everything after a change. The lists are small, so one refresh
 /// is simpler than tracking which list a given action touched.
 void refreshFriendsData(WidgetRef ref) {
@@ -118,6 +157,7 @@ void refreshFriendsData(WidgetRef ref) {
   ref.invalidate(myOrgsProvider);
   ref.invalidate(orgMembersProvider);
   ref.invalidate(blockedListProvider);
+  ref.invalidate(shareLinkProvider);
 }
 
 /// [refreshFriendsData] from outside a widget, or after the widget that
@@ -129,7 +169,8 @@ void refreshFriendsDataIn(ProviderContainer container) {
     ..invalidate(friendRequestsProvider)
     ..invalidate(myOrgsProvider)
     ..invalidate(orgMembersProvider)
-    ..invalidate(blockedListProvider);
+    ..invalidate(blockedListProvider)
+    ..invalidate(shareLinkProvider);
 }
 
 /// Second line of the games-hub friends card: pending requests first, else

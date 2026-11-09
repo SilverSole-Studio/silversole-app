@@ -42,6 +42,33 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Friend share links: https://dongyu.company/f/?t=<token> opens the
+                 app directly (App Links). autoVerify needs
+                 https://dongyu.company/.well-known/assetlinks.json to list this
+                 app's package and signing-key SHA-256 (website repo
+                 Dongyu-Tech/dongyu.company-second). Keep host and path in step
+                 with kShareLinkHost / kShareLinkPath in friend_rules.dart. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="https"
+                    android:host="dongyu.company"
+                    android:pathPrefix="/f/"/>
+            </intent-filter>
+            <!-- The website's 「用銀足 App 打開」 button (for LINE / Facebook in-app
+                 browsers, which do not hand https links to the app) sends
+                 silversole://dongyu.company/f/?t=<token> through an intent:// URL. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data
+                    android:scheme="silversole"
+                    android:host="dongyu.company"
+                    android:pathPrefix="/f/"/>
+            </intent-filter>
         </activity>
         <service
             android:name=".ble.BleForegroundService"

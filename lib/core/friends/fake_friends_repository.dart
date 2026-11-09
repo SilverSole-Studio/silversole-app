@@ -127,6 +127,14 @@ class FakeFriendsRepository implements FriendsRepository {
   final _declinedAt = <(String, String), DateTime>{};
   final _qrTokens = <String, _QrToken>{};
 
+  /// One share link per person, like the server's `friend_share_links`.
+  final _shareLinks = <String, _ShareLinkRow>{};
+
+  /// Requests each person got through links today, like `friend_link_inbox`.
+  /// Nothing the sender or recipient does takes it back down.
+  final _linkInbox = <String, int>{};
+  DateTime? _linkInboxDay;
+
   /// Friend and org codes previewed today: sending to them or joining does
   /// not spend another lookup (the server's friend_daily_limits.previewed_codes).
   final _previewedCodes = <String>{};
@@ -246,6 +254,24 @@ class FakeFriendsRepository implements FriendsRepository {
   /// Someone else's QR token, as if they had opened "my QR".
   void addQrToken(String userId, String token, DateTime expiresAt) =>
       _qrTokens[token] = _QrToken(userId, expiresAt);
+
+  /// Someone else's share link, as if they had made it from the friends page.
+  void addShareLink(
+    String userId,
+    String token, {
+    DateTime? expiresAt,
+    bool disabled = false,
+  }) => _shareLinks[userId] = _ShareLinkRow(
+    token,
+    expiresAt ?? clock.now().add(kShareLinkTtl),
+  )..disabled = disabled;
+
+  /// [count] other people have already sent [userId] a request through their
+  /// link today (the fake has only one "me", so this stands in for them).
+  void addLinkRequestsReceived(String userId, int count) {
+    _rollLinkInbox();
+    _linkInbox[userId] = (_linkInbox[userId] ?? 0) + count;
+  }
 
   /// [userId] quietly declines the request I sent them.
   void declineAs(String userId) {
@@ -422,6 +448,45 @@ class FakeFriendsRepository implements FriendsRepository {
   });
 
   @override
+  Future<Result<ShareLink>> createShareLink() => _respond(() {
+    if (_me.nickname == null) {
+      throw const FriendException(FriendError.nicknameInvalid);
+    }
+    final now = clock.now();
+    var row = _shareLinks[meId];
+    if (row == null || !row.isLive(now)) {
+      // A new token replaces the old row, so the old link stops working.
+      row = _shareLinks[meId] = _ShareLinkRow(
+        _newShareToken(),
+        now.add(kShareLinkTtl),
+      );
+    }
+    return ShareLink(token: row.token, expiresAt: row.expiresAt);
+  });
+
+  @override
+  Future<Result<ShareLink?>> getShareLink() => _respond(() {
+    final row = _shareLinks[meId];
+    if (row == null || !row.isLive(clock.now())) return null;
+    return ShareLink(token: row.token, expiresAt: row.expiresAt);
+  });
+
+  @override
+  Future<Result<void>> disableShareLink() => _respond(() {
+    _shareLinks[meId]?.disabled = true;
+  });
+
+  @override
+  Future<Result<SharedProfile>> previewByShareLink(String token) =>
+      _respond(() {
+        final userId = _resolveShareLink(token);
+        return SharedProfile(
+          profile: _profileOf(userId, withPhoto: false),
+          alreadyFriends: _friendships.containsKey(_pairKey(meId, userId)),
+        );
+      });
+
+  @override
   Future<Result<SendRequestOutcome>> sendFriendRequest(
     FriendSource source,
     String ref,
@@ -440,6 +505,7 @@ class FakeFriendsRepository implements FriendsRepository {
         orgId = _sharedVisibleOrg(ref);
         return ref;
       }(),
+      FriendSource.link => _resolveShareLink(ref),
     };
     if (target == meId || _blockedEitherWay(meId, target)) {
       throw const FriendException(FriendError.notFound);
@@ -474,14 +540,25 @@ class FakeFriendsRepository implements FriendsRepository {
     if (pendingOut >= kPendingOutLimit) {
       throw const FriendException(FriendError.pendingLimit);
     }
-    _addRequest(meId, target, source, orgId: orgId);
     // They said no within the last 30 days: answering "cooldown" would tell
     // me so. It goes out like any other request on my side, but is held
     // (stored as declined) and never reaches them.
     final declined = _declinedAt[(meId, target)];
-    if (declined != null && now.difference(declined) < kDeclineCooldown) {
-      _requests.last.status = _Status.declined;
+    final held =
+        declined != null && now.difference(declined) < kDeclineCooldown;
+    // Requests through links: the recipient takes only so many a day, and
+    // the count is theirs — it does not go back down when a request is
+    // cancelled or answered, or when they make a new link.
+    if (source == FriendSource.link && !held) {
+      _rollLinkInbox();
+      final got = _linkInbox[target] ?? 0;
+      if (got >= kShareLinkInboxLimit) {
+        throw const FriendException(FriendError.linkLimit);
+      }
+      _linkInbox[target] = got + 1;
     }
+    _addRequest(meId, target, source, orgId: orgId);
+    if (held) _requests.last.status = _Status.declined;
     return SendRequestOutcome.sent;
   });
 
@@ -770,6 +847,21 @@ class FakeFriendsRepository implements FriendsRepository {
     return t.userId;
   }
 
+  /// Whose link [token] is. Unknown, my own and blocked-either-way read as
+  /// not found; a switched-off or old one as expired.
+  String _resolveShareLink(String token) {
+    final wanted = token.trim().toLowerCase();
+    for (final e in _shareLinks.entries) {
+      if (e.value.token != wanted) continue;
+      if (e.key == meId || _blockedEitherWay(meId, e.key)) break;
+      if (!e.value.isLive(clock.now())) {
+        throw const FriendException(FriendError.linkExpired);
+      }
+      return e.key;
+    }
+    throw const FriendException(FriendError.notFound);
+  }
+
   String _userIdByCode(String code) {
     if (!isWellFormedCode(code)) {
       throw const FriendException(FriendError.notFound);
@@ -836,6 +928,15 @@ class FakeFriendsRepository implements FriendsRepository {
     }
   }
 
+  void _rollLinkInbox() {
+    final now = clock.now();
+    final day = DateTime(now.year, now.month, now.day);
+    if (_linkInboxDay != day) {
+      _linkInboxDay = day;
+      _linkInbox.clear();
+    }
+  }
+
   void _rollDay() {
     final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -861,6 +962,11 @@ class FakeFriendsRepository implements FriendsRepository {
       if (!taken.contains(code)) return code;
     }
   }
+
+  String _newShareToken() => List.generate(
+    16,
+    (_) => _random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ).join();
 
   String _newToken() =>
       List.generate(16, (_) => _random.nextInt(256).toRadixString(16)).join();
@@ -955,6 +1061,16 @@ class _Org {
   bool isActive = true;
 
   OrgSummary get summary => OrgSummary(id: id, name: name, kind: kind);
+}
+
+class _ShareLinkRow {
+  _ShareLinkRow(this.token, this.expiresAt);
+
+  final String token;
+  final DateTime expiresAt;
+  bool disabled = false;
+
+  bool isLive(DateTime now) => !disabled && now.isBefore(expiresAt);
 }
 
 class _QrToken {

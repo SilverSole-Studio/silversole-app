@@ -34,8 +34,24 @@ abstract interface class FriendsRepository {
 
   Future<Result<FriendProfile>> previewByCode(String code);
 
+  /// The signed-in user's share link: the one that still works, or a new one
+  /// (7 days) if there is none. Only ever one at a time.
+  Future<Result<ShareLink>> createShareLink();
+
+  /// The share link as it stands now; null when there is none, it was
+  /// switched off, or it ran out.
+  Future<Result<ShareLink?>> getShareLink();
+
+  /// Switches the share link off at once. A new one can be made afterwards.
+  Future<Result<void>> disableShareLink();
+
+  /// Who owns a share link, for the person who opened it. Fails with
+  /// [FriendError.linkExpired] for a link that was switched off or ran out.
+  Future<Result<SharedProfile>> previewByShareLink(String token);
+
   /// [ref] is the QR token, the friend code, or (for [FriendSource.org]) the
-  /// user id of someone on a shared org list.
+  /// user id of someone on a shared org list, or (for [FriendSource.link]) the
+  /// token of their share link.
   Future<Result<SendRequestOutcome>> sendFriendRequest(
     FriendSource source,
     String ref,
