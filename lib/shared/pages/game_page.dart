@@ -8,6 +8,7 @@ import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/widgets/badge_wall.dart';
 import 'package:silversole/shared/models/game_entry.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
+import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/widgets/section_card.dart';
 
 /// Games hub, classic theme.
@@ -160,7 +161,7 @@ class _VillageRow extends ConsumerWidget {
             title: 'friends_title'.tr(),
             subtitle: friendsCardSubtitle(ref),
             badge: ref.watch(incomingRequestCountProvider),
-            onTap: () => context.push('/friends'),
+            onTap: () => openTownFriends(ref),
           ),
         ),
       ],

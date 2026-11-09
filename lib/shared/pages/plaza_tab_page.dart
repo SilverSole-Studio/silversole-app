@@ -66,12 +66,21 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
   /// can follow it (the app itself caps its own text at [kMaxAppTextScale]).
   double _systemFontScale = 1.0;
 
+  /// The page asked to open on the friends screen (`open=friends`); it is
+  /// already on its way.
+  late final String _initialUrl;
+
   @override
   InAppWebViewController? get soleForwardTarget => _controller;
 
   @override
   void initState() {
     super.initState();
+    // A friends entry elsewhere in the app switched to this tab: the town
+    // opens its friends screen on its own.
+    _initialUrl = ref.read(plazaFriendsRequestProvider.notifier).consume()
+        ? PlazaBridge.friendsUrl(PlazaTabPage.url)
+        : PlazaTabPage.url;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // Fresh diamond balance for the redeem shop (and a retry of today's
@@ -163,6 +172,21 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     );
   }
 
+  /// A friends request that arrived while the town was already up: run the
+  /// town's own opener. Before the first load finishes it stays pending and
+  /// [onLoadStop] picks it up.
+  Future<void> _runPendingFriends() async {
+    final controller = _controller;
+    if (controller == null || !_loaded || !mounted) return;
+    if (!ref.read(plazaFriendsRequestProvider)) return;
+    if (!await _onGamePage(controller) || !mounted) return;
+    if (!ref.read(plazaFriendsRequestProvider.notifier).consume()) return;
+    await controller.evaluateJavascript(source: PlazaBridge.openFriendsScript);
+  }
+
+  /// Fallback only: the page calls this when the town cannot reach its server.
+  /// It must open the native screen and never send the user back to the town,
+  /// or the two would bounce between each other.
   Future<bool> _openFriends() async {
     if (!mounted || !ref.read(friendsEnabledProvider)) return false;
     if (_friendsOpen) return true;
@@ -248,6 +272,9 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     }
     // Sign in / out while the tab is up: tell the page who it is now.
     ref.listen(authUserProvider, (_, _) => _publishAppInfo());
+    ref.listen(plazaFriendsRequestProvider, (_, want) {
+      if (want) _runPendingFriends();
+    });
     ref.listen(subscriptionActiveProvider, (_, _) => _publishAppInfo());
     // The settings page's 文字大小 changed: the games follow it.
     ref.listen(
@@ -271,7 +298,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
           child: Stack(
             children: [
               InAppWebView(
-                initialUrlRequest: URLRequest(url: WebUri(PlazaTabPage.url)),
+                initialUrlRequest: URLRequest(url: WebUri(_initialUrl)),
                 initialUserScripts: UnmodifiableListView([_infoUserScript()]),
                 initialSettings: InAppWebViewSettings(
                   isInspectable: kDebugMode,
@@ -294,6 +321,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
                   soleForwardReady = true;
                   _loaded = true;
                   _publishAppInfo();
+                  _runPendingFriends();
                   _syncBack();
                 },
                 onUpdateVisitedHistory: (controller, url, isReload) {
