@@ -22,3 +22,32 @@ class HomeTabNotifier extends Notifier<int> {
 final homeTabProvider = NotifierProvider.autoDispose<HomeTabNotifier, int>(
   HomeTabNotifier.new,
 );
+
+/// 「打開小鎮的好友頁」的待辦：好友入口（遊戲分頁的信箱卡等）把它設成 true 並切到
+/// 遊戲分頁，[PlazaTabPage] 看到後消費掉。小鎮還沒載入就改帶 `open=friends`
+/// 進場，已載入就執行 `window.WorldOpenFriends()`。
+/// 不 autoDispose：設定時小鎮分頁還沒建起來，沒人在聽。
+class PlazaFriendsRequest extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void request() => state = true;
+
+  /// 取走待辦；回傳取走前是不是有待辦。
+  bool consume() {
+    final had = state;
+    if (had) state = false;
+    return had;
+  }
+}
+
+final plazaFriendsRequestProvider = NotifierProvider<PlazaFriendsRequest, bool>(
+  PlazaFriendsRequest.new,
+);
+
+/// 好友入口統一走這裡：切到遊戲分頁（小鎮）並要求打開小鎮的好友頁。
+/// 原生好友頁只剩小鎮連不上時的退路（`openFriends` handler）。
+void openTownFriends(WidgetRef ref) {
+  ref.read(plazaFriendsRequestProvider.notifier).request();
+  ref.read(homeTabProvider.notifier).select(HomeTabNotifier.games);
+}
