@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.13.2
+
+更新內容:
+
+- 換上新的 App 圖示：粗哥拿著鞋墊。
+- 加好友多一種方式：在好友頁按「傳連結給朋友」，用 LINE、Facebook 或簡訊傳出去，朋友點開就能送邀請，你同意後成為好友。連結 7 天有效，隨時可以停用。
+- 好友入口改成直接打開小鎮裡的好友頁。
+- 報告頁可以把「日常活動紀錄」做成一張圖分享，資料不會上傳。
+- 修正首頁健檢站屋頂顏色超出外框、鞋墊名稱被擠掉，以及大字模式下好友按鈕與信箱跑版。
+
+Updates:
+
+- New app icon: Cuge holding an insole.
+- A new way to add friends: tap "Send a link" on the Friends page and share it via LINE, Facebook or SMS. Your friend opens it to send a request, and you become friends once you accept. Links last 7 days and can be turned off anytime.
+- The Friends entry now opens the Friends page in the town.
+- Share your daily activity record from the Report page as a single image; no data is uploaded.
+- Fixed the health check roof color spilling outside its frame, the insole name being cut off, and the Friends button and inbox layout in large text mode.
+
 ## v1.13.1
 
 更新內容:
