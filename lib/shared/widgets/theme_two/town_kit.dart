@@ -1,36 +1,295 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 
 /// Pieces of look A (粗哥手繪小鎮風) that more than one page draws: the sky
 /// behind a greeting, a shop awning, a status dot, a big outlined button label.
 
-/// The town's sky: blue, a sun, two clouds and the near hills, 390x300 scaled to
-/// the page width. The hills end in the page's own grass color so the sky melts
-/// into the canvas below it.
+/// The town's sky: a soft blue gradient, a smiling sun with rays, two outlined
+/// puffy clouds and the near hills, 390x300 scaled to the page width. Drawn in
+/// the town's hand-drawn style (brown outline, warm fills). The clouds stay out
+/// of the greeting's way (the date pill and the name sit at the left, below
+/// y 36). The hills end in the page's own grass color so the sky melts into
+/// the canvas below it.
+///
+/// Sun, clouds and hills are separate layers with the box shapes of the
+/// illustration files that will replace them (see [TownSkyArt]): flip the
+/// flag there once the PNGs are in assets.
 class TownSky extends StatelessWidget {
   const TownSky({super.key});
 
-  static const _svg = '''
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 300" preserveAspectRatio="xMidYMin slice">
-<rect width="390" height="300" fill="#a9ddf2"/>
-<g stroke="#3b3325" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-<circle cx="352" cy="62" r="24" fill="#ffd23f"/>
-<path d="M24 118c-14 0-20-18-4-24 3-14 24-16 30-4 16-4 24 14 12 26z" fill="#fff" transform="translate(20 -30)"/>
-<path d="M190 74c-12 0-17-15-3-20 3-12 20-13 25-3 13-3 20 12 10 22z" fill="#fff" transform="translate(-60 -36)"/>
-</g>
-<path d="M0 232 Q70 196 150 222 T300 210 T390 226 V300 H0Z" fill="#b6dc8b"/>
-<path d="M0 252 Q90 222 190 246 T390 240 V300 H0Z" fill="#9ccc6b"/>
-</svg>''';
-
   @override
   Widget build(BuildContext context) {
+    final ink = context.mascot.line;
     return AspectRatio(
       aspectRatio: 390 / 300,
-      child: SvgPicture.string(_svg, fit: BoxFit.cover),
+      child: LayoutBuilder(
+        builder: (context, box) {
+          final k = box.maxWidth / 390;
+          Widget layer(
+            String asset,
+            CustomPainter painter,
+            double l,
+            double t,
+            double w,
+            double h,
+          ) => Positioned(
+            left: l * k,
+            top: t * k,
+            width: w * k,
+            height: h * k,
+            child: TownSkyArt.useFiles
+                ? Image.asset(asset, fit: BoxFit.fill)
+                : CustomPaint(painter: painter),
+          );
+          return Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              const Positioned.fill(child: CustomPaint(painter: _SkyPainter())),
+              // Hills: 1290x302, bottom edge on the sky's bottom edge.
+              layer(
+                TownSkyArt.hills,
+                _HillsPainter(ink),
+                0,
+                300 - 390 * 302 / 1290,
+                390,
+                390 * 302 / 1290,
+              ),
+              // Clouds: 600x300 boxes.
+              layer(TownSkyArt.cloudA, _CloudPainter(ink), 198, 12, 100, 50),
+              layer(TownSkyArt.cloudB, _CloudPainter(ink), 120, 0, 60, 30),
+              // Sun: 512x512 box.
+              layer(TownSkyArt.sun, _SunPainter(ink), 288, 14, 104, 104),
+            ],
+          );
+        },
+      ),
     );
   }
+}
+
+/// The grass under the page: a gentle gradient with faint tufts, so the green
+/// is not one flat slab. Quiet on purpose; the cards are what you look at.
+class TownGrass extends StatelessWidget {
+  const TownGrass({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const CustomPaint(painter: _GrassPainter());
+}
+
+class _GrassPainter extends CustomPainter {
+  const _GrassPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const top = 290.0;
+    if (size.height <= top) return;
+    final area = Rect.fromLTWH(0, top, size.width, size.height - top);
+    canvas.drawRect(
+      area,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppPaletteT2.canvas, Color(0xFF8CC25C)],
+        ).createShader(area),
+    );
+    final rnd = math.Random(7);
+    final tuft = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF7DB352).withValues(alpha: 0.45);
+    for (var y = top + 30; y < size.height; y += 70) {
+      for (var x = 20.0; x < size.width; x += 90) {
+        final o = Offset(x + rnd.nextDouble() * 60, y + rnd.nextDouble() * 40);
+        final p = Path()
+          ..moveTo(o.dx - 6, o.dy)
+          ..lineTo(o.dx - 3, o.dy - 8)
+          ..moveTo(o.dx, o.dy)
+          ..lineTo(o.dx, o.dy - 11)
+          ..moveTo(o.dx + 6, o.dy)
+          ..lineTo(o.dx + 3, o.dy - 8);
+        canvas.drawPath(p, tuft);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GrassPainter old) => false;
+}
+
+/// Where the sky illustrations live once G 社 hands them over (all
+/// transparent PNGs). While [useFiles] is false the sky is drawn in code.
+abstract final class TownSkyArt {
+  static const bool useFiles = true;
+  static const sun = 'assets/mascot-assets/sky/app_home_sun.png'; // 512x512
+  static const cloudA = 'assets/mascot-assets/sky/app_home_cloud_a.png'; // 600x300
+  static const cloudB = 'assets/mascot-assets/sky/app_home_cloud_b.png'; // 600x300
+  static const hills = 'assets/mascot-assets/sky/app_home_hills.png'; // 1290x302
+}
+
+Paint _fillP(Color c) => Paint()..color = c;
+Paint _lineP(Color ink, double w) => Paint()
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = w
+  ..strokeJoin = StrokeJoin.round
+  ..strokeCap = StrokeCap.round
+  ..color = ink;
+
+class _SkyPainter extends CustomPainter {
+  const _SkyPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF8FD3EF), Color(0xFFBDE8F6), Color(0xFFDDF4F5)],
+          stops: [0, 0.6, 1],
+        ).createShader(Offset.zero & size),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SkyPainter old) => false;
+}
+
+/// Hills, with the town's outline on the far ridge. Drawn in the 390x300 sky
+/// space, shifted up into its own box.
+class _HillsPainter extends CustomPainter {
+  _HillsPainter(this.ink);
+  final Color ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.scale(size.width / 390);
+    canvas.translate(0, -(300 - 390 * 302 / 1290));
+    const w = 390.0;
+    const h = 300.0;
+    final far = Path()
+      ..moveTo(0, 232)
+      ..quadraticBezierTo(70, 196, 150, 222)
+      ..quadraticBezierTo(225, 246, 300, 210)
+      ..quadraticBezierTo(350, 190, 390, 226)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(far, _fillP(AppPaletteT2.grassLight));
+    final ridge = Path()
+      ..moveTo(0, 232)
+      ..quadraticBezierTo(70, 196, 150, 222)
+      ..quadraticBezierTo(225, 246, 300, 210)
+      ..quadraticBezierTo(350, 190, 390, 226);
+    canvas.drawPath(ridge, _lineP(ink, 3));
+    for (final b in const [Offset(56, 214), Offset(318, 203)]) {
+      canvas.drawCircle(b, 12, _fillP(const Color(0xFF7DBA55)));
+      canvas.drawCircle(b, 12, _lineP(ink, 2.5));
+    }
+    final near = Path()
+      ..moveTo(0, 252)
+      ..quadraticBezierTo(90, 222, 190, 246)
+      ..quadraticBezierTo(300, 262, 390, 240)
+      ..lineTo(w, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(near, _fillP(AppPaletteT2.canvas));
+  }
+
+  @override
+  bool shouldRepaint(_HillsPainter old) => old.ink != ink;
+}
+
+/// The sun, centered in a square box: rays, a face with rosy cheeks.
+class _SunPainter extends CustomPainter {
+  _SunPainter(this.ink);
+  final Color ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const r = 23.0;
+    canvas.translate(size.width / 2, size.height / 2);
+    canvas.scale(size.width / 104);
+    const c = Offset.zero;
+    final ray = _fillP(AppPaletteT2.goldBright);
+    final rayLine = _lineP(ink, 2.5);
+    for (var i = 0; i < 12; i++) {
+      final len = i.isEven ? 17.0 : 11.0;
+      canvas.save();
+      canvas.rotate(i * math.pi / 6);
+      final path = Path()
+        ..moveTo(-5, -(r + 4))
+        ..lineTo(0, -(r + 4 + len))
+        ..lineTo(5, -(r + 4))
+        ..close();
+      canvas.drawPath(path, ray);
+      canvas.drawPath(path, rayLine);
+      canvas.restore();
+    }
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..shader = const RadialGradient(
+          center: Alignment(-0.3, -0.4),
+          colors: [Color(0xFFFFE680), AppPaletteT2.goldBright],
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+    canvas.drawCircle(c, r, _lineP(ink, 3));
+    final cheek = _fillP(const Color(0xFFF59A6B).withValues(alpha: 0.7));
+    for (final dx in const [-13.0, 13.0]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(dx, 5), width: 8, height: 5),
+        cheek,
+      );
+    }
+    canvas.drawCircle(const Offset(-8, -3), 2.4, _fillP(ink));
+    canvas.drawCircle(const Offset(8, -3), 2.4, _fillP(ink));
+    final smile = Path()
+      ..moveTo(-6, 4)
+      ..quadraticBezierTo(0, 11, 6, 4);
+    canvas.drawPath(smile, _lineP(ink, 2.4));
+  }
+
+  @override
+  bool shouldRepaint(_SunPainter old) => old.ink != ink;
+}
+
+/// A puffy cloud: three bumps on a flat base, outlined, soft shade under it,
+/// fitted into a 2:1 box.
+class _CloudPainter extends CustomPainter {
+  _CloudPainter(this.ink);
+  final Color ink;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.scale(size.width / 100);
+    canvas.translate(6, 8);
+    final body = Path()
+      ..moveTo(10, 38)
+      ..cubicTo(-6, 38, -6, 16, 14, 16)
+      ..cubicTo(14, -2, 40, -6, 46, 10)
+      ..cubicTo(58, -2, 80, 6, 72, 24)
+      ..cubicTo(88, 26, 88, 38, 74, 38)
+      ..close();
+    canvas.drawPath(body, _fillP(Colors.white));
+    canvas.save();
+    canvas.clipPath(body);
+    canvas.drawRect(
+      const Rect.fromLTWH(-10, 29, 110, 14),
+      _fillP(const Color(0xFFD9EEF7)),
+    );
+    canvas.restore();
+    canvas.drawPath(body, _lineP(ink, 3));
+  }
+
+  @override
+  bool shouldRepaint(_CloudPainter old) => old.ink != ink;
 }
 
 /// A shop awning: alternating brick-red and paper stripes with scalloped
