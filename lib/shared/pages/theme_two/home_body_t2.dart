@@ -33,9 +33,12 @@ class HomeBodyT2 extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
     return Scaffold(
+      // The grass gradient's far color, so nothing shows below the page.
+      backgroundColor: const Color(0xFF8CC25C),
       body: SingleChildScrollView(
         child: Stack(
           children: [
+            const Positioned.fill(child: TownGrass()),
             const Positioned(top: 0, left: 0, right: 0, child: TownSky()),
             Padding(
               padding: EdgeInsets.fromLTRB(16, top + 8, 16, 28),
@@ -168,14 +171,23 @@ class FootCheckCardT2 extends ConsumerWidget {
                           ),
                           const SizedBox(height: 10),
                           // The one hero figure: the band, in big type.
-                          Text(
-                            last == null
-                                ? 'foot_check_none_yet'.tr()
-                                : last.rating.labelKey.tr(),
-                            style: townHeroStyle(
-                              context,
-                              last == null ? 30 : 60,
-                            ).copyWith(height: 1.1),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                last == null
+                                    ? 'foot_check_none_yet'.tr()
+                                    : last.rating.labelKey.tr(),
+                                maxLines: 1,
+                                softWrap: false,
+                                style: townHeroStyle(
+                                  context,
+                                  last == null ? 30 : 60,
+                                ).copyWith(height: 1.1),
+                              ),
+                            ),
                           ),
                           if (last != null) ...[
                             const SizedBox(height: 8),
@@ -254,6 +266,18 @@ class FootCheckCardT2 extends ConsumerWidget {
 
 // ── Two stalls: the insole, today's exercise ──────────────────────────────
 
+/// Header row of the two small cards: same height so the figures line up.
+const double _stallHeader = 48;
+
+/// The small status line under a stall's bar: big enough to read at arm's
+/// length, in the card's secondary ink.
+TextStyle _stallNote(BuildContext context) =>
+    context.textTheme.bodyMedium!.copyWith(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      color: context.mascot.inkMuted,
+    );
+
 class _Stalls extends StatelessWidget {
   const _Stalls();
 
@@ -283,25 +307,27 @@ class _InsoleStall extends ConsumerWidget {
 
     return AppCard(
       onTap: () => context.push('/my-devices'),
-      padding: const EdgeInsets.fromLTRB(14, 14, 12, 14),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'home_insole_title'.tr(),
-                  style: context.textTheme.titleMedium,
+          SizedBox(
+            height: _stallHeader,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'home_insole_title'.tr(),
+                    style: context.textTheme.titleMedium,
+                  ),
                 ),
-              ),
-              Image.asset(
-                'assets/mascot-assets/icons/dev_foot.webp',
-                width: 52,
-              ),
-            ],
+                Image.asset(
+                  'assets/mascot-assets/icons/dev_foot.webp',
+                  width: 48,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
           if (!status.paired)
             Text('device_tap_to_pair'.tr(), style: context.textTheme.titleLarge)
           else ...[
@@ -331,13 +357,15 @@ class _InsoleStall extends ConsumerWidget {
                 TownDot(on: status.online),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    status.online ? 'device_synced'.tr() : 'offline'.tr(),
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      status.online ? 'device_synced'.tr() : 'offline'.tr(),
+                      style: _stallNote(context),
+                      maxLines: 1,
+                      softWrap: false,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -362,8 +390,16 @@ class _ExerciseStall extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('today_exercise'.tr(), style: context.textTheme.titleMedium),
-          const SizedBox(height: 4),
+          SizedBox(
+            height: _stallHeader,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'today_exercise'.tr(),
+                style: context.textTheme.titleMedium,
+              ),
+            ),
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -390,9 +426,7 @@ class _ExerciseStall extends ConsumerWidget {
             today.reached
                 ? 'exercise_reached'.tr()
                 : 'exercise_remaining'.tr(args: ['${today.remaining}']),
-            style: context.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: _stallNote(context),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -449,7 +483,7 @@ class _MissionBoard extends ConsumerWidget {
           boxShadow: [
             BoxShadow(
               color: c.line,
-              offset: const Offset(0, AppPaletteT2.shadowDrop),
+              offset: const Offset(0, AppPaletteT2.shadowDrop - 1),
             ),
           ],
         ),
@@ -474,7 +508,7 @@ class _MissionBoard extends ConsumerWidget {
                   ),
                 ),
                 for (var i = 0; i < (lines?.length ?? 0); i++)
-                  _Note(line: lines![i], index: i),
+                  _Note(line: lines![i]),
               ],
             ),
           ],
@@ -504,57 +538,57 @@ class _Pin extends StatelessWidget {
 }
 
 class _Note extends StatelessWidget {
-  const _Note({required this.line, required this.index});
+  const _Note({required this.line});
 
   final MissionLine line;
-  final int index;
 
   @override
   Widget build(BuildContext context) {
     final c = context.mascot;
-    // Notes hang a little crooked, like paper pinned by hand.
-    const tilts = [-0.014, 0.012, -0.007];
-    return Transform.rotate(
-      angle: tilts[index % tilts.length],
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        constraints: const BoxConstraints(minHeight: 58),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: c.card,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.line, width: AppPaletteT2.outlineWidth),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: line.done ? c.gold : Colors.white,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: c.line, width: 3),
-              ),
-              child: line.done
-                  ? const Center(child: TownIcon('check', size: 22))
-                  : null,
+    final done = line.done;
+    // A finished note turns green and dims, with a ticked box: readable
+    // at a glance, the way a quest list does it.
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      constraints: const BoxConstraints(minHeight: 60),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: done ? c.safeSoft : c.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.line, width: AppPaletteT2.outlineWidth),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: done ? c.safe : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: c.line, width: 3),
             ),
-            const SizedBox(width: 12),
-            Expanded(
+            child: done
+                ? const Icon(Icons.check_rounded, color: Colors.white, size: 26)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Opacity(
+              opacity: done ? 0.6 : 1,
               child: Text(
                 line.titleKey.tr(),
                 style: context.textTheme.titleLarge?.copyWith(
                   fontSize: 18,
-                  decoration: line.done ? TextDecoration.lineThrough : null,
-                  decorationThickness: 3,
-                  color: line.done ? c.inkMuted : c.ink,
+                  decoration: done ? TextDecoration.lineThrough : null,
+                  decorationThickness: 2.5,
+                  color: c.ink,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

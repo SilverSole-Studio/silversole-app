@@ -59,7 +59,7 @@ class TownSky extends StatelessWidget {
               ),
               // Clouds: 600x300 boxes.
               layer(TownSkyArt.cloudA, _CloudPainter(ink), 198, 12, 100, 50),
-              layer(TownSkyArt.cloudB, _CloudPainter(ink), 40, -6, 62, 31),
+              layer(TownSkyArt.cloudB, _CloudPainter(ink), 118, -12, 60, 30),
               // Sun: 512x512 box.
               layer(TownSkyArt.sun, _SunPainter(ink), 288, 14, 104, 104),
             ],
@@ -68,6 +68,58 @@ class TownSky extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The grass under the page: a gentle gradient with faint tufts, so the green
+/// is not one flat slab. Quiet on purpose; the cards are what you look at.
+class TownGrass extends StatelessWidget {
+  const TownGrass({super.key});
+
+  @override
+  Widget build(BuildContext context) =>
+      const CustomPaint(painter: _GrassPainter());
+}
+
+class _GrassPainter extends CustomPainter {
+  const _GrassPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const top = 290.0;
+    if (size.height <= top) return;
+    final area = Rect.fromLTWH(0, top, size.width, size.height - top);
+    canvas.drawRect(
+      area,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppPaletteT2.canvas, Color(0xFF8CC25C)],
+        ).createShader(area),
+    );
+    final rnd = math.Random(7);
+    final tuft = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF7DB352).withValues(alpha: 0.45);
+    for (var y = top + 30; y < size.height; y += 70) {
+      for (var x = 20.0; x < size.width; x += 90) {
+        final o = Offset(x + rnd.nextDouble() * 60, y + rnd.nextDouble() * 40);
+        final p = Path()
+          ..moveTo(o.dx - 6, o.dy)
+          ..lineTo(o.dx - 3, o.dy - 8)
+          ..moveTo(o.dx, o.dy)
+          ..lineTo(o.dx, o.dy - 11)
+          ..moveTo(o.dx + 6, o.dy)
+          ..lineTo(o.dx + 3, o.dy - 8);
+        canvas.drawPath(p, tuft);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GrassPainter old) => false;
 }
 
 /// Where the sky illustrations live once G 社 hands them over (all
