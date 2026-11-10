@@ -455,7 +455,8 @@ ota_tip_paused,Live data pauses during the update.,更新期間即時資料會�
 ota_tip_safe,If it is interrupted the insole keeps its current firmware and keeps working.,如果中途中斷，鞋墊會保留目前的韌體並正常運作。
 ota_start,Start update,開始更新
 ota_local_file,local file,本機檔案
-ota_nothing_to_install,Nothing to install.,沒有可安裝的韌體。
+ota_nothing_to_install,Firmware is up to date.,目前已是最新版本
+ota_recheck,Check again,重新檢查
 ota_downloading,Downloading firmware…,正在下載韌體…
 ota_transferring,Sending to the insole · {} / {} KB,正在傳送到鞋墊 · {} / {} KB
 ota_verifying,The insole is checking the firmware…,鞋墊正在驗證韌體…
