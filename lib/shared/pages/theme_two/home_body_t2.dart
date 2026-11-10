@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/daily_missions_bottom_modal.dart';
-import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/home_data_providers.dart';
 import 'package:silversole/shared/providers/home_tab_provider.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/widgets/app_card.dart';
+import 'package:silversole/shared/widgets/home_hello.dart' show greetingName;
 import 'package:silversole/shared/widgets/foot_health_check_card.dart'
     show lastFootCheckDate;
 import 'package:silversole/shared/widgets/theme_two/mascot_card.dart';
@@ -82,12 +82,11 @@ class _Greeting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authUserProvider);
     final now = DateTime.now();
     final locale = context.locale.toString();
-    // The account only gives us an email; use its local part as a display
-    // name until a real profile name exists.
-    final name = user?.email.split('@').first ?? 'silversole'.tr();
+    // The friends nickname when there is one; otherwise the account only gives
+    // us an email, so use its local part.
+    final name = greetingName(ref);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +208,7 @@ class FootCheckCardT2 extends ConsumerWidget {
                     ),
                     // The mascot invites a check (or reads the result).
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, top: 14),
+                      padding: const EdgeInsets.only(left: 16, top: 14),
                       child: Transform.rotate(
                         angle: 0.05,
                         child: Image.asset(
@@ -580,7 +579,7 @@ class _Note extends StatelessWidget {
                 style: context.textTheme.titleLarge?.copyWith(
                   fontSize: 18,
                   decoration: done ? TextDecoration.lineThrough : null,
-                  decorationThickness: 2.5,
+                  decorationThickness: 1.5,
                   color: c.ink,
                 ),
                 maxLines: 2,

@@ -114,7 +114,24 @@ class _ChardSectionState extends ConsumerState<ChardSection> {
               ),
               leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
               bottomTitles: AxisTitles(
-                sideTitles: SideTitles(showTitles: true),
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 32,
+                  // At most about six labels, and the first and last kept
+                  // inside the chart instead of cut at its edges.
+                  interval: ((getMaxX() - getMinX()) / 6).ceilToDouble().clamp(
+                    1,
+                    double.infinity,
+                  ),
+                  getTitlesWidget: (value, meta) => SideTitleWidget(
+                    meta: meta,
+                    fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+                    child: Text(
+                      meta.formattedValue,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
               ),
             ),
             minX: getMinX(),

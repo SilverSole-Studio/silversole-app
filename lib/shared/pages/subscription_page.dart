@@ -17,6 +17,10 @@ import 'package:silversole/shared/widgets/section_card.dart';
 /// debug builds / developer mode also get a test switch that pretends to be
 /// subscribed. Shows the diamond balance (2026-11-02): earned only by moving
 /// 15 minutes a day with the insole, +10 a day, up to 300 a month.
+/// The price stays hidden until billing opens (user 2026-11-09). The string
+/// `subscription_price` is kept for then.
+const _kShowPrice = false;
+
 class SubscriptionPage extends ConsumerStatefulWidget {
   const SubscriptionPage({super.key});
 
@@ -64,14 +68,15 @@ class _SubscriptionPageState extends ConsumerState<SubscriptionPage> {
                         'subscription_plan_name'.tr(),
                         style: context.textTheme.titleLarge,
                       ),
-                      Text(
-                        'subscription_price'.tr(
-                          args: ['$kSubscriptionMonthlyPrice'],
+                      if (_kShowPrice)
+                        Text(
+                          'subscription_price'.tr(
+                            args: ['$kSubscriptionMonthlyPrice'],
+                          ),
+                          style: context.textTheme.headlineMedium?.copyWith(
+                            color: context.accent,
+                          ),
                         ),
-                        style: context.textTheme.headlineMedium?.copyWith(
-                          color: context.accent,
-                        ),
-                      ),
                       if (active)
                         Chip(
                           avatar: const Icon(LucideIcons.badgeCheck, size: 18),

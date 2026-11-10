@@ -48,18 +48,18 @@ class TownSky extends StatelessWidget {
             clipBehavior: Clip.hardEdge,
             children: [
               const Positioned.fill(child: CustomPaint(painter: _SkyPainter())),
-              // Hills: 1290x500, bottom edge on the sky's bottom edge.
+              // Hills: 1290x302, bottom edge on the sky's bottom edge.
               layer(
                 TownSkyArt.hills,
                 _HillsPainter(ink),
                 0,
-                300 - 390 * 500 / 1290,
+                300 - 390 * 302 / 1290,
                 390,
-                390 * 500 / 1290,
+                390 * 302 / 1290,
               ),
               // Clouds: 600x300 boxes.
               layer(TownSkyArt.cloudA, _CloudPainter(ink), 198, 12, 100, 50),
-              layer(TownSkyArt.cloudB, _CloudPainter(ink), 118, -12, 60, 30),
+              layer(TownSkyArt.cloudB, _CloudPainter(ink), 120, 0, 60, 30),
               // Sun: 512x512 box.
               layer(TownSkyArt.sun, _SunPainter(ink), 288, 14, 104, 104),
             ],
@@ -125,12 +125,11 @@ class _GrassPainter extends CustomPainter {
 /// Where the sky illustrations live once G 社 hands them over (all
 /// transparent PNGs). While [useFiles] is false the sky is drawn in code.
 abstract final class TownSkyArt {
-  static const bool useFiles = false;
+  static const bool useFiles = true;
   static const sun = 'assets/mascot-assets/sky/app_home_sun.png'; // 512x512
   static const cloudA = 'assets/mascot-assets/sky/app_home_cloud_a.png'; // 600x300
   static const cloudB = 'assets/mascot-assets/sky/app_home_cloud_b.png'; // 600x300
-  static const cloudC = 'assets/mascot-assets/sky/app_home_cloud_c.png'; // 600x300
-  static const hills = 'assets/mascot-assets/sky/app_home_hills.png'; // 1290x500
+  static const hills = 'assets/mascot-assets/sky/app_home_hills.png'; // 1290x302
 }
 
 Paint _fillP(Color c) => Paint()..color = c;
@@ -170,7 +169,7 @@ class _HillsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 390);
-    canvas.translate(0, -(300 - 390 * 500 / 1290));
+    canvas.translate(0, -(300 - 390 * 302 / 1290));
     const w = 390.0;
     const h = 300.0;
     final far = Path()
