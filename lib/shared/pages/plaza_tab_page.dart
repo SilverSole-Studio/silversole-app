@@ -9,6 +9,7 @@ import 'package:silversole/constants.dart';
 import 'package:silversole/core/game_save/game_save_repository.dart';
 import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
+import 'package:silversole/core/utils/game_orientation.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
@@ -286,56 +287,58 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       (_, _) => _publishAppInfo(),
     );
 
-    return PopScope(
-      // Always handled here: from the town the back button goes to the home
-      // tab, it never closes the app from this tab.
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _onBack();
-      },
-      child: Scaffold(
-        body: SafeArea(
-          child: Stack(
-            children: [
-              InAppWebView(
-                initialUrlRequest: URLRequest(url: WebUri(_initialUrl)),
-                initialUserScripts: UnmodifiableListView([_infoUserScript()]),
-                initialSettings: InAppWebViewSettings(
-                  isInspectable: kDebugMode,
-                  mediaPlaybackRequiresUserGesture: false,
-                  allowsInlineMediaPlayback: true,
-                  // The phone's font size must not enlarge the web text a
-                  // second time; the page enlarges itself (large-text mode).
-                  textZoom: 100,
+    return GameOrientationScope(
+      child: PopScope(
+        // Always handled here: from the town the back button goes to the home
+        // tab, it never closes the app from this tab.
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _onBack();
+        },
+        child: Scaffold(
+          body: SafeArea(
+            child: Stack(
+              children: [
+                InAppWebView(
+                  initialUrlRequest: URLRequest(url: WebUri(_initialUrl)),
+                  initialUserScripts: UnmodifiableListView([_infoUserScript()]),
+                  initialSettings: InAppWebViewSettings(
+                    isInspectable: kDebugMode,
+                    mediaPlaybackRequiresUserGesture: false,
+                    allowsInlineMediaPlayback: true,
+                    // The phone's font size must not enlarge the web text a
+                    // second time; the page enlarges itself (large-text mode).
+                    textZoom: 100,
+                  ),
+                  onWebViewCreated: (controller) {
+                    _controller = controller;
+                    _registerBridge(controller);
+                  },
+                  // Camera mode in the games asks for the camera from the page.
+                  // That is all a page gets, and only on the games' own site.
+                  onPermissionRequest: (controller, request) =>
+                      answerGamePermission(request),
+                  onLoadStart: (controller, url) => _loaded = false,
+                  onLoadStop: (controller, url) {
+                    soleForwardReady = true;
+                    _loaded = true;
+                    _publishAppInfo();
+                    _runPendingFriends();
+                    _syncBack();
+                  },
+                  onUpdateVisitedHistory: (controller, url, isReload) {
+                    _syncBack();
+                    _syncOnHub(url);
+                  },
+                  onProgressChanged: (controller, progress) {
+                    if (!mounted) return;
+                    setState(() => _progress = progress / 100);
+                  },
                 ),
-                onWebViewCreated: (controller) {
-                  _controller = controller;
-                  _registerBridge(controller);
-                },
-                // Camera mode in the games asks for the camera from the page.
-                // That is all a page gets, and only on the games' own site.
-                onPermissionRequest: (controller, request) =>
-                    answerGamePermission(request),
-                onLoadStart: (controller, url) => _loaded = false,
-                onLoadStop: (controller, url) {
-                  soleForwardReady = true;
-                  _loaded = true;
-                  _publishAppInfo();
-                  _runPendingFriends();
-                  _syncBack();
-                },
-                onUpdateVisitedHistory: (controller, url, isReload) {
-                  _syncBack();
-                  _syncOnHub(url);
-                },
-                onProgressChanged: (controller, progress) {
-                  if (!mounted) return;
-                  setState(() => _progress = progress / 100);
-                },
-              ),
-              if (_progress < 1.0)
-                LinearProgressIndicator(value: _progress, minHeight: 2),
-            ],
+                if (_progress < 1.0)
+                  LinearProgressIndicator(value: _progress, minHeight: 2),
+              ],
+            ),
           ),
         ),
       ),

@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/auth/auth_service.dart';
+import 'core/utils/game_orientation.dart';
 import 'constants.dart';
 
 Future<void> main() async {
@@ -32,7 +33,7 @@ Future<void> main() async {
   await initializeGoogleSignIn();
   // No location request here: the map views ask for it when the wearer taps
   // "my location" (App Review 5.1.1 — ask only when the feature needs it).
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await SystemChrome.setPreferredOrientations(appOrientations);
   runApp(
     ProviderScope(
       child: EasyLocalization(

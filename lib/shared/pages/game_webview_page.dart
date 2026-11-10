@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
+import 'package:silversole/core/utils/game_orientation.dart';
 import 'package:silversole/core/utils/game_path.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
@@ -54,101 +55,106 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        // Compact header for a content page (default kToolbarHeight 56 felt tall).
-        toolbarHeight: 48,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(LucideIcons.arrowLeft),
-        ),
-        title: Text(widget.title ?? '', style: context.textTheme.titleLarge),
-        // Thin loading bar under the app bar while the page loads.
-        bottom: _progress < 1.0
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(2),
-                child: LinearProgressIndicator(value: _progress, minHeight: 2),
-              )
-            : null,
-      ),
-      body: SafeArea(
-        child: InAppWebView(
-          initialUrlRequest: URLRequest(url: WebUri(widget.url)),
-          initialSettings: InAppWebViewSettings(
-            isInspectable: kDebugMode,
-            // Camera mode: the preview autoplays, inline rather than full screen on iOS.
-            mediaPlaybackRequiresUserGesture: false,
-            allowsInlineMediaPlayback: true,
-            // The phone's font size must not enlarge the web text a second
-            // time; the game has its own large-text mode.
-            textZoom: 100,
-            useShouldOverrideUrlLoading: widget.closeOnLeavePath,
+    return GameOrientationScope(
+      child: Scaffold(
+        appBar: AppBar(
+          // Compact header for a content page (default kToolbarHeight 56 felt tall).
+          toolbarHeight: 48,
+          leading: IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: const Icon(LucideIcons.arrowLeft),
           ),
-          shouldOverrideUrlLoading: widget.closeOnLeavePath
-              ? (controller, action) async {
-                  // Only the page itself: frames and sub-requests are left alone.
-                  if (!action.isForMainFrame) {
-                    return NavigationActionPolicy.ALLOW;
-                  }
-                  if (staysOnGamePath(
-                    Uri.tryParse(widget.url),
-                    action.request.url?.uriValue,
-                  )) {
-                    return NavigationActionPolicy.ALLOW;
-                  }
-                  if (!_closing && mounted) {
-                    _closing = true;
-                    Navigator.of(context).maybePop();
-                  }
-                  return NavigationActionPolicy.CANCEL;
-                }
+          title: Text(widget.title ?? '', style: context.textTheme.titleLarge),
+          // Thin loading bar under the app bar while the page loads.
+          bottom: _progress < 1.0
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(2),
+                  child: LinearProgressIndicator(
+                    value: _progress,
+                    minHeight: 2,
+                  ),
+                )
               : null,
-          onWebViewCreated: (controller) {
-            _controller = controller;
-            // Game → Flutter: the game reports its score here.
-            controller.addJavaScriptHandler(
-              handlerName: 'gameScore',
-              callback: (args) {
-                // TODO: persist the score (Supabase). For now just log it.
-                debugPrint('[Game] gameScore: $args');
-              },
-            );
-            // Online play, same rule as the plaza tab: only the games' own site.
-            controller.addJavaScriptHandler(
-              handlerName: PlazaBridge.mpSession,
-              callback: (_) async {
-                final onGameSite = PlazaBridge.isGameOrigin(
-                  await controller.getUrl(),
-                  Constants.gameUrl,
-                );
-                if (!onGameSite || !mounted) return null;
-                return ref.read(mpSessionServiceProvider).session();
-              },
-            );
-            // A finished round, for the daily missions (a mission opens its
-            // game in this page): only the games' own site may report one.
-            controller.addJavaScriptHandler(
-              handlerName: PlazaBridge.gameActivity,
-              callback: (args) async {
-                final onGameSite = PlazaBridge.isGameOrigin(
-                  await controller.getUrl(),
-                  Constants.gameUrl,
-                );
-                if (!onGameSite || !mounted) return null;
-                return recordGameActivity(ref, args);
-              },
-            );
-          },
-          onPermissionRequest: (controller, request) =>
-              answerGamePermission(request),
-          onLoadStop: (controller, url) {
-            // The page's sole handlers are installed → start forwarding.
-            soleForwardReady = true;
-          },
-          onProgressChanged: (controller, progress) {
-            if (!mounted) return;
-            setState(() => _progress = progress / 100);
-          },
+        ),
+        body: SafeArea(
+          child: InAppWebView(
+            initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+            initialSettings: InAppWebViewSettings(
+              isInspectable: kDebugMode,
+              // Camera mode: the preview autoplays, inline rather than full screen on iOS.
+              mediaPlaybackRequiresUserGesture: false,
+              allowsInlineMediaPlayback: true,
+              // The phone's font size must not enlarge the web text a second
+              // time; the game has its own large-text mode.
+              textZoom: 100,
+              useShouldOverrideUrlLoading: widget.closeOnLeavePath,
+            ),
+            shouldOverrideUrlLoading: widget.closeOnLeavePath
+                ? (controller, action) async {
+                    // Only the page itself: frames and sub-requests are left alone.
+                    if (!action.isForMainFrame) {
+                      return NavigationActionPolicy.ALLOW;
+                    }
+                    if (staysOnGamePath(
+                      Uri.tryParse(widget.url),
+                      action.request.url?.uriValue,
+                    )) {
+                      return NavigationActionPolicy.ALLOW;
+                    }
+                    if (!_closing && mounted) {
+                      _closing = true;
+                      Navigator.of(context).maybePop();
+                    }
+                    return NavigationActionPolicy.CANCEL;
+                  }
+                : null,
+            onWebViewCreated: (controller) {
+              _controller = controller;
+              // Game → Flutter: the game reports its score here.
+              controller.addJavaScriptHandler(
+                handlerName: 'gameScore',
+                callback: (args) {
+                  // TODO: persist the score (Supabase). For now just log it.
+                  debugPrint('[Game] gameScore: $args');
+                },
+              );
+              // Online play, same rule as the plaza tab: only the games' own site.
+              controller.addJavaScriptHandler(
+                handlerName: PlazaBridge.mpSession,
+                callback: (_) async {
+                  final onGameSite = PlazaBridge.isGameOrigin(
+                    await controller.getUrl(),
+                    Constants.gameUrl,
+                  );
+                  if (!onGameSite || !mounted) return null;
+                  return ref.read(mpSessionServiceProvider).session();
+                },
+              );
+              // A finished round, for the daily missions (a mission opens its
+              // game in this page): only the games' own site may report one.
+              controller.addJavaScriptHandler(
+                handlerName: PlazaBridge.gameActivity,
+                callback: (args) async {
+                  final onGameSite = PlazaBridge.isGameOrigin(
+                    await controller.getUrl(),
+                    Constants.gameUrl,
+                  );
+                  if (!onGameSite || !mounted) return null;
+                  return recordGameActivity(ref, args);
+                },
+              );
+            },
+            onPermissionRequest: (controller, request) =>
+                answerGamePermission(request),
+            onLoadStop: (controller, url) {
+              // The page's sole handlers are installed → start forwarding.
+              soleForwardReady = true;
+            },
+            onProgressChanged: (controller, progress) {
+              if (!mounted) return;
+              setState(() => _progress = progress / 100);
+            },
+          ),
         ),
       ),
     );
