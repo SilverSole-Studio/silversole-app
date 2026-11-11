@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.13.3
+
+更新內容:
+
+- 首頁換上手繪天空：太陽、雲和遠方山丘，跟小鎮同一套畫風；雲不再擋到文字。
+- 首頁卡片整理：卡片樣式統一、小卡對齊，今天的任務完成後會標示已完成。
+- 「我的」頁改顯示暱稱，不再顯示信箱。
+- 各子頁標題改成置中。
+- 分析圖表補上座標軸；韌體更新頁在沒有可用更新時會說明目前狀態。
+
+Updates:
+
+- The home screen now has a hand-drawn sky with a sun, clouds and distant hills, in the same style as the town; clouds no longer cover text.
+- Home cards are tidied up: a consistent card style, aligned small cards, and today's tasks are marked once done.
+- The Me page shows your nickname instead of your email.
+- Sub-page titles are now centered.
+- Analytics charts now have axes; the firmware update page explains the current state when no update is available.
+
 ## v1.13.2
 
 更新內容:
