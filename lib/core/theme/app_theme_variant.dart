@@ -10,6 +10,11 @@ import 'dart:ui' show Brightness;
 ///
 /// Free for everyone: [mascot] (the default), [techLight], [techDark].
 /// Only with an active subscription: [dashboard], [journal].
+/// 限時免費: while true, 大數字儀表板 and 紙本手帳 can be picked by everyone
+/// (they are still the two looks meant for subscribers). Flip to false when
+/// the subscription can be bought and they go back behind it.
+const bool kPaidThemesFreeTrial = true;
+
 enum AppThemeVariant {
   /// A · 粗哥手繪小鎮風 — sky and grass, thick brown outlines with a hard
   /// shadow, the mascot's yellow. The default.
@@ -37,6 +42,11 @@ enum AppThemeVariant {
 
   /// Whether picking this look needs a subscription.
   bool get requiresSubscription => this == dashboard || this == journal;
+
+  /// Whether this look is locked for an account without a subscription right
+  /// now: [requiresSubscription], unless the 限時免費 period is on.
+  bool get lockedWithoutSubscription =>
+      requiresSubscription && !kPaidThemesFreeTrial;
 
   /// Dark looks: the [ThemeData] and the system bars follow this.
   Brightness get brightness => switch (this) {

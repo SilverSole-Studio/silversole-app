@@ -82,7 +82,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
   /// false, nothing stored) unless the account is subscribed; the three free
   /// looks always work.
   Future<bool> setThemeVariant(AppThemeVariant variant) async {
-    if (variant.requiresSubscription && !ref.read(subscriptionActiveProvider)) {
+    if (variant.lockedWithoutSubscription &&
+        !ref.read(subscriptionActiveProvider)) {
       return false;
     }
     await saveLocalValue(LocalSavableKey.themeVariant, variant.wireName);

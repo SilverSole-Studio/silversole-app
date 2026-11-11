@@ -11,7 +11,8 @@ import 'package:silversole/shared/providers/subscription_provider.dart';
 /// choice itself is kept, so renewing brings the look back.
 final themeVariantProvider = Provider<AppThemeVariant>((ref) {
   final chosen = ref.watch(settingsProvider.select((s) => s.themeVariant));
-  if (chosen.requiresSubscription && !ref.watch(subscriptionActiveProvider)) {
+  if (chosen.lockedWithoutSubscription &&
+      !ref.watch(subscriptionActiveProvider)) {
     return AppThemeVariant.mascot;
   }
   return chosen;
