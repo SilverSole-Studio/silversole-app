@@ -181,10 +181,18 @@ class FootCheckCardT2 extends ConsumerWidget {
                                     : last.rating.labelKey.tr(),
                                 maxLines: 1,
                                 softWrap: false,
-                                style: townHeroStyle(
-                                  context,
-                                  last == null ? 30 : 60,
-                                ).copyWith(height: 1.1),
+                                // The yellow drop shadow is for the short
+                                // verdict only; the empty-state sentence is
+                                // plain ink so it doesn't read as a doubled,
+                                // blurry line.
+                                style: last == null
+                                    ? context.look
+                                          .number(26, color: context.mascot.ink)
+                                          .copyWith(height: 1.1)
+                                    : townHeroStyle(
+                                        context,
+                                        60,
+                                      ).copyWith(height: 1.1),
                               ),
                             ),
                           ),
