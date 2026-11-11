@@ -71,6 +71,7 @@ dependencies:
   qr_flutter: ^4.1.0
   image_picker: ^1.2.4
   sign_in_with_apple: ^8.2.0
+  flutter_dynamic_icon_plus: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -117,6 +118,8 @@ flutter:
     - assets/images/
     - assets/images/games/
     - assets/translations/
+    # App 圖示 picker previews (256px; the full-size sources next to them are not bundled).
+    - assets/app_icon/preview/
     - assets/map_styles/
     # Canned motion clips replayed by the pressure map's demo menu.
     - assets/foot-pressure-heatmpt-samples/
