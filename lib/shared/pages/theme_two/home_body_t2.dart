@@ -32,6 +32,7 @@ class HomeBodyT2 extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.paddingOf(context).top;
+    final phase = skyPhaseFor(DateTime.now());
     return Scaffold(
       // The grass gradient's far color, so nothing shows below the page.
       backgroundColor: const Color(0xFF8CC25C),
@@ -39,13 +40,13 @@ class HomeBodyT2 extends ConsumerWidget {
         child: Stack(
           children: [
             const Positioned.fill(child: TownGrass()),
-            const Positioned(top: 0, left: 0, right: 0, child: TownSky()),
+            Positioned(top: 0, left: 0, right: 0, child: TownSky(phase: phase)),
             Padding(
               padding: EdgeInsets.fromLTRB(16, top + 8, 16, 28),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Greeting(),
+                  _Greeting(night: phase == SkyPhase.night),
                   SizedBox(height: 14),
                   FootCheckCardT2(),
                   SizedBox(height: 20),
@@ -71,7 +72,10 @@ class HomeBodyT2 extends ConsumerWidget {
 // ── Greeting ──────────────────────────────────────────────────────────────
 
 class _Greeting extends ConsumerWidget {
-  const _Greeting();
+  const _Greeting({this.night = false});
+
+  /// Night sky is dark: the greeting turns light so it stays readable.
+  final bool night;
 
   /// Time-of-day greeting — derived from the clock, so it is real data.
   String _greetingKey(int hour) {
@@ -104,7 +108,10 @@ class _Greeting extends ConsumerWidget {
           padding: const EdgeInsets.only(right: 64),
           child: Text(
             '${_greetingKey(now.hour).tr()}，$name',
-            style: context.textTheme.headlineLarge?.copyWith(fontSize: 34),
+            style: context.textTheme.headlineLarge?.copyWith(
+              fontSize: 34,
+              color: night ? const Color(0xFFFFF6DC) : null,
+            ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

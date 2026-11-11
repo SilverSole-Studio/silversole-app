@@ -17,8 +17,38 @@ import 'package:silversole/core/utils/useful_extension.dart';
 /// Sun, clouds and hills are separate layers with the box shapes of the
 /// illustration files that will replace them (see [TownSkyArt]): flip the
 /// flag there once the PNGs are in assets.
+/// Which sky the home page shows. Decided once from the phone's local clock
+/// when the page opens; the sun / moon stays in the same spot in all three.
+enum SkyPhase { day, dusk, night }
+
+/// 6:00-16:59 day, 17:00-18:59 dusk, 19:00-5:59 night.
+SkyPhase skyPhaseFor(DateTime t) {
+  final h = t.hour;
+  if (h >= 6 && h < 17) return SkyPhase.day;
+  if (h >= 17 && h < 19) return SkyPhase.dusk;
+  return SkyPhase.night;
+}
+
 class TownSky extends StatelessWidget {
-  const TownSky({super.key});
+  const TownSky({super.key, this.phase = SkyPhase.day});
+
+  final SkyPhase phase;
+
+  static const _gradients = {
+    SkyPhase.day: [Color(0xFF8FD3EF), Color(0xFFBDE8F6), Color(0xFFDDF4F5)],
+    SkyPhase.dusk: [Color(0xFF7A8CD8), Color(0xFFF2A68C), Color(0xFFFFD99A)],
+    SkyPhase.night: [Color(0xFF1E2A5A), Color(0xFF2F4586), Color(0xFF4A63A3)],
+  };
+
+  static Widget _filtered(Widget w, ColorFilter? f) =>
+      f == null ? w : ColorFiltered(colorFilter: f, child: w);
+
+  static ColorFilter _tint(double r, double g, double b) => ColorFilter.matrix([
+    r, 0, 0, 0, 0, //
+    0, g, 0, 0, 0,
+    0, 0, b, 0, 0,
+    0, 0, 0, 1, 0,
+  ]);
 
   @override
   Widget build(BuildContext context) {
@@ -34,20 +64,55 @@ class TownSky extends StatelessWidget {
             double l,
             double t,
             double w,
-            double h,
-          ) => Positioned(
+            double h, {
+            ColorFilter? filter,
+            BoxFit fit = BoxFit.fill,
+          }) => Positioned(
             left: l * k,
             top: t * k,
             width: w * k,
             height: h * k,
             child: TownSkyArt.useFiles
-                ? Image.asset(asset, fit: BoxFit.fill)
+                ? _filtered(Image.asset(asset, fit: fit), filter)
                 : CustomPaint(painter: painter),
           );
+          final night = phase == SkyPhase.night;
+          final dusk = phase == SkyPhase.dusk;
+          final hillsTint = dusk
+              ? _tint(1.0, 0.86, 0.82)
+              : night
+              ? _tint(0.42, 0.5, 0.75)
+              : null;
+          final cloudTint = night ? _tint(0.55, 0.6, 0.8) : null;
+          final cloudA = dusk ? TownSkyArt.cloudDusk : TownSkyArt.cloudA;
+          final cloudB = dusk ? TownSkyArt.cloudDusk : TownSkyArt.cloudB;
+          final cloudFit = dusk ? BoxFit.contain : BoxFit.fill;
           return Stack(
             clipBehavior: Clip.hardEdge,
             children: [
-              const Positioned.fill(child: CustomPaint(painter: _SkyPainter())),
+              Positioned.fill(
+                child: CustomPaint(painter: _SkyPainter(_gradients[phase]!)),
+              ),
+              if (night) ...[
+                layer(
+                  TownSkyArt.stars,
+                  _CloudPainter(ink),
+                  20,
+                  14,
+                  64,
+                  80,
+                  fit: BoxFit.contain,
+                ),
+                layer(
+                  TownSkyArt.stars,
+                  _CloudPainter(ink),
+                  150,
+                  44,
+                  44,
+                  55,
+                  fit: BoxFit.contain,
+                ),
+              ],
               // Hills: 1290x302, bottom edge on the sky's bottom edge.
               layer(
                 TownSkyArt.hills,
@@ -56,12 +121,42 @@ class TownSky extends StatelessWidget {
                 300 - 390 * 302 / 1290,
                 390,
                 390 * 302 / 1290,
+                filter: hillsTint,
               ),
-              // Clouds: 600x300 boxes.
-              layer(TownSkyArt.cloudA, _CloudPainter(ink), 198, 12, 100, 50),
-              layer(TownSkyArt.cloudB, _CloudPainter(ink), 120, 0, 60, 30),
-              // Sun: 512x512 box.
-              layer(TownSkyArt.sun, _SunPainter(ink), 288, 14, 104, 104),
+              // Clouds: 600x300 boxes (dusk cloud 512x368, kept in proportion).
+              layer(
+                cloudA,
+                _CloudPainter(ink),
+                198,
+                12,
+                100,
+                50,
+                filter: cloudTint,
+                fit: cloudFit,
+              ),
+              layer(
+                cloudB,
+                _CloudPainter(ink),
+                120,
+                0,
+                60,
+                30,
+                filter: cloudTint,
+                fit: cloudFit,
+              ),
+              // Sun (512x512) or moon (451x512) in the same box, same spot.
+              if (night)
+                layer(
+                  TownSkyArt.moon,
+                  _SunPainter(ink),
+                  288,
+                  14,
+                  104,
+                  104,
+                  fit: BoxFit.contain,
+                )
+              else
+                layer(TownSkyArt.sun, _SunPainter(ink), 288, 14, 104, 104),
             ],
           );
         },
@@ -127,9 +222,16 @@ class _GrassPainter extends CustomPainter {
 abstract final class TownSkyArt {
   static const bool useFiles = true;
   static const sun = 'assets/mascot-assets/sky/app_home_sun.png'; // 512x512
-  static const cloudA = 'assets/mascot-assets/sky/app_home_cloud_a.png'; // 600x300
-  static const cloudB = 'assets/mascot-assets/sky/app_home_cloud_b.png'; // 600x300
-  static const hills = 'assets/mascot-assets/sky/app_home_hills.png'; // 1290x302
+  static const cloudA =
+      'assets/mascot-assets/sky/app_home_cloud_a.png'; // 600x300
+  static const cloudB =
+      'assets/mascot-assets/sky/app_home_cloud_b.png'; // 600x300
+  static const hills =
+      'assets/mascot-assets/sky/app_home_hills.png'; // 1290x302
+  static const moon = 'assets/mascot-assets/sky/app_home_moon.png'; // 451x512
+  static const stars = 'assets/mascot-assets/sky/app_home_stars.png'; // 409x512
+  static const cloudDusk =
+      'assets/mascot-assets/sky/app_home_cloud_dusk.png'; // 512x368
 }
 
 Paint _fillP(Color c) => Paint()..color = c;
@@ -141,23 +243,24 @@ Paint _lineP(Color ink, double w) => Paint()
   ..color = ink;
 
 class _SkyPainter extends CustomPainter {
-  const _SkyPainter();
+  const _SkyPainter(this.colors);
+  final List<Color> colors;
   @override
   void paint(Canvas canvas, Size size) {
     canvas.drawRect(
       Offset.zero & size,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF8FD3EF), Color(0xFFBDE8F6), Color(0xFFDDF4F5)],
+          colors: colors,
           stops: [0, 0.6, 1],
         ).createShader(Offset.zero & size),
     );
   }
 
   @override
-  bool shouldRepaint(_SkyPainter old) => false;
+  bool shouldRepaint(_SkyPainter old) => old.colors != colors;
 }
 
 /// Hills, with the town's outline on the far ridge. Drawn in the 390x300 sky
