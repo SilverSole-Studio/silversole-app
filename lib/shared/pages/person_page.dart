@@ -13,6 +13,8 @@ import 'package:silversole/shared/models/user_identity.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
+import 'package:silversole/core/app_icon/app_icon_choice.dart';
+import 'package:silversole/shared/pages/app_icon_page.dart';
 import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/providers/theme_variant_provider.dart';
@@ -259,6 +261,16 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                   subtitle: themeNameKey(variant).tr(),
                   showChevron: true,
                   onTap: () => context.push('/themes'),
+                ),
+                SettingsRow(
+                  icon: LucideIcons.smartphone,
+                  title: 'app_icon'.tr(),
+                  subtitle: (ref.watch(appIconChoiceProvider).value ??
+                          AppIconChoice.standard)
+                      .nameKey
+                      .tr(),
+                  showChevron: true,
+                  onTap: () => context.push('/app-icon'),
                 ),
                 SettingsRow(
                   icon: LucideIcons.shieldCheck,

@@ -19,6 +19,7 @@ import 'package:silversole/shared/pages/shop_page.dart';
 import 'package:silversole/shared/pages/sign_in_page.dart';
 import 'package:silversole/shared/pages/sign_up_page.dart';
 import 'package:silversole/shared/pages/subscription_page.dart';
+import 'package:silversole/shared/pages/app_icon_page.dart';
 import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
@@ -67,6 +68,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/shop', builder: (_, _) => const ShopRoute()),
       GoRoute(path: '/themes', builder: (_, _) => const ThemePickerPage()),
+      GoRoute(path: '/app-icon', builder: (_, _) => const AppIconPage()),
       GoRoute(
         path: '/subscription',
         builder: (_, _) => const SubscriptionPage(),

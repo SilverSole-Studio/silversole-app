@@ -87,6 +87,14 @@ general,General,一般
 search_device,Search device,搜尋裝置
 current_devices,Current devices,目前裝置
 switch_theme,Switch Theme,切換主題
+app_icon,App Icon,App 圖示
+app_icon_title,Choose an app icon,選 App 圖示
+app_icon_default,Cuge with insole,粗哥拿鞋墊
+app_icon_wave,Cuge waving,粗哥站鞋墊揮手
+app_icon_s,Warm S logo,S 標誌暖色版
+app_icon_in_use,In use,使用中
+app_icon_note_android,"After you change it, close the app. The icon on your home screen may disappear for a moment.",換好後請把 App 關掉，桌面圖示會稍等一下才換好。
+app_icon_failed,Could not change the icon,圖示換不了
 theme_mascot,Mascot Town,粗哥手繪小鎮
 theme_tech_light,Minimal Tech · Light,極簡科技・白
 theme_tech_dark,Minimal Tech · Dark,極簡科技・黑
