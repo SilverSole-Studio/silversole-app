@@ -165,3 +165,13 @@ window.flutter_inappwebview.callHandler("gameActivity", { slug: "fish", stage: "
 - **怎麼賺**：只有遊戲分頁與每日任務開的遊戲頁回報 `gameActivity`、而且當下**鞋墊連線中**的秒數，才累計成「今天的運動分鐘」。累計滿 15 分鐘，App 向伺服器要當天的 10 鑽石；一天一次、每月最多 300、沒訂閱不給。失敗（沒網路、被限流）下次回報或回到廣場時會再試。
 - **遊戲這邊不用做任何事**就會賺到：照舊在結算時呼叫 `gameActivity`。遊戲不能自己改餘額，也沒有扣鑽石的通道；兌換實物還沒開放（伺服器 `diamond_redeem` 目前一律回 `not_open`），兌換站的實物分頁在訂閱中要顯示「即將開放」。
 - 回報的分鐘是手機說的，伺服器沒有原始鞋墊資料，所以最壞情況是有人假報、當月領滿 300 鑽石（約 NT$30）。
+
+## 銀足樂齡模式（`aaRpc`，只在 `/game/aa/` 頁面）
+
+不是廣場的通道。「我的」頁的隱藏入口開 `<gameUrl>game/aa/`（`ActiveAgingPage`），那個頁面有：
+
+- `window.silversoleApp.features.activeAging === true`（只有 `aa_me().active` 的帳號才有這個 key；一般帳號根本沒有）。H5 頁自己要檢查，不能只靠入口隱藏。
+- `callHandler('aaRpc', { fn, args })` → `{ ok: true, data }` 或 `{ ok: false, reason }`。`fn` 只能是 12 個名字（見 `lib/core/active_aging/aa_bridge.dart`），`args` 的 key 是 08 號文件參數表去掉 `p_`（`session_id`、`rows`、`closed_at`…），多一個 key 就拒絕。`reason`：`signed_out`、`not_member`、`forbidden`、`rate_limited`、`offline`、`invalid`、`too_large`、`closed`。`data` 是伺服器回傳去掉 `ok` 的其餘欄位。
+- 相機（只給同 origin，跟遊戲一樣）。這個頁面只能留在 `/game/aa/` 底下，導到別處的請求會被取消。
+
+資料庫：`supabase/migrations/20261113120000_active_aging.sql`（草稿，未套用）；開關 `--dart-define=ACTIVE_AGING_BACKEND=supabase`，沒開之前沒有人有角色。測試：`supabase/tests/aa_rpc_test.mjs`。

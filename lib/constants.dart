@@ -85,6 +85,16 @@ abstract class Constants {
   );
   static const bool friendsOnSupabase = friendsBackend == 'supabase';
 
+  /// Whether the 銀足樂齡 mode asks the server who has the role. Off until
+  /// `supabase/migrations/20261113120000_active_aging.sql` is applied; off means
+  /// nobody has it, so neither the entry nor `features.activeAging` ever shows.
+  ///
+  ///     flutter run --dart-define=ACTIVE_AGING_BACKEND=supabase
+  static const String activeAgingBackend = String.fromEnvironment(
+    'ACTIVE_AGING_BACKEND',
+  );
+  static const bool activeAgingOnSupabase = activeAgingBackend == 'supabase';
+
   /// Whether the gait tab shows the wearer's own figures instead of the
   /// sample page. Off in release until the step detection has been tuned on
   /// real recordings (`docs/superpowers/specs/2026-10-31-daily-gait-design.md`

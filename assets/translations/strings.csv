@@ -837,3 +837,15 @@ friends_link_home,Back to home,回首頁
 friends_via_link,By link,傳連結加的
 friends_err_linkExpired,This link no longer works. Ask them to send a new one.,這個連結失效了，請對方重新傳一個。
 friends_err_linkLimit,They got too many requests today. Please try tomorrow.,對方今天收到的邀請太多了，明天再試。
+aa_title,Active Aging,銀足樂齡
+aa_not_available,This is not available for your account.,這個帳號目前沒有開通。
+aa_code_title,Enter your code,輸入啟用碼
+aa_code_hint,8-digit code,8 位數字
+aa_code_confirm,Confirm,確認
+aa_code_cancel,Cancel,取消
+aa_code_done,Turned on,已開通
+aa_code_err_invalid,That code does not work. Check it with whoever gave it to you.,這組代碼不能用，請向發給你的人確認。
+aa_code_err_rate_limited,Too many tries. Please wait a while.,試太多次了，請稍後再試。
+aa_code_err_forbidden,This account cannot use a code. Please contact us.,這個帳號無法使用啟用碼，請與我們聯絡。
+aa_code_err_offline,No connection. Please try again.,目前連不上，請稍後再試。
+aa_code_err_signed_out,Please sign in first.,請先登入。

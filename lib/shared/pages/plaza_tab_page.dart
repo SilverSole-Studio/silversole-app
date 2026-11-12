@@ -6,6 +6,7 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
+import 'package:silversole/core/active_aging/aa_repository.dart';
 import 'package:silversole/core/game_save/game_save_repository.dart';
 import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
@@ -115,6 +116,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     return PlazaBridge.info(
       friends: friends,
       friendRequests: friends ? ref.read(incomingRequestCountProvider) : 0,
+      activeAging: ref.read(activeAgingEnabledProvider),
       accountId: user?.uuid,
       accountEmail: user?.email,
       systemFontScale: _systemFontScale,
@@ -276,6 +278,7 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       if (want) _runPendingFriends();
     });
     ref.listen(subscriptionActiveProvider, (_, _) => _publishAppInfo());
+    ref.listen(activeAgingEnabledProvider, (_, _) => _publishAppInfo());
     // The settings page's 文字大小 changed: the games follow it.
     ref.listen(
       settingsProvider.select((s) => s.textSize),
