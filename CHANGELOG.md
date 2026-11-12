@@ -9,6 +9,9 @@
 - 「我的」頁改顯示暱稱，不再顯示信箱。
 - 各子頁標題改成置中。
 - 分析圖表補上座標軸；韌體更新頁在沒有可用更新時會說明目前狀態。
+- 首頁天空跟著時間變：白天、傍晚、晚上各有不同的樣子。
+- 「大數字儀表板」與「紙本手帳」兩套主題限時免費開放。
+- 「我的」頁可以自己選 App 圖示。
 
 Updates:
 
@@ -17,6 +20,9 @@ Updates:
 - The Me page shows your nickname instead of your email.
 - Sub-page titles are now centered.
 - Analytics charts now have axes; the firmware update page explains the current state when no update is available.
+- The home sky now follows the time of day: day, dusk and night.
+- The "Big Numbers" dashboard and "Paper Journal" themes are free for a limited time.
+- You can now choose the app icon on the Me page.
 
 ## v1.13.2
 
