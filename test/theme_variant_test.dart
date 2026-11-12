@@ -141,18 +141,35 @@ void main() {
       }
     });
 
-    test('B and C are refused without a subscription', () async {
+    test('B and C can be picked by everyone during 限時免費', () async {
       final c = _container(subscribed: false);
       await _loaded(c);
       final notifier = c.read(settingsProvider.notifier);
-      await notifier.setThemeVariant(AppThemeVariant.techDark);
       for (final v in [AppThemeVariant.dashboard, AppThemeVariant.journal]) {
-        expect(await notifier.setThemeVariant(v), isFalse, reason: v.name);
-        expect(c.read(settingsProvider).themeVariant, AppThemeVariant.techDark);
+        expect(await notifier.setThemeVariant(v), kPaidThemesFreeTrial);
+        expect(c.read(themeVariantProvider) == v, kPaidThemesFreeTrial);
       }
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('theme_variant'), 'tech_dark');
     });
+
+    test(
+      'B and C are refused without a subscription',
+      skip: kPaidThemesFreeTrial,
+      () async {
+        final c = _container(subscribed: false);
+        await _loaded(c);
+        final notifier = c.read(settingsProvider.notifier);
+        await notifier.setThemeVariant(AppThemeVariant.techDark);
+        for (final v in [AppThemeVariant.dashboard, AppThemeVariant.journal]) {
+          expect(await notifier.setThemeVariant(v), isFalse, reason: v.name);
+          expect(
+            c.read(settingsProvider).themeVariant,
+            AppThemeVariant.techDark,
+          );
+        }
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('theme_variant'), 'tech_dark');
+      },
+    );
 
     test('B and C can be picked with a subscription', () async {
       final c = _container(subscribed: true);
@@ -166,6 +183,7 @@ void main() {
 
     test(
       'an expired subscription draws A again, and keeps the choice',
+      skip: kPaidThemesFreeTrial,
       () async {
         SharedPreferences.setMockInitialValues({'theme_variant': 'dashboard'});
         final c = _container(subscribed: false);
@@ -245,12 +263,19 @@ void main() {
       for (final name in free) {
         expect(find.text(name), findsOneWidget, reason: name);
       }
-      if (kSubscriptionOffered) {
+      if (kSubscriptionOffered || kPaidThemesFreeTrial) {
         for (final name in forSubscribers) {
           expect(find.text(name), findsOneWidget, reason: name);
         }
         expect(find.byType(ThemeThumb), findsNWidgets(5));
-        expect(find.text('訂閱後可用'), findsNWidgets(2));
+        expect(
+          find.text('訂閱後可用'),
+          kPaidThemesFreeTrial ? findsNothing : findsNWidgets(2),
+        );
+        expect(
+          find.text('限時免費'),
+          kPaidThemesFreeTrial ? findsNWidgets(2) : findsNothing,
+        );
       } else {
         // Not sold yet: nothing on the page leads to the subscription.
         for (final name in forSubscribers) {
@@ -265,7 +290,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(container.read(themeVariantProvider), AppThemeVariant.techDark);
 
-      if (kSubscriptionOffered) {
+      if (kPaidThemesFreeTrial) {
+        // 限時免費: B and C switch at once, no subscription needed.
+        await tester.tap(find.text('大數字儀表板'));
+        await tester.pumpAndSettle();
+        expect(container.read(themeVariantProvider), AppThemeVariant.dashboard);
+        await tester.tap(find.text('紙本手帳'));
+        await tester.pumpAndSettle();
+        expect(container.read(themeVariantProvider), AppThemeVariant.journal);
+      } else if (kSubscriptionOffered) {
         // A locked look opens the subscription page instead, and nothing
         // changes.
         await tester.tap(find.text('大數字儀表板'));

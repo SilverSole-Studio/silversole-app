@@ -35,7 +35,8 @@ class ThemePickerPage extends ConsumerWidget {
     final subscribed = ref.watch(subscriptionActiveProvider);
 
     Widget tile(AppThemeVariant v) {
-      final locked = v.requiresSubscription && !subscribed;
+      final locked = v.lockedWithoutSubscription && !subscribed;
+      final trial = v.requiresSubscription && kPaidThemesFreeTrial;
       return AppCard(
         weight: v == current ? CardWeight.hero : CardWeight.standard,
         onTap: () async {
@@ -53,9 +54,17 @@ class ThemePickerPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    themeNameKey(v).tr(),
-                    style: context.textTheme.titleMedium,
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        themeNameKey(v).tr(),
+                        style: context.textTheme.titleMedium,
+                      ),
+                      if (trial)
+                        _Badge(label: 'theme_trial_free'.tr(), icon: null),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -109,9 +118,14 @@ class ThemePickerPage extends ConsumerWidget {
             tile(v),
             const SizedBox(height: AppSpacing.md),
           ],
-          if (kSubscriptionOffered || subscribed) ...[
+          if (kSubscriptionOffered || subscribed || kPaidThemesFreeTrial) ...[
             const SizedBox(height: AppSpacing.sm),
-            section('theme_subscribers_section'.tr()),
+            section(
+              (kPaidThemesFreeTrial
+                      ? 'theme_more_section'
+                      : 'theme_subscribers_section')
+                  .tr(),
+            ),
             const SizedBox(height: AppSpacing.md),
             for (final v in AppThemeVariant.values.where(
               (v) => v.requiresSubscription,
@@ -127,7 +141,7 @@ class _Badge extends StatelessWidget {
   const _Badge({required this.label, required this.icon});
 
   final String label;
-  final IconData icon;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -140,8 +154,10 @@ class _Badge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: context.colorScheme.onPrimary),
-          const SizedBox(width: 4),
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: context.colorScheme.onPrimary),
+            const SizedBox(width: 4),
+          ],
           Text(
             label,
             style: context.textTheme.labelMedium?.copyWith(
