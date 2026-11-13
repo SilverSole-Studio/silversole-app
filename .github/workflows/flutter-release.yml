@@ -382,8 +382,11 @@ jobs:
 
       - name: Upload to TestFlight
         run: |
+          # --apple-id：這個 App 在 App Store 的數字 ID（公開，就是 App Store 網址裡的 id）。
+          # 11/13 起 altool 報「Cannot determine the Apple ID from Bundle ID」，直接指定就不用它自己查。
           xcrun altool --upload-app --type ios \
             --file dist/*.ipa \
+            --apple-id 6826730775 \
             --apiKey "$ASC_KEY_ID" \
             --apiIssuer "$ASC_ISSUER_ID"
 
