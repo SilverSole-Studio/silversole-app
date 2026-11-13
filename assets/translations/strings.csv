@@ -648,8 +648,8 @@ friends_err_notFound_avatar,That picture is not available. Please pick another.,
 friends_err_limitReached_photo,Photos can be changed 5 times a day. Please try tomorrow.,照片一天只能換 5 次，明天再換。
 friends_err_limitReached_report,You have sent 10 reports today. Please try tomorrow.,今天已經檢舉 10 次了，明天再試。
 friends_qr_retry,Try again,再試一次
-foot_check_none_yet,No foot check yet,尚未做過足部健檢
-foot_check_none_yet_hint,Take the one-minute check and your result shows up here.,做一次一分鐘健檢，結果會顯示在這裡。
+foot_check_none_yet,No foot check yet,尚未做過足部健⁠檢
+foot_check_none_yet_hint,Take the one-minute check and your result shows up here.,做一次一分鐘健檢，結果會顯示在這⁠裡⁠。
 foot_check_from_sample,Calculated from the sample motion and not from your sole — so it is not kept as your result.,依範例動作計算，不是你的量測，因此不會記為你的結果。
 fall_guard_none_since_open,No falls detected since the app was opened,開啟 App 以來未偵測到跌倒
 fall_guard_count_since_open,{} falls detected since the app was opened,開啟 App 以來偵測到 {} 次跌倒
