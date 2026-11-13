@@ -183,3 +183,13 @@ window.flutter_inappwebview.callHandler("gameActivity", { slug: "fish", stage: "
 - `day`：App 判斷「今天」用的本地日期鍵。`id` 是任務 id；`title` 是 App 任務頁顯示的中文名稱；`done` 是 App 現在的完成判定。
 - 今天還沒有清單時，App 用打開每日任務頁的同一套邏輯產生並存起來；產生不出來回 `missions: []`。
 - 只讀：H5 改不了任務或完成狀態（完成只認 App 自己記的量測與 `gameActivity`）。回傳不含個資。
+
+## 銀足樂齡模式（`aaRpc`，只在 `/game/aa/` 頁面）
+
+不是廣場的通道。「我的」頁的隱藏入口開 `<gameUrl>game/aa/`（`ActiveAgingPage`），那個頁面有：
+
+- `window.silversoleApp.features.activeAging === true`（只有 `aa_me().active` 的帳號才有這個 key；一般帳號根本沒有）。H5 頁自己要檢查，不能只靠入口隱藏。
+- `callHandler('aaRpc', { fn, args })` → `{ ok: true, data }` 或 `{ ok: false, reason }`。`fn` 只能是 12 個名字（見 `lib/core/active_aging/aa_bridge.dart`），`args` 的 key 是 08 號文件參數表去掉 `p_`（`session_id`、`rows`、`closed_at`…），多一個 key 就拒絕。`reason`：`signed_out`、`not_member`、`forbidden`、`rate_limited`、`offline`、`invalid`、`too_large`、`closed`。`data` 是伺服器回傳去掉 `ok` 的其餘欄位。
+- 相機（只給同 origin，跟遊戲一樣）。這個頁面只能留在 `/game/aa/` 底下，導到別處的請求會被取消。
+
+資料庫：`supabase/migrations/20261113120000_active_aging.sql`（草稿，未套用）；開關 `--dart-define=ACTIVE_AGING_BACKEND=supabase`，沒開之前沒有人有角色。測試：`supabase/tests/aa_rpc_test.mjs`。

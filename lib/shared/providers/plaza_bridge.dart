@@ -92,6 +92,9 @@ abstract final class PlazaBridge {
   /// (`ricky951102@gmail.com` → `ricky951102`). It is empty when there is no
   /// email. It is only a name to match on, not proof of who the user is.
   ///
+  /// [activeAging] is `aa_me().active` (see `aaActiveProvider`); it becomes
+  /// `features.activeAging`, which the H5 銀足樂齡 pages check themselves.
+  ///
   /// [diamonds] is the server's last answer about the account's diamonds
   /// (`balance`, earned this `month`, the month's `cap`); left out until the
   /// app has one.
@@ -106,6 +109,7 @@ abstract final class PlazaBridge {
   static Map<String, Object> info({
     required bool friends,
     required int friendRequests,
+    bool activeAging = false,
     String? accountId,
     String? accountEmail,
     double systemFontScale = 1.0,
@@ -113,7 +117,9 @@ abstract final class PlazaBridge {
     bool subscribed = false,
     DiamondBalance? diamonds,
   }) => {
-    'features': {'friends': friends},
+    // activeAging is only ever there as true: the 銀足樂齡 mode is for accounts
+    // the server says have the role (aa_me().active); everyone else gets no key.
+    'features': {'friends': friends, if (activeAging) 'activeAging': true},
     'friendRequests': friends ? friendRequests : 0,
     if (accountId != null && accountId.isNotEmpty)
       'account': {'id': accountId, 'username': usernameOf(accountEmail)},

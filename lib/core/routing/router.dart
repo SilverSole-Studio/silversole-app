@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/friends/friend_rules.dart';
+import 'package:silversole/shared/pages/active_aging_page.dart';
 import 'package:silversole/shared/pages/activity_report_page.dart';
 import 'package:silversole/shared/pages/analytics_detail_page.dart';
 import 'package:silversole/shared/pages/device_recent_warnings_page.dart';
@@ -72,6 +73,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/subscription',
         builder: (_, _) => const SubscriptionPage(),
+      ),
+      // 銀足樂齡: reached only from the hidden row on 「我的」; the page checks
+      // aa_me() itself and the server checks every call.
+      GoRoute(
+        path: '/active-aging',
+        builder: (_, _) => const ActiveAgingPage(),
       ),
       friendsRoute(enabled: friendsOn),
       shareLinkRoute(enabled: friendsOn),

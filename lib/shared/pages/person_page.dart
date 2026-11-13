@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:silversole/constants.dart';
+import 'package:silversole/core/active_aging/aa_repository.dart';
 import 'package:silversole/core/auth/auth_service.dart';
 import 'package:silversole/core/error/error_logger.dart';
 import 'package:silversole/core/theme/theme.dart';
@@ -19,6 +21,7 @@ import 'package:silversole/shared/pages/theme_picker_page.dart';
 import 'package:silversole/shared/providers/subscription_provider.dart';
 import 'package:silversole/shared/providers/theme_variant_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
+import 'package:silversole/shared/widgets/aa_unlock.dart';
 import 'package:silversole/shared/widgets/app_card.dart';
 import 'package:silversole/shared/widgets/delete_account_tile.dart';
 import 'package:silversole/shared/widgets/privacy_policy_link.dart';
@@ -108,6 +111,7 @@ class _PersonPageState extends ConsumerState<PersonPage> {
     final profile = ref.watch(myFriendProfileProvider).value;
     final nickname = profile?.nickname?.trim();
     final hasNickname = nickname != null && nickname.isNotEmpty;
+    final aaActive = ref.watch(activeAgingEnabledProvider);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -184,6 +188,20 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                 ),
               ],
             ),
+            // 銀足樂齡: only accounts with the role see this row (see
+            // activeAgingEnabledProvider). Everyone else turns it on through the
+            // version tag at the bottom.
+            if (aaActive)
+              SettingsGroup(
+                children: [
+                  SettingsRow(
+                    icon: LucideIcons.activity,
+                    title: 'aa_title'.tr(),
+                    showChevron: true,
+                    onTap: () => context.push('/active-aging'),
+                  ),
+                ],
+              ),
             // 2026-11-01 user：訂閱 149／月、解鎖遊戲兌換站的實物（畫面先做、還沒接金流）
             // 金流接上前不顯示訂閱入口（kSubscriptionOffered）。
             if (kSubscriptionOffered || !isSignedIn || hasNickname)
@@ -265,10 +283,11 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                 SettingsRow(
                   icon: LucideIcons.smartphone,
                   title: 'app_icon'.tr(),
-                  subtitle: (ref.watch(appIconChoiceProvider).value ??
-                          AppIconChoice.standard)
-                      .nameKey
-                      .tr(),
+                  subtitle:
+                      (ref.watch(appIconChoiceProvider).value ??
+                              AppIconChoice.standard)
+                          .nameKey
+                          .tr(),
                   showChevron: true,
                   onTap: () => context.push('/app-icon'),
                 ),
@@ -296,6 +315,14 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                   ),
                 ],
               ),
+            // The app version. Seven quick taps ask for a 銀足樂齡 code, but only
+            // for a signed-in account that does not have the role yet.
+            VersionTag(
+              onUnlockTap:
+                  isSignedIn && Constants.activeAgingOnSupabase && !aaActive
+                  ? () => showAaCodeDialog(context)
+                  : null,
+            ),
           ],
         ),
       ),
