@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.13.4
+
+更新內容:
+
+- 小鎮的「今日小鎮目標」會顯示 App 今天排給你的訓練，完成後可以在小鎮領金幣。
+- 暱稱建立後可以免費改一次，改完 24 小時內不能再改。
+- 修正主題卡片的中文句尾只剩一個字掉到下一行。
+
+Updates:
+
+- The town's "Today's Town Goals" now shows the training the app set for you today; finish it to collect coins in the town.
+- You can change your nickname once for free after creating it, and not again within 24 hours.
+- Fixed a single Chinese character wrapping onto its own line at the end of theme card text.
+
 ## v1.13.3
 
 更新內容:
