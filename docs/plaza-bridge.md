@@ -165,3 +165,21 @@ window.flutter_inappwebview.callHandler("gameActivity", { slug: "fish", stage: "
 - **怎麼賺**：只有遊戲分頁與每日任務開的遊戲頁回報 `gameActivity`、而且當下**鞋墊連線中**的秒數，才累計成「今天的運動分鐘」。累計滿 15 分鐘，App 向伺服器要當天的 10 鑽石；一天一次、每月最多 300、沒訂閱不給。失敗（沒網路、被限流）下次回報或回到廣場時會再試。
 - **遊戲這邊不用做任何事**就會賺到：照舊在結算時呼叫 `gameActivity`。遊戲不能自己改餘額，也沒有扣鑽石的通道；兌換實物還沒開放（伺服器 `diamond_redeem` 目前一律回 `not_open`），兌換站的實物分頁在訂閱中要顯示「即將開放」。
 - 回報的分鐘是手機說的，伺服器沒有原始鞋墊資料，所以最壞情況是有人假報、當月領滿 300 鑽石（約 NT$30）。
+
+## 每日任務 `dailyMissions`（唯讀）
+
+小鎮用 `await window.flutter_inappwebview.callHandler("dailyMissions")`（不帶參數）拿今天的每日任務與完成狀態。只有遊戲站自己的頁面會得到答案，其他頁回 `null`。
+
+```json
+{
+  "day": "2026-11-13",
+  "missions": [
+    { "id": "foot_check", "title": "足壓量測一次", "done": false },
+    { "id": "bike", "title": "…", "done": true }
+  ]
+}
+```
+
+- `day`：App 判斷「今天」用的本地日期鍵。`id` 是任務 id；`title` 是 App 任務頁顯示的中文名稱；`done` 是 App 現在的完成判定。
+- 今天還沒有清單時，App 用打開每日任務頁的同一套邏輯產生並存起來；產生不出來回 `missions: []`。
+- 只讀：H5 改不了任務或完成狀態（完成只認 App 自己記的量測與 `gameActivity`）。回傳不含個資。
