@@ -849,3 +849,6 @@ aa_code_err_rate_limited,Too many tries. Please wait a while.,試太多次了，
 aa_code_err_forbidden,This account cannot use a code. Please contact us.,這個帳號無法使用啟用碼，請與我們聯絡。
 aa_code_err_offline,No connection. Please try again.,目前連不上，請稍後再試。
 aa_code_err_signed_out,Please sign in first.,請先登入。
+update_required_title,Please update the app,請更新 App
+update_required_body,This version can no longer be used. Please update to the latest version.,這個版本已經不能使用，請更新到最新版。
+update_required_button,Update,前往更新
