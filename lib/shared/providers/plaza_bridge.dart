@@ -28,6 +28,10 @@ import 'package:silversole/core/utils/system_font_scale.dart';
 /// resolves to `{ok: true}`, or `{ok: false}` for a report of the wrong shape
 /// (see `GameActivity.tryParse`).
 ///
+/// Daily missions: `callHandler('dailyMissions')` (no arguments) resolves to
+/// `{day: 'YYYY-MM-DD', missions: [{id, title, done}]}` for today, read only
+/// (see `dailyMissionsAnswer`); `missions` is empty when no plan can be made.
+///
 /// Online play: `callHandler('mpSession')` resolves to `{url, anonKey,
 /// accessToken, expiresAt}` for the signed-in user (`expiresAt` in
 /// milliseconds), or null when nobody is signed in (see `MpSessionService`).
@@ -47,6 +51,7 @@ abstract final class PlazaBridge {
   static const String gameSaveStore = 'gameSaveStore';
   static const String gameActivity = 'gameActivity';
   static const String mpSession = 'mpSession';
+  static const String dailyMissions = 'dailyMissions';
 
   /// The `{rev, data}` the page passes to [gameSaveStore], or null when it is
   /// not that shape (the call then answers `bad_data` without a round trip).

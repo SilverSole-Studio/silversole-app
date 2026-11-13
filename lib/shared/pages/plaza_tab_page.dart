@@ -12,6 +12,7 @@ import 'package:silversole/core/mp/mp_session.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/system_font_scale.dart';
 import 'package:silversole/shared/providers/auth_provider.dart';
+import 'package:silversole/shared/providers/daily_missions_bridge.dart';
 import 'package:silversole/shared/providers/diamonds_provider.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/providers/game_activity_provider.dart';
@@ -255,6 +256,14 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
       callback: (_) async {
         if (!await _onGamePage(controller) || !mounted) return null;
         return ref.read(mpSessionServiceProvider).session();
+      },
+    );
+    // Today's daily missions, read only: same origin rule as the save.
+    controller.addJavaScriptHandler(
+      handlerName: PlazaBridge.dailyMissions,
+      callback: (_) async {
+        if (!await _onGamePage(controller) || !mounted) return null;
+        return dailyMissionsAnswer(ref);
       },
     );
     // A finished round, for the daily missions: same origin rule as the save.
