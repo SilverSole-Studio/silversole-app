@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.13.5
+
+更新內容:
+
+- 支援 iPad：在 iPad 上會用整個螢幕顯示，不再是手機大小的畫面。
+- 伺服器搬到東京，離台灣比較近，存檔、領金幣、好友等動作反應更快。更新後需要重新登入一次，帳號和資料都會保留。
+
+Updates:
+
+- iPad support: the app now fills the whole iPad screen instead of running at phone size.
+- Our server moved to Tokyo, closer to Taiwan, so saving, collecting coins and friend features respond faster. You will need to sign in once after updating; your account and data stay the same.
+
 ## v1.13.4
 
 更新內容:
