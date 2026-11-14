@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.13.7
+
+更新內容:
+
+- 支援 iPad 全螢幕。
+- 好友對戰邀請：對方剛婉拒時，會顯示多久後可以再邀請。
+
+Updates:
+
+- Full-screen support on iPad.
+- Friend match invites: if your friend just declined, you'll see when you can invite again.
+
 ## v1.13.6
 
 更新內容:
