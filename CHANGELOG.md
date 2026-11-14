@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.13.6
+
+更新內容:
+
+- 伺服器搬到東京，離台灣比較近，存檔、領金幣、好友等動作反應更快。更新後需要重新登入一次，帳號和資料都會保留。
+- 取名字頁、App 圖示頁的說明文字修正。
+
+Updates:
+
+- Our server moved to Tokyo, closer to Taiwan, so saving, collecting coins and friend features respond faster. You will need to sign in once after updating; your account and data stay the same.
+- Fixed the help text on the nickname and app icon pages.
+
 ## v1.13.5
 
 更新內容:
