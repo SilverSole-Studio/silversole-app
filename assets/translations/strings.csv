@@ -93,7 +93,7 @@ app_icon_default,Cuge with insole,粗哥拿鞋墊
 app_icon_wave,Cuge waving,粗哥站鞋墊揮手
 app_icon_s,Warm S logo,S 標誌暖色版
 app_icon_in_use,In use,使用中
-app_icon_note_android,"After you change it, close the app. The icon on your home screen may disappear for a moment.",換好後請把 App 關掉，桌面圖示會稍等一下才換好。
+app_icon_note_android,Close the app after changing it. The icon on your home screen may disappear for a moment.,換好後請把 App 關掉，桌面圖示會稍等一下才換好。
 app_icon_failed,Could not change the icon,圖示換不了
 theme_mascot,Mascot Town,粗哥手繪小鎮
 theme_tech_light,Minimal Tech · Light,極簡科技・白
@@ -520,7 +520,7 @@ friends_card_requests,{} want to add you,{} 人想加你
 friends_card_open,Add friends,加朋友
 friends_setup_intro,Friends will see this name and picture. Only people you know can add you.,朋友會看到這個名字和頭像。只有認識的人加得到你。
 nickname_setup_title,Pick a name,取個名字
-nickname_setup_hint,"Tap the dice for another name, or type your own.",按骰子換一個名字，也可以自己打。
+nickname_setup_hint,Tap the dice for another name or type your own.,按骰子換一個名字，也可以自己打。
 nickname_setup_reroll,Roll for another name,換一個名字
 nickname_setup_done,Use this name,就用這個
 friends_profile_title,My name and picture,我的名字與頭像
