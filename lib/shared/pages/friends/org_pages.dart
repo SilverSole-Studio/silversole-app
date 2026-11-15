@@ -176,12 +176,30 @@ class _MemberRow extends ConsumerWidget {
     final Widget trailing = switch (member.status) {
       OrgMemberStatus.friend => _Tag('friends_tag_friend'.tr()),
       OrgMemberStatus.pendingOut => _Tag('friends_tag_waiting'.tr()),
+      // 對方想加我：直接在這裡同意，不用再跳到邀請頁（找不到那筆邀請時才退回邀請頁）。
       OrgMemberStatus.pendingIn => SizedBox(
         height: 56,
         child: FilledButton(
-          onPressed: () => context.push('/friends/requests'),
+          onPressed: () {
+            final all = ref.read(friendRequestsProvider).value ?? const [];
+            final req = all
+                .where((r) => r.incoming && r.other.userId == p.userId)
+                .firstOrNull;
+            if (req == null) {
+              context.push('/friends/requests');
+              return;
+            }
+            runFriendAction(
+              ref,
+              () => ref
+                  .read(friendsRepositoryProvider)
+                  .respondFriendRequest(req.id, FriendRequestAction.accept),
+              successText: 'friends_now_friends'.tr(args: [p.nickname]),
+              scope: FriendErrorScope.request,
+            );
+          },
           child: Text(
-            'friends_tag_wants_you'.tr(),
+            'friends_accept'.tr(),
             style: context.textTheme.titleLarge,
           ),
         ),

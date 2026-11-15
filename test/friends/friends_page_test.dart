@@ -125,10 +125,14 @@ void main() {
     expect(find.text('張阿姨'), findsOneWidget);
     expectReadableText(tester);
     expectBigButtons(tester);
-    await tester.ensureVisible(find.text('同意').first);
+    final changAccept = find.descendant(
+      of: find.ancestor(of: find.text('張阿姨'), matching: find.byType(Card)),
+      matching: find.text('同意'),
+    );
+    await tester.ensureVisible(changAccept);
     await tester.drag(find.byType(ListView).first, const Offset(0, 200));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('同意').first);
+    await tester.tap(changAccept);
     await tester.pumpAndSettle();
     expect(repo.friendCount('me'), 5);
     await tester.scrollUntilVisible(find.text('朋友（5／100）'), 200);
@@ -170,6 +174,12 @@ void main() {
     expect(find.text('吳奶奶'), findsOneWidget);
     expect(find.text('蔡阿公'), findsNothing); // chose not to be listed
     expect(find.text('好康報報'), findsNothing); // blocked
+    // 黃伯伯 asked me through this centre: say yes right on the member list.
+    expect(repo.areFriends('me', 'u_huang'), isFalse);
+    await tester.ensureVisible(find.text('同意'));
+    await tester.tap(find.text('同意'));
+    await tester.pumpAndSettle();
+    expect(repo.areFriends('me', 'u_huang'), isTrue);
     expectReadableText(tester);
     expectBigButtons(tester);
     expect(tester.takeException(), isNull);
