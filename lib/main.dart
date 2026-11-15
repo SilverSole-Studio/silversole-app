@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:easy_localization_loader/easy_localization_loader.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/auth/auth_service.dart';
 import 'constants.dart';
+import 'core/utils/device_orientation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +32,8 @@ Future<void> main() async {
   await initializeGoogleSignIn();
   // No location request here: the map views ask for it when the wearer taps
   // "my location" (App Review 5.1.1 — ask only when the feature needs it).
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  // Phones stay portrait; tablets (iPad with Stage Manager included) rotate.
+  await restoreDefaultOrientations();
   runApp(
     ProviderScope(
       child: EasyLocalization(

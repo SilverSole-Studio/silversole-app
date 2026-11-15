@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+更新內容:
+
+- iPad 可橫向使用，開啟「幕前調度」時畫面也能正常展開；手機仍維持直向。
+
+Updates:
+
+- iPad now rotates to landscape and displays correctly with Stage Manager; phones stay portrait.
+
 ## v1.13.7
 
 更新內容:
