@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -51,6 +52,28 @@ class _GameWebViewPageState extends ConsumerState<GameWebViewPage>
 
   @override
   InAppWebViewController? get soleForwardTarget => _controller;
+
+  // 玩遊戲時把 Android 的系統導覽列與狀態列收起來（從邊緣滑一下會暫時出現），
+  // 跟一般手遊一樣把整個畫面讓給遊戲；三鍵導覽列的手機（例如 OPPO 調大顯示大小）
+  // 原本會被導覽列吃掉一截高度，按鍵被擠到畫面外。離開遊戲恢復原狀。iOS 不動。
+  static bool get _immersive =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_immersive) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_immersive) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
