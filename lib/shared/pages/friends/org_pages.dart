@@ -213,8 +213,7 @@ class _MemberRow extends ConsumerWidget {
             child: Text(
               p.nickname,
               style: context.textTheme.titleLarge,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
             ),
           ),
           trailing,

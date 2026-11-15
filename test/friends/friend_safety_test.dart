@@ -63,15 +63,15 @@ void main() {
     // Requests: two incoming and one outgoing, each with its own menu.
     expect(find.byType(FriendSafetyMenu), findsNWidgets(3));
 
-    // An incoming request's menu reports; blocking stays on the card's own
-    // "decline and block" button. No photo is shown, so no photo report.
-    // (The cards' own buttons read "Block" too, so count them first.)
-    final blockButtons = find.text('Block').evaluate().length;
+    // An incoming request's menu reports and blocks; the card itself only has
+    // Accept / No thanks, so nobody blocks by a stray tap. No photo is shown,
+    // so no photo report.
+    expect(find.text('Block'), findsNothing);
     await tester.tap(find.byType(FriendSafetyMenu).first);
     await tester.pumpAndSettle();
     expect(find.text('Report name'), findsOneWidget);
     expect(find.text('Report photo'), findsNothing);
-    expect(find.text('Block'), findsNWidgets(blockButtons));
+    expect(find.text('Block'), findsOneWidget);
 
     // Reporting asks why and sends it.
     await tester.tap(find.text('Report name'));

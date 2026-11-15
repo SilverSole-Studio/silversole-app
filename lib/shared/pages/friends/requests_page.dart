@@ -45,12 +45,12 @@ class RequestsPage extends ConsumerWidget {
                 if (incoming.isEmpty)
                   FriendText('friends_requests_none'.tr())
                 else
-                  for (final r in incoming) _IncomingCard(request: r),
+                  for (final r in incoming) IncomingRequestCard(request: r),
                 FriendSectionTitle('friends_requests_outgoing'.tr()),
                 if (outgoing.isEmpty)
                   FriendText('friends_requests_none'.tr())
                 else
-                  for (final r in outgoing) _OutgoingRow(request: r),
+                  for (final r in outgoing) OutgoingRequestRow(request: r),
               ],
             );
           },
@@ -67,8 +67,8 @@ String _sourceText(FriendRequest r) => switch (r.source) {
   FriendSource.link => 'friends_via_link'.tr(),
 };
 
-class _IncomingCard extends ConsumerWidget {
-  const _IncomingCard({required this.request});
+class IncomingRequestCard extends ConsumerWidget {
+  const IncomingRequestCard({super.key, required this.request});
 
   final FriendRequest request;
 
@@ -97,9 +97,8 @@ class _IncomingCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                // Report sits here; blocking is the "decline and block"
-                // button below.
-                FriendSafetyMenu(person: request.other, showBlock: false),
+                // 檢舉與封鎖都收在這個選單裡，卡片上只留「同意」「不要」兩顆，長輩不會誤按封鎖。
+                FriendSafetyMenu(person: request.other),
               ],
             ),
             FriendButton(
@@ -114,48 +113,17 @@ class _IncomingCard extends ConsumerWidget {
                 scope: FriendErrorScope.request,
               ),
             ),
-            Row(
-              spacing: AppSpacing.sm,
-              children: [
-                Expanded(
-                  child: FriendButton(
-                    label: 'friends_decline'.tr(),
-                    secondary: true,
-                    onPressed: () => runFriendAction(
-                      ref,
-                      () => repo.respondFriendRequest(
-                        request.id,
-                        FriendRequestAction.decline,
-                      ),
-                      scope: FriendErrorScope.request,
-                    ),
-                  ),
+            FriendButton(
+              label: 'friends_decline'.tr(),
+              secondary: true,
+              onPressed: () => runFriendAction(
+                ref,
+                () => repo.respondFriendRequest(
+                  request.id,
+                  FriendRequestAction.decline,
                 ),
-                Expanded(
-                  child: FriendButton(
-                    label: 'friends_decline_block'.tr(),
-                    destructive: true,
-                    onPressed: () async {
-                      final ok = await confirmFriendAction(
-                        context,
-                        title: 'friends_block_title'.tr(args: [name]),
-                        body: 'friends_block_confirm'.tr(),
-                        confirmLabel: 'friends_block'.tr(),
-                        destructive: true,
-                      );
-                      if (!ok) return;
-                      await runFriendAction(
-                        ref,
-                        () => repo.respondFriendRequest(
-                          request.id,
-                          FriendRequestAction.declineAndBlock,
-                        ),
-                        scope: FriendErrorScope.request,
-                      );
-                    },
-                  ),
-                ),
-              ],
+                scope: FriendErrorScope.request,
+              ),
             ),
           ],
         ),
@@ -164,8 +132,8 @@ class _IncomingCard extends ConsumerWidget {
   }
 }
 
-class _OutgoingRow extends ConsumerWidget {
-  const _OutgoingRow({required this.request});
+class OutgoingRequestRow extends ConsumerWidget {
+  const OutgoingRequestRow({super.key, required this.request});
 
   final FriendRequest request;
 
