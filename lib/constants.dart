@@ -96,9 +96,11 @@ abstract class Constants {
   static const bool activeAgingOnSupabase = activeAgingBackend == 'supabase';
 
   /// Whether the gait tab shows the wearer's own figures instead of the
-  /// sample page. Off in release until the step detection has been tuned on
-  /// real recordings (`docs/superpowers/specs/2026-10-31-daily-gait-design.md`
-  /// §6); debug builds are always on (see `realGaitEnabledProvider`).
+  /// sample page. On in release builds since 2026-11-17 (the product owner's
+  /// call, before the calibration in
+  /// `docs/superpowers/specs/2026-10-31-daily-gait-design.md` §7.2 was run): the
+  /// page then shows a "still being tuned" banner. Debug builds are always on
+  /// (see `realGaitEnabledProvider`).
   ///
   ///     flutter run --release --dart-define=REAL_GAIT=on
   static const bool realGait = String.fromEnvironment('REAL_GAIT') == 'on';

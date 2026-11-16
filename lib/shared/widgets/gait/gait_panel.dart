@@ -29,6 +29,10 @@ class GaitAnalysisPanel extends StatelessWidget {
   /// The "sample data" banner, for tests.
   static const sampleBannerKey = Key('gait-sample-banner');
 
+  /// Shown instead of [sampleBannerKey] on the wearer's own figures while the
+  /// step detection is still being tuned (on in release since 2026-11-17).
+  static const betaBannerKey = Key('gait-beta-banner');
+
   /// The "still collecting" card, for tests.
   static const pendingKey = Key('gait-pending');
 
@@ -44,7 +48,7 @@ class GaitAnalysisPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppSpacing.base,
       children: [
-        if (snapshot.isSample) const _SampleBanner(),
+        _SampleBanner(beta: !snapshot.isSample),
         if (mobility case final card?)
           SectionCard(child: MobilityCardView(card: card)),
         if (snapshot.isPending)
@@ -102,13 +106,16 @@ class GaitAnalysisPanel extends StatelessWidget {
 /// not measure gait yet. Tinted with the data-orange the sample-clip menu uses,
 /// so "sample" reads the same everywhere.
 class _SampleBanner extends StatelessWidget {
-  const _SampleBanner();
+  const _SampleBanner({this.beta = false});
+
+  /// The wearer's own figures, still being tuned: "testing" instead of "sample".
+  final bool beta;
 
   @override
   Widget build(BuildContext context) {
     final tint = context.tokens.dataOrange;
     return Container(
-      key: GaitAnalysisPanel.sampleBannerKey,
+      key: beta ? GaitAnalysisPanel.betaBannerKey : GaitAnalysisPanel.sampleBannerKey,
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: ShapeDecoration(
         color: tint.withValues(alpha: 0.14),
@@ -123,7 +130,7 @@ class _SampleBanner extends StatelessWidget {
           Icon(LucideIcons.info, color: tint),
           Expanded(
             child: Text(
-              'gait_sample_banner'.tr(),
+              (beta ? 'gait_beta_banner' : 'gait_sample_banner').tr(),
               style: context.textTheme.titleSmall,
             ),
           ),
