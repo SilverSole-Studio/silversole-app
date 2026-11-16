@@ -655,6 +655,7 @@ fall_guard_none_since_open,No falls detected since the app was opened,開啟 App
 fall_guard_count_since_open,{} falls detected since the app was opened,開啟 App 以來偵測到 {} 次跌倒
 mission_measure_subtitle,Take the one-minute foot check,做一次一分鐘足壓健檢
 gait_sample_banner,Sample data — not measured yet,範例資料 · 尚未實際量測
+gait_beta_banner,Still being tuned — figures are for reference only,測試中 · 步態數字還在校正，僅供參考
 delete_account,Delete account,刪除帳號
 delete_account_deleting,Deleting account…,正在刪除帳號…
 delete_account_title,Delete your account?,要刪除帳號嗎？

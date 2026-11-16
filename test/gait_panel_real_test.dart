@@ -91,6 +91,7 @@ void main() {
 
     // Month with one day of data: six more to go, no figures, no banner.
     expect(find.byKey(GaitAnalysisPanel.sampleBannerKey), findsNothing);
+    expect(find.byKey(GaitAnalysisPanel.betaBannerKey), findsOneWidget);
     expect(find.byKey(GaitAnalysisPanel.pendingKey), findsOneWidget);
     expect(find.text('Collecting data: 6 more day(s) needed'), findsOneWidget);
     expect(find.text('Falls since the app was opened'), findsOneWidget);

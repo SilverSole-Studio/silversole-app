@@ -25,6 +25,10 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
   /// The "sample data" banner, for tests.
   static const sampleBannerKey = Key('gait-sample-banner-t2');
 
+  /// Shown instead of [sampleBannerKey] on the wearer's own figures while the
+  /// step detection is still being tuned (on in release since 2026-11-17).
+  static const betaBannerKey = Key('gait-beta-banner-t2');
+
   /// The "still collecting" card, for tests.
   static const pendingKey = Key('gait-pending-t2');
 
@@ -40,7 +44,7 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 14,
       children: [
-        if (snapshot.isSample) const _SampleBanner(),
+        _SampleBanner(beta: !snapshot.isSample),
         if (mobility case final card?)
           MascotCard(child: MobilityCardView(card: card)),
         if (snapshot.isPending)
@@ -97,12 +101,15 @@ class GaitAnalysisPanelT2 extends StatelessWidget {
 /// Says, above everything else, that the figures are an example: the app does
 /// not measure gait yet.
 class _SampleBanner extends StatelessWidget {
-  const _SampleBanner();
+  const _SampleBanner({this.beta = false});
+
+  /// The wearer's own figures, still being tuned: "testing" instead of "sample".
+  final bool beta;
 
   @override
   Widget build(BuildContext context) {
     return MascotCard(
-      key: GaitAnalysisPanelT2.sampleBannerKey,
+      key: beta ? GaitAnalysisPanelT2.betaBannerKey : GaitAnalysisPanelT2.sampleBannerKey,
       color: context.mascot.cardWarm,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
@@ -111,7 +118,7 @@ class _SampleBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'gait_sample_banner'.tr(),
+              (beta ? 'gait_beta_banner' : 'gait_sample_banner').tr(),
               style: context.textTheme.titleSmall?.copyWith(
                 color: context.mascot.ink,
               ),
