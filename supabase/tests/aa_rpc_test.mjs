@@ -87,14 +87,25 @@ async function ready() {
   return db;
 }
 
-test('signed out and not a member are told apart; aa_me is false for everyone else', async () => {
+test('signed in is enough (11/16 open); a revoked account is turned away', async () => {
   const db = await fresh();
   assert.deepEqual(await rpc(db, null, 'aa_me'), { ok: false, reason: 'signed_out' });
-  assert.deepEqual(await rpc(db, ann, 'aa_me'), { ok: true, active: false, role: null });
-  assert.deepEqual(await rpc(db, ann, 'aa_session_upsert', [sessionArgs()]), { ok: false, reason: 'not_member' });
-  assert.deepEqual(await rpc(db, ann, 'aa_session_list'), { ok: false, reason: 'not_member' });
-  await activate(db, ann, 'assistant');
-  assert.deepEqual(await rpc(db, ann, 'aa_me'), { ok: true, active: true, role: 'assistant' });
+  // No invite needed: any signed-in account is an instructor.
+  assert.deepEqual(await rpc(db, ann, 'aa_me'), { ok: true, active: true, role: 'instructor' });
+  assert.equal((await rpc(db, ann, 'aa_session_upsert', [sessionArgs()])).ok, true);
+  assert.equal((await rpc(db, ann, 'aa_session_list')).ok, true);
+  // A role row from an invite still decides the role.
+  await activate(db, bob, 'assistant');
+  assert.deepEqual(await rpc(db, bob, 'aa_me'), { ok: true, active: true, role: 'assistant' });
+  // The company can still revoke someone.
+  await db.exec('reset role');
+  await db.query('insert into public.aa_roles (user_id, role, revoked_at) values ($1, $2, now())', [eve, 'instructor']);
+  assert.deepEqual(await rpc(db, eve, 'aa_me'), { ok: true, active: false, role: null });
+  assert.deepEqual(await rpc(db, eve, 'aa_session_upsert', [sessionArgs()]), { ok: false, reason: 'not_member' });
+  // Open does not mean shared: bob cannot see ann's session.
+  const list = await rpc(db, bob, 'aa_session_list');
+  assert.equal(list.ok, true);
+  assert.equal(JSON.stringify(list).includes(sid), false);
 });
 
 test('tables are closed to the app roles; anon cannot call the RPCs', async () => {
