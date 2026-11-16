@@ -111,29 +111,36 @@ void main() {
     await tester.tap(find.text('就用這個'));
     await tester.pumpAndSettle();
 
-    // The hub: four friends, two people waiting on me.
+    // The hub: two people waiting on me are right at the top, then four friends.
+    expect(find.text('同意'), findsNWidgets(2));
+    await tester.scrollUntilVisible(find.text('陳伯伯'), 200);
     expect(find.text('陳伯伯'), findsOneWidget);
     expect(find.text('朋友（4／100）'), findsOneWidget);
-    expect(find.text('2'), findsOneWidget); // requests badge
+    await tester.scrollUntilVisible(find.text('同意').first, -200);
     expectReadableText(tester);
     expectBigButtons(tester);
     expect(tester.takeException(), isNull);
 
-    // Accept 張阿姨.
-    await tester.tap(find.text('邀請'));
-    await tester.pumpAndSettle();
+    // Accept 張阿姨 right on the friends page (no second page).
     expect(find.text('張阿姨'), findsOneWidget);
     expectReadableText(tester);
     expectBigButtons(tester);
-    await tester.tap(find.text('同意').first);
+    final changAccept = find.descendant(
+      of: find.ancestor(of: find.text('張阿姨'), matching: find.byType(Card)),
+      matching: find.text('同意'),
+    );
+    await tester.ensureVisible(changAccept);
+    await tester.drag(find.byType(ListView).first, const Offset(0, 200));
+    await tester.pumpAndSettle();
+    await tester.tap(changAccept);
     await tester.pumpAndSettle();
     expect(repo.friendCount('me'), 5);
-    router.pop();
-    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('朋友（5／100）'), 200);
     expect(find.text('朋友（5／100）'), findsOneWidget);
 
     // Add 李伯伯 by pasting his code (as read out, with a space in it) into the
     // code field: only the digits are kept and the lookup starts by itself.
+    await tester.scrollUntilVisible(find.text('輸入好友碼'), -200);
     await tester.tap(find.text('輸入好友碼'));
     await tester.pumpAndSettle();
     expectReadableText(tester);
@@ -158,13 +165,21 @@ void main() {
     expect(repo.areFriends('me', 'u_li'), isFalse); // waits for his yes
 
     // The org list: one tap to ask someone.
+    await tester.ensureVisible(find.text('我的據點'));
     await tester.tap(find.text('我的據點'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('三峽示範據點'));
     await tester.tap(find.text('三峽示範據點'));
     await tester.pumpAndSettle();
     expect(find.text('吳奶奶'), findsOneWidget);
     expect(find.text('蔡阿公'), findsNothing); // chose not to be listed
     expect(find.text('好康報報'), findsNothing); // blocked
+    // 黃伯伯 asked me through this centre: say yes right on the member list.
+    expect(repo.areFriends('me', 'u_huang'), isFalse);
+    await tester.ensureVisible(find.text('同意'));
+    await tester.tap(find.text('同意'));
+    await tester.pumpAndSettle();
+    expect(repo.areFriends('me', 'u_huang'), isTrue);
     expectReadableText(tester);
     expectBigButtons(tester);
     expect(tester.takeException(), isNull);

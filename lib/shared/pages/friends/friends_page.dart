@@ -10,6 +10,7 @@ import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/pages/friends/enter_code_page.dart';
 import 'package:silversole/shared/pages/friends/nickname_setup_page.dart';
+import 'package:silversole/shared/pages/friends/requests_page.dart';
 import 'package:silversole/shared/providers/friends_provider.dart';
 import 'package:silversole/shared/widgets/friends/friend_widgets.dart';
 
@@ -82,7 +83,6 @@ class _FriendsHub extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final friends = ref.watch(friendsListProvider);
-    final incoming = ref.watch(incomingRequestCountProvider);
     final orgs = ref.watch(myOrgsProvider).value ?? const [];
 
     return RefreshIndicator(
@@ -103,20 +103,8 @@ class _FriendsHub extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
           const _ShareLinkCard(),
           const SizedBox(height: AppSpacing.base),
-          _NavRow(
-            icon: Icons.mail_outline,
-            label: 'friends_requests'.tr(),
-            badge: incoming,
-            onTap: () => context.push('/friends/requests'),
-          ),
-          _NavRow(
-            icon: Icons.groups_outlined,
-            label: 'friends_my_orgs'.tr(),
-            detail: orgs.isEmpty
-                ? 'friends_no_org'.tr()
-                : orgs.map((o) => o.name).join('、'),
-            onTap: () => context.push('/friends/orgs'),
-          ),
+          _InlineRequests(),
+          _OrgsExpander(orgs: orgs),
           FriendSectionTitle(
             'friends_list_title'.tr(
               args: ['${friends.value?.length ?? 0}', '$kFriendLimit'],
@@ -343,18 +331,10 @@ class _ShareLinkCard extends ConsumerWidget {
 }
 
 class _NavRow extends StatelessWidget {
-  const _NavRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.detail,
-    this.badge = 0,
-  });
+  const _NavRow({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
-  final String? detail;
-  final int badge;
   final VoidCallback onTap;
 
   @override
@@ -369,35 +349,141 @@ class _NavRow extends StatelessWidget {
             spacing: AppSpacing.md,
             children: [
               Icon(icon, size: 32),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: context.textTheme.titleLarge),
-                    if (detail != null)
-                      Text(
-                        detail!,
-                        style: context.textTheme.titleLarge?.copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-              if (badge > 0)
-                Badge(
-                  label: Text('$badge'),
-                  textStyle: context.textTheme.titleLarge,
-                  largeSize: 30,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                ),
+              Expanded(child: Text(label, style: context.textTheme.titleLarge)),
               const Icon(Icons.chevron_right, size: 32),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 好友邀請直接列在好友頁：別人邀我的在最上面，按「同意」就好；
+/// 我送出、還在等的列在下面，可以取消。沒有任何邀請時整段不出現。
+class _InlineRequests extends ConsumerWidget {
+  const _InlineRequests();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final all = ref.watch(friendRequestsProvider).value ?? const [];
+    final incoming = all.where((r) => r.incoming).toList();
+    final outgoing = all.where((r) => !r.incoming).toList();
+    if (incoming.isEmpty && outgoing.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (incoming.isNotEmpty) ...[
+          FriendSectionTitle('friends_requests_incoming'.tr()),
+          for (final r in incoming) IncomingRequestCard(request: r),
+        ],
+        if (outgoing.isNotEmpty) ...[
+          FriendSectionTitle('friends_requests_outgoing'.tr()),
+          for (final r in outgoing) OutgoingRequestRow(request: r),
+        ],
+      ],
+    );
+  }
+}
+
+/// 「我的據點」：點一下往下展開，直接看到每個據點的全名（不另開一層頁面）。
+/// 點據點進成員名單；最後一列是加入據點（掃海報、輸入代碼在 OrgsPage）。
+class _OrgsExpander extends StatefulWidget {
+  const _OrgsExpander({required this.orgs});
+
+  final List<OrgSummary> orgs;
+
+  @override
+  State<_OrgsExpander> createState() => _OrgsExpanderState();
+}
+
+class _OrgsExpanderState extends State<_OrgsExpander> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final orgs = widget.orgs;
+    final muted = context.textTheme.titleLarge?.copyWith(
+      color: context.colorScheme.onSurfaceVariant,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: kFriendRowHeight),
+          child: InkWell(
+            onTap: () => setState(() => _open = !_open),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+              child: Row(
+                spacing: AppSpacing.md,
+                children: [
+                  const Icon(Icons.groups_outlined, size: 32),
+                  Expanded(
+                    child: Text(
+                      'friends_my_orgs'.tr(),
+                      style: context.textTheme.titleLarge,
+                    ),
+                  ),
+                  if (orgs.isNotEmpty) Text('${orgs.length}', style: muted),
+                  Icon(_open ? Icons.expand_less : Icons.expand_more, size: 32),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (_open) ...[
+          if (orgs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 44, bottom: AppSpacing.sm),
+              child: Text('friends_no_org'.tr(), style: muted),
+            ),
+          for (final o in orgs)
+            InkWell(
+              onTap: () => context.push('/friends/org', extra: o),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: kFriendRowHeight),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 44),
+                  child: Row(
+                    spacing: AppSpacing.md,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          o.name,
+                          style: context.textTheme.titleLarge,
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, size: 32),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          InkWell(
+            onTap: () => context.push('/friends/orgs'),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: kFriendRowHeight),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 44),
+                child: Row(
+                  spacing: AppSpacing.md,
+                  children: [
+                    const Icon(Icons.add, size: 28),
+                    Expanded(
+                      child: Text(
+                        'friends_join_org_title'.tr(args: ['$kOrgLimit']),
+                        style: context.textTheme.titleLarge,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, size: 32),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -425,8 +511,7 @@ class FriendRow extends StatelessWidget {
                 child: Text(
                   p.nickname,
                   style: context.textTheme.titleLarge,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                 ),
               ),
               // No "visit garden" button: the garden redesign is a separate

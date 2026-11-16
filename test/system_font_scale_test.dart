@@ -209,13 +209,19 @@ void main() {
         scrollable: hub,
       );
       expect(find.textContaining('朋友（'), findsOneWidget, reason: '$at hub');
-      await tester.scrollUntilVisible(find.text('邀請'), -200, scrollable: hub);
-
-      await tester.tap(find.text('邀請'));
-      await tester.pumpAndSettle();
+      // Requests sit right on the hub now (no separate page): the incoming
+      // cards and their big Accept button must fit at this font size too.
+      await tester.scrollUntilVisible(
+        find.text('同意').first,
+        -200,
+        scrollable: hub,
+      );
       expect(tester.takeException(), isNull, reason: '$at requests');
-      friends.pop();
+      // The centres row opens in place.
+      await tester.scrollUntilVisible(find.text('我的據點'), 200, scrollable: hub);
+      await tester.tap(find.text('我的據點'));
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: '$at centres');
 
       tester
           .state<ScrollableState>(find.byType(Scrollable).first)
