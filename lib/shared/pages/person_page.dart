@@ -188,17 +188,19 @@ class _PersonPageState extends ConsumerState<PersonPage> {
                 ),
               ],
             ),
-            // 銀足樂齡: only accounts with the role see this row (see
-            // activeAgingEnabledProvider). Everyone else turns it on through the
-            // version tag at the bottom.
-            if (aaActive)
+            // 銀足樂齡（2026-11-16 user：入口直接打開，不要邀請碼）：登入的人都看得到、
+            // 點了直接進；沒登入點了先去登入（場次存在自己的帳號）。被公司停權的帳號
+            // 伺服器回 not active，這列就不出現。
+            if (Constants.activeAgingOnSupabase && (aaActive || !isSignedIn))
               SettingsGroup(
                 children: [
                   SettingsRow(
                     icon: LucideIcons.activity,
                     title: 'aa_title'.tr(),
                     showChevron: true,
-                    onTap: () => context.push('/active-aging'),
+                    onTap: () => isSignedIn
+                        ? context.push('/active-aging')
+                        : context.push('/sign-in'),
                   ),
                 ],
               ),
