@@ -1,6 +1,6 @@
 -- supabase/migrations/20261117120000_friend_suggest_pool_20.sql
 --
--- *** 尚未套用到正式庫（東京 imeoncydtgyywbovjxwq）。套用前要先問 user、技術長看過。 ***
+-- 2026-11-17 已套用到正式庫（東京 imeoncydtgyywbovjxwq），user 同意；套用前確認正式庫定義與底稿只差 limit。
 --
 -- user 2026-11-17：「推薦好友也太多人，可以改成固定推薦五個、會刷新？」「正常業界怎麼做」→
 -- 照業界：畫面一次 5 個＋「換一批」鈕＋重開頁面時更新，不做計時自動換（遊戲 repo #25 已上線）。
