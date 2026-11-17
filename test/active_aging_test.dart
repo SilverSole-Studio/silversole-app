@@ -459,6 +459,24 @@ void main() {
       expect(AaBridge.isAaPage(null, game), isFalse);
     });
 
+    test('the class page is game/aa/class/ and nothing else', () {
+      bool at(String u) => AaBridge.isClassPage(Uri.parse(u), game);
+      expect(
+        at(
+          'https://h5.silversole.dongyu.company/game/aa/class/%E8%AA%B2%E5%A0%82/?host=1',
+        ),
+        isTrue,
+      );
+      expect(at('https://h5.silversole.dongyu.company/game/aa/class'), isTrue);
+      expect(at('https://h5.silversole.dongyu.company/game/aa/'), isFalse);
+      expect(
+        at('https://h5.silversole.dongyu.company/game/aa/classroom/'),
+        isFalse,
+      );
+      expect(at('https://evil.example/game/aa/class/'), isFalse);
+      expect(AaBridge.isClassPage(null, game), isFalse);
+    });
+
     test('a game url with a path prefix keeps the prefix', () {
       expect(
         AaBridge.isAaPage(
