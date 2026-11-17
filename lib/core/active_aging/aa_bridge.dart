@@ -33,6 +33,19 @@ abstract final class AaBridge {
     return path.startsWith(prefix);
   }
 
+  /// The 走進三峽 class page (videos, games, stations; landscape, made for a
+  /// tablet or TV the elders watch) lives under this path, inside [gamePath].
+  static const String classPath = 'game/aa/class/';
+
+  /// Whether [page] is the class page: an [isAaPage] under [classPath]. The
+  /// page lets the phone turn sideways while it is up.
+  static bool isClassPage(Uri? page, String gameUrl) {
+    if (!isAaPage(page, gameUrl)) return false;
+    final prefix = '${Uri.parse(gameUrl).path}$classPath';
+    final path = page!.path.endsWith('/') ? page.path : '${page.path}/';
+    return path.startsWith(prefix);
+  }
+
   /// The server takes 100 KB a request (08 §5 item 4); refuse earlier here.
   static const int maxArgsBytes = 102400;
 

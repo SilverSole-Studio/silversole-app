@@ -3,12 +3,14 @@ import 'dart:collection';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/constants.dart';
 import 'package:silversole/core/active_aging/aa_bridge.dart';
 import 'package:silversole/core/active_aging/aa_repository.dart';
+import 'package:silversole/core/utils/device_orientation.dart';
 import 'package:silversole/core/utils/game_camera_permission.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/providers/plaza_bridge.dart';
@@ -35,6 +37,29 @@ class ActiveAgingPage extends ConsumerStatefulWidget {
 class _ActiveAgingPageState extends ConsumerState<ActiveAgingPage> {
   double _progress = 0;
 
+  /// On the class page ([AaBridge.isClassPage]): the phone may turn sideways
+  /// and the app bar steps aside (the page has its own 「回課程主持」).
+  bool _inClass = false;
+
+  void _syncClass(Uri? url) {
+    final inClass = AaBridge.isClassPage(url, Constants.gameUrl);
+    if (inClass == _inClass || !mounted) return;
+    setState(() => _inClass = inClass);
+    if (inClass) {
+      SystemChrome.setPreferredOrientations(
+        defaultOrientationsFor(tablet: true),
+      );
+    } else {
+      restoreDefaultOrientations();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_inClass) restoreDefaultOrientations();
+    super.dispose();
+  }
+
   Map<String, Object> _appInfo() => PlazaBridge.info(
     friends: false,
     friendRequests: 0,
@@ -51,20 +76,25 @@ class _ActiveAgingPageState extends ConsumerState<ActiveAgingPage> {
   Widget build(BuildContext context) {
     final active = ref.watch(aaActiveProvider);
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 48,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(LucideIcons.arrowLeft),
-        ),
-        title: Text('aa_title'.tr(), style: context.textTheme.titleLarge),
-        bottom: _progress < 1.0 && active.value == true
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(2),
-                child: LinearProgressIndicator(value: _progress, minHeight: 2),
-              )
-            : null,
-      ),
+      appBar: _inClass
+          ? null
+          : AppBar(
+              toolbarHeight: 48,
+              leading: IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(LucideIcons.arrowLeft),
+              ),
+              title: Text('aa_title'.tr(), style: context.textTheme.titleLarge),
+              bottom: _progress < 1.0 && active.value == true
+                  ? PreferredSize(
+                      preferredSize: const Size.fromHeight(2),
+                      child: LinearProgressIndicator(
+                        value: _progress,
+                        minHeight: 2,
+                      ),
+                    )
+                  : null,
+            ),
       body: SafeArea(
         child: switch (active) {
           AsyncData(value: true) => _web(),
@@ -149,6 +179,8 @@ class _ActiveAgingPageState extends ConsumerState<ActiveAgingPage> {
         if (!mounted) return;
         setState(() => _progress = progress / 100);
       },
+      onUpdateVisitedHistory: (controller, url, isReload) =>
+          _syncClass(url?.uriValue),
     );
   }
 }
