@@ -95,13 +95,16 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     _onHub = PlazaBridge.isHub(url, Constants.gameUrl);
   }
 
-  /// The system back button. Off the hub the page gets the first say
+  /// The system back button. The page always gets the first say
   /// ([PlazaBridge.pageBackScript]): a game pauses, or leaves through its own
-  /// exit. Pages that don't handle it fall back to the web history in a game
-  /// (or on another site), otherwise out of the games tab to the home tab.
+  /// exit; the town hub closes a farm chore or a panel that is open over it
+  /// (2026-11-17: back during a chore played inside the town used to leave the
+  /// whole games tab). Pages that don't handle it fall back to the web history
+  /// in a game (or on another site), otherwise out of the games tab to the
+  /// home tab.
   Future<void> _onBack() async {
     final c = _controller;
-    if (!_onHub && c != null) {
+    if (c != null) {
       Object? r;
       try {
         r = await c.evaluateJavascript(source: PlazaBridge.pageBackScript);
