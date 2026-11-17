@@ -16,11 +16,17 @@ Updates:
 
 - 支援 iPad 全螢幕。
 - 好友對戰邀請：對方剛婉拒時，會顯示多久後可以再邀請。
+- 遊戲裡按返回鍵：先暫停，再按一次回到車庫或小鎮，不會再跳到別的頁面。
+- 在小鎮裡做農事時按返回鍵，只會關掉農事畫面。
+- 步態分析（測試中）：穿著鞋墊走路，會累積全天的步態資料。
 
 Updates:
 
 - Full-screen support on iPad.
 - Friend match invites: if your friend just declined, you'll see when you can invite again.
+- Back button in games: the first press pauses, the second takes you back to the garage or town instead of an unrelated page.
+- Back button during a farm chore in the town now just closes the chore.
+- Gait analysis (beta): walking with the insoles builds up all-day gait data.
 
 ## v1.13.6
 
