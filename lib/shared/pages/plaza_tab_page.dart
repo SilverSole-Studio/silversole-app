@@ -95,9 +95,19 @@ class _PlazaTabPageState extends ConsumerState<PlazaTabPage>
     _onHub = PlazaBridge.isHub(url, Constants.gameUrl);
   }
 
-  /// The system back button: back through the web history in a game (or on
-  /// another site), otherwise out of the games tab to the home tab.
-  void _onBack() {
+  /// The system back button. Off the hub the page gets the first say
+  /// ([PlazaBridge.pageBackScript]): a game pauses, or leaves through its own
+  /// exit. Pages that don't handle it fall back to the web history in a game
+  /// (or on another site), otherwise out of the games tab to the home tab.
+  Future<void> _onBack() async {
+    final c = _controller;
+    if (!_onHub && c != null) {
+      Object? r;
+      try {
+        r = await c.evaluateJavascript(source: PlazaBridge.pageBackScript);
+      } catch (_) {}
+      if (PlazaBridge.pageHandledBack(r) || !mounted) return;
+    }
     switch (PlazaBridge.backAction(onHub: _onHub, canGoBack: _canGoBack)) {
       case PlazaBackAction.webBack:
         _controller?.goBack();

@@ -325,4 +325,18 @@ void main() {
       );
     });
   });
+
+  group('page handles back first (2026-11-17)', () {
+    test('only an explicit true counts as handled', () {
+      expect(PlazaBridge.pageHandledBack(true), isTrue);
+      expect(PlazaBridge.pageHandledBack('true'), isTrue);
+      expect(PlazaBridge.pageHandledBack(false), isFalse);
+      expect(PlazaBridge.pageHandledBack(null), isFalse);
+      expect(PlazaBridge.pageHandledBack('false'), isFalse);
+    });
+    test('script asks window.silversoleBack and never throws', () {
+      expect(PlazaBridge.pageBackScript, contains('window.silversoleBack'));
+      expect(PlazaBridge.pageBackScript, contains('catch'));
+    });
+  });
 }

@@ -186,6 +186,20 @@ abstract final class PlazaBridge {
   /// In the hub it always leaves for the home tab (history there would only
   /// lead back into a game); in a game, or on another site, it walks the
   /// history while there is any, and leaves when there is none.
+  /// JavaScript the back button runs first when the page is not the hub: the
+  /// page's own `window.silversoleBack()` (games repo: engine.js for every
+  /// game, garage.js, home.js) returns true when it handled back itself — a
+  /// game pauses, or leaves through its own exit button. Without it the back
+  /// button walked the web history and could land on an older page, e.g. from
+  /// 粗哥車旅 straight into 粗哥的家 (2026-11-17).
+  static const String pageBackScript =
+      '(function(){try{return typeof window.silversoleBack==="function"'
+      '&&window.silversoleBack()===true;}catch(e){return false;}})()';
+
+  /// Whether [pageBackScript]'s result means the page handled back.
+  static bool pageHandledBack(Object? result) =>
+      result == true || result == 'true';
+
   static PlazaBackAction backAction({
     required bool onHub,
     required bool canGoBack,
