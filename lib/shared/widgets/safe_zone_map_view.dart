@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
+import 'package:silversole/shared/widgets/settings_hint.dart';
 
 /// The map itself: the device's position, a safe-zone ring around it, and
 /// zoom / locate controls.
@@ -106,13 +109,31 @@ class _SafeZoneMapViewState extends State<SafeZoneMapView> {
   }
 
   Future<void> _goToMyLocation() async {
-    if (!await Geolocator.isLocationServiceEnabled()) return;
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      if (!mounted) return;
+      await showSettingsHintDialog(
+        context,
+        icon: LucideIcons.mapPinOff,
+        title: 'location_off_title'.tr(),
+        body: 'location_off_body'.tr(),
+        onOpenSettings: () => Geolocator.openLocationSettings(),
+      );
+      return;
+    }
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      await showSettingsHintDialog(
+        context,
+        icon: LucideIcons.mapPinOff,
+        title: 'location_permission_title'.tr(),
+        body: 'location_permission_body'.tr(),
+        onOpenSettings: () => ph.openAppSettings(),
+      );
       return;
     }
     if (mounted && !_showMyLocation) setState(() => _showMyLocation = true);

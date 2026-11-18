@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
+import 'package:silversole/shared/models/app_settings.dart';
 import 'package:silversole/shared/pages/foot_check_result_page.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/pages/foot_check_session_page.dart';
 import 'helpers/translations.dart';
 
@@ -16,6 +18,13 @@ import 'helpers/translations.dart';
 Finder session() => find.text('One-minute foot check');
 Finder result() => find.text('Check result');
 Finder progressBar() => find.byType(LinearProgressIndicator);
+
+/// Developer mode skips the "pair a sole first" gate (covered in
+/// foot_check_no_sole_test.dart), so this flow can run with no sole.
+class _DevSettings extends SettingsNotifier {
+  @override
+  AppSettings build() => const AppSettings(firmwareDevMode: true);
+}
 
 void main() {
   // easy_localization persists the chosen locale through shared_preferences;
@@ -57,6 +66,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
+        overrides: [settingsProvider.overrideWith(_DevSettings.new)],
         child: EasyLocalization(
           supportedLocales: const [Locale('en'), Locale('zh', 'TW')],
           path: 'assets/translations/strings.csv',

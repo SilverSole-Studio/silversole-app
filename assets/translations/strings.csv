@@ -853,3 +853,19 @@ aa_code_err_signed_out,Please sign in first.,請先登入。
 update_required_title,Please update the app,請更新 App
 update_required_body,This version can no longer be used. Please update to the latest version.,這個版本已經不能使用，請更新到最新版。
 update_required_button,Update,前往更新
+ble_off_title,Bluetooth is off,藍牙沒開
+ble_off_body,Please turn on Bluetooth to find your sole.,請打開藍牙，才找得到鞋墊
+ble_permission_title,Bluetooth is not allowed,需要藍牙權限
+ble_permission_body,Allow Bluetooth permission to find your sole.,需要允許藍牙權限才能找鞋墊
+open_settings,Open settings,去設定開啟
+location_permission_title,Location is not allowed,需要定位權限
+location_permission_body,Allow location in Settings to find where you are.,請到設定允許定位，才能找到你在哪
+location_off_title,Location is off,手機定位沒開
+location_off_body,Please turn on location on your phone.,請打開手機的定位功能
+foot_check_pair_title,Pair your sole first,先配對鞋墊
+foot_check_pair_body,The check needs your sole.,健檢要用到鞋墊
+foot_check_pair_button,Pair sole,去配對
+foot_check_offline_title,Sole not connected,鞋墊沒連上
+foot_check_offline_body,Make sure the sole is charged and nearby.,請確認鞋墊有電，放在身邊
+foot_check_reconnect,Reconnect,重新連線
+ble_turn_on,Turn on Bluetooth,打開藍牙
