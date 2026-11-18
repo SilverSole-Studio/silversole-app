@@ -4,10 +4,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:silversole/core/theme/theme.dart';
 import 'package:silversole/core/utils/foot_load_balance.dart';
 import 'package:silversole/core/utils/useful_extension.dart';
 import 'package:silversole/shared/dialogs/basic_dialog.dart';
+import 'package:silversole/shared/pages/device_connect_bottom_modal.dart';
+import 'package:silversole/shared/providers/ble_foreground_controller.dart';
+import 'package:silversole/shared/providers/connected_sole_provider.dart';
+import 'package:silversole/shared/providers/settings_provider.dart';
+import 'package:silversole/shared/widgets/settings_hint.dart';
 import 'package:silversole/shared/providers/last_foot_check_provider.dart';
 import 'package:silversole/shared/providers/telemetry_process_providers/telemetry_view_provider.dart';
 import 'package:silversole/shared/widgets/app_progress_bar.dart';
@@ -61,14 +67,20 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
               FootCheckSessionPage.sessionLength.inMilliseconds)
           .clamp(0.0, 1.0);
 
-  @override
-  void initState() {
-    super.initState();
+  /// Starts the minute, once. Not at `initState`: with no sole paired or
+  /// connected there is nothing to collect, and a minute that can only end in
+  /// "not enough data" is a minute wasted. Once begun, a sole dropping out
+  /// does not stop it — the report then says what it got.
+  void _startTimer() {
+    if (_timer != null || _started) return;
+    _started = true;
     _timer = Timer.periodic(FootCheckSessionPage.tick, (_) {
       setState(() => _elapsed += FootCheckSessionPage.tick);
       if (_elapsed >= FootCheckSessionPage.sessionLength) _finish();
     });
   }
+
+  bool _started = false;
 
   @override
   void dispose() {
@@ -131,6 +143,50 @@ class _FootCheckSessionPageState extends ConsumerState<FootCheckSessionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final hasConnected = ref.watch(
+      connectedSolesProvider.select((m) => m.isNotEmpty),
+    );
+    // Developer mode keeps the sample clips usable with no sole.
+    final blocked =
+        !_started &&
+        !settings.firmwareDevMode &&
+        (settings.pairedDevicesList.isEmpty || !hasConnected);
+    if (!blocked) _startTimer();
+    if (blocked) {
+      final unpaired = settings.pairedDevicesList.isEmpty;
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            'foot_check_session_title'.tr(),
+            style: context.textTheme.titleLarge,
+          ),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: SettingsHint(
+                icon: unpaired
+                    ? LucideIcons.bluetoothSearching
+                    : LucideIcons.bluetoothOff,
+                title: unpaired
+                    ? 'foot_check_pair_title'.tr()
+                    : 'foot_check_offline_title'.tr(),
+                body: unpaired
+                    ? 'foot_check_pair_body'.tr()
+                    : 'foot_check_offline_body'.tr(),
+                buttonLabel: unpaired
+                    ? 'foot_check_pair_button'.tr()
+                    : 'foot_check_reconnect'.tr(),
+                onPressed: unpaired
+                    ? () => unawaited(showDeviceConnectBottomModal(context))
+                    : () => ref.invalidate(bleForegroundControlProvider),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return PopScope(
       // The back gesture must not slip past the confirmation either.
       canPop: false,

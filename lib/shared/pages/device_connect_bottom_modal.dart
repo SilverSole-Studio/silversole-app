@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -17,6 +18,8 @@ import 'package:silversole/shared/models/ble_paired_device_model.dart';
 import 'package:silversole/shared/models/list_tile_data_model.dart';
 import 'package:silversole/shared/providers/settings_provider.dart';
 import 'package:silversole/shared/widgets/build_material_list.dart';
+import 'package:silversole/shared/widgets/settings_hint.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
 
 Future<T?> showDeviceConnectBottomModal<T>(BuildContext context) {
   return showModalBottomSheet<T>(
@@ -32,6 +35,9 @@ Future<T?> showDeviceConnectBottomModal<T>(BuildContext context) {
   );
 }
 
+/// What stops the pairing sheet from scanning.
+enum _BleBlock { adapterOff, permission }
+
 class DeviceConnectBottomModal extends ConsumerStatefulWidget {
   const DeviceConnectBottomModal({super.key});
 
@@ -41,20 +47,65 @@ class DeviceConnectBottomModal extends ConsumerStatefulWidget {
 }
 
 class _DeviceConnectBottomModalState
-    extends ConsumerState<DeviceConnectBottomModal> {
+    extends ConsumerState<DeviceConnectBottomModal>
+    with WidgetsBindingObserver {
   final Map<DeviceIdentifier, ScanResult> _scanMap = {};
   StreamSubscription<List<ScanResult>>? _scanSub;
   Timer? _retryTimer;
+  StreamSubscription<BluetoothAdapterState>? _adapterSub;
   bool _isScanning = false;
+
+  /// Why scanning cannot run, or null. Shown in place of the endless progress
+  /// bar, with a button that leads to the fix.
+  _BleBlock? _block;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    try {
+      _adapterSub = FlutterBluePlus.adapterState.listen(_onAdapterState);
+    } catch (_) {
+      // No Bluetooth plugin here (desktop, tests): scanning will say so.
+    }
     startNimBleScanLoop();
+  }
+
+  void _onAdapterState(BluetoothAdapterState state) {
+    if (!mounted) return;
+    if (state == BluetoothAdapterState.off) {
+      setState(() => _block = _BleBlock.adapterOff);
+    } else if (state == BluetoothAdapterState.on &&
+        _block == _BleBlock.adapterOff) {
+      startNimBleScanLoop();
+    }
+  }
+
+  /// Back from the system settings: try again.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _block != null) {
+      startNimBleScanLoop();
+    }
+  }
+
+  Future<void> _openFix() async {
+    if (_block == _BleBlock.adapterOff &&
+        defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        await FlutterBluePlus.turnOn();
+        return;
+      } catch (_) {
+        // Refused or unsupported: fall through to the settings page.
+      }
+    }
+    await ph.openAppSettings();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _adapterSub?.cancel();
     _scanSub?.cancel();
     _retryTimer?.cancel();
     FlutterBluePlus.stopScan();
@@ -63,7 +114,15 @@ class _DeviceConnectBottomModalState
 
   Future<void> startNimBleScanLoop() async {
     final hasPermission = await ensureScanPermission();
-    if (!hasPermission) return;
+    if (!hasPermission) {
+      if (mounted) setState(() => _block = _BleBlock.permission);
+      return;
+    }
+    if (_adapterOff) {
+      if (mounted) setState(() => _block = _BleBlock.adapterOff);
+      return;
+    }
+    if (_block != null && mounted) setState(() => _block = null);
 
     _scanSub ??= FlutterBluePlus.scanResults.listen((results) {
       var changed = false;
@@ -80,13 +139,19 @@ class _DeviceConnectBottomModalState
 
   Future<bool> ensureScanPermission() async {
     try {
-      if (await requestBleScanPermission()) return true;
-      showErrorSnakeBar('Bluetooth scan permission is required.');
-      return false;
+      return await requestBleScanPermission();
     } on MissingPluginException {
       // Desktop (macOS) has no permission_handler implementation; CoreBluetooth
       // prompts for Bluetooth on the first scan, so just proceed.
       return true;
+    }
+  }
+
+  bool get _adapterOff {
+    try {
+      return FlutterBluePlus.adapterStateNow == BluetoothAdapterState.off;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -222,10 +287,31 @@ class _DeviceConnectBottomModalState
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
-              child: LinearProgressIndicator(),
-            ),
+            if (_block == null)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+                child: LinearProgressIndicator(),
+              )
+            else
+              SettingsHint(
+                icon: LucideIcons.bluetoothOff,
+                title:
+                    (_block == _BleBlock.adapterOff
+                            ? 'ble_off_title'
+                            : 'ble_permission_title')
+                        .tr(),
+                body:
+                    (_block == _BleBlock.adapterOff
+                            ? 'ble_off_body'
+                            : 'ble_permission_body')
+                        .tr(),
+                buttonLabel:
+                    _block == _BleBlock.adapterOff &&
+                        defaultTargetPlatform == TargetPlatform.android
+                    ? 'ble_turn_on'.tr()
+                    : 'open_settings'.tr(),
+                onPressed: _openFix,
+              ),
             Expanded(
               child: Padding(
                 padding: hPadding,
