@@ -12,10 +12,17 @@ name: Flutter Release
 # which is how the very first upload to Play Console is made (the Play API
 # cannot upload to an app that has never had a release).
 #
-# iOS: every rc (and a manual run with `testflight` ticked) also builds an IPA
-# and uploads it to TestFlight, with the same build number as Android's
-# version code. v1.9.0 then submits that same TestFlight build (the rc Play
-# promoted) to App Store review, released as soon as Apple approves it.
+# iOS is opt-in (macOS runners bill 10x, so building an IPA on every rc burned
+# the whole monthly Actions quota in 11/2026). An rc builds the IPA and uploads
+# it to TestFlight only when its tag is annotated with a message containing
+# [ios]:
+#
+#     git tag -a v1.9.0-rc.5 -m "[ios] last rc before release"
+#
+# (a manual run with `testflight` ticked does too). The build number is the
+# same as Android's version code. v1.9.0 then submits that same TestFlight
+# build (the rc Play promoted) to App Store review, so the LAST rc before a
+# release must carry [ios]; the plan job warns when it doesn't.
 
 on:
   push:
@@ -62,6 +69,7 @@ jobs:
     steps:
       - id: plan
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_VERSION_NAME: ${{ inputs.version_name }}
           INPUT_TRACK: ${{ inputs.track }}
           INPUT_TESTFLIGHT: ${{ inputs.testflight }}
@@ -82,7 +90,16 @@ jobs:
             version_name="${BASH_REMATCH[1]}"
             track=alpha
             release_name="$GITHUB_REF_NAME"
-            testflight=true
+            # iOS only when the annotated tag's message says [ios] (see top).
+            testflight=false
+            tag_obj=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$GITHUB_REF_NAME" --jq '.object.type + " " + .object.sha')
+            if [ "${tag_obj%% *}" = "tag" ]; then
+              msg=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/${tag_obj#* }" --jq '.message')
+              case "$msg" in *"[ios]"*) testflight=true ;; esac
+            fi
+            if [ "$testflight" != "true" ]; then
+              echo "::warning::$GITHUB_REF_NAME builds Android only. The last rc before v$version_name must be an annotated tag with [ios] in its message, or the App Store submit of v$version_name has no TestFlight build."
+            fi
           elif [[ "$GITHUB_REF_NAME" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             kind=final
             version_name="${BASH_REMATCH[1]}"
@@ -322,6 +339,17 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      # macOS minutes bill 10x: reuse the Pods between runs instead of
+      # downloading and building them every time.
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-${{ runner.os }}-
 
       # Compiles Dart and runs pod install; signing happens in the archive.
       - name: Build iOS (unsigned)
